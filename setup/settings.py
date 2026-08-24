@@ -3,11 +3,14 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-chave-temporaria-para-desenvolvimento-local'
+# A chave do Render será lida da variável de ambiente se existir, senão usa a padrão
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-temporaria-para-desenvolvimento-local')
 
-DEBUG = True
+# Em produção no Render, desativa o modo Debug automaticamente
+DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# Permite o acesso pelo domínio do Render, além de localhost
+ALLOWED_HOSTS = ['.onrender.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,6 +24,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Servidor de arquivos estáticos para produção
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,7 +75,18 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+# Arquivos Estáticos (CSS, JavaScript, Imagens)
+STATIC_URL = '/static/'
+
+# Adiciona STATICFILES_DIRS apenas se a pasta 'static' existir
+STATIC_DIR = BASE_DIR / 'static'
+if STATIC_DIR.exists():
+    STATICFILES_DIRS = [STATIC_DIR]
+else:
+    STATICFILES_DIRS = []
+
+# Configurações do WhiteNoise para coletar estáticos na hospedagem
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
