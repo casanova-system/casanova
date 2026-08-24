@@ -110,7 +110,6 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
     equipe_instalacao = 4
     total_pessoas = equipe_instalacao + 1  # 4 instaladores + 1 supervisor
 
-    # Só cobra diária de hotel se a distância for maior que 150 km
     precisa_pernoite = distancia_km > 150.0
     diaria_hotel_aplicada = CUSTO_DIARIA_HOTEL if precisa_pernoite else 0.0
 
@@ -131,14 +130,12 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
 
 
 def converter_para_decimal(valor):
-    """Converte valores do excel (float, int ou string com vírgula/ponto) com segurança."""
     if valor is None or pd.isna(valor):
         return Decimal("0.00")
     if isinstance(valor, (int, float)):
         return Decimal(str(valor))
 
     val_str = str(valor).strip().replace("R$", "").replace(" ", "")
-    # Se contiver vírgula e ponto, assumir padrão brasileiro (ponto milhar, vírgula decimal)
     if "," in val_str and "." in val_str:
         if val_str.find(".") < val_str.find(","):
             val_str = val_str.replace(".", "").replace(",", ".")
@@ -160,15 +157,13 @@ def converter_para_decimal(valor):
 
 
 def processar_excel_relatorio(file_stream):
-    """Processa o arquivo .xlsx exportado do FastReport de forma dinâmica e robusta."""
     df = pd.read_excel(file_stream, sheet_name=0, header=None)
 
     codigo_obra = "25-0021-06"
-    nome_obra = "RESIDENCIAL ADALBERTO E LUDMILA"
-    cliente = "ADALBERTO BRUNO SANSÃO"
-    endereco_cliente = "Barra do Bugres - MT"
+    nome_obra = "RESIDENCIA"
+    cliente = ""
+    endereco_cliente = ""
 
-    # 1. Extração do Código, Nome e Endereço da Obra
     for idx, row in df.iloc[:15].iterrows():
         row_str = " ".join([str(v) for v in row if pd.notna(v)])
         match_cod = re.search(r"(\d{2}-\d{4}-\d{2})", row_str)
@@ -190,7 +185,6 @@ def processar_excel_relatorio(file_stream):
             if match_end:
                 endereco_cliente = match_end.group(1).strip()
 
-    # 2. Busca pela Linha de Totais Gerais da Planilha (Fallback)
     m2_total_geral = Decimal("0.00")
     peso_total_geral = Decimal("0.00")
     qtd_total_geral = 0
@@ -220,7 +214,6 @@ def processar_excel_relatorio(file_stream):
                     pass
             break
 
-    # 3. Mapeamento Dinâmico de Colunas e Extração de Itens
     obra_obj, _ = Obra.objects.update_or_create(
         codigo=codigo_obra,
         defaults={
@@ -235,7 +228,6 @@ def processar_excel_relatorio(file_stream):
     obra_obj.itens.all().delete()
     itens_processados = []
 
-    # Varre procurando o cabeçalho "Tipo" ou "Quantidade"
     idx_tipo, idx_qtd, idx_area, idx_local, idx_peso = 0, 3, 8, 10, 13
 
     for idx, row in df.iterrows():
@@ -254,7 +246,6 @@ def processar_excel_relatorio(file_stream):
                     idx_peso = i
             break
 
-    # Varre os itens individuais com base nas colunas mapeadas
     descricao_atual = "ESQUADRIAS DA OBRA"
     for idx, row in df.iterrows():
         for cell in row.values:
@@ -331,7 +322,6 @@ def processar_excel_relatorio(file_stream):
             except Exception:
                 continue
 
-    # Se por algum motivo não extraiu os itens fracionados, usa os totais gerais
     if not itens_processados:
         item_resumo = ItemVidro.objects.create(
             obra=obra_obj,
@@ -344,7 +334,6 @@ def processar_excel_relatorio(file_stream):
         )
         itens_processados.append(item_resumo)
 
-    # 4. Recalcula Frete e Operação com base no M² total real somado dos itens
     m2_total = (
         sum(i.m2_corte for i in itens_processados)
         if itens_processados
