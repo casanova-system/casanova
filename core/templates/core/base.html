@@ -33,6 +33,11 @@
             border-bottom: 3px solid var(--casanova-blue);
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+        .brand-logo {
+            max-height: 42px;
+            width: auto;
+            object-fit: contain;
+        }
         .btn-casanova {
             background-color: var(--casanova-blue);
             color: #ffffff;
@@ -71,7 +76,7 @@
             <a class="navbar-brand d-flex align-items-center gap-3" href="{% url 'lista_obras' %}">
                 <div class="d-flex align-items-center">
                     <!-- Logo em Imagem -->
-                    <img src="{% static 'img/logo.png' %}" alt="CASANOVA" height="40" class="d-inline-block align-text-top">
+                    <img src="{% static 'img/logo.png' %}" alt="CASANOVA Esquadrias Prime" class="brand-logo">
                 </div>
                 <span class="border-start ps-3 ms-2 text-muted fw-bold" style="font-size: 0.95rem;">Custo de Frete</span>
             </a>
