@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Obra: {{ obra.nome }}</h2>
+            <p class="text-muted mb-0">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
+        </div>
+        <a href="{% url 'upload_pdf' %}" class="btn btn-outline-secondary">← Novo Upload</a>
+    </div>
+
+    <!-- Painel de Calculadora Logística (CEP / KM) -->
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="POST" class="row g-3 align-items-center">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">CEP Origem (Matriz):</label>
+                    <input type="text" class="form-control" value="78088-800" disabled>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Distância até o Cliente (KM):</label>
+                    <input type="number" step="0.1" name="distancia_km" class="form-control" value="{{ obra.distancia_km }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Recalcular Frete/Operação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Indicadores Principais (Cards) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Total Peças</h6>
+                    <h3 class="fw-bold mb-0">{{ total_pecas }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Área Total M²</h6>
+                    <h3 class="fw-bold mb-0">{{ m2_corte_total }} m²</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-dark text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Peso Total</h6>
+                    <h3 class="fw-bold mb-0">{{ peso_total }} kg</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Custo Total Obra</h6>
+                    <h3 class="fw-bold mb-0">R$ {{ custo_geral_obra }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo dos Custos da Planilha (Frete e Operação) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-info">
+                <div class="card-body">
+                    <h6 class="text-muted">Custo Estimado de Frete</h6>
+                    <h4 class="fw-bold text-info">R$ {{ obra.custo_frete }}</h4>
+                    <small class="text-muted">Combustível + Pedágio</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                <div class="card-body">
+                    <h6 class="text-muted">Custo Operacional de Equipe</h6>
+                    <h4 class="fw-bold text-warning">R$ {{ obra.custo_operacao }}</h4>
+                    <small class="text-muted">Hospedagem + Alimentação + Auxílio</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-danger">
+                <div class="card-body">
+                    <h6 class="text-muted">Custo Total Deslocamento</h6>
+                    <h4 class="fw-bold text-danger">R$ {{ obra.custo_total_deslocamento }}</h4>
+                    <small class="text-muted">Frete + Operação ({{ obra.distancia_km }} KM)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Itens Extraídos -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Itens da Obra</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Qtd</th>
+                        <th>M² Corte</th>
+                        <th>Peso (kg)</th>
+                        <th>Custo Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td class="fw-bold">{{ item.codigo_item }}</td>
+                        <td>{{ item.descricao }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>{{ item.m2_corte }}</td>
+                        <td>{{ item.peso_kg }}</td>
+                        <td>R$ {{ item.custo_total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Nenhum item encontrado nesta obra.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
