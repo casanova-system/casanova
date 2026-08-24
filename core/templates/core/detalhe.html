@@ -14,6 +14,39 @@
     .btn-animado:active {
         transform: translateY(1px);
     }
+
+    /* Correção específica para o botão de Novo Upload / Importar Relatório na página de detalhes */
+    .btn-outline-secondary-custom {
+        border-width: 1px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    [data-bs-theme="light"] .btn-outline-secondary-custom {
+        color: #495057 !important;
+        background-color: #ffffff !important;
+        border-color: #ced4da !important;
+    }
+    [data-bs-theme="light"] .btn-outline-secondary-custom:hover {
+        color: #212529 !important;
+        background-color: #e2e6ea !important;
+        border-color: #dae0e5 !important;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary-custom {
+        color: #f8f9fa !important;
+        background-color: #1e2638 !important;
+        border-color: #2d3748 !important;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary-custom:hover {
+        background-color: #2d3748 !important;
+        color: #ffffff !important;
+    }
+
+    /* Correção global para inputs de arquivo/texto se adaptarem ao tema claro/escuro */
+    nav input[type="file"], .navbar input[type="file"], input.form-control {
+        background-color: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+    }
 </style>
 
 <div class="container py-4">
@@ -22,7 +55,8 @@
             <h2 class="fw-bold mb-1">Obra: {{ obra.nome }}</h2>
             <p class="text-muted mb-0">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
         </div>
-        <a href="{% url 'upload_pdf' %}" class="btn btn-outline-secondary">← Novo Upload</a>
+        <!-- Botão corrigido com a classe customizada para alternar perfeitamente entre os temas -->
+        <a href="{% url 'upload_pdf' %}" class="btn btn-outline-secondary-custom">← Novo Upload</a>
     </div>
 
     <!-- Painel de Calculadora Logística (CEP / KM) -->
@@ -114,6 +148,37 @@
                     <h6 class="text-muted">Custo Total Deslocamento</h6>
                     <h4 class="fw-bold text-danger">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</h4>
                     <small class="text-muted">Frete + Operação ({{ obra.distancia_km }} KM)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card de Parâmetros de Cálculo Utilizados (Compatível com Dark/Light Mode) -->
+    <div class="card border-0 shadow-sm mb-4 bg-body-tertiary">
+        <div class="card-body py-3 px-4">
+            <h6 class="fw-bold mb-3 text-body">
+                <i class="bi bi-sliders me-1"></i> Parâmetros Utilizados no Cálculo
+            </h6>
+            <div class="row g-3 text-center">
+                <div class="col-lg col-md-4 col-6 border-end">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Média Hospedagem</span>
+                    <span class="fw-bold text-body">R$ {{ parametros.media_hospedagem|floatformat:2 }}</span>
+                </div>
+                <div class="col-lg col-md-4 col-6 border-end">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Média Gasolina</span>
+                    <span class="fw-bold text-body">R$ {{ parametros.media_gasolina|floatformat:2 }}</span>
+                </div>
+                <div class="col-lg col-md-4 col-6 border-end">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Média Diesel</span>
+                    <span class="fw-bold text-body">R$ {{ parametros.media_diesel|floatformat:2 }}</span>
+                </div>
+                <div class="col-lg col-md-4 col-6 border-end">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Média Alimentação</span>
+                    <span class="fw-bold text-body">R$ {{ parametros.media_alimentacao|floatformat:2 }}</span>
+                </div>
+                <div class="col-lg col-md-4 col-6">
+                    <span class="text-muted d-block" style="font-size: 0.75rem;">Média Locomoção</span>
+                    <span class="fw-bold text-body">R$ {{ parametros.media_locomocao|floatformat:2 }}</span>
                 </div>
             </div>
         </div>

@@ -45,8 +45,17 @@
         }
 
         /* =========================================
-           TEMA ESCURO (CORREÇÕES DE FUNDO BRANCO)
-           ========================================= */
+            CORREÇÃO PARA INPUT DE ARQUIVO (TEMA CLARO E ESCURO)
+            ========================================= */
+        input[type="file"] {
+            color: #212529 !important;
+            background-color: #ffffff !important;
+            border: 1px solid #ced4da !important;
+        }
+
+        /* =========================================
+            TEMA ESCURO (CORREÇÕES DE FUNDO E TEXTO)
+            ========================================= */
         [data-bs-theme="dark"] body {
             background-color: #0f141e !important;
             color: #e2e8f0 !important;
@@ -59,14 +68,40 @@
             border-color: #2d3748 !important;
         }
 
+        /* Correção para o título e textos na Navbar do modo escuro */
+        [data-bs-theme="dark"] .navbar-casanova .text-dark {
+            color: #e2e8f0 !important;
+        }
+
+        /* Links da Navbar no modo escuro */
+        [data-bs-theme="dark"] .navbar-casanova .nav-link {
+            color: #cbd5e1 !important;
+        }
+        [data-bs-theme="dark"] .navbar-casanova .nav-link:hover {
+            color: #ffffff !important;
+        }
+
         /* Força os Cards e elementos com bg-white a ficarem escuros */
         [data-bs-theme="dark"] .card,
         [data-bs-theme="dark"] .card-custom,
         [data-bs-theme="dark"] .bg-white,
         [data-bs-theme="dark"] .bg-light,
         [data-bs-theme="dark"] .card-header {
-            background-color: #1e2638 !important; /* Cor elegante para cards no modo escuro */
+            background-color: #1e2638 !important;
             color: #e2e8f0 !important;
+            border-color: #2d3748 !important;
+        }
+
+        /* Correção específica para textos secundários dentro de cards no modo escuro */
+        [data-bs-theme="dark"] .card .text-muted,
+        [data-bs-theme="dark"] .card-custom .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        /* Força o input de arquivo no modo escuro */
+        [data-bs-theme="dark"] input[type="file"] {
+            color: #f8f9fa !important;
+            background-color: #141b27 !important;
             border-color: #2d3748 !important;
         }
 
@@ -111,7 +146,7 @@
         }
         .btn-casanova {
             background-color: var(--casanova-blue);
-            color: #ffffff;
+            color: #ffffff !important;
             border: none;
             font-weight: 600;
             padding: 10px 24px;
@@ -120,7 +155,7 @@
         }
         .btn-casanova:hover {
             background-color: var(--casanova-dark-blue);
-            color: #ffffff;
+            color: #ffffff !important;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(11, 56, 130, 0.25);
         }
@@ -148,7 +183,7 @@
                 <div class="brand-logo-container">
                     <img src="{% static 'img/logo.png' %}" alt="CASANOVA Esquadrias Prime" class="brand-logo">
                 </div>
-                <span class="border-start ps-3 ms-2 text-muted fw-bold" style="font-size: 1rem;">Custo de Frete</span>
+                <span class="border-start ps-3 ms-2 text-dark fw-bold" style="font-size: 1rem;">Custo de Frete</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -158,12 +193,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center gap-3">
                     <li class="nav-item">
-                        <a class="nav-link fw-semibold px-3 text-secondary" href="{% url 'lista_obras' %}">
+                        <a class="nav-link fw-semibold px-3 text-dark" href="{% url 'lista_obras' %}">
                             <i class="fa-solid fa-file-lines me-1"></i> Relatório
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-casanova text-white btn-sm" href="{% url 'upload_pdf' %}">
+                        <a class="btn btn-casanova btn-sm" href="{% url 'upload_pdf' %}">
                             <i class="fa-solid fa-file-arrow-up me-1"></i> Importar Relatório
                         </a>
                     </li>

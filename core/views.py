@@ -14,7 +14,6 @@ def upload_pdf(request):
     if request.method == "POST" and request.FILES.get("excel_file"):
         excel_file = request.FILES["excel_file"]
 
-        # Chamada atualizada para o serviço do Excel
         obra, _ = processar_excel_relatorio(excel_file)
         return redirect("detalhe_obra", pk=obra.pk)
 
@@ -55,6 +54,15 @@ def detalhe_obra(request, pk):
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
     dias_trabalho = math.ceil(m2_real / 15.0)
 
+    # Parâmetros de cálculo base utilizados nas variáveis operacionais
+    parametros_calculo = {
+        "media_hospedagem": 120.00,
+        "media_gasolina": 5.89,
+        "media_diesel": 6.19,
+        "media_alimentacao": 50.00,
+        "media_locomocao": 30.00,
+    }
+
     context = {
         "obra": obra,
         "itens": itens,
@@ -63,6 +71,7 @@ def detalhe_obra(request, pk):
         "peso_total": peso_total,
         "custo_total_materiais": custo_total_materiais,
         "custo_geral_obra": custo_geral_obra,
-        "dias_trabalho": dias_trabalho,  # <- Variável enviada para o template
+        "dias_trabalho": dias_trabalho,
+        "parametros": parametros_calculo,
     }
     return render(request, "core/detalhe.html", context)
