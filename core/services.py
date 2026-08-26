@@ -274,15 +274,24 @@ def processar_excel_relatorio(file_stream):
                     raw_qtd = partes[1] if len(partes) > 1 else "1"
                     qtd = int(float(raw_qtd.replace(",", ".")))
 
-                    # CORREÇÃO DA MÊTRAGEM: Procura o valor plausível de área (ignora larguras altas em mm)
+                    # CORREÇÃO DA MÊTRAGEM (Blindada com try-except individual)
                     m2 = Decimal("0.00")
                     for parte in partes[2:]:
-                        val_dec = converter_para_decimal(parte)
-                        if Decimal("0.01") <= val_dec < 100.0:
-                            m2 = val_dec
-                            break
+                        try:
+                            val_dec = converter_para_decimal(parte)
+                            if Decimal("0.01") <= val_dec < Decimal("100.00"):
+                                m2 = val_dec
+                                break
+                        except Exception:
+                            continue
 
-                    peso = converter_para_decimal(partes[-1]) if len(partes) > 4 else Decimal("0.00")
+                    # Tratamento seguro para o peso
+                    peso = Decimal("0.00")
+                    if len(partes) > 4:
+                        try:
+                            peso = converter_para_decimal(partes[-1])
+                        except Exception:
+                            peso = Decimal("0.00")
 
                     item_obj = ItemVidro.objects.create(
                         obra=obra_obj,
