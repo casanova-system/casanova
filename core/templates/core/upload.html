@@ -42,9 +42,9 @@
             <div class="card shadow-sm border-0 rounded-3">
                 <div class="card-body p-4">
                     <div class="text-center mb-4">
-                        <i class="fa-solid fa-file-excel text-success fa-3x mb-2"></i>
-                        <h4 class="fw-bold">Importar Relatório Excel</h4>
-                        <p class="text-muted small">Selecione o arquivo do orçamento em Excel (.xlsx ou .xls) para realizar o processamento automático.</p>
+                        <i class="fa-solid fa-file-pdf text-danger fa-3x mb-2"></i>
+                        <h4 class="fw-bold">Importar Relatório PDF</h4>
+                        <p class="text-muted small">Selecione o arquivo do orçamento em PDF para realizar o processamento automático.</p>
                     </div>
 
                     {% if messages %}
@@ -58,13 +58,13 @@
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-4">
-                            <label for="excel_file" class="form-label fw-semibold">Arquivo Excel</label>
-                            <input class="form-control" type="file" id="excel_file" name="excel_file" accept=".xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required>
+                            <label for="pdf_file" class="form-label fw-semibold">Arquivo PDF</label>
+                            <input class="form-control" type="file" id="pdf_file" name="excel_file" accept=".pdf, application/pdf" required>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-casanova text-white">
-                                <i class="fa-solid fa-gears me-1"></i> Processar Excel
+                                <i class="fa-solid fa-gears me-1"></i> Processar PDF
                             </button>
                             <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary-custom">
                                 Cancelar

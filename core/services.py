@@ -4,7 +4,7 @@ import math
 import re
 import urllib.parse
 import urllib.request
-import pandas as pd
+import pdfplumber
 from .models import ItemVidro, Obra
 
 CEP_MATRIZ = "78088-800"
@@ -68,13 +68,11 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
     CUSTO_ALIMENTACAO = 55.00
     CUSTO_AUX_DESLOCAMENTO = 35.00
 
-    # Quantidade de viagens e dias operacionais baseados no m² real
     visitas_supervisao = math.ceil(m2_real / 300.0) * 3
     deslocamentos_instalacao = math.ceil(m2_real / 300.0)
     viagens_caminhao = math.ceil(m2_real / 150.0)
     dias_trabalho = math.ceil(m2_real / 15.0)
 
-    # Combustível (Ida e Volta)
     km_caminhao = distancia_km * 2 * viagens_caminhao
     custo_diesel = (km_caminhao / CONSUMO_DIESEL) * PRECO_DIESEL
 
@@ -88,7 +86,6 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
         km_instalacao / CONSUMO_GASOLINA
     ) * PRECO_GASOLINA
 
-    # Pedágio (a cada 80km - Ida e Volta)
     num_pedagios = int(distancia_km / 80) * 2
     custo_pedagio_caminhao = (
         num_pedagios * TARIFA_PEDAGIO_CAMINHAO * viagens_caminhao
@@ -108,7 +105,7 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
     )
 
     equipe_instalacao = 4
-    total_pessoas = equipe_instalacao + 1  # 4 instaladores + 1 supervisor
+    total_pessoas = equipe_instalacao + 1  
 
     precisa_pernoite = distancia_km > 150.0
     diaria_hotel_aplicada = CUSTO_DIARIA_HOTEL if precisa_pernoite else 0.0
@@ -130,7 +127,7 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
 
 
 def converter_para_decimal(valor):
-    if valor is None or pd.isna(valor):
+    if valor is None:
         return Decimal("0.00")
     if isinstance(valor, (int, float)):
         return Decimal(str(valor))
@@ -156,32 +153,56 @@ def converter_para_decimal(valor):
     return Decimal("0.00")
 
 
+def validar_codigo_esquadria(codigo):
+    """Filtra e valida se o código extraído segue o padrão real de esquadria (ex: J03_1, PF4, OF5)."""
+    if not codigo:
+        return False
+    
+    codigo_limpo = str(codigo).strip().upper()
+    
+    if codigo_limpo.isdigit() or codigo_limpo in ["FIXO", "MOVEL", "TIPO", "OBRA", "TOTAIS"]:
+        return False
+        
+    padrao = re.compile(r'^[A-Z]+\d+(_\d+)?$')
+    return bool(padrao.match(codigo_limpo))
+
+
 def processar_excel_relatorio(file_stream):
-    df = pd.read_excel(file_stream, sheet_name=0, header=None)
+    """Lê e processa o relatório em PDF enviado pelo sistema."""
+    if hasattr(file_stream, 'seek'):
+        file_stream.seek(0)
+
+    linhas_texto = []
+    with pdfplumber.open(file_stream) as pdf:
+        for page in pdf.pages:
+            texto_pagina = page.extract_text()
+            if texto_pagina:
+                for linha in texto_pagina.split("\n"):
+                    if linha.strip():
+                        linhas_texto.append(linha.strip())
 
     codigo_obra = "25-0021-06"
     nome_obra = "RESIDENCIA"
     cliente = ""
     endereco_cliente = ""
 
-    for idx, row in df.iloc[:15].iterrows():
-        row_str = " ".join([str(v) for v in row if pd.notna(v)])
-        match_cod = re.search(r"(\d{2}-\d{4}-\d{2})", row_str)
+    for linha in linhas_texto:
+        match_cod = re.search(r"(\d{2}-\d{4}-\d{2})", linha)
         if match_cod:
             codigo_obra = match_cod.group(1)
 
-        if "Obra:" in row_str:
-            parts = row_str.split("Obra:")
+        if "Obra:" in linha:
+            parts = linha.split("Obra:")
             if len(parts) > 1:
                 nome_obra = parts[1].strip()
 
-        if "Cliente:" in row_str:
-            parts = row_str.split("Cliente:")
+        if "Cliente:" in linha:
+            parts = linha.split("Cliente:")
             if len(parts) > 1:
                 cliente = parts[1].strip()
 
-        if "Endereço:" in row_str or "Endereco:" in row_str:
-            match_end = re.search(r"Endereç?o:\s*(.+)", row_str, re.IGNORECASE)
+        if "Endereço:" in linha or "Endereco:" in linha:
+            match_end = re.search(r"Endereç?o:\s*(.+)", linha, re.IGNORECASE)
             if match_end:
                 endereco_cliente = match_end.group(1).strip()
 
@@ -189,36 +210,38 @@ def processar_excel_relatorio(file_stream):
     peso_total_geral = Decimal("0.00")
     qtd_total_geral = 0
 
-    for idx, row in df.iterrows():
-        first_col = (
-            str(row.iloc[0]).strip().upper() if pd.notna(row.iloc[0]) else ""
-        )
-        row_full_str = " ".join([str(v) for v in row if pd.notna(v)]).upper()
-        if "TOTAIS:" in first_col or "TOTAIS" in row_full_str:
-            vals = [
-                v for v in row if pd.notna(v) and "TOTAIS" not in str(v).upper()
-            ]
-            if len(vals) >= 2:
+    for linha in linhas_texto:
+        linha_upper = linha.upper()
+        if "TOTAIS" in linha_upper or "TOTAL" in linha_upper:
+            vals = re.findall(r"[\d,\.]+", linha)
+            if len(vals) >= 1:
                 try:
                     nums = []
                     for v in vals:
-                        dec_v = converter_para_decimal(v)
-                        if dec_v > 0:
-                            nums.append(float(dec_v))
-                    if len(nums) >= 2:
+                        dec = converter_para_decimal(v)
+                        if dec > 0:
+                            nums.append(dec)
+                    
+                    if len(nums) >= 1:
                         qtd_total_geral = int(nums[0])
-                        m2_total_geral = Decimal(str(nums[1]))
-                        if len(nums) >= 3:
-                            peso_total_geral = Decimal(str(nums[2]))
+                    if len(nums) >= 2:
+                        m2_total_geral = nums[1]
+                    if len(nums) >= 3:
+                        peso_total_geral = nums[2]
+                    
+                    if qtd_total_geral > 0:
+                        break
                 except Exception:
                     pass
-            break
 
     obra_obj, _ = Obra.objects.update_or_create(
         codigo=codigo_obra,
         defaults={
             "nome": nome_obra,
             "cliente": cliente,
+            "total_pecas": qtd_total_geral,
+            "m2_total": m2_total_geral,
+            "peso_total": peso_total_geral,
             "distancia_km": calcular_distancia_automatica(
                 CEP_MATRIZ, endereco_cliente or cliente
             ),
@@ -228,99 +251,51 @@ def processar_excel_relatorio(file_stream):
     obra_obj.itens.all().delete()
     itens_processados = []
 
-    idx_tipo, idx_qtd, idx_area, idx_local, idx_peso = 0, 3, 8, 10, 13
-
-    for idx, row in df.iterrows():
-        headers = [str(cell).strip().lower() for cell in row.values]
-        if "tipo" in headers or ("quantidade" in headers and "área" in headers):
-            for i, h in enumerate(headers):
-                if h in ["tipo", "código", "codigo"]:
-                    idx_tipo = i
-                elif h in ["quantidade", "qtd"]:
-                    idx_qtd = i
-                elif "área" in h or "area" in h:
-                    idx_area = i
-                elif "localização" in h or "localizacao" in h:
-                    idx_local = i
-                elif "peso" in h and "unit" not in h:
-                    idx_peso = i
-            break
-
-    descricao_atual = "ESQUADRIAS DA OBRA"
-    for idx, row in df.iterrows():
-        for cell in row.values:
-            if pd.notna(cell):
-                cell_str = str(cell).strip()
-                if (
-                    not cell_str.replace(".", "").isdigit()
-                    and "FOLHA" in cell_str.upper()
-                ):
-                    descricao_atual = cell_str
-
-        col0_val = (
-            str(row.iloc[idx_tipo]).strip()
-            if len(row) > idx_tipo and pd.notna(row.iloc[idx_tipo])
-            else ""
-        )
-
-        if (
-            col0_val
-            and col0_val.upper()
-            not in [
-                "TIPO",
-                "OBRA:",
-                "TOTAIS:",
-                "CEM PRO - ALUMISOFT SISTEMAS",
-                "ITENS DA OBRA",
-            ]
-            and not col0_val.startswith("Atenção")
-            and not col0_val.startswith("Emitido")
-        ):
-            try:
-                raw_qtd = (
-                    row.iloc[idx_qtd]
-                    if len(row) > idx_qtd and pd.notna(row.iloc[idx_qtd])
-                    else 1
-                )
-                qtd = int(float(str(raw_qtd).replace(",", ".")))
-
-                m2 = (
-                    converter_para_decimal(row.iloc[idx_area])
-                    if len(row) > idx_area
-                    else Decimal("0.00")
-                )
-                peso = (
-                    converter_para_decimal(row.iloc[idx_peso])
-                    if len(row) > idx_peso
-                    else Decimal("0.00")
-                )
-
-                localizacao = (
-                    str(row.iloc[idx_local]).strip()
-                    if len(row) > idx_local and pd.notna(row.iloc[idx_local])
-                    else ""
-                )
-                if localizacao.lower() in ["nan", "none"]:
-                    localizacao = ""
-
-                desc_item = (
-                    f"{col0_val} - {localizacao}".strip(" -")
-                    if localizacao
-                    else f"{col0_val} - {descricao_atual}"
-                )
-
-                item_obj = ItemVidro.objects.create(
-                    obra=obra_obj,
-                    codigo_item=col0_val,
-                    descricao=desc_item,
-                    quantidade=qtd,
-                    m2_corte=m2,
-                    peso_kg=peso,
-                    custo_total=Decimal("0.00"),
-                )
-                itens_processados.append(item_obj)
-            except Exception:
+    capturando_itens = False
+    for linha in linhas_texto:
+        if "Tipo" in linha and "Quantidade" in linha and "Área" in linha:
+            capturando_itens = True
+            continue
+        
+        if capturando_itens:
+            if "TOTAIS" in linha.upper() or not linha:
+                if "TOTAIS" in linha.upper():
+                    capturando_itens = False
                 continue
+
+            partes = linha.split()
+            if len(partes) >= 3:
+                col0_val = partes[0]
+                
+                if not validar_codigo_esquadria(col0_val):
+                    continue
+
+                try:
+                    raw_qtd = partes[1] if len(partes) > 1 else "1"
+                    qtd = int(float(raw_qtd.replace(",", ".")))
+
+                    # CORREÇÃO DA MÊTRAGEM: Procura o valor plausível de área (ignora larguras altas em mm)
+                    m2 = Decimal("0.00")
+                    for parte in partes[2:]:
+                        val_dec = converter_para_decimal(parte)
+                        if Decimal("0.01") <= val_dec < 100.0:
+                            m2 = val_dec
+                            break
+
+                    peso = converter_para_decimal(partes[-1]) if len(partes) > 4 else Decimal("0.00")
+
+                    item_obj = ItemVidro.objects.create(
+                        obra=obra_obj,
+                        codigo_item=col0_val,
+                        descricao=f"{col0_val} - ESQUADRIA",
+                        quantidade=qtd,
+                        m2_corte=m2,
+                        peso_kg=peso,
+                        custo_total=Decimal("0.00"),
+                    )
+                    itens_processados.append(item_obj)
+                except Exception:
+                    continue
 
     if not itens_processados:
         item_resumo = ItemVidro.objects.create(

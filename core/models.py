@@ -7,6 +7,11 @@ class Obra(models.Model):
     tratamento_cor = models.CharField(max_length=100, blank=True, null=True)
     data_emissao = models.DateField(blank=True, null=True)
     
+    # Certifique-se de que estes três campos estão declarados aqui:
+    total_pecas = models.IntegerField(default=0)
+    m2_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    peso_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
     # Campos de Logística e Precificação
     distancia_km = models.FloatField(default=15.0)
     custo_frete = models.DecimalField(max_length=10, decimal_places=2, max_digits=12, default=0.0)
