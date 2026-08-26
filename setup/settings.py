@@ -6,11 +6,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # A chave do Render será lida da variável de ambiente se existir, senão usa a padrão
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-temporaria-para-desenvolvimento-local')
 
-# Em produção no Render, desativa o modo Debug automaticamente
-DEBUG = 'RENDER' not in os.environ
+# Forçado como True temporariamente para exibir a tela de erro detalhada do Django
+DEBUG = True
 
-# Permite o acesso pelo domínio do Render, além de localhost
-ALLOWED_HOSTS = ['.onrender.com', '127.0.0.1', 'localhost']
+# Permite acesso de qualquer host para testes
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
