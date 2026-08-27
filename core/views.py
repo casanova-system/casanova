@@ -4,6 +4,7 @@ import os
 import shutil
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User  # <-- Importação necessária para o admin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import ItemVidro, Obra
@@ -46,7 +47,6 @@ def upload_pdf(request):
         try:
             obra, itens = processar_excel_relatorio(excel_file)
             
-            # Salva temporariamente na sessão com distância e custos zerados na importação
             request.session['temp_obra'] = {
                 'codigo': obra.codigo,
                 'nome': obra.nome,
@@ -54,10 +54,10 @@ def upload_pdf(request):
                 'total_pecas': obra.total_pecas,
                 'm2_total': str(obra.m2_total),
                 'peso_total': str(obra.peso_total),
-                'distancia_km': 0.0,          # <-- Iniciando com 0 km
-                'custo_frete': '0.00',        # <-- Custo de frete zerado
-                'custo_operacao': '0.00',     # <-- Custo de operação zerado
-                'custo_total_deslocamento': '0.00', # <-- Deslocamento total zerado
+                'distancia_km': 0.0,
+                'custo_frete': '0.00',
+                'custo_operacao': '0.00',
+                'custo_total_deslocamento': '0.00',
             }
             request.session['temp_itens'] = [
                 {
@@ -78,16 +78,13 @@ def upload_pdf(request):
 
 @login_required(login_url='login')
 def detalhe_obra_temp(request):
-    """Exibe os dados extraídos do PDF em memória, permitindo recalcular via GET e salvar via POST."""
     temp_obra_data = request.session.get('temp_obra')
     temp_itens_data = request.session.get('temp_itens')
 
     if not temp_obra_data:
         return redirect("upload_pdf")
 
-    # Se o usuário clicou em Salvar (POST), grava definitivamente no banco
     if request.method == "POST" and request.POST.get("acao") == "salvar":
-        # Verificação preventiva de espaço em disco (Menor que 50 MB bloqueia a escrita)
         try:
             disco = shutil.disk_usage("C:\\" if os.name == "nt" else "/")
             espaco_livre_mb = disco.free / (1024 * 1024)
@@ -130,7 +127,6 @@ def detalhe_obra_temp(request):
             )
             item.save()
         
-        # Limpa os dados temporários da sessão
         if 'temp_obra' in request.session:
             del request.session['temp_obra']
         if 'temp_itens' in request.session:
@@ -139,7 +135,6 @@ def detalhe_obra_temp(request):
         messages.success(request, "Obra salva com sucesso!")
         return redirect("lista_obras")
 
-    # Tratamento do Recálculo Visual via GET (quando altera o KM e clica em Recalcular)
     dist_str = request.GET.get("distancia_km", str(temp_obra_data['distancia_km']))
     try:
         dist_km = float(dist_str.replace(",", "."))
@@ -148,7 +143,6 @@ def detalhe_obra_temp(request):
 
     res = calcular_precificacao_operacao(dist_km, float(temp_obra_data['m2_total']))
 
-    # Reconstrói o objeto obra temporário com os valores recalculados para exibição na tela
     obra = Obra(
         codigo=temp_obra_data['codigo'],
         nome=temp_obra_data['nome'],
@@ -193,7 +187,7 @@ def detalhe_obra_temp(request):
         "obra": obra,
         "itens": itens,
         "total_pecas": total_pecas,
-        "m2_corte_total": m2_cortal_total if 'm2_cortal_total' in locals() else m2_corte_total,
+        "m2_corte_total": m2_corte_total,
         "peso_total": peso_total,
         "custo_total_materiais": custo_total_materiais,
         "custo_geral_obra": custo_geral_obra,
@@ -208,7 +202,6 @@ def detalhe_obra_temp(request):
 
 @login_required(login_url='login')
 def detalhe_obra(request, pk):
-    """Visualização de obras já salvas no banco (Somente Leitura - Sem alterações permitidas)."""
     obra = get_object_or_404(Obra, pk=pk)
     itens = obra.itens.all()
 
@@ -249,7 +242,6 @@ def detalhe_obra(request, pk):
 
 @login_required(login_url='login')
 def editar_obra(request, pk):
-    """Permite editar uma obra existente, recalcular a distância via GET ou salvar definitivamente via POST."""
     obra = get_object_or_404(Obra, pk=pk)
     itens = obra.itens.all()
 
@@ -258,9 +250,7 @@ def editar_obra(request, pk):
     peso_total = sum(item.peso_kg for item in itens)
     custo_total_materiais = sum(item.custo_total for item in itens)
 
-    # Se o usuário clicou em Salvar (POST), grava definitivamente no banco
     if request.method == "POST" and request.POST.get("acao") == "salvar":
-        # Verificação preventiva de espaço em disco na edição
         try:
             disco = shutil.disk_usage("C:\\" if os.name == "nt" else "/")
             espaco_livre_mb = disco.free / (1024 * 1024)
@@ -287,7 +277,6 @@ def editar_obra(request, pk):
         messages.success(request, "Obra atualizada com sucesso!")
         return redirect("lista_obras")
 
-    # Tratamento do Recálculo Visual via GET (ao digitar o KM e clicar em Recalcular)
     dist_str = request.GET.get("distancia_km", str(obra.distancia_km))
     try:
         dist_km = float(dist_str.replace(",", "."))
@@ -296,7 +285,6 @@ def editar_obra(request, pk):
 
     res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
 
-    # Atualiza temporariamente os valores do objeto para exibição imediata na tela
     obra.distancia_km = dist_km
     obra.custo_frete = Decimal(str(res["custo_frete"]))
     obra.custo_operacao = Decimal(str(res["custo_operacao"]))
@@ -340,23 +328,21 @@ def excluir_obra(request, pk):
     return redirect("lista_obras")
 
 
-# ==========================================
-# NOVAS VIEWS ADICIONADAS PARA O MENU
-# ==========================================
-
 @login_required(login_url='login')
 def rotinas_view(request):
-    """Renderiza a página de Rotinas."""
     return render(request, "core/rotinas.html")
 
 
 @login_required(login_url='login')
 def graficos_view(request):
-    """Renderiza a página de Gráficos."""
     return render(request, "core/graficos.html")
 
 
 @login_required(login_url='login')
 def relatorios_view(request):
-    """Renderiza a página de Relatórios."""
     return render(request, "core/relatorios.html")
+
+
+# Criação automática de um admin padrão caso não exista nenhum
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('administrador', 'guilhermekauamt01@gmail.com', '@4C0f3r@')
