@@ -168,7 +168,7 @@ def validar_codigo_esquadria(codigo):
 
 
 def processar_excel_relatorio(file_stream):
-    """Lê e processa o relatório em PDF enviado pelo sistema."""
+    """Lê o relatório em PDF e prepara o objeto e os itens em memória sem salvar imediatamente."""
     if hasattr(file_stream, 'seek'):
         file_stream.seek(0)
 
@@ -206,6 +206,10 @@ def processar_excel_relatorio(file_stream):
             if match_end:
                 endereco_cliente = match_end.group(1).strip()
 
+    # BLOQUEIO DE DUPLICIDADE: Impede processar se a obra já estiver salva no banco
+    if Obra.objects.filter(codigo=codigo_obra).exists():
+        raise ValueError(f"A obra com o código {codigo_obra} já existe no sistema e não pode ser duplicada!")
+
     m2_total_geral = Decimal("0.00")
     peso_total_geral = Decimal("0.00")
     qtd_total_geral = 0
@@ -234,23 +238,20 @@ def processar_excel_relatorio(file_stream):
                 except Exception:
                     pass
 
-    obra_obj, _ = Obra.objects.update_or_create(
+    dist_calc = calcular_distancia_automatica(CEP_MATRIZ, endereco_cliente or cliente)
+
+    # Cria o objeto Obra apenas em memória (sem .save() ou update_or_create)
+    obra_obj = Obra(
         codigo=codigo_obra,
-        defaults={
-            "nome": nome_obra,
-            "cliente": cliente,
-            "total_pecas": qtd_total_geral,
-            "m2_total": m2_total_geral,
-            "peso_total": peso_total_geral,
-            "distancia_km": calcular_distancia_automatica(
-                CEP_MATRIZ, endereco_cliente or cliente
-            ),
-        },
+        nome=nome_obra,
+        cliente=cliente,
+        total_pecas=qtd_total_geral,
+        m2_total=m2_total_geral,
+        peso_total=peso_total_geral,
+        distancia_km=dist_calc,
     )
 
-    obra_obj.itens.all().delete()
     itens_processados = []
-
     capturando_itens = False
     for linha in linhas_texto:
         if "Tipo" in linha and "Quantidade" in linha and "Área" in linha:
@@ -293,7 +294,8 @@ def processar_excel_relatorio(file_stream):
                         except Exception:
                             peso = Decimal("0.00")
 
-                    item_obj = ItemVidro.objects.create(
+                    # Cria o item em memória vinculado à obra (sem .create() no banco)
+                    item_obj = ItemVidro(
                         obra=obra_obj,
                         codigo_item=col0_val,
                         descricao=f"{col0_val} - ESQUADRIA",
@@ -307,7 +309,7 @@ def processar_excel_relatorio(file_stream):
                     continue
 
     if not itens_processados:
-        item_resumo = ItemVidro.objects.create(
+        item_resumo = ItemVidro(
             obra=obra_obj,
             codigo_item="ITM-01",
             descricao="RESUMO GERAL DOS ITENS DA OBRA",
@@ -328,6 +330,7 @@ def processar_excel_relatorio(file_stream):
     obra_obj.custo_frete = res["custo_frete"]
     obra_obj.custo_operacao = res["custo_operacao"]
     obra_obj.custo_total_deslocamento = res["custo_total_deslocamento"]
-    obra_obj.save()
+    
+    # ATENÇÃO: Nenhum .save() é executado aqui! Tudo fica guardado na memória.
 
     return obra_obj, itens_processados

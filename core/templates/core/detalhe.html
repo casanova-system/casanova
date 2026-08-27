@@ -3,7 +3,6 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    /* Estilo e animação suave para o botão de recalcular */
     .btn-animado {
         transition: all 0.25s ease-in-out;
     }
@@ -15,7 +14,6 @@
         transform: translateY(1px);
     }
 
-    /* Correção específica para o botão de Novo Upload / Importar Relatório na página de detalhes */
     .btn-outline-secondary-custom {
         border-width: 1px;
         font-weight: 500;
@@ -41,7 +39,6 @@
         color: #ffffff !important;
     }
 
-    /* Correção global para inputs de arquivo/texto se adaptarem ao tema claro/escuro */
     nav input[type="file"], .navbar input[type="file"], input.form-control {
         background-color: var(--bs-body-bg) !important;
         color: var(--bs-body-color) !important;
@@ -50,27 +47,51 @@
 </style>
 
 <div class="container py-4">
+    <!-- Cabeçalho com Título e Botões -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1">Obra: {{ obra.nome }}</h2>
             <p class="text-muted mb-0">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
         </div>
-        <!-- Botão corrigido com a classe customizada para alternar perfeitamente entre os temas -->
-        <a href="{% url 'upload_pdf' %}" class="btn btn-outline-secondary-custom">← Novo Upload</a>
+        <div class="d-flex gap-2">
+            {% if is_temp or is_edit %}
+                <a href="{% url 'upload_pdf' %}" class="btn btn-outline-secondary-custom">
+                    <i class="fa-solid fa-plus me-1"></i> Novo Upload
+                </a>
+                <!-- Botão Salvar do topo agora aciona o Modal Customizado -->
+                <button type="button" class="btn btn-success d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalSalvarObra">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar
+                </button>
+            {% endif %}
+            
+            <!-- Botão Voltar aparece sempre -->
+            <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary-custom">
+                <i class="fa-solid fa-arrow-left me-1"></i> Voltar para Lista de Fretes
+            </a>
+        </div>
     </div>
 
-    <!-- Painel de Calculadora Logística (CEP / KM) -->
+    <!-- Formulário invisível dedicado exclusivamente a efetivar o SAVE no banco -->
+    {% if is_temp or is_edit %}
+    <form id="form-salvar" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="salvar">
+        <input type="hidden" name="distancia_km" id="input-distancia-hidden" value="{{ obra.distancia_km }}">
+    </form>
+    {% endif %}
+
+    <!-- Painel de Calculadora Logística (Apenas simula o cálculo visual via GET) -->
+    {% if is_temp or is_edit %}
     <div class="card shadow-sm border-0 mb-4 bg-light">
         <div class="card-body">
-            <form method="POST" class="row g-3 align-items-end">
-                {% csrf_token %}
+            <form id="form-recalcular" method="GET" class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label fw-bold">CEP Origem (Matriz):</label>
                     <input type="text" class="form-control" value="78088-800" disabled>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Distância até o Cliente (KM):</label>
-                    <input type="number" step="0.1" name="distancia_km" class="form-control" value="{{ obra.distancia_km }}">
+                    <input type="number" step="0.1" name="distancia_km" id="input-distancia" class="form-control" value="{{ obra.distancia_km }}" oninput="atualizarHiddenDistancia(this.value)">
                 </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn btn-primary w-100 btn-animado">Recalcular Frete/Operação</button>
@@ -78,6 +99,22 @@
             </form>
         </div>
     </div>
+    {% else %}
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted small d-block">CEP Origem (Matriz)</span>
+                    <strong>78088-800</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small d-block">Distância Registrada até o Cliente</span>
+                    <strong>{{ obra.distancia_km }} KM</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Indicadores Principais (Cards) -->
     <div class="row g-3 mb-4">
@@ -153,7 +190,7 @@
         </div>
     </div>
 
-    <!-- Card de Parâmetros de Cálculo Utilizados (Compatível com Dark/Light Mode) -->
+    <!-- Card de Parâmetros de Cálculo Utilizados -->
     <div class="card border-0 shadow-sm mb-4 bg-body-tertiary">
         <div class="card-body py-3 px-4">
             <h6 class="fw-bold mb-3 text-body">
@@ -219,4 +256,47 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Personalizado de Confirmação de Salvamento -->
+<div class="modal fade" id="modalSalvarObra" tabindex="-1" aria-labelledby="modalSalvarObraLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: #1a1d24; color: #fff; border: 1px solid #2d323b; border-radius: 8px;">
+      <div class="modal-header" style="border-bottom: 1px solid #2d323b;">
+        <h5 class="modal-title" id="modalSalvarObraLabel">
+          <i class="fa-solid fa-floppy-disk text-success me-2"></i> Confirmar Salvamento
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body py-4" style="color: #cbd5e1;">
+        Tem certeza de que deseja salvar as alterações desta obra? Esta ação atualizará os dados definitivos no sistema.
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid #2d323b;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: #2d323b; border: none;">Cancelar</button>
+        <button type="button" id="btnConfirmarSalvar" class="btn btn-success" style="background-color: #198754; border: none;">Sim, Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script de Sincronização de Distância e Confirmação via Modal -->
+<script>
+    function atualizarHiddenDistancia(valor) {
+        const inputHidden = document.getElementById('input-distancia-hidden');
+        if (inputHidden) {
+            inputHidden.value = valor;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnConfirmar = document.getElementById("btnConfirmarSalvar");
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener("click", function() {
+                const form = document.getElementById("form-salvar");
+                if (form) {
+                    form.submit();
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

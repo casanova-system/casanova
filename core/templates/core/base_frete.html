@@ -1,0 +1,23 @@
+<!-- Links do Menu Lateral -->
+<div class="nav flex-column">
+    <a href="{% url 'menu_principal' %}" class="nav-link {% if request.resolver_match.url_name == 'menu_principal' %}active{% endif %}">
+        <i class="fa-solid fa-house me-2"></i> Início
+    </a>
+    
+    <a href="{% url 'lista_obras' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}">
+        <i class="fa-solid fa-truck me-2"></i> Custo de Frete
+    </a>
+
+    <!-- Novos Tópicos Adicionados -->
+    <a href="{% url 'rotinas' %}" class="nav-link {% if request.resolver_match.url_name == 'rotinas' %}active{% endif %}">
+        <i class="fa-solid fa-gears me-2"></i> Rotinas
+    </a>
+
+    <a href="{% url 'graficos' %}" class="nav-link {% if request.resolver_match.url_name == 'graficos' %}active{% endif %}">
+        <i class="fa-solid fa-chart-pie me-2"></i> Gráficos
+    </a>
+
+    <a href="{% url 'relatorios' %}" class="nav-link {% if request.resolver_match.url_name == 'relatorios' %}active{% endif %}">
+        <i class="fa-solid fa-file-lines me-2"></i> Relatórios
+    </a>
+</div>
