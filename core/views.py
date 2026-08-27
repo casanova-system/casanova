@@ -344,5 +344,5 @@ def relatorios_view(request):
 
 
 # Criação automática de um admin padrão caso não exista nenhum
-if not User.objects.filter(username='admin').exists():
+if not User.objects.filter(username='administrador').exists():
     User.objects.create_superuser('administrador', 'guilhermekauamt01@gmail.com', '@4C0f3r@')
