@@ -4,8 +4,9 @@ import os
 import shutil
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User  # <-- Importação necessária para o admin
+from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db.models import Q  # <--- IMPORTAÇÃO NECESSÁRIA PARA A BUSCA
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import ItemVidro, Obra
 from .services import calcular_precificacao_operacao, processar_excel_relatorio
@@ -36,8 +37,45 @@ def menu_principal(request):
 
 @login_required(login_url='login')
 def lista_obras(request):
-    obras = Obra.objects.all().order_by("-id")
-    return render(request, "core/index.html", {"obras": obras})
+    # Captura o termo de busca digitado pelo usuário (parâmetro 'q')
+    query = request.GET.get('q', '')
+    
+    # Captura o parâmetro de ordenação enviado pelo template (padrão: '-id')
+    sort_by = request.GET.get('sort', '-id')
+    
+    # Mapeamento seguro de opções de ordenação permitidas
+    sort_options = {
+        'recentes': '-id',
+        'antigos': 'id',
+        'nome_asc': 'nome',
+        'nome_desc': '-nome',
+        'cliente_asc': 'cliente',
+        'cliente_desc': '-cliente',
+        'codigo_asc': 'codigo',
+        'codigo_desc': '-codigo',
+    }
+    
+    django_order = sort_options.get(sort_by, '-id')
+
+    # Consulta base
+    obras = Obra.objects.all()
+    
+    # Aplica o filtro de busca se houver termo digitado
+    if query:
+        obras = obras.filter(
+            Q(codigo__icontains=query) | 
+            Q(nome__icontains=query) | 
+            Q(cliente__icontains=query)
+        )
+        
+    # Aplica a ordenação selecionada (alfabética, código ou data)
+    obras = obras.order_by(django_order)
+        
+    return render(request, "core/index.html", {
+        "obras": obras, 
+        "query": query, 
+        "current_sort": sort_by
+    })
 
 
 @login_required(login_url='login')
@@ -341,3 +379,21 @@ def graficos_view(request):
 @login_required(login_url='login')
 def relatorios_view(request):
     return render(request, "core/relatorios.html")
+
+
+@login_required(login_url='login')
+def relatorio_fretes_mes(request):
+    """
+    View adicionada para atender a rota de relatório de fretes do mês,
+    exibindo a página correspondente sem quebrar a estrutura existente.
+    """
+    return render(request, "core/relatorio_fretes_mes.html")
+
+
+@login_required(login_url='login')
+def grafico_custo_frete(request):
+    """
+    View dedicada para exibir o gráfico de custo de frete,
+    seguindo o mesmo padrão estrutural das demais rotinas e relatórios.
+    """
+    return render(request, "core/grafico_custo_frete.html")

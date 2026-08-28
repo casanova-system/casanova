@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CASANOVA | Esquadrias Prime</title>
     
+    <!-- Script crítico para evitar o "piscar" de tema e menu ao trocar de página -->
+    <script>
+        (function() {
+            const temaSalvo = localStorage.getItem('casanova_theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', temaSalvo);
+            
+            const sidebarSalva = localStorage.getItem('casanova_sidebar_collapsed');
+            if (sidebarSalva === 'true') {
+                document.documentElement.classList.add('preload-collapsed');
+            }
+        })();
+    </script>
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{% static 'img/logo_semfundo.png' %}?v=2">
     <link rel="shortcut icon" type="image/png" href="{% static 'img/logo_semfundo.png' %}?v=2">
@@ -15,9 +28,23 @@
     <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* Evita o piscar da sidebar ao trocar de página */
+        html.preload-collapsed .sidebar-casanova {
+            width: 72px !important;
+        }
+        html.preload-collapsed .sidebar-casanova .hide-on-collapse,
+        html.preload-collapsed .sidebar-casanova .rotinas-toggle .fa-chevron-down,
+        html.preload-collapsed .sidebar-casanova .graficos-toggle .fa-chevron-down,
+        html.preload-collapsed .sidebar-casanova .relatorios-toggle .fa-chevron-down,
+        html.preload-collapsed .sidebar-casanova .user-profile-box .flex-grow-1,
+        html.preload-collapsed .sidebar-casanova .user-profile-box .fa-chevron-up,
+        html.preload-collapsed .sidebar-casanova .collapse {
+            display: none !important;
+        }
+
         :root {
             --casanova-blue: #0b3882;
             --casanova-dark-blue: #062254;
@@ -25,8 +52,8 @@
             --casanova-light-bg: #f4f6f9;
         }
 
-        body, .sidebar-casanova, .main-content-area, .card, .card-header, .table, th, td, .brand-title {
-            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+        body, .sidebar-casanova, .main-content-area, .card, .card-header, .table, th, td {
+            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
         }
 
         #icone-tema {
@@ -45,7 +72,8 @@
             color: #2c3e50;
         }
 
-        input[type="file"] {
+        /* INPUTS PADRÃO TEMA CLARO */
+        input[type="text"], input[type="search"], input[type="file"], .form-control {
             color: #212529 !important;
             background-color: #ffffff !important;
             border: 1px solid #ced4da !important;
@@ -53,17 +81,17 @@
 
         /* TEMA ESCURO */
         [data-bs-theme="dark"] body {
-            background-color: #0f141e !important;
-            color: #e2e8f0 !important;
+            background-color: #0d1117 !important;
+            color: #e6edf3 !important;
         }
 
         [data-bs-theme="dark"] .sidebar-casanova {
-            background-color: #171f2d !important;
-            border-color: #2d3748 !important;
+            background-color: #161b22 !important;
+            border-color: #30363d !important;
         }
 
         [data-bs-theme="dark"] .main-content-area {
-            background-color: #0f141e !important;
+            background-color: #0d1117 !important;
         }
 
         [data-bs-theme="dark"] .card,
@@ -72,47 +100,50 @@
         [data-bs-theme="dark"] .bg-light,
         [data-bs-theme="dark"] .card-header,
         [data-bs-theme="dark"] .modal-content {
-            background-color: #1e2638 !important;
-            color: #e2e8f0 !important;
-            border-color: #2d3748 !important;
+            background-color: #161b22 !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
         }
 
         [data-bs-theme="dark"] .dropdown-menu {
-            background-color: #1e2638 !important;
-            border-color: #2d3748 !important;
+            background-color: #161b22 !important;
+            border-color: #30363d !important;
         }
 
         [data-bs-theme="dark"] .dropdown-item {
-            color: #e2e8f0 !important;
+            color: #e6edf3 !important;
         }
 
         [data-bs-theme="dark"] .dropdown-item:hover {
-            background-color: #2d3748 !important;
+            background-color: #30363d !important;
             color: #ffffff !important;
         }
 
         [data-bs-theme="dark"] .dropdown-divider {
-            border-color: #2d3748 !important;
+            border-color: #30363d !important;
         }
 
-        [data-bs-theme="dark"] input[type="file"] {
-            color: #f8f9fa !important;
-            background-color: #141b27 !important;
-            border-color: #2d3748 !important;
+        [data-bs-theme="dark"] input[type="text"],
+        [data-bs-theme="dark"] input[type="search"],
+        [data-bs-theme="dark"] input[type="file"],
+        [data-bs-theme="dark"] .form-control {
+            color: #f0f6fc !important;
+            background-color: #0d1117 !important;
+            border-color: #30363d !important;
         }
 
         [data-bs-theme="dark"] .table,
         [data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
-            color: #e2e8f0 !important;
+            color: #e6edf3 !important;
             background-color: transparent !important;
-            border-color: #2d3748 !important;
+            border-color: #30363d !important;
         }
         
         [data-bs-theme="dark"] .table-light,
         [data-bs-theme="dark"] .table thead th {
-            background-color: #141b27 !important;
-            color: #94a3b8 !important;
-            border-color: #2d3748 !important;
+            background-color: #0d1117 !important;
+            color: #8b949e !important;
+            border-color: #30363d !important;
         }
 
         /* Layout de Sidebar e Conteúdo */
@@ -124,7 +155,7 @@
         }
 
         .sidebar-casanova {
-            width: 280px;
+            width: 270px;
             background-color: #ffffff;
             border-right: 1px solid #e2e8f0;
             display: flex;
@@ -132,6 +163,68 @@
             justify-content: space-between;
             flex-shrink: 0;
             z-index: 10;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ESTADO RECOLHIDO DA SIDEBAR (PRO) */
+        .sidebar-casanova.sidebar-collapsed {
+            width: 72px;
+        }
+        .sidebar-casanova.sidebar-collapsed .hide-on-collapse,
+        .sidebar-casanova.sidebar-collapsed .rotinas-toggle .fa-chevron-down,
+        .sidebar-casanova.sidebar-collapsed .graficos-toggle .fa-chevron-down,
+        .sidebar-casanova.sidebar-collapsed .relatorios-toggle .fa-chevron-down,
+        .sidebar-casanova.sidebar-collapsed .user-profile-box .flex-grow-1,
+        .sidebar-casanova.sidebar-collapsed .user-profile-box .fa-chevron-up,
+        .sidebar-casanova.sidebar-collapsed .collapse {
+            display: none !important;
+        }
+        
+        .sidebar-casanova.sidebar-collapsed .list-group-item,
+        .sidebar-casanova.sidebar-collapsed .rotinas-toggle,
+        .sidebar-casanova.sidebar-collapsed .graficos-toggle,
+        .sidebar-casanova.sidebar-collapsed .relatorios-toggle {
+            pointer-events: none !important;
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .sidebar-casanova.sidebar-collapsed .list-group-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .sidebar-casanova.sidebar-collapsed .list-group-item i {
+            margin-right: 0 !important;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-casanova.sidebar-collapsed .user-profile-box {
+            justify-content: center;
+            padding: 8px 0;
+            pointer-events: auto !important;
+        }
+        
+        /* Ajustes do Header da Sidebar ao recolher */
+        .sidebar-casanova.sidebar-collapsed .sidebar-header-box {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .sidebar-casanova.sidebar-collapsed .sidebar-brand-container {
+            display: none !important;
+        }
+        .sidebar-casanova.sidebar-collapsed #toggleSidebarBtn {
+            margin: 0 auto;
+        }
+
+        /* Estilo da Logo */
+        .sidebar-logo-img {
+            height: 30px;
+            width: auto;
+            object-fit: contain;
         }
 
         .main-content-area {
@@ -143,8 +236,12 @@
         }
 
         .sidebar-bottom-container {
-            padding: 20px;
+            padding: 12px 16px;
             background-color: inherit;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        [data-bs-theme="dark"] .sidebar-bottom-container {
+            border-top-color: #30363d;
         }
 
         .btn-casanova {
@@ -166,42 +263,70 @@
         .card-custom {
             border: none;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
             background: #ffffff;
         }
 
-        /* Animação e Estilo da Seta do Colapso */
-        .rotinas-toggle .fa-chevron-down {
+        /* ITENS INTERNOS DA SIDEBAR */
+        .sidebar-item-compacto {
+            background-color: transparent !important;
+            color: inherit !important;
+            border-radius: 6px !important;
+            padding: 6px 10px !important;
+            font-size: 0.81rem !important;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .sidebar-item-compacto:hover {
+            background-color: rgba(140, 146, 154, 0.1) !important;
+        }
+        .sidebar-item-compacto.active {
+            background-color: rgba(11, 56, 130, 0.12) !important;
+            color: var(--casanova-blue) !important;
+            font-weight: 600 !important;
+        }
+        [data-bs-theme="dark"] .sidebar-item-compacto.active {
+            background-color: rgba(59, 130, 246, 0.18) !important;
+            color: #58a6ff !important;
+        }
+
+        .rotinas-toggle .fa-chevron-down,
+        .graficos-toggle .fa-chevron-down,
+        .relatorios-toggle .fa-chevron-down {
             transition: transform 0.3s ease;
         }
-        .rotinas-toggle[aria-expanded="true"] .fa-chevron-down {
+        .rotinas-toggle[aria-expanded="true"] .fa-chevron-down,
+        .graficos-toggle[aria-expanded="true"] .fa-chevron-down,
+        .relatorios-toggle[aria-expanded="true"] .fa-chevron-down {
             transform: rotate(180deg);
         }
 
-        /* Barra de Rolagem Personalizada para a Seção de Rotinas */
-        .rotinas-collapse-body {
-            max-height: 220px;
+        .rotinas-collapse-body,
+        .graficos-collapse-body,
+        .relatorios-collapse-body {
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 4px;
         }
-        .rotinas-collapse-body::-webkit-scrollbar {
-            width: 4px;
+        .rotinas-collapse-body::-webkit-scrollbar,
+        .graficos-collapse-body::-webkit-scrollbar,
+        .relatorios-collapse-body::-webkit-scrollbar {
+            width: 3px;
         }
-        .rotinas-collapse-body::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .rotinas-collapse-body::-webkit-scrollbar-thumb {
+        .rotinas-collapse-body::-webkit-scrollbar-thumb,
+        .graficos-collapse-body::-webkit-scrollbar-thumb,
+        .relatorios-collapse-body::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
         }
-        [data-bs-theme="dark"] .rotinas-collapse-body::-webkit-scrollbar-thumb {
-            background: #475569;
+        [data-bs-theme="dark"] .rotinas-collapse-body::-webkit-scrollbar-thumb,
+        [data-bs-theme="dark"] .graficos-collapse-body::-webkit-scrollbar-thumb,
+        [data-bs-theme="dark"] .relatorios-collapse-body::-webkit-scrollbar-thumb {
+            background: #30363d;
         }
 
-        /* Avatar Redondo do Usuário */
         .user-avatar-container {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             overflow: hidden;
             border: 2px solid var(--casanova-blue);
@@ -220,8 +345,8 @@
         .user-profile-box {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px;
+            gap: 10px;
+            padding: 6px 8px;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s;
@@ -230,7 +355,7 @@
             background-color: rgba(0,0,0,0.03);
         }
         [data-bs-theme="dark"] .user-profile-box:hover {
-            background-color: rgba(255,255,255,0.05);
+            background-color: rgba(255,255,255,0.04);
         }
         .dropdown-toggle::after {
             display: none !important;
@@ -241,77 +366,119 @@
 
     <div class="app-container">
         <!-- Sidebar Esquerda -->
-        <aside class="sidebar-casanova">
-            <!-- Navegação Principal -->
-            <div class="flex-grow-1 overflow-y-auto p-3">
+        <aside class="sidebar-casanova" id="sidebarCasanova">
+            <!-- Header do Menu com Estilo Corporativo -->
+            <div class="sidebar-header-box px-3 py-3 border-bottom d-flex align-items-center justify-content-between">
+                <div class="sidebar-brand-container d-flex align-items-center gap-2 overflow-hidden">
+                    <img src="{% static 'img/logo.png' %}" alt="Casanova Esquadrias" class="sidebar-logo-img">
+                    <div class="d-flex flex-column text-truncate hide-on-collapse">
+                        <span class="fw-bold text-truncate" style="font-size: 0.8rem; letter-spacing: 0.3px;">Casanova Esquadrias</span>
+                        <span class="text-muted" style="font-size: 0.62rem;">Enterprise System v2.4</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-sm btn-outline-secondary border-0 text-secondary p-1" id="toggleSidebarBtn" title="Expandir/Recolher Menu">
+                    <i class="fa-solid fa-bars fs-6"></i>
+                </button>
+            </div>
+
+            <!-- Corpo de Navegação -->
+            <div class="flex-grow-1 overflow-y-auto px-3 py-3">
                 {% block sidebar_content %}
-                <div class="text-muted small fw-bold text-uppercase mb-3 px-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">Navegação</div>
-                <div class="list-group list-group-flush gap-1">
-                    <!-- Link Direto: Início -->
-                    <a href="{% url 'menu_principal' %}" class="list-group-item list-group-item-action rounded-2 border-0 py-2 px-3 d-flex align-items-center gap-2 text-decoration-none {% if request.resolver_match.url_name == 'menu_principal' %}active{% endif %}">
-                        <i class="fa-solid fa-house text-primary" style="width: 20px;"></i> <span class="fw-semibold small">Início</span>
+                <div class="list-group list-group-flush gap-1" id="listaNavegacao">
+                    <a href="{% url 'menu_principal' %}" class="list-group-item list-group-item-action rounded-2 border-0 py-2 px-3 d-flex align-items-center gap-2 text-decoration-none {% if request.resolver_match.url_name == 'menu_principal' %}active{% endif %}" title="Início">
+                        <i class="fa-solid fa-house text-primary" style="width: 20px;"></i> <span class="fw-semibold small hide-on-collapse">Início</span>
                     </a>
                     
-                    <!-- Grupo Expansível: Rotinas -->
                     <div class="mt-3">
-                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="true" aria-controls="collapseRotinas" style="font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer;">
-                            <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> Rotinas</span>
-                            <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.65rem;"></i>
+                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_obras' %}true{% else %}false{% endif %}" aria-controls="collapseRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
+                            <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Rotinas</span></span>
+                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
 
-                        <div class="collapse show mt-1" id="collapseRotinas">
-                            <div class="rotinas-collapse-body d-flex flex-column gap-1">
-                                <!-- Rotina: Custo de Frete -->
-                                <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action rounded-2 border-0 py-2 px-3 d-flex align-items-center gap-2 text-decoration-none {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}">
-                                    <i class="fa-solid fa-truck-fast text-primary" style="width: 20px;"></i> <span class="fw-semibold small">Custo de Frete</span>
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_obras' %}show{% endif %} mt-1" id="collapseRotinas" data-bs-parent="#listaNavegacao">
+                            <div class="px-2 mb-2 hide-on-collapse">
+                                <input type="text" id="buscaRotina" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarRotinas()" style="font-size: 0.75rem;">
+                            </div>
+                            <div class="rotinas-collapse-body d-flex flex-column gap-1" id="listaRotinas">
+                                <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
-                                <!-- Futuras rotinas adicionadas aqui entrarão automaticamente na rolagem se excederem o limite -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Grupos Estáticos: Gráficos e Relatórios -->
-                    <div class="text-muted small fw-bold text-uppercase mt-4 mb-2 px-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-chart-pie me-1" style="width: 16px;"></i> Gráficos
+                    <div class="mt-3">
+                        <a class="graficos-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseGraficos" role="button" aria-expanded="{% if 'grafico' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseGraficos" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Gráficos">
+                            <span><i class="fa-solid fa-chart-pie me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Gráficos</span></span>
+                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
+                        </a>
+
+                        <div class="collapse {% if 'grafico' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseGraficos" data-bs-parent="#listaNavegacao">
+                            <div class="px-2 mb-2 hide-on-collapse">
+                                <input type="text" id="buscaGrafico" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarGraficos()" style="font-size: 0.75rem;">
+                            </div>
+                            <div class="graficos-collapse-body d-flex flex-column gap-1" id="listaGraficos">
+                                <a href="{% url 'grafico_custo_frete' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none grafico-item sidebar-item-compacto {% if request.resolver_match.url_name == 'grafico_custo_frete' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="text-muted small fw-bold text-uppercase mt-4 mb-2 px-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-file-lines me-1" style="width: 16px;"></i> Relatórios
+                    <div class="mt-3">
+                        <a class="relatorios-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRelatorios" role="button" aria-expanded="{% if 'relatorio' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseRelatorios" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Relatórios">
+                            <span><i class="fa-solid fa-file-lines me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Relatórios</span></span>
+                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
+                        </a>
+
+                        <div class="collapse {% if 'relatorio' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseRelatorios" data-bs-parent="#listaNavegacao">
+                            <div class="relatorios-collapse-body d-flex flex-column gap-1" id="listaRelatorios">
+                                <a href="{% url 'relatorio_fretes_mes' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none relatorio-item sidebar-item-compacto {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Relatórios de Frete</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {% endblock %}
             </div>
 
-            <!-- Rodapé da Sidebar (Apenas Perfil do Usuário) -->
+            <!-- Footer da Sidebar (Copyright e Perfil do Usuário) -->
             <div class="sidebar-bottom-container">
+                <div class="hide-on-collapse text-muted mb-2 text-center" style="font-size: 0.62rem; line-height: 1.3;">
+                    <div>&copy; 2026 Casanova Esquadrias</div>
+                    <div style="opacity: 0.6;">Todos os direitos reservados</div>
+                </div>
+
                 <div class="dropdown">
                     <div class="user-profile-box dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Menu do Usuário">
-                        <div class="user-avatar-container" id="navAvatarContainer">
+                        <div class="user-avatar-container">
                             <i class="fa-solid fa-user text-secondary fs-6" id="navAvatarIcon"></i>
                             <img id="navAvatarImg" src="" alt="Perfil" class="user-avatar-img d-none">
                         </div>
-                        <div class="flex-grow-1 overflow-hidden">
-                            <div class="fw-bold text-truncate small" style="color: inherit;">{{ request.user.username|default:"Usuário" }}</div>
-                            <span class="text-muted" style="font-size: 0.7rem;">Configurações</span>
+                        <div class="flex-grow-1 overflow-hidden hide-on-collapse">
+                            <div class="fw-bold text-truncate small" style="color: inherit; font-size: 0.78rem;">{{ request.user.username|default:"Usuário" }}</div>
+                            <span class="text-muted d-flex align-items-center gap-1" style="font-size: 0.68rem;"><span style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%; display: inline-block;"></span> Online</span>
                         </div>
-                        <i class="fa-solid fa-chevron-up text-muted small"></i>
+                        <i class="fa-solid fa-chevron-up text-muted small hide-on-collapse" style="font-size: 0.7rem;"></i>
                     </div>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mb-2 rounded-3 w-100" aria-labelledby="userDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mb-2 rounded-3 w-100" aria-labelledby="userDropdown">
                         <li>
                             <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" data-bs-toggle="modal" data-bs-target="#modalFotoPerfil">
-                                <i class="fa-solid fa-camera" style="width: 16px;"></i> Alterar Foto de Perfil
+                                <i class="fa-solid fa-camera text-primary" style="width: 16px;"></i> Alterar Foto de Perfil
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item d-flex align-items-center gap-2 py-2" id="btn-tema" type="button">
-                                <i class="fa-solid fa-moon" id="icone-tema" style="width: 16px;"></i> Alternar Tema
+                                <i class="fa-solid fa-moon text-secondary" id="icone-tema" style="width: 16px;"></i> Alternar Tema
                             </button>
                         </li>
                         <li><hr class="dropdown-divider my-1"></li>
                         <li>
                             <a class="dropdown-item text-danger d-flex align-items-center gap-2 py-2" href="{% url 'logout' %}">
-                                <i class="fa-solid fa-right-from-bracket" style="width: 16px;"></i> Sair
+                                <i class="fa-solid fa-right-from-bracket" style="width: 16px;"></i> Sair do Sistema
                             </a>
                         </li>
                     </ul>
@@ -365,7 +532,6 @@
         const htmlElement = document.documentElement;
 
         const temaSalvo = localStorage.getItem('casanova_theme') || 'light';
-        htmlElement.setAttribute('data-bs-theme', temaSalvo);
         atualizarIcone(temaSalvo, false);
 
         btnTema.addEventListener('click', (e) => {
@@ -391,6 +557,54 @@
                 iconeTema.className = 'fa-solid fa-sun text-warning ' + (animar ? 'spin-icon' : '');
             } else {
                 iconeTema.className = 'fa-solid fa-moon text-secondary ' + (animar ? 'spin-icon' : '');
+            }
+        }
+
+        const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+        const sidebarCasanova = document.getElementById('sidebarCasanova');
+
+        const sidebarSalva = localStorage.getItem('casanova_sidebar_collapsed');
+        if (sidebarSalva === 'true') {
+            sidebarCasanova.classList.add('sidebar-collapsed');
+        }
+        
+        document.documentElement.classList.remove('preload-collapsed');
+
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebarCasanova.classList.toggle('sidebar-collapsed');
+            const estaFechado = sidebarCasanova.classList.contains('sidebar-collapsed');
+            localStorage.setItem('casanova_sidebar_collapsed', estaFechado);
+        });
+
+        function filtrarRotinas() {
+            let input = document.getElementById('buscaRotina').value.toLowerCase();
+            let itens = document.getElementsByClassName('rotina-item');
+
+            for (let i = 0; i < itens.length; i++) {
+                let id = itens[i].getAttribute('data-id') || "";
+                let nome = itens[i].getAttribute('data-nome') || "";
+                
+                if (id.includes(input) || nome.includes(input)) {
+                    itens[i].style.display = "";
+                } else {
+                    itens[i].style.display = "none";
+                }
+            }
+        }
+
+        function filtrarGraficos() {
+            let input = document.getElementById('buscaGrafico').value.toLowerCase();
+            let itens = document.getElementsByClassName('grafico-item');
+
+            for (let i = 0; i < itens.length; i++) {
+                let id = itens[i].getAttribute('data-id') || "";
+                let nome = itens[i].getAttribute('data-nome') || "";
+                
+                if (id.includes(input) || nome.includes(input)) {
+                    itens[i].style.display = "";
+                } else {
+                    itens[i].style.display = "none";
+                }
             }
         }
 

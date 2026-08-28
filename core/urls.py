@@ -20,11 +20,9 @@ urlpatterns = [
     
     # Nova rota para excluir o frete/obra:
     path('frete/excluir/<int:pk>/', views.excluir_obra, name='excluir_obra'),
-
-    # ==========================================
-    # NOVAS ROTAS ADICIONADAS PARA O MENU
-    # ==========================================
+    # Novos no Menu
     path('rotinas/', views.rotinas_view, name='rotinas'),
     path('graficos/', views.graficos_view, name='graficos'),
-    path('relatorios/', views.relatorios_view, name='relatorios'),
+    path('relatorios/fretes-mes/', views.relatorio_fretes_mes, name='relatorio_fretes_mes'),
+    path('graficos/custo-frete/', views.grafico_custo_frete, name='grafico_custo_frete'),    
 ]

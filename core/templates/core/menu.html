@@ -2,91 +2,56 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid py-2 overflow-hidden" style="max-height: calc(100vh - 40px);">
-    <!-- 1. Banner Principal Compacto -->
-    <div class="card card-custom border-0 shadow-sm mb-2">
-        <div class="position-relative p-3 text-white" style="background: linear-gradient(135deg, rgba(11, 56, 130, 0.95), rgba(6, 34, 84, 0.85)); border-radius: 10px;">
-            <div class="row align-items-center">
-                <div class="col-lg-9">
-                    <!-- Logo Aumentada -->
-                    <div class="mb-2">
-                        <img src="{% static 'img/logo_semfundo.png' %}" alt="Casanova Esquadrias Prime" style="height: 90px; filter: brightness(0) invert(1);">
+<div class="container-fluid py-3 px-3">
+    
+    <!-- Card Principal de Boas-Vindas no Topo -->
+    <div class="card border-0 shadow-lg position-relative overflow-hidden w-100" style="background: linear-gradient(135deg, #092c6b 0%, #031330 100%); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
+        
+        <div class="card-body p-4 p-xl-4 position-relative z-1 text-white">
+            <div class="row align-items-center justify-content-between">
+                
+                <!-- Informações e Título da Empresa -->
+                <div class="col-lg-8 mb-3 mb-lg-0">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="text-white-50" style="font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase;">
+                            <i class="fa-solid fa-house-chimney me-1 text-info"></i> Portal Oficial • Bem-vindo
+                        </span>
                     </div>
-                    <h1 class="fw-bold fs-5 mb-1">Qualidade, tecnologia e sofisticação</h1>
-                    <p class="text-white-50 mb-0" style="font-size: 0.8rem; line-height: 1.2;">
-                        Produzimos sistemas em alumínio que se adaptam ao seu projeto. Configurações que harmonizam em diversos estilos arquitetônicos, com o padrão de qualidade Casa Nova.
+                    
+                    <!-- Nome da Empresa em Destaque Absoluto -->
+                    <div class="my-1">
+                        <h1 class="fw-bold text-white mb-2" style="font-size: 2rem; letter-spacing: 1.5px; font-family: 'Inter', sans-serif; text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
+                            CASANOVA <span style="color: #60a5fa; font-weight: 300;">ESQUADRIAS</span>
+                        </h1>
+                    </div>
+
+                    <p class="text-white-50 mb-0" style="font-size: 0.85rem; line-height: 1.4; max-width: 750px;">
+                        Excelência em engenharia de alumínio e PVC. Sistemas arquitetônicos sob medida com padrão internacional de sofisticação e tecnologia para projetos de alto padrão.
                     </p>
                 </div>
-                <div class="col-lg-3 text-lg-end mt-2 mt-lg-0">
-                    <a href="https://www.cn.ind.br" target="_blank" class="btn btn-light text-primary fw-bold px-3 py-1 rounded-3 shadow-sm d-inline-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar
+
+                <!-- Botão de Acesso ao Portal -->
+                <div class="col-lg-4 text-lg-end">
+                    <a href="https://www.cn.ind.br" target="_blank" class="btn btn-light fw-bold px-4 py-2.5 rounded-pill shadow-lg d-inline-flex align-items-center gap-2 text-primary transition-all premium-btn" style="font-size: 0.85rem; background: #ffffff;">
+                        <span style="letter-spacing: 0.8px;">ACESSAR PORTAL</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-primary" style="font-size: 0.75rem;"></i>
                     </a>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Grid de Informações Reduzidas (Para não gerar rolagem) -->
-    <div class="row g-2">
-        <!-- 2. A Casa Nova -->
-        <div class="col-lg-6">
-            <div class="card card-custom border-0 shadow-sm p-3 h-100">
-                <h6 class="fw-bold text-primary mb-2" style="font-size: 0.85rem;">A CASA NOVA</h6>
-                <p class="text-muted mb-1" style="font-size: 0.75rem; line-height: 1.2;">
-                    A <strong>CASA NOVA Fachadas e Esquadrias</strong> é referência com qualidade <strong>PREMIUM</strong> em esquadrias de Alumínio e PVC. No mercado há mais de 30 anos e há 10 anos em Cuiabá (MT).
-                </p>
-                <p class="text-muted mb-0" style="font-size: 0.75rem; line-height: 1.2;">
-                    Projetos exclusivos sob medida: peles de vidro, guarda corpos, big portas, janelas, brises e envidraçamentos para obras de médio e alto padrão na região centro-oeste.
-                </p>
-            </div>
-        </div>
-
-        <!-- 3. Vantagens -->
-        <div class="col-lg-6">
-            <div class="card card-custom border-0 shadow-sm p-3 h-100">
-                <h6 class="fw-bold text-primary mb-2 text-center" style="font-size: 0.85rem;">VANTAGENS DAS ESQUADRIAS</h6>
-                <div class="row g-2 text-center">
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-secondary bg-opacity-10">
-                            <i class="fa-solid fa-snowflake text-primary mb-1" style="font-size: 1rem;"></i>
-                            <span class="d-block fw-bold text-muted" style="font-size: 0.7rem;">ISOLAMENTO TÉRMICO</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-secondary bg-opacity-10">
-                            <i class="fa-solid fa-volume-xmark text-primary mb-1" style="font-size: 1rem;"></i>
-                            <span class="d-block fw-bold text-muted" style="font-size: 0.7rem;">ISOLAMENTO ACÚSTICO</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-secondary bg-opacity-10">
-                            <i class="fa-solid fa-rotate text-primary mb-1" style="font-size: 1rem;"></i>
-                            <span class="d-block fw-bold text-muted" style="font-size: 0.7rem;">DURABILIDADE</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-2 rounded bg-secondary bg-opacity-10">
-                            <i class="fa-solid fa-leaf text-primary mb-1" style="font-size: 1rem;"></i>
-                            <span class="d-block fw-bold text-muted" style="font-size: 0.7rem;">SUSTENTABILIDADE</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Produtos Principais -->
-        <div class="col-12">
-            <div class="card card-custom border-0 shadow-sm p-2 text-center">
-                <div class="row g-1">
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">BIG PORTAS</span></div>
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">BRISES</span></div>
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">ALUMÍNIO / PVC</span></div>
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">PELE DE VIDRO</span></div>
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">GUARDA CORPOS</span></div>
-                    <div class="col-4"><span class="badge bg-secondary bg-opacity-10 text-primary w-100 py-1" style="font-size: 0.7rem;">PROJETOS SOB MEDIDA</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+
+<style>
+    .premium-btn {
+        transition: all 0.3s ease;
+    }
+    .premium-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.25) !important;
+        background-color: #f8fafc !important;
+    }
+</style>
 {% endblock %}

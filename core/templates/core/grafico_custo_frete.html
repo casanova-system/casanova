@@ -1,0 +1,32 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--casanova-blue);">Gráfico: Custo de Frete</h2>
+            <p class="text-muted small mb-0">Visualização gráfica dos custos de frete mensais.</p>
+        </div>
+        <div>
+            <span class="badge bg-primary px-3 py-2">[001] Gráficos</span>
+        </div>
+    </div>
+
+    <!-- Card Principal do Gráfico -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-custom p-4">
+                <h5 class="fw-semibold mb-3">Evolução dos Fretes</h5>
+                <hr class="text-muted opacity-25">
+                
+                <!-- Área onde o gráfico será renderizado (ex: Chart.js) -->
+                <div style="height: 350px; position: relative;" class="d-flex align-items-center justify-content-center bg-light rounded-3">
+                    <p class="text-muted">Espaço reservado para o Gráfico de Custo de Frete</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
