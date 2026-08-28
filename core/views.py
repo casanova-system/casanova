@@ -341,8 +341,3 @@ def graficos_view(request):
 @login_required(login_url='login')
 def relatorios_view(request):
     return render(request, "core/relatorios.html")
-
-
-# Criação automática de um admin padrão caso não exista nenhum
-if not User.objects.filter(username='administrador').exists():
-    User.objects.create_superuser('administrador', 'guilhermekauamt01@gmail.com', '@4C0f3r@')
