@@ -4,154 +4,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CASANOVA</title>
+    <title>Enterprise Login - CASANOVA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @keyframes fadeIn {
+        @keyframes fadeInScale {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: scale(0.96) translateY(15px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: scale(1) translateY(0);
             }
         }
 
+        :root {
+            --bg-base: #090d16;
+            --card-bg: #111827;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+        }
+
         body {
-            background-color: #0d1117;
-            background-image: radial-gradient(circle at 10% 20%, rgba(35, 134, 54, 0.08) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(88, 166, 255, 0.08) 0%, transparent 40%);
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(13, 110, 253, 0.07) 0%, transparent 45%),
+                linear-gradient(to bottom, #090d16, #030712);
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             overflow: hidden;
         }
 
         .login-container {
             display: flex;
-            width: 950px;
-            max-width: 95%;
-            height: 540px;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 18px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            width: 980px;
+            max-width: 94%;
+            height: 560px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.05);
             overflow: hidden;
-            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: fadeInScale 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Lado esquerdo (Inteiro Branco) */
+        /* Lado esquerdo - Identidade Visual Vetorial */
         .login-left {
             flex: 1.1;
-            background: #ffffff;
-            color: #24292e;
+            background: linear-gradient(145deg, #0f172a 0%, #090d16 100%);
+            color: #ffffff;
             padding: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            border-right: 1px solid #d1d5db;
+            border-right: 1px solid var(--border-color);
+            position: relative;
         }
 
-        .system-logo {
-            width: 280px;
-            height: auto;
+        .login-left::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+        }
+
+        .brand-logo-wrapper {
             margin-bottom: 20px;
-            display: block;
+            filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.3));
+        }
+
+        .brand-title {
+            font-weight: 800;
+            color: #ffffff;
+            font-size: 32px;
+            letter-spacing: 4px;
+            margin-bottom: 2px;
+        }
+
+        .brand-subtitle {
+            font-weight: 500;
+            color: #93c5fd;
+            font-size: 11px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
         }
 
         .login-left p {
-            font-size: 14px;
-            color: #57606a;
+            font-size: 13px;
+            color: #94a3b8;
             margin-bottom: 0;
             letter-spacing: 0.3px;
-            font-weight: 500;
+            font-weight: 400;
+            line-height: 1.5;
+            max-width: 320px;
         }
 
-        /* Lado direito (Formulário) */
+        /* Lado direito - Formulário Executivo */
         .login-right {
             flex: 1;
             padding: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            background: #161b22;
-            color: #c9d1d9;
+            background: #111827;
+            color: #f3f4f6;
         }
 
-        .login-right h3 {
-            font-weight: 700;
-            color: #ffffff;
-            font-size: 24px;
+        /* Cabeçalho do formulário mais elaborado */
+        .login-header {
             margin-bottom: 25px;
         }
 
-        .form-label {
+        .login-header h3 {
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-header .form-sub-tag {
+            font-weight: 500;
+            color: var(--accent-blue);
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #94a3b8;
             font-size: 13px;
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            font-size: 12px;
             font-weight: 600;
-            color: #8b949e;
-            letter-spacing: 0.3px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
 
         .form-control {
-            background-color: #0d1117;
-            border: 1px solid #30363d;
+            background-color: #0b0f19;
+            border: 1px solid #1f293d;
             color: #ffffff;
             padding: 12px 15px;
-            border-radius: 0 10px 10px 0;
             font-size: 14px;
-            transition: all 0.3s ease;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.25s ease;
+        }
+
+        .form-control::placeholder {
+            color: #4b5563;
         }
 
         .form-control:focus {
-            background-color: #0d1117;
-            border-color: #58a6ff;
+            background-color: #0b0f19;
+            border-color: var(--accent-blue);
             color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
         .input-group-text {
-            background-color: #21262d;
-            border: 1px solid #30363d;
-            color: #8b949e;
+            background-color: #161f33;
+            border: 1px solid #1f293d;
+            color: #94a3b8;
             border-radius: 10px 0 0 10px;
-            padding: 0 15px;
+            padding: 0 16px;
         }
 
         .btn-custom {
-            background-color: #238636;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             border: none;
             color: white;
             font-weight: 600;
-            padding: 12px;
+            padding: 13px;
             border-radius: 10px;
+            font-size: 14px;
             transition: all 0.3s ease;
-            margin-top: 15px;
-            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+            letter-spacing: 0.3px;
         }
 
         .btn-custom:hover {
-            background-color: #2ea043;
+            background: linear-gradient(135deg, #1d4ed8 100%, #1e40af 100%);
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(35, 134, 54, 0.4);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
             color: white;
+        }
+
+        .alert-custom {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            font-size: 13px;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
             .login-container {
                 flex-direction: column;
                 height: auto;
+                max-width: 90%;
             }
             .login-left {
                 padding: 30px;
                 border-right: none;
-                border-bottom: 1px solid #30363d;
+                border-bottom: 1px solid var(--border-color);
             }
             .login-right {
                 padding: 30px;
@@ -162,19 +244,31 @@
 <body>
 
     <div class="login-container">
-        <!-- Lado Esquerdo: Bloco inteiro branco com a logo e texto escuro -->
+        <!-- Lado Esquerdo: Logo Vetorial -->
         <div class="login-left">
-            <img src="{% static 'img/logologin.png' %}" alt="Casanova Logo" class="system-logo">
-            <p>Faça login para gerenciar suas operações.</p>
+            <div class="brand-logo-wrapper">
+                <svg width="85" height="55" viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 70L75 15C77 11 83 11 85 15L110 70H50Z" fill="#1e3a8a" stroke="#1e3a8a" stroke-width="8" stroke-linejoin="round"/>
+                    <path d="M30 70L55 15C57 11 63 11 65 15L90 70H30Z" fill="#94a3b8" stroke="#94a3b8" stroke-width="8" stroke-linejoin="round"/>
+                    <path d="M10 70L35 15C37 11 43 11 45 15L70 70H10Z" fill="#2563eb" stroke="#2563eb" stroke-width="8" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="brand-title">CASANOVA</h1>
+            <span class="brand-subtitle">ESQUADRIAS PRIME</span>
+            <p>Plataforma de gestão avançada para operações e controle de fretes.</p>
         </div>
 
-        <!-- Lado Direito: Formulário de Acesso -->
+        <!-- Lado Direito: Formulário com Título Elaborado -->
         <div class="login-right">
-            <h3>Área Restrita</h3>
+            <div class="login-header">
+                <span class="form-sub-tag">Painel de Acesso</span>
+                <h3>Casanova Esquadrias</h3>
+                <p>Insira suas credenciais corporativas para continuar</p>
+            </div>
 
             {% if erro %}
-                <div class="alert alert-danger bg-opacity-25 border-danger text-danger py-2 small text-center rounded-3 mb-3" role="alert">
-                    {{ erro }}
+                <div class="alert alert-custom" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ erro }}
                 </div>
             {% endif %}
 
@@ -183,20 +277,22 @@
                 <div class="mb-3">
                     <label class="form-label">Usuário</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" name="username" class="form-control" placeholder="Digite seu usuário" required autofocus>
+                        <span class="input-group-text"><i class="fa-solid fa-user-shield"></i></span>
+                        <input type="text" name="username" class="form-control" placeholder="Seu nome de usuário" required autofocus>
                     </div>
                 </div>
                 
                 <div class="mb-4">
                     <label class="form-label">Senha</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" name="password" class="form-control" placeholder="Digite sua senha" required>
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="••••••••••••" required>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-custom w-100">Entrar no Sistema</button>
+                <button type="submit" class="btn btn-custom w-100">
+                    <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Acessar Sistema
+                </button>
             </form>
         </div>
     </div>
