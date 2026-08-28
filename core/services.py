@@ -56,17 +56,17 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
     """Calcula custos de frete e operação com base nas regras de negócio."""
     m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
 
-    CONSUMO_DIESEL = 6.5
+    CONSUMO_DIESEL = 8.0
     CONSUMO_GASOLINA = 11.0
-    PRECO_DIESEL = 7.55
-    PRECO_GASOLINA = 5.10
+    PRECO_DIESEL = 7.55 #
+    PRECO_GASOLINA = 7.99#
 
-    TARIFA_PEDAGIO_CARRO = 5.80
-    TARIFA_PEDAGIO_CAMINHAO = 9.60
+    TARIFA_PEDAGIO_CARRO = 12.00
+    TARIFA_PEDAGIO_CAMINHAO = 65.00
 
-    CUSTO_DIARIA_HOTEL = 130.00
-    CUSTO_ALIMENTACAO = 55.00
-    CUSTO_AUX_DESLOCAMENTO = 35.00
+    CUSTO_DIARIA_HOTEL = 453.00#
+    CUSTO_ALIMENTACAO = 50.00
+    CUSTO_AUX_DESLOCAMENTO = 50.00
 
     visitas_supervisao = math.ceil(m2_real / 300.0) * 3
     deslocamentos_instalacao = math.ceil(m2_real / 300.0)

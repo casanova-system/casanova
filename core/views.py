@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 import math
 import os
 import shutil
@@ -334,11 +335,11 @@ def editar_obra(request, pk):
     dias_trabalho = math.ceil(m2_real / 15.0)
 
     parametros_calculo = {
-        "media_hospedagem": 120.00,
-        "media_gasolina": 5.89,
-        "media_diesel": 6.19,
+        "media_hospedagem": 453.00,
+        "media_gasolina": 7.99,
+        "media_diesel": 7.55,
         "media_alimentacao": 50.00,
-        "media_locomocao": 30.00,
+        "media_locomocao": 50.00,
     }
 
     context = {
@@ -376,7 +377,7 @@ def graficos_view(request):
     return render(request, "core/graficos.html")
 
 
-@login_required(login_url='login')
+@login_required(login_url='relatorio_fretes_mes')
 def relatorios_view(request):
     return render(request, "core/relatorios.html")
 
@@ -393,7 +394,20 @@ def relatorio_fretes_mes(request):
 @login_required(login_url='login')
 def grafico_custo_frete(request):
     """
-    View dedicada para exibir o gráfico de custo de frete,
-    seguindo o mesmo padrão estrutural das demais rotinas e relatórios.
+    View que serializa as obras em formato JSON limpo para consumo direto do Chart.js.
     """
-    return render(request, "core/grafico_custo_frete.html")
+    obras_qs = Obra.objects.all().order_by('-id')
+    
+    # A estrutura correta da list comprehension coloca o 'for obra in obras_qs' no final
+    obras_lista = [
+        {
+            "nome": obra.nome,
+            "custo_total_deslocamento": float(obra.custo_total_deslocamento)
+        }
+        for obra in obras_qs
+    ]
+    
+    context = {
+        "obras_json": json.dumps(obras_lista),
+    }
+    return render(request, "core/grafico_custo_frete.html", context)
