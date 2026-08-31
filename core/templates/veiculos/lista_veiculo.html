@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+    <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-white mb-1" style="font-size: 1.5rem;">Cadastro de Veículos</h2>
+            <p class="text-muted small mb-0">Gerencie a frota de veículos, placas, chassi e especificações.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Botão de Incluir Novo Veículo -->
+            <a href="{% url 'cadastrar_veiculo' %}" class="btn btn-primary d-flex align-items-center gap-2 px-3" style="font-size: 0.85rem; font-weight: 500;">
+                <i class="fa-solid fa-plus"></i> Novo Veículo
+            </a>
+            <!-- Botão Voltar ao Início -->
+            <a href="{% url 'menu_principal' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 text-white border-secondary" style="font-size: 0.85rem;">
+                <i class="fa-solid fa-arrow-left"></i> Voltar ao Início
+            </a>
+        </div>
+    </div>
+
+    <!-- Caixa da Tabela / Card Principal -->
+    <div class="card bg-dark border-secondary shadow-sm rounded-3">
+        
+        <!-- Header da Tabela com Barra de Pesquisa -->
+        <div class="card-header bg-dark border-bottom border-secondary py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2 text-white fw-bold" style="font-size: 0.9rem;">
+                <i class="fa-solid fa-list text-primary"></i> Veículos Cadastrados
+            </div>
+            
+            <!-- Barra de Busca -->
+            <form method="GET" class="d-flex gap-2" style="max-width: 350px; width: 100%;">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control bg-dark text-white border-secondary" placeholder="Buscar por placa, modelo...">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-secondary text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="py-3 ps-3">Placa</th>
+                            <th class="py-3">Chassi</th>
+                            <th class="py-3">Marca / Modelo</th>
+                            <th class="py-3">Ano Fab.</th>
+                            <th class="py-3">Cor</th>
+                            <th class="py-3">Combustível</th>
+                            <th class="py-3">Usuário</th>
+                            <th class="py-3 text-end pe-3" style="width: 150px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for veiculo in veiculos %}
+                        <tr>
+                            <!-- Placa (Destaque em Branco/Negrito igual ao Código na tela de fretes) -->
+                            <td class="ps-3 fw-bold text-white">{{ veiculo.placa }}</td>
+                            
+                            <!-- Chassi (Tom acinzentado igual ao nome da obra/detalhes) -->
+                            <td class="text-muted font-monospace" style="font-size: 0.78rem;">{{ veiculo.chassi|default:"-" }}</td>
+                            
+                            <!-- Marca / Modelo (Branco padrão legível) -->
+                            <td class="text-white">{{ veiculo.marca_modelo }}</td>
+                            
+                            <!-- Ano Fabricação -->
+                            <td>
+                                <span class="text-muted">{{ veiculo.ano_fabricacao }}</span>
+                            </td>
+                            
+                            <!-- Cor -->
+                            <td><span class="text-muted">{{ veiculo.cor|default:"-" }}</span></td>
+                            
+                            <!-- Tipo Combustível -->
+                            <td>
+                                <span class="text-muted">{{ veiculo.tipo_combustivel|default:"-" }}</span>
+                            </td>
+
+                            <!-- Usuário Responsável (Igualzinho ao badge de usuário da tela de fretes) -->
+                            <td>
+                                {% if veiculo.usuario_responsavel %}
+                                    <span class="badge bg-primary text-white" style="font-size: 0.75rem; font-weight: normal;">
+                                        <i class="fa-solid fa-user me-1" style="font-size: 0.65rem;"></i> {{ veiculo.usuario_responsavel.username }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Botões de Ação (Visualizar, Alterar, Excluir com as mesmas cores de ícones) -->
+                            <td class="text-end pe-3">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <!-- Visualizar -->
+                                    <a href="{% url 'detalhe_veiculo' veiculo.id %}" class="btn btn-sm btn-primary px-2 py-1" title="Visualizar">
+                                        <i class="fa-solid fa-eye" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                    <!-- Alterar -->
+                                    <a href="{% url 'editar_veiculo' veiculo.id %}" class="btn btn-sm btn-warning px-2 py-1 text-dark" title="Alterar">
+                                        <i class="fa-solid fa-pen-to-square" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                    <!-- Excluir -->
+                                    <a href="{% url 'excluir_veiculo' veiculo.id %}" class="btn btn-sm btn-danger px-2 py-1" title="Excluir">
+                                        <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                Nenhum veículo cadastrado até o momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

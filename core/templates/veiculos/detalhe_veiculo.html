@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Detalhes do Veículo</h2>
+        <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary btn-sm">Voltar para Lista</a>
+    </div>
+
+    <div class="card bg-dark text-white border-secondary shadow">
+        <div class="card-body">
+            <h4 class="card-title text-info mb-3">{{ veiculo.marca_modelo }}</h4>
+            <hr class="border-secondary">
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <strong>Placa:</strong> 
+                    <span class="text-uppercase fw-bold">{{ veiculo.placa }}</span>
+                </div>
+                
+                <div class="col-md-6">
+                    <strong>Chassi:</strong> 
+                    <span class="text-muted">{{ veiculo.chassi|default:"Não informado" }}</span>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Ano de Fabricação:</strong> 
+                    <span>{{ veiculo.ano_fabricacao }}</span>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Cor:</strong> 
+                    <span>{{ veiculo.cor|default:"Não informada" }}</span>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Tipo de Combustível:</strong> 
+                    <span>{{ veiculo.tipo_combustivel|default:"Não informado" }}</span>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Status:</strong> 
+                    {% if veiculo.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inativo</span>
+                    {% endif %}
+                </div>
+
+                <div class="col-12">
+                    <strong>Especificação Técnica:</strong>
+                    <p class="p-3 bg-secondary bg-opacity-10 border border-secondary rounded mt-1 mb-0">
+                        {{ veiculo.especificacao_tecnica|default:"Nenhuma especificação técnica registrada." }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-dark border-secondary text-muted small">
+            Cadastrado em: {{ veiculo.data_cadastro|date:"d/m/Y H:i" }} 
+            {% if veiculo.usuario_responsavel %} por {{ veiculo.usuario_responsavel.username }}{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

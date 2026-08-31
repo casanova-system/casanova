@@ -1,6 +1,13 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
 from core.views import usuario as views_usuario
+from core.views.veiculo import (
+    lista_veiculos,
+    cadastrar_veiculo,
+    detalhe_veiculo,
+    editar_veiculo,
+    excluir_veiculo,
+)
 from core.views.views import (
     menu_principal,
     login_view,
@@ -13,10 +20,10 @@ from core.views.views import (
     excluir_obra,
     rotinas_view,
     graficos_view,
-    relatorios_view,          # <--- Certifique-se de importar esta view
+    relatorios_view,
     relatorio_fretes_mes,
     grafico_custo_frete,
-    atualizar_foto_perfil     # <--- Importação da nova view de foto de perfil
+    atualizar_foto_perfil,
 )
 
 urlpatterns = [
@@ -28,7 +35,7 @@ urlpatterns = [
     # MENU
     path('rotinas/', rotinas_view, name='rotinas'),
     path('graficos/', graficos_view, name='graficos'),
-    path('relatorios/', relatorios_view, name='relatorios'),                     # <--- ADICIONE ESTA LINHA
+    path('relatorios/', relatorios_view, name='relatorios'),                     
     path('relatorios/fretes-mes/', relatorio_fretes_mes, name='relatorio_fretes_mes'),    
 
     # ROTINA DE CUSTO DE FRETE
@@ -52,4 +59,12 @@ urlpatterns = [
 
     # PERFIL / FOTO
     path('perfil/atualizar-foto/', atualizar_foto_perfil, name='atualizar_foto_perfil'),
+
+    # ROTINA DE VEÍCULOS
+  # ROTINAS DE VEÍCULOS
+    path('veiculos/', lista_veiculos, name='lista_veiculos'),
+    path('veiculos/cadastrar/', cadastrar_veiculo, name='cadastrar_veiculo'),
+    path('veiculos/<int:pk>/', detalhe_veiculo, name='detalhe_veiculo'),
+    path('veiculos/<int:pk>/editar/', editar_veiculo, name='editar_veiculo'),
+    path('veiculos/<int:pk>/excluir/', excluir_veiculo, name='excluir_veiculo'),
 ]

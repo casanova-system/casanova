@@ -373,7 +373,7 @@
                     <img src="{% static 'img/logo.png' %}" alt="Casanova Esquadrias" class="sidebar-logo-img">
                     <div class="d-flex flex-column text-truncate hide-on-collapse">
                         <span class="fw-bold text-truncate" style="font-size: 0.8rem; letter-spacing: 0.3px;">Casanova Esquadrias</span>
-                        <span class="text-muted" style="font-size: 0.62rem;">Enterprise System v2.4</span>
+                        <span class="text-muted" style="font-size: 0.62rem;">Enterprise System Beta.0.0</span>
                     </div>
                 </div>
 
@@ -391,12 +391,14 @@
                     </a>
                     
                     <div class="mt-3">
-                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
+                        <!-- CORRIGIDO: Adicionado '/veiculos/' na condição do aria-expanded -->
+                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or '/veiculos/' in request.path %}true{% else %}false{% endif %}" aria-controls="collapseRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
                             <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Rotinas</span></span>
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseRotinas" data-bs-parent="#listaNavegacao">
+                        <!-- CORRIGIDO: Adicionado '/veiculos/' na condição da classe show -->
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or '/veiculos/' in request.path %}show{% endif %} mt-1" id="collapseRotinas" data-bs-parent="#listaNavegacao">
                             <div class="px-2 mb-2 hide-on-collapse">
                                 <input type="text" id="buscaRotina" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarRotinas()" style="font-size: 0.75rem;">
                             </div>
@@ -409,8 +411,13 @@
                                 {% if request.user.is_superuser or request.user.perfilusuario.nivel_acesso == 'ADMINISTRACAO' %}
                                 <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
-                                </a>
+                                </a>                    
                                 {% endif %}
+
+                                <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastrar Veículo</span>
+                                </a>      
+
                             </div>
                         </div>
                     </div>
@@ -639,41 +646,55 @@
 
         let novaFotoBase64 = null;
 
-        inputArquivoFoto.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    novaFotoBase64 = e.target.result;
-                    modalPreviewImg.src = novaFotoBase64;
-                    modalPreviewImg.classList.remove('d-none');
-                    modalPreviewIcon.classList.add('d-none');
+        if (inputArquivoFoto) {
+            inputArquivoFoto.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        novaFotoBase64 = e.target.result;
+                        if (modalPreviewImg) modalPreviewImg.src = novaFotoBase64;
+                        if (modalPreviewImg) modalPreviewImg.classList.remove('d-none');
+                        if (modalPreviewIcon) modalPreviewIcon.classList.add('d-none');
+                    }
+                    reader.readAsDataURL(file);
                 }
-                reader.readAsDataURL(file);
-            }
-        });
+            });
+        }
 
-        salvarFotoBtn.addEventListener('click', function() {
-            if (novaFotoBase64) {
-                localStorage.setItem('casanova_user_avatar', novaFotoBase64);
-                aplicarFotoPerfil(novaFotoBase64);
-                
-                const modalEl = document.getElementById('modalFotoPerfil');
-                const modalObj = bootstrap.Modal.getInstance(modalEl);
-                modalObj.hide();
-            } else {
-                alert('Por favor, selecione uma imagem primeiro.');
-            }
-        });
+        if (salvarFotoBtn) {
+            salvarFotoBtn.addEventListener('click', function() {
+                if (novaFotoBase64) {
+                    localStorage.setItem('casanova_user_avatar', novaFotoBase64);
+                    aplicarFotoPerfil(novaFotoBase64);
+                    
+                    const modalEl = document.getElementById('modalFotoPerfil');
+                    if (modalEl) {
+                        const modalObj = bootstrap.Modal.getInstance(modalEl);
+                        if (modalObj) modalObj.hide();
+                    }
+                } else {
+                    alert('Por favor, selecione uma imagem primeiro.');
+                }
+            });
+        }
 
         function aplicarFotoPerfil(src) {
-            navAvatarImg.src = src;
-            navAvatarImg.classList.remove('d-none');
-            navAvatarIcon.classList.add('d-none');
+            if (navAvatarImg) {
+                navAvatarImg.src = src;
+                navAvatarImg.classList.remove('d-none');
+            }
+            if (navAvatarIcon) {
+                navAvatarIcon.classList.add('d-none');
+            }
 
-            modalPreviewImg.src = src;
-            modalPreviewImg.classList.remove('d-none');
-            modalPreviewIcon.classList.add('d-none');
+            if (modalPreviewImg) {
+                modalPreviewImg.src = src;
+                modalPreviewImg.classList.remove('d-none');
+            }
+            if (modalPreviewIcon) {
+                modalPreviewIcon.classList.add('d-none');
+            }
         }
     </script>
 </body>

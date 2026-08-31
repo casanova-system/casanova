@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Cadastrar Veículo</h2>
+    <hr>
+
+    <form method="POST" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- Placa -->
+        <div class="mb-3">
+            <label for="placa" class="form-label">Placa</label>
+            <input type="text" class="form-control" id="placa" name="placa" required style="text-transform: uppercase;" placeholder="Ex: ABC-1234">
+        </div>
+
+        <!-- Chassi -->
+        <div class="mb-3">
+            <label for="chassi" class="form-label">Chassi</label>
+            <input type="text" class="form-control" id="chassi" name="chassi" placeholder="Número do chassi">
+        </div>
+
+        <!-- Marca / Modelo -->
+        <div class="mb-3">
+            <label for="marca_modelo" class="form-label">Marca / Modelo</label>
+            <input type="text" class="form-control" id="marca_modelo" name="marca_modelo" required placeholder="Ex: Ford Ranger">
+        </div>
+
+        <!-- Ano de Fabricação -->
+        <div class="mb-3">
+            <label for="ano_fabricacao" class="form-label">Ano de Fabricação</label>
+            <input type="number" class="form-control" id="ano_fabricacao" name="ano_fabricacao" required placeholder="Ex: 2026">
+        </div>
+
+        <!-- Cor -->
+        <div class="mb-3">
+            <label for="cor" class="form-label">Cor</label>
+            <input type="text" class="form-control" id="cor" name="cor" placeholder="Ex: Prata">
+        </div>
+
+        <!-- Tipo de Combustível -->
+        <div class="mb-3">
+            <label for="tipo_combustivel" class="form-label">Tipo de Combustível</label>
+            <select class="form-control" id="tipo_combustivel" name="tipo_combustivel">
+                <option value="">Selecione...</option>
+                <option value="Gasolina">Gasolina</option>
+                <option value="Etanol">Etanol</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Flex">Flex</option>
+                <option value="Elétrico">Elétrico</option>
+            </select>
+        </div>
+
+        <!-- Especificação Técnica -->
+        <div class="mb-3">
+            <label for="especificacao_tecnica" class="form-label">Especificação Técnica</label>
+            <textarea class="form-control" id="especificacao_tecnica" name="especificacao_tecnica" rows="3" placeholder="Detalhes técnicos adicionais..."></textarea>
+        </div>
+
+        <!-- Ativo -->
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="ativo" name="ativo" checked>
+            <label class="form-check-label" for="ativo">Ativo</label>
+        </div>
+
+        <button type="submit" class="btn btn-success">Salvar Veículo</button>
+        <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

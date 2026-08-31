@@ -1,0 +1,74 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Editar Veículo</h2>
+        <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary btn-sm">Voltar para Lista</a>
+    </div>
+
+    <div class="card bg-dark text-white border-secondary shadow p-4">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Placa -->
+            <div class="mb-3">
+                <label for="placa" class="form-label">Placa</label>
+                <input type="text" class="form-control" id="placa" name="placa" value="{{ veiculo.placa }}" required style="text-transform: uppercase;">
+            </div>
+
+            <!-- Chassi -->
+            <div class="mb-3">
+                <label for="chassi" class="form-label">Chassi</label>
+                <input type="text" class="form-control" id="chassi" name="chassi" value="{{ veiculo.chassi|default:'' }}">
+            </div>
+
+            <!-- Marca / Modelo -->
+            <div class="mb-3">
+                <label for="marca_modelo" class="form-label">Marca / Modelo</label>
+                <input type="text" class="form-control" id="marca_modelo" name="marca_modelo" value="{{ veiculo.marca_modelo }}" required>
+            </div>
+
+            <!-- Ano de Fabricação -->
+            <div class="mb-3">
+                <label for="ano_fabricacao" class="form-label">Ano de Fabricação</label>
+                <input type="number" class="form-control" id="ano_fabricacao" name="ano_fabricacao" value="{{ veiculo.ano_fabricacao }}" required>
+            </div>
+
+            <!-- Cor -->
+            <div class="mb-3">
+                <label for="cor" class="form-label">Cor</label>
+                <input type="text" class="form-control" id="cor" name="cor" value="{{ veiculo.cor|default:'' }}">
+            </div>
+
+            <!-- Tipo de Combustível -->
+            <div class="mb-3">
+                <label for="tipo_combustivel" class="form-label">Tipo de Combustível</label>
+                <select class="form-control" id="tipo_combustivel" name="tipo_combustivel">
+                    <option value="">Selecione...</option>
+                    <option value="Gasolina" {% if veiculo.tipo_combustivel == "Gasolina" %}selected{% endif %}>Gasolina</option>
+                    <option value="Etanol" {% if veiculo.tipo_combustivel == "Etanol" %}selected{% endif %}>Etanol</option>
+                    <option value="Diesel" {% if veiculo.tipo_combustivel == "Diesel" %}selected{% endif %}>Diesel</option>
+                    <option value="Flex" {% if veiculo.tipo_combustivel == "Flex" %}selected{% endif %}>Flex</option>
+                    <option value="Elétrico" {% if veiculo.tipo_combustivel == "Elétrico" %}selected{% endif %}>Elétrico</option>
+                </select>
+            </div>
+
+            <!-- Especificação Técnica -->
+            <div class="mb-3">
+                <label for="especificacao_tecnica" class="form-label">Especificação Técnica</label>
+                <textarea class="form-control" id="especificacao_tecnica" name="especificacao_tecnica" rows="3">{{ veiculo.especificacao_tecnica|default:'' }}</textarea>
+            </div>
+
+            <!-- Ativo -->
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="ativo" name="ativo" {% if veiculo.ativo %}checked{% endif %}>
+                <label class="form-check-label" for="ativo">Ativo</label>
+            </div>
+
+            <button type="submit" class="btn btn-success">Salvar Alterações</button>
+            <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
