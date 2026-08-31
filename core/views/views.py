@@ -9,8 +9,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q  # <--- IMPORTAÇÃO NECESSÁRIA PARA A BUSCA
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import ItemVidro, Obra
-from .services import calcular_precificacao_operacao, processar_excel_relatorio
+from ..models import ItemVidro, Obra
+from ..services import calcular_precificacao_operacao, processar_excel_relatorio
 
 
 def login_view(request):
@@ -34,6 +34,23 @@ def logout_view(request):
 @login_required(login_url='login')
 def menu_principal(request):
     return render(request, "core/menu.html")
+
+
+@login_required(login_url='login')
+def atualizar_foto_perfil(request):
+    """
+    View responsável por atualizar a foto de perfil do usuário logado no banco de dados.
+    """
+    if request.method == 'POST' and request.FILES.get('foto'):
+        try:
+            perfil = request.user.perfil
+            perfil.foto = request.FILES['foto']
+            perfil.save()
+            messages.success(request, "Foto de perfil atualizada com sucesso!")
+        except Exception as e:
+            messages.error(request, f"Erro ao atualizar foto: {e}")
+            
+    return redirect(request.META.get('HTTP_REFERER', 'menu_principal'))
 
 
 @login_required(login_url='login')
@@ -72,7 +89,7 @@ def lista_obras(request):
     # Aplica a ordenação selecionada (alfabética, código ou data)
     obras = obras.order_by(django_order)
         
-    return render(request, "core/index.html", {
+    return render(request, 'core/fretes/index.html', {
         "obras": obras, 
         "query": query, 
         "current_sort": sort_by
@@ -112,7 +129,7 @@ def upload_pdf(request):
             messages.error(request, str(e))
             return redirect("upload_pdf")
 
-    return render(request, "core/upload.html")
+    return render(request, "core/fretes/upload.html")
 
 
 @login_required(login_url='login')
@@ -152,6 +169,7 @@ def detalhe_obra_temp(request):
             custo_frete=Decimal(str(res["custo_frete"])),
             custo_operacao=Decimal(str(res["custo_operacao"])),
             custo_total_deslocamento=Decimal(str(res["custo_total_deslocamento"])),
+            usuario=request.user,  # <--- ATRIBUI O USUÁRIO LOGADO AO SALVAR
         )
         obra.save()
         
@@ -236,7 +254,7 @@ def detalhe_obra_temp(request):
         "is_read_only": False,
         "is_edit": False,
     }
-    return render(request, "core/detalhe.html", context)
+    return render(request, "core/fretes/detalhe.html", context)
 
 
 @login_required(login_url='login')
@@ -276,7 +294,7 @@ def detalhe_obra(request, pk):
         "is_read_only": True,
         "is_edit": False,
     }
-    return render(request, "core/detalhe.html", context)
+    return render(request, "core/fretes/detalhe.html", context)
 
 
 @login_required(login_url='login')
@@ -311,6 +329,7 @@ def editar_obra(request, pk):
         obra.custo_frete = Decimal(str(res["custo_frete"]))
         obra.custo_operacao = Decimal(str(res["custo_operacao"]))
         obra.custo_total_deslocamento = Decimal(str(res["custo_total_deslocamento"]))
+        obra.usuario = request.user  # <--- ATUALIZA TAMBÉM O USUÁRIO AO EDITAR (OPCIONAL, MAS RECOMENDADO)
         obra.save()
 
         messages.success(request, "Obra atualizada com sucesso!")
@@ -356,7 +375,7 @@ def editar_obra(request, pk):
         "is_read_only": False,
         "is_edit": True,
     }
-    return render(request, "core/detalhe.html", context)
+    return render(request, "core/fretes/detalhe.html", context)
 
 
 @login_required(login_url='login')
@@ -398,7 +417,6 @@ def grafico_custo_frete(request):
     """
     obras_qs = Obra.objects.all().order_by('-id')
     
-    # A estrutura correta da list comprehension coloca o 'for obra in obras_qs' no final
     obras_lista = [
         {
             "nome": obra.nome,

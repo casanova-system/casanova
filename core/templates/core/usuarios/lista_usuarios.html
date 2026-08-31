@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Cabeçalho com o Título e o Botão Incluir -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-body fw-bold mb-1">Gerenciamento de Usuários</h2>
+            <p class="text-muted mb-0">Cadastre e gerencie os usuários com acesso ao sistema.</p>
+        </div>
+        <div>
+            <a href="{% url 'criar_usuario' %}" class="btn btn-success fw-semibold">
+                <i class="fas fa-plus me-1"></i> Incluir
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabela de Usuários com a Barra de Busca e Menu de Ordenação Integrados -->
+    <div class="card shadow-lg">
+        <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3">
+            <h5 class="mb-0 fw-bold text-nowrap"><i class="fas fa-users me-2 text-primary"></i> Usuários Cadastrados</h5>
+            
+            <!-- Agrupador da Busca e Ordenação -->
+            <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto justify-content-end">
+                <!-- Barra de Pesquisa Integrada -->
+                <form method="GET" action="" class="d-flex align-items-center gap-2" style="max-width: 350px;">
+                    {% if ordenacao_atual %}
+                        <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
+                    {% endif %}
+
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="Buscar por usuário ou e-mail...">
+                        <button class="btn btn-primary px-3" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    {% if query %}
+                        <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtro">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    {% endif %}
+                </form>
+
+                <!-- MENU DE ORDENAÇÃO CUSTOMIZADO -->
+                <div class="dropdown">
+                    <button class="btn btn-dark btn-sm dropdown-toggle fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-sort me-1"></i> Ordenar
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 230px;">
+                        <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'recentes' %}active{% endif %}" href="?ordenar=recentes&q={{ query }}"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'antigos' %}active{% endif %}" href="?ordenar=antigos&q={{ query }}"><i class="fas fa-clock me-2"></i> Mais Antigos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'nome_asc' %}active{% endif %}" href="?ordenar=nome_asc&q={{ query }}"><i class="fas fa-sort-alpha-down me-2"></i> Nome de Usuário (A-Z)</a></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'nome_desc' %}active{% endif %}" href="?ordenar=nome_desc&q={{ query }}"><i class="fas fa-sort-alpha-up me-2"></i> Nome de Usuário (Z-A)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'id_asc' %}active{% endif %}" href="?ordenar=id_asc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Crescente)</a></li>
+                        <li><a class="dropdown-item {% if ordenacao_atual == 'id_desc' %}active{% endif %}" href="?ordenar=id_desc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Decrescente)</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Nome de Usuário</th>
+                            <th>Nome Completo</th>
+                            <th>E-mail</th>
+                            <th>Setor</th>
+                            <th>Nível de Acesso</th>
+                            <th>Nascimento</th>
+                            <th>Data de Cadastro</th>
+                            <th class="text-end pe-3">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-muted">#{{ u.id }}</td>
+                            <td class="fw-semibold">{{ u.username }}</td>
+                            <td>{{ u.get_full_name|default:"Não informado" }}</td>
+                            <td>{{ u.email|default:"Não informado" }}</td>
+                            <td>{{ u.perfil.setor|default:"Não informado" }}</td>
+                            <td>{{ u.perfil.nivel_acesso|default:"Não informado" }}</td>
+                            <td>{{ u.perfil.data_nascimento|date:"d/m/Y"|default:"Não informada" }}</td>
+                            <td>{{ u.date_joined|date:"d/m/Y H:i" }}</td>
+                            <td class="text-end pe-3">
+                                <!-- BOTÕES COM AS CORES EXATAS SOLICITADAS -->
+                                <a href="{% url 'detalhe_usuario' u.id %}" class="btn btn-sm text-white shadow-sm" style="background-color: #0d6efd;" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm text-dark shadow-sm" style="background-color: #ffc107;" title="Editar">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm text-white shadow-sm" style="background-color: #dc3545;" title="Excluir" onclick="abrirModalExclusao('{{ u.id }}', '{{ u.username }}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">Nenhum usuário encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EXCLUSÃO CUSTOMIZADO -->
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i> Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o usuário <strong id="nomeUsuarioModal"></strong>?</p>
+                <p class="text-muted small mb-0">Esta ação não poderá ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <a id="btnConfirmarExclusao" href="#" class="btn btn-danger btn-sm">Sim, Excluir</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalExclusao(id, nome) {
+        document.getElementById('nomeUsuarioModal').innerText = nome;
+        document.getElementById('btnConfirmarExclusao').href = "{% url 'excluir_usuario' 0 %}".replace('0', id);
+        var meuModal = new bootstrap.Modal(document.getElementById('modalExcluir'));
+        meuModal.show();
+    }
+</script>
+{% endblock %}

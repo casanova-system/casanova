@@ -1,0 +1,127 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-lg">
+                <div class="card-header py-3">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2 text-primary"></i> {{ acao }} Usuário</h4>
+                </div>
+                <div class="card-body">
+                    <!-- ADICIONADO enctype="multipart/form-data" ABAIXO -->
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Nome de Usuário <span class="text-danger">*</span></label>
+                                <input type="text" name="username" class="form-control" value="{{ usuario.username|default:'' }}" required>
+                            </div>
+                            <!-- CAMPO DE NOME COMPLETO ADICIONADO AQUI -->
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Nome Completo <span class="text-danger">*</span></label>
+                                <input type="text" name="first_name" class="form-control" value="{{ usuario.first_name|default:'' }}" placeholder="Digite o nome completo" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">E-mail <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" value="{{ usuario.email|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Senha {% if usuario %}(Deixe em branco para não alterar){% endif %}</label>
+                                <input type="password" name="password" class="form-control" {% if not usuario %}required{% endif %}>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Nível de Acesso <span class="text-danger">*</span></label>
+                                <select name="nivel_acesso" class="form-select" required>
+                                    <option value="USUARIO" {% if usuario.perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário</option>
+                                    <option value="GERENCIA" {% if usuario.perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
+                                    <option value="DIRETORIA" {% if usuario.perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Setor <span class="text-danger">*</span></label>
+                                <select name="setor" class="form-select" required>
+                                    <option value="" disabled {% if not usuario.perfil.setor %}selected{% endif %}>Selecione o setor...</option>
+                                    <option value="COMERCIAL" {% if usuario.perfil.setor == 'COMERCIAL' %}selected{% endif %}>Comercial</option>
+                                    <option value="FINANCEIRO" {% if usuario.perfil.setor == 'FINANCEIRO' %}selected{% endif %}>Financeiro</option>
+                                    <option value="OPERACAO" {% if usuario.perfil.setor == 'OPERACAO' %}selected{% endif %}>Operação</option>
+                                    <option value="ADMINISTRACAO" {% if usuario.perfil.setor == 'ADMINISTRACAO' %}selected{% endif %}>Administração</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- CAMPO DE FOTO DE PERFIL -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label text-muted">Foto de Perfil</label>
+                                <input type="file" name="foto" class="form-control" accept="image/*">
+                                {% if usuario.perfil.foto %}
+                                    <div class="form-text text-muted mt-1">Já existe uma foto cadastrada. Envie um arquivo novo apenas se desejar alterá-la.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">CPF <span class="text-danger">*</span></label>
+                                <input type="text" id="cpf" name="cpf" class="form-control" value="{{ usuario.perfil.cpf|default:'' }}" placeholder="000.000.000-00" maxlength="14" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Data de Nascimento <span class="text-danger">*</span></label>
+                                <input type="date" name="data_nascimento" class="form-control" value="{{ usuario.perfil.data_nascimento|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">CEP</label>
+                                <input type="text" id="cep" name="cep" class="form-control" value="{{ usuario.perfil.cep|default:'' }}" placeholder="00000-000" maxlength="9">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label text-muted">Endereço</label>
+                                <input type="text" name="endereco" class="form-control" value="{{ usuario.perfil.endereco|default:'' }}" placeholder="Rua, Número, Bairro, Cidade">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary fw-semibold">
+                                <i class="fas fa-arrow-left me-1"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-success fw-semibold">
+                                <i class="fas fa-save me-1"></i> Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para Máscaras de CPF e CEP -->
+<script>
+    document.getElementById('cpf').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = value;
+    });
+
+    document.getElementById('cep').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    });
+</script>
+{% endblock %}

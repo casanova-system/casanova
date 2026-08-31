@@ -391,12 +391,12 @@
                     </a>
                     
                     <div class="mt-3">
-                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_obras' %}true{% else %}false{% endif %}" aria-controls="collapseRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
+                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
                             <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Rotinas</span></span>
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
-
-                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_obras' %}show{% endif %} mt-1" id="collapseRotinas" data-bs-parent="#listaNavegacao">
+                
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseRotinas" data-bs-parent="#listaNavegacao">
                             <div class="px-2 mb-2 hide-on-collapse">
                                 <input type="text" id="buscaRotina" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarRotinas()" style="font-size: 0.75rem;">
                             </div>
@@ -404,16 +404,23 @@
                                 <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
+                                
+                                <!-- Rotina 02 - Cadastro Usuário (Apenas para Administradores ou Superusers) -->
+                                {% if request.user.is_superuser or request.user.perfilusuario.nivel_acesso == 'ADMINISTRACAO' %}
+                                <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-
+                
                     <div class="mt-3">
                         <a class="graficos-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseGraficos" role="button" aria-expanded="{% if 'grafico' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseGraficos" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Gráficos">
                             <span><i class="fa-solid fa-chart-pie me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Gráficos</span></span>
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
-
+                
                         <div class="collapse {% if 'grafico' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseGraficos" data-bs-parent="#listaNavegacao">
                             <div class="px-2 mb-2 hide-on-collapse">
                                 <input type="text" id="buscaGrafico" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarGraficos()" style="font-size: 0.75rem;">
@@ -425,13 +432,13 @@
                             </div>
                         </div>
                     </div>
-
+                
                     <div class="mt-3">
                         <a class="relatorios-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#collapseRelatorios" role="button" aria-expanded="{% if 'relatorio' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="collapseRelatorios" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Relatórios">
                             <span><i class="fa-solid fa-file-lines me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Relatórios</span></span>
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
-
+                
                         <div class="collapse {% if 'relatorio' in request.resolver_match.url_name %}show{% endif %} mt-1" id="collapseRelatorios" data-bs-parent="#listaNavegacao">
                             <div class="relatorios-collapse-body d-flex flex-column gap-1" id="listaRelatorios">
                                 <a href="{% url 'relatorio_fretes_mes' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none relatorio-item sidebar-item-compacto {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
@@ -454,8 +461,11 @@
                 <div class="dropdown">
                     <div class="user-profile-box dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Menu do Usuário">
                         <div class="user-avatar-container">
-                            <i class="fa-solid fa-user text-secondary fs-6" id="navAvatarIcon"></i>
-                            <img id="navAvatarImg" src="" alt="Perfil" class="user-avatar-img d-none">
+                            {% if request.user.perfil and request.user.perfil.foto %}
+                                <img src="{{ request.user.perfil.foto.url }}" alt="Perfil" class="user-avatar-img">
+                            {% else %}
+                                <i class="fa-solid fa-user text-secondary fs-6"></i>
+                            {% endif %}
                         </div>
                         <div class="flex-grow-1 overflow-hidden hide-on-collapse">
                             <div class="fw-bold text-truncate small" style="color: inherit; font-size: 0.78rem;">{{ request.user.username|default:"Usuário" }}</div>
@@ -498,7 +508,9 @@
     <!-- Modal para Alterar Foto de Perfil -->
     <div class="modal fade" id="modalFotoPerfil" tabindex="-1" aria-labelledby="modalFotoPerfilLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
+            <!-- Transforme em um form para enviar via POST para o Django -->
+            <form method="POST" action="{% url 'atualizar_foto_perfil' %}" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow">
+                {% csrf_token %}
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold" id="modalFotoPerfilLabel"><i class="fa-solid fa-user-pen me-2 text-primary"></i>Alterar Foto de Perfil</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -506,21 +518,26 @@
                 <div class="modal-body text-center py-4">
                     <div class="mb-3">
                         <div class="mx-auto rounded-circle overflow-hidden border shadow-sm d-flex align-items-center justify-content-center bg-light mb-3" style="width: 100px; height: 100px;">
-                            <i class="fa-solid fa-user text-secondary fa-3x" id="modalPreviewIcon"></i>
-                            <img id="modalPreviewImg" src="" alt="Pré-visualização" class="w-100 h-100 object-fit-cover d-none">
+                            <!-- Se já tiver foto no banco, exibe ela na prévia do modal -->
+                            {% if request.user.perfil and request.user.perfil.foto %}
+                                <img src="{{ request.user.perfil.foto.url }}" alt="Pré-visualização" class="w-100 h-100 object-fit-cover">
+                            {% else %}
+                                <i class="fa-solid fa-user text-secondary fa-3x"></i>
+                            {% endif %}
                         </div>
                         <p class="text-muted small">Escolha uma nova imagem do seu computador para usar como foto de perfil no sistema.</p>
                     </div>
                     <div class="mb-3 text-start px-3">
                         <label for="inputArquivoFoto" class="form-label small fw-semibold">Selecionar Imagem</label>
-                        <input class="form-control form-control-sm" type="file" id="inputArquivoFoto" accept="image/*">
+                        <!-- O name="foto" deve bater com o que você vai receber no views.py -->
+                        <input class="form-control form-control-sm" type="file" id="inputArquivoFoto" name="foto" accept="image/*" required>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-casanova btn-sm px-4" id="salvarFotoBtn">Salvar Foto de Perfil</button>
+                    <button type="submit" class="btn btn-casanova btn-sm px-4">Salvar Foto de Perfil</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 

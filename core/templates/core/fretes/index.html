@@ -79,7 +79,8 @@
                             <th>Nome da Obra</th>
                             <th>Cliente</th>
                             <th>Distância</th>
-                            <th>Total Deslocamento</th>                            
+                            <th>Total Deslocamento</th>
+                            <th>Usuário</th> <!-- NOVA COLUNA -->
                             <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
@@ -91,6 +92,18 @@
                             <td>{{ obra.cliente|default:"Não informado" }}</td>
                             <td><span class="badge bg-secondary bg-opacity-15 text-dark fw-semibold px-2 py-1">{{ obra.distancia_km }} KM</span></td>
                             <td class="fw-bold text-success">R$ {{ obra.custo_total_deslocamento }}</td>
+                            
+                            <!-- EXIBIÇÃO DO USUÁRIO RESPONSÁVEL -->
+                            <td>
+                                {% if obra.usuario %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                        <i class="fa-solid fa-user me-1"></i> {{ obra.usuario.username }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">Não registrado</span>
+                                {% endif %}
+                            </td>
+
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
                                     <!-- Visualizar Detalhes -->
@@ -131,7 +144,7 @@
 
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-folder-open fa-2x mb-3 d-block"></i>
                                 {% if query %}
                                     Nenhum frete encontrado para "<strong>{{ query }}</strong>".<br>
