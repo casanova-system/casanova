@@ -1,70 +1,168 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Cadastrar Veículo</h2>
-    <hr>
+<div class="container-fluid px-4 py-3">
 
-    <form method="POST" class="needs-validation" novalidate>
-        {% csrf_token %}
+    <!-- Exibe apenas a mensagem mais recente para evitar acúmulo na tela -->
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                {% if forloop.last %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Cadastrar Veículo</h2>
+            <p class="text-muted small mb-0">Preencha as informações para registrar um novo veículo na frota.</p>
+        </div>
+        <div>
+            <a href="{% url 'lista_veiculos' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                <i class="fa-solid fa-arrow-left me-1"></i> Voltar à Lista
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulário Card -->
+    <div class="card shadow-sm rounded-3">
+        <div class="card-header py-3 d-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;">
+            <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
+        </div>
         
-        <!-- Placa -->
-        <div class="mb-3">
-            <label for="placa" class="form-label">Placa</label>
-            <input type="text" class="form-control" id="placa" name="placa" required style="text-transform: uppercase;" placeholder="Ex: ABC-1234">
-        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="formVeiculo" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row g-3">
+                    <!-- Placa -->
+                    <div class="col-md-4">
+                        <label for="placa" class="form-label fw-semibold small">Placa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="placa" name="placa" required style="text-transform: uppercase;" placeholder="Ex: ABC1D23">
+                    </div>
 
-        <!-- Chassi -->
-        <div class="mb-3">
-            <label for="chassi" class="form-label">Chassi</label>
-            <input type="text" class="form-control" id="chassi" name="chassi" placeholder="Número do chassi">
-        </div>
+                    <!-- Chassi -->
+                    <div class="col-md-8">
+                        <label for="chassi" class="form-label fw-semibold small">Chassi</label>
+                        <input type="text" class="form-control form-control-sm" id="chassi" name="chassi" placeholder="Número do chassi">
+                    </div>
 
-        <!-- Marca / Modelo -->
-        <div class="mb-3">
-            <label for="marca_modelo" class="form-label">Marca / Modelo</label>
-            <input type="text" class="form-control" id="marca_modelo" name="marca_modelo" required placeholder="Ex: Ford Ranger">
-        </div>
+                    <!-- Marca / Modelo -->
+                    <div class="col-md-6">
+                        <label for="marca_modelo" class="form-label fw-semibold small">Marca / Modelo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="marca_modelo" name="marca_modelo" required placeholder="Ex: Ford Ranger">
+                    </div>
 
-        <!-- Ano de Fabricação -->
-        <div class="mb-3">
-            <label for="ano_fabricacao" class="form-label">Ano de Fabricação</label>
-            <input type="number" class="form-control" id="ano_fabricacao" name="ano_fabricacao" required placeholder="Ex: 2026">
-        </div>
+                    <!-- Ano de Fabricação -->
+                    <div class="col-md-3">
+                        <label for="ano_fabricacao" class="form-label fw-semibold small">Ano de Fabricação <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" id="ano_fabricacao" name="ano_fabricacao" required placeholder="Ex: 2026" value="2026">
+                    </div>
 
-        <!-- Cor -->
-        <div class="mb-3">
-            <label for="cor" class="form-label">Cor</label>
-            <input type="text" class="form-control" id="cor" name="cor" placeholder="Ex: Prata">
-        </div>
+                    <!-- Cor -->
+                    <div class="col-md-3">
+                        <label for="cor" class="form-label fw-semibold small">Cor</label>
+                        <input type="text" class="form-control form-control-sm" id="cor" name="cor" placeholder="Ex: Prata">
+                    </div>
 
-        <!-- Tipo de Combustível -->
-        <div class="mb-3">
-            <label for="tipo_combustivel" class="form-label">Tipo de Combustível</label>
-            <select class="form-control" id="tipo_combustivel" name="tipo_combustivel">
-                <option value="">Selecione...</option>
-                <option value="Gasolina">Gasolina</option>
-                <option value="Etanol">Etanol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Flex">Flex</option>
-                <option value="Elétrico">Elétrico</option>
-            </select>
-        </div>
+                    <!-- Tipo de Combustível -->
+                    <div class="col-md-4">
+                        <label for="tipo_combustivel" class="form-label fw-semibold small">Tipo de Combustível</label>
+                        <select class="form-select form-select-sm" id="tipo_combustivel" name="tipo_combustivel">
+                            <option value="">Selecione...</option>
+                            <option value="Gasolina">Gasolina</option>
+                            <option value="Etanol">Etanol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Flex">Flex</option>
+                            <option value="Elétrico">Elétrico</option>
+                        </select>
+                    </div>
 
-        <!-- Especificação Técnica -->
-        <div class="mb-3">
-            <label for="especificacao_tecnica" class="form-label">Especificação Técnica</label>
-            <textarea class="form-control" id="especificacao_tecnica" name="especificacao_tecnica" rows="3" placeholder="Detalhes técnicos adicionais..."></textarea>
-        </div>
+                    <!-- Capacidade Volumétrica -->
+                    <div class="col-md-4">
+                        <label for="capacidade_volumetrica" class="form-label fw-semibold small">Capacidade Volumétrica (m³) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="capacidade_volumetrica" name="capacidade_volumetrica" required placeholder="Ex: 12.50">
+                    </div>
 
-        <!-- Ativo -->
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="ativo" name="ativo" checked>
-            <label class="form-check-label" for="ativo">Ativo</label>
-        </div>
+                    <!-- Consumo de Combustível -->
+                    <div class="col-md-4">
+                        <label for="consumo_combustivel" class="form-label fw-semibold small">Consumo de Combustível (km/L) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="consumo_combustivel" name="consumo_combustivel" required placeholder="Ex: 8.50">
+                    </div>
 
-        <button type="submit" class="btn btn-success">Salvar Veículo</button>
-        <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary">Cancelar</a>
-    </form>
+                    <!-- Especificação Técnica -->
+                    <div class="col-12">
+                        <label for="especificacao_tecnica" class="form-label fw-semibold small">Especificação Técnica</label>
+                        <textarea class="form-control form-control-sm" id="especificacao_tecnica" name="especificacao_tecnica" rows="3" placeholder="Detalhes técnicos adicionais sobre o veículo..."></textarea>
+                    </div>
+
+                    <!-- Ativo -->
+                    <div class="col-12 mt-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="ativo" name="ativo" checked>
+                            <label class="form-check-label small fw-semibold" for="ativo">Veículo Ativo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <a href="{% url 'lista_veiculos' %}" class="btn btn-sm btn-outline-secondary px-4">Cancelar</a>
+                    <button type="button" id="btnSalvar" class="btn btn-sm btn-primary px-4">Salvar Veículo</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<!-- Modal de Confirmação de Salvamento -->
+<div class="modal fade" id="modalConfirmarSalvar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border border-secondary shadow-lg">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fs-6 fw-bold text-primary d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> Confirmação
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4 text-start">
+                <p class="mb-0">Tem certeza de que deseja salvar este veículo?</p>
+            </div>
+            <div class="modal-footer border-top border-secondary">
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formVeiculo" class="btn btn-sm btn-primary px-3">Sim, Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script de Validação, Modal e Auto-Close do Alerta -->
+<script>
+    document.getElementById('btnSalvar').addEventListener('click', function () {
+        const form = document.getElementById('formVeiculo');
+        
+        if (form.checkValidity()) {
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarSalvar'));
+            modal.show();
+        } else {
+            form.reportValidity();
+        }
+    });
+
+    // Faz o alerta sumir sozinho após 4 segundos
+    setTimeout(function() {
+        let alertas = document.querySelectorAll('.alert');
+        alertas.forEach(function(alerta) {
+            let bsAlert = new bootstrap.Alert(alerta);
+            bsAlert.close();
+        });
+    }, 3000);
+</script>
 {% endblock %}

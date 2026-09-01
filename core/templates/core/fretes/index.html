@@ -1,70 +1,83 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container-fluid px-0">
-    <!-- Cabeçalho com Título e Botões de Ação -->
+<div class="container-fluid px-4 py-3">
+
+    <!-- Exibe mensagens do sistema (Alertas) -->
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                {% if forloop.last %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Cabeçalho com o Título e os Botões de Ação -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1">Custo de Frete</h2>
+            <h2 class="text-body fw-bold mb-1" style="font-size: 1.5rem;">Custo de Frete</h2>
             <p class="text-muted small mb-0">Gerencie os fretes, cálculos de frete.</p>
         </div>
         <div class="d-flex gap-2">
-            <!-- Botão Incluir (Upload) -->
-            <a href="{% url 'upload_pdf' %}" class="btn btn-casanova btn-sm px-3 rounded-3 d-inline-flex align-items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Novo Frete
+            <a href="{% url 'upload_pdf' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6';">
+                <i class="fa-solid fa-plus me-1"></i> Novo Frete
             </a>
-            <!-- Botão Voltar ao Início -->
-            <a href="{% url 'menu_principal' %}" class="btn btn-outline-secondary btn-sm px-3 rounded-3 d-inline-flex align-items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Voltar ao Início
+            <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
             </a>
         </div>
     </div>
 
-    <!-- Tabela de Fretes com Filtro de Busca e Ordenação -->
-    <div class="card card-custom border shadow-sm">
-        <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <h5 class="card-title mb-0 fw-bold fs-6"><i class="fa-solid fa-list me-2 text-primary"></i>Fretes Cadastrados</h5>
+    <!-- Tabela de Fretes com a Barra de Busca e Menu de Ordenação Integrados -->
+    <div class="card shadow-lg">
+        <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3">
+            <h5 class="mb-0 fw-bold text-nowrap" style="font-size: 0.9rem;"><i class="fa-solid fa-list me-2 text-primary"></i> Fretes Cadastrados</h5>
             
-            <!-- Grupo de Ações do Cabeçalho (Busca + Ordenação) -->
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <!-- Formulário de Pesquisa e Ordenação Combinados -->
-                <form method="GET" action="{% url 'lista_obras' %}" class="d-flex gap-2 align-items-center flex-wrap">
-                    <!-- Mantém o filtro de ordenação ativo caso o usuário faça uma busca -->
+            <!-- Agrupador da Busca e Ordenação -->
+            <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto justify-content-end">
+                <!-- Barra de Pesquisa Integrada -->
+                <form method="GET" action="{% url 'lista_obras' %}" class="d-flex align-items-center gap-2" style="max-width: 350px;">
                     {% if current_sort %}
                         <input type="hidden" name="sort" value="{{ current_sort }}">
                     {% endif %}
 
-                    <div class="input-group input-group-sm" style="max-width: 300px; width: 100%;">
-                        <input type="text" name="q" value="{{ query|default:'' }}" class="form-control bg-dark text-light border-secondary" placeholder="Buscar por código, obra ou cliente...">
-                        <button class="btn btn-outline-primary" type="submit" title="Pesquisar">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" class="form-control" value="{{ query|default:'' }}" placeholder="Buscar por código, obra ou cliente...">
+                        <button class="btn btn-primary px-3" type="submit">
                             <i class="fa-solid fa-search"></i>
                         </button>
-                        {% if query %}
-                            <a href="{% url 'lista_obras' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="btn btn-outline-secondary" title="Limpar busca">
-                                <i class="fa-solid fa-xmark"></i>
-                            </a>
-                        {% endif %}
                     </div>
+                    {% if query %}
+                        <a href="{% url 'lista_obras' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtro">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    {% endif %}
                 </form>
 
-                <!-- Dropdown de Ordenação Avançada -->
+                <!-- MENU DE ORDENAÇÃO CUSTOMIZADO -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-solid fa-arrow-down-wide-short"></i> Ordenar
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-arrow-down-wide-short me-1"></i> Ordenar
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-secondary shadow" aria-labelledby="dropdownOrdenacao">
-                        <li><h6 class="dropdown-header text-muted text-uppercase fs-7">Ordenar por</h6></li>
-                        <li><a class="dropdown-item {% if current_sort == 'recentes' or not current_sort %}active{% endif %}" href="?sort=recentes{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-clock-rotate-left me-2"></i>Mais Recentes</a></li>
-                        <li><a class="dropdown-item {% if current_sort == 'antigos' %}active{% endif %}" href="?sort=antigos{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-clock me-2"></i>Mais Antigos</a></li>
-                        <li><hr class="dropdown-divider border-secondary"></li>
-                        <li><a class="dropdown-item {% if current_sort == 'nome_asc' %}active{% endif %}" href="?sort=nome_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-arrow-down-a-z me-2"></i>Nome da Obra (A-Z)</a></li>
-                        <li><a class="dropdown-item {% if current_sort == 'nome_desc' %}active{% endif %}" href="?sort=nome_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-arrow-up-z-a me-2"></i>Nome da Obra (Z-A)</a></li>
-                        <li><hr class="dropdown-divider border-secondary"></li>
-                        <li><a class="dropdown-item {% if current_sort == 'cliente_asc' %}active{% endif %}" href="?sort=cliente_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-user-tag me-2"></i>Cliente (A-Z)</a></li>
-                        <li><a class="dropdown-item {% if current_sort == 'cliente_desc' %}active{% endif %}" href="?sort=cliente_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-user-slash me-2"></i>Cliente (Z-A)</a></li>
-                        <li><hr class="dropdown-divider border-secondary"></li>
-                        <li><a class="dropdown-item {% if current_sort == 'codigo_asc' %}active{% endif %}" href="?sort=codigo_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-hashtag me-2"></i>Código (Crescente)</a></li>
-                        <li><a class="dropdown-item {% if current_sort == 'codigo_desc' %}active{% endif %}" href="?sort=codigo_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-hashtag me-2"></i>Código (Decrescente)</a></li>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 240px;">
+                        <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
+                        <li><a class="dropdown-item {% if current_sort == 'recentes' or not current_sort %}active{% endif %}" href="?sort=recentes{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-clock-rotate-left me-2"></i> Mais Recentes</a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'antigos' %}active{% endif %}" href="?sort=antigos{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-clock me-2"></i> Mais Antigos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if current_sort == 'nome_asc' %}active{% endif %}" href="?sort=nome_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-arrow-down-a-z me-2"></i> Nome da Obra (A-Z)</a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'nome_desc' %}active{% endif %}" href="?sort=nome_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-arrow-up-z-a me-2"></i> Nome da Obra (Z-A)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if current_sort == 'cliente_asc' %}active{% endif %}" href="?sort=cliente_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-user-tag me-2"></i> Cliente (A-Z)</a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'cliente_desc' %}active{% endif %}" href="?sort=cliente_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-user-slash me-2"></i> Cliente (Z-A)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if current_sort == 'codigo_asc' %}active{% endif %}" href="?sort=codigo_asc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-hashtag me-2"></i> Código (Crescente)</a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'codigo_desc' %}active{% endif %}" href="?sort=codigo_desc{% if query %}&q={{ query }}{% endif %}"><i class="fa-solid fa-hashtag me-2"></i> Código (Decrescente)</a></li>
                     </ul>
                 </div>
             </div>
@@ -72,51 +85,49 @@
 
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+                    <thead>
                         <tr>
-                            <th class="ps-3">Código</th>
-                            <th>Nome da Obra</th>
-                            <th>Cliente</th>
-                            <th>Distância</th>
-                            <th>Total Deslocamento</th>
-                            <th>Usuário</th> <!-- NOVA COLUNA -->
-                            <th class="text-end pe-3">Ações</th>
+                            <th class="ps-3 text-nowrap" style="width: 135px;">Código</th>
+                            <th class="text-nowrap" style="width: 25%;">Nome da Obra</th>
+                            <th class="text-nowrap" style="width: 22%;">Cliente</th>
+                            <th class="text-nowrap" style="width: 90px;">Distância</th>
+                            <th class="text-nowrap" style="width: 140px;">Tot. Deslocamento</th>
+                            <th class="text-nowrap" style="width: 110px;">Usuário</th>
+                            <th class="text-end pe-3 text-nowrap" style="width: 120px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for obra in obras %}
                         <tr>
-                            <td class="ps-3 fw-semibold">{{ obra.codigo }}</td>
-                            <td>{{ obra.nome }}</td>
-                            <td>{{ obra.cliente|default:"Não informado" }}</td>
-                            <td><span class="badge bg-secondary bg-opacity-15 text-dark fw-semibold px-2 py-1">{{ obra.distancia_km }} KM</span></td>
-                            <td class="fw-bold text-success">R$ {{ obra.custo_total_deslocamento }}</td>
-                            
-                            <!-- EXIBIÇÃO DO USUÁRIO RESPONSÁVEL -->
+                            <td class="ps-3 fw-semibold text-nowrap">#{{ obra.codigo }}</td>
+                            <td class="fw-semibold text-truncate" title="{{ obra.nome }}">{{ obra.nome }}</td>
+                            <td class="text-truncate" title="{{ obra.cliente|default:'Não informado' }}">{{ obra.cliente|default:"Não informado" }}</td>
+                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1 text-nowrap">{{ obra.distancia_km }} KM</span></td>
+                            <td class="fw-bold text-success text-nowrap">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</td>
                             <td>
                                 {% if obra.usuario %}
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 text-truncate" style="max-width: 100px;" title="{{ obra.usuario.username }}">
                                         <i class="fa-solid fa-user me-1"></i> {{ obra.usuario.username }}
                                     </span>
                                 {% else %}
                                     <span class="text-muted small">Não registrado</span>
                                 {% endif %}
                             </td>
-
+                            
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <!-- Visualizar Detalhes -->
-                                    <a href="{% url 'detalhe_obra' obra.pk %}" class="btn btn-primary btn-sm px-2 py-1 rounded-2 shadow-sm" title="Ver Detalhes">
-                                        <i class="fa-solid fa-eye"></i>
+                                    <!-- Botão Visualizar -->
+                                    <a href="{% url 'detalhe_obra' obra.pk %}" class="btn btn-sm shadow-sm" style="background-color: transparent; border: 1px solid #0ea5e9; color: #0ea5e9; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#0ea5e9'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#0ea5e9';" title="Visualizar">
+                                        <i class="fas fa-eye" style="font-size: 0.75rem;"></i>
                                     </a>
-                                    <!-- Alterar -->
-                                    <a href="{% url 'editar_obra' obra.pk %}" class="btn btn-warning btn-sm px-2 py-1 rounded-2 shadow-sm text-dark" title="Alterar">
-                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    <!-- Botão Editar -->
+                                    <a href="{% url 'editar_obra' obra.pk %}" class="btn btn-sm shadow-sm" style="background-color: transparent; border: 1px solid #eab308; color: #eab308; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#eab308'; this.style.color='#000000';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#eab308';" title="Editar">
+                                        <i class="fas fa-pen-to-square" style="font-size: 0.75rem;"></i>
                                     </a>
-                                    <!-- Botão que aciona o Modal Customizado -->
-                                    <button type="button" class="btn btn-danger btn-sm px-2 py-1 rounded-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ obra.pk }}" title="Excluir">
-                                        <i class="fa-solid fa-trash"></i>
+                                    <!-- Botão Excluir -->
+                                    <button type="button" class="btn btn-sm shadow-sm" style="background-color: transparent; border: 1px solid #ef4444; color: #ef4444; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#ef4444'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ef4444';" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ obra.pk }}">
+                                        <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
                                     </button>
                                 </div>
                             </td>
@@ -125,17 +136,19 @@
                         <!-- Modal de Confirmação para cada item -->
                         <div class="modal fade" id="modalExcluir{{ obra.pk }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark text-light border-secondary">
-                                    <div class="modal-header border-secondary">
-                                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Confirmar Exclusão</h5>
+                                <div class="modal-content bg-dark text-light border border-secondary shadow-lg">
+                                    <div class="modal-header border-bottom border-secondary">
+                                        <h5 class="modal-title fs-6 fw-bold text-warning d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Confirmar Exclusão
+                                        </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <div class="modal-body">
-                                        Tem certeza que deseja excluir o frete <strong>{{ obra.codigo }}</strong> referente à obra <strong>{{ obra.nome }}</strong>? Esta ação não poderá ser desfeita.
+                                    <div class="modal-body py-4 text-start">
+                                        <p class="mb-0">Tem certeza que deseja excluir o frete <strong>{{ obra.codigo }}</strong> referente à obra <strong>{{ obra.nome }}</strong>? Esta ação não poderá ser desfeita.</p>
                                     </div>
-                                    <div class="modal-footer border-secondary">
-                                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                                        <a href="{% url 'excluir_obra' obra.pk %}" class="btn btn-danger btn-sm px-3">Sim, Excluir</a>
+                                    <div class="modal-footer border-top border-secondary">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
+                                        <a href="{% url 'excluir_obra' obra.pk %}" class="btn btn-sm btn-danger px-3">Sim, Excluir</a>
                                     </div>
                                 </div>
                             </div>
@@ -162,4 +175,29 @@
         </div>
     </div>
 </div>
+
+<!-- Script para formatar os valores monetários no padrão brasileiro (9.999,99) via JavaScript -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('td.text-success').forEach(function(el) {
+            let texto = el.textContent.replace('R$', '').trim();
+            // Converte o número para o padrão pt-BR se vier em ponto flutuante puro do python
+            let numero = parseFloat(texto.replace(',', '.'));
+            if (!isNaN(numero)) {
+                el.textContent = 'R$ ' + numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        });
+    });
+</script>
+
+<!-- Script para sumir com os alertas automaticamente -->
+<script>
+    setTimeout(function() {
+        let alertas = document.querySelectorAll('.alert');
+        alertas.forEach(function(alerta) {
+            let bsAlert = new bootstrap.Alert(alerta);
+            bsAlert.close();
+        });
+    }, 2000);
+</script>
 {% endblock %}

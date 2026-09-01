@@ -1,63 +1,97 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 800px;">
+<div class="container-fluid px-4 py-3">
+
+    <!-- Cabeçalho da Página -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Detalhes do Veículo</h2>
-        <a href="{% url 'lista_veiculos' %}" class="btn btn-secondary btn-sm">Voltar para Lista</a>
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Detalhes do Veículo</h2>
+            <p class="text-muted small mb-0">Visualização das informações e especificações da frota.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'lista_veiculos' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                <i class="fa-solid fa-arrow-left me-1"></i> Voltar à Lista
+            </a>
+        </div>
     </div>
 
-    <div class="card bg-dark text-white border-secondary shadow">
-        <div class="card-body">
-            <h4 class="card-title text-info mb-3">{{ veiculo.marca_modelo }}</h4>
-            <hr class="border-secondary">
-            
+    <!-- Caixa do Formulário / Card Principal -->
+    <div class="card shadow-sm rounded-3">
+        <div class="card-header py-3 d-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;">
+            <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
+        </div>
+        
+        <div class="card-body p-4">
             <div class="row g-3">
-                <div class="col-md-6">
-                    <strong>Placa:</strong> 
-                    <span class="text-uppercase fw-bold">{{ veiculo.placa }}</span>
-                </div>
-                
-                <div class="col-md-6">
-                    <strong>Chassi:</strong> 
-                    <span class="text-muted">{{ veiculo.chassi|default:"Não informado" }}</span>
+                <!-- Placa -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Placa</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.placa }}" disabled>
                 </div>
 
-                <div class="col-md-6">
-                    <strong>Ano de Fabricação:</strong> 
-                    <span>{{ veiculo.ano_fabricacao }}</span>
+                <!-- Chassi -->
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold small">Chassi</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.chassi|default:'' }}" disabled>
                 </div>
 
+                <!-- Marca / Modelo -->
                 <div class="col-md-6">
-                    <strong>Cor:</strong> 
-                    <span>{{ veiculo.cor|default:"Não informada" }}</span>
+                    <label class="form-label fw-semibold small">Marca / Modelo</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.marca_modelo }}" disabled>
                 </div>
 
-                <div class="col-md-6">
-                    <strong>Tipo de Combustível:</strong> 
-                    <span>{{ veiculo.tipo_combustivel|default:"Não informado" }}</span>
+                <!-- Ano de Fabricação -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Ano de Fabricação</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.ano_fabricacao }}" disabled>
                 </div>
 
-                <div class="col-md-6">
-                    <strong>Status:</strong> 
-                    {% if veiculo.ativo %}
-                        <span class="badge bg-success">Ativo</span>
-                    {% else %}
-                        <span class="badge bg-danger">Inativo</span>
-                    {% endif %}
+                <!-- Cor -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Cor</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.cor|default:'' }}" disabled>
                 </div>
 
+                <!-- Tipo de Combustível -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Tipo de Combustível</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.tipo_combustivel|default:'-' }}" disabled>
+                </div>
+
+                <!-- Capacidade Volumétrica -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Capacidade Volumétrica (m³)</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.capacidade_volumetrica|default:'' }}" disabled>
+                </div>
+
+                <!-- Consumo de Combustível -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Consumo de Combustível (km/L)</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.consumo_combustivel|default:'' }}" disabled>
+                </div>
+
+                <!-- Especificação Técnica -->
                 <div class="col-12">
-                    <strong>Especificação Técnica:</strong>
-                    <p class="p-3 bg-secondary bg-opacity-10 border border-secondary rounded mt-1 mb-0">
-                        {{ veiculo.especificacao_tecnica|default:"Nenhuma especificação técnica registrada." }}
-                    </p>
+                    <label class="form-label fw-semibold small">Especificação Técnica</label>
+                    <textarea class="form-control form-control-sm" rows="3" disabled>{{ veiculo.especificacao_tecnica|default:'' }}</textarea>
+                </div>
+
+                <!-- Ativo -->
+                <div class="col-12 mt-3">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" {% if veiculo.ativo %}checked{% endif %} disabled>
+                        <label class="form-check-label small fw-semibold">Veículo Ativo</label>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="card-footer bg-dark border-secondary text-muted small">
-            Cadastrado em: {{ veiculo.data_cadastro|date:"d/m/Y H:i" }} 
-            {% if veiculo.usuario_responsavel %} por {{ veiculo.usuario_responsavel.username }}{% endif %}
+
+            <!-- Rodapé apenas com Informações de Cadastro -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top text-muted small">
+                <span>Cadastrado em: {{ veiculo.data_cadastro|default:"-" }} {% if veiculo.usuario_responsavel %}por <strong>{{ veiculo.usuario_responsavel.username }}</strong>{% endif %}</span>
+            </div>
         </div>
     </div>
 </div>
