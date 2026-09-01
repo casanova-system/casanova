@@ -1,0 +1,317 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    /* Trava rigorosamente a tela inteira sem transbordar */
+    html, body {
+        height: 100vh;
+        overflow: hidden !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Layout Flexível de altura fixa preenchendo a janela */
+    .app-layout-flex {
+        height: calc(100vh - 60px);
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 1.25rem;
+        overflow: hidden;
+    }
+
+    .btn-animado {
+        transition: all 0.25s ease-in-out;
+    }
+    .btn-animado:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+    }
+    .btn-animado:active {
+        transform: translateY(1px);
+    }
+
+    .btn-outline-secondary-custom {
+        border-width: 1px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    [data-bs-theme="light"] .btn-outline-secondary-custom {
+        color: #495057 !important;
+        background-color: #ffffff !important;
+        border-color: #ced4da !important;
+    }
+    [data-bs-theme="light"] .btn-outline-secondary-custom:hover {
+        color: #212529 !important;
+        background-color: #e2e6ea !important;
+        border-color: #dae0e5 !important;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary-custom {
+        color: #f8f9fa !important;
+        background-color: #1e2638 !important;
+        border-color: #2d3748 !important;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary-custom:hover {
+        background-color: #2d3748 !important;
+        color: #ffffff !important;
+    }
+
+    /* Botões padrão neutro/escuro e ficam verde SOMENTE no hover ou active */
+    .btn-hover-success {
+        background-color: var(--bs-secondary-bg, #2b3035) !important;
+        border-color: var(--bs-border-color, #495057) !important;
+        color: #ffffff !important;
+        transition: all 0.25s ease-in-out;
+    }
+    .btn-hover-success:hover, 
+    .btn-hover-success:focus, 
+    .btn-hover-success:active {
+        background-color: #198754 !important;
+        border-color: #198754 !important;
+        color: #ffffff !important;
+    }
+
+    nav input[type="file"], .navbar input[type="file"], input.form-control {
+        background-color: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+
+    /* O Card da tabela expande e absorve todo o espaço restante da tela */
+    .card-tabela-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* A tabela em si ganha o scroll interno e vai até o rodapé */
+    .table-container-scroll {
+        flex-grow: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    
+    /* Fixar o cabeçalho da tabela ao rolar */
+    .table-container-scroll thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: var(--bs-tertiary-bg, #212529) !important;
+    }
+</style>
+
+{% comment %} Captura segura da distância independentemente do nome da variável enviada pela View {% endcomment %}
+{% with valor_distancia=distancia_km|default:obra.distancia_km %}
+<div class="container-fluid app-layout-flex">
+    <!-- Cabeçalho com Título e Botões (Super Compacto) -->
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-shrink-0">
+        <div>
+            <h4 class="fw-bold mb-0 fs-5">Obra: {{ obra.nome }}</h4>
+            <p class="text-muted small mb-0" style="font-size: 0.8rem;">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if is_temp %}
+                <a href="{% url 'upload_pdf' %}" class="btn btn-sm btn-outline-secondary-custom">
+                    <i class="fa-solid fa-plus me-1"></i> Novo Upload
+                </a>
+            {% endif %}
+            
+            {% if is_temp or is_edit %}
+                <button type="button" class="btn btn-sm btn-hover-success d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalSalvarObra">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar
+                </button>
+            {% endif %}
+            <a href="{% url 'lista_obras' %}" class="btn btn-sm btn-outline-secondary-custom">
+                <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulário invisível dedicado exclusivamente a efetivar o SAVE no banco -->
+    {% if is_temp or is_edit %}
+    <form id="form-salvar" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="salvar">
+        <input type="hidden" name="distancia_km" id="input-distancia-hidden" value="{{ valor_distancia }}">
+    </form>
+    {% endif %}
+
+    <!-- Painel de Calculadora Logística / Info (Compacto) -->
+    {% if is_temp or is_edit %}
+    <div class="card shadow-sm border-0 mb-2 bg-light flex-shrink-0">
+        <div class="card-body py-1 px-3">
+            <form id="form-recalcular" method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small mb-0" style="font-size: 0.75rem;">CEP Origem:</label>
+                    <input type="text" class="form-control form-control-sm" value="78088-800" disabled>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small mb-0" style="font-size: 0.75rem;">Distância (KM):</label>
+                    <input type="number" step="0.1" name="distancia_km" id="input-distancia" class="form-control form-control-sm" value="{{ valor_distancia }}" oninput="atualizarHiddenDistancia(this.value)">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-sm btn-hover-success w-100 py-1">Recalcular</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm border-0 mb-2 bg-light flex-shrink-0">
+        <div class="card-body py-1 px-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted small d-block" style="font-size: 0.7rem;">CEP Origem</span>
+                    <strong class="small">78088-800</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small d-block" style="font-size: 0.7rem;">Distância Registrada</span>
+                    <strong class="small">{{ valor_distancia }} KM</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Indicadores Principais (Cards Compactos) -->
+    <div class="row g-2 mb-2 flex-shrink-0">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white py-1">
+                <div class="card-body py-1 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Total Peças</span>
+                    <h6 class="fw-bold mb-0">{{ total_pecas }}</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-secondary text-white py-1">
+                <div class="card-body py-1 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Área Total M²</span>
+                    <h6 class="fw-bold mb-0">{{ m2_corte_total }} m²</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-dark text-white py-1">
+                <div class="card-body py-1 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Peso Total</span>
+                    <h6 class="fw-bold mb-0">{{ peso_total }} kg</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white py-1">
+                <div class="card-body py-1 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Custo Total Obra</span>
+                    <h6 class="fw-bold mb-0">R$ {{ custo_geral_obra|floatformat:2 }}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo de Custos Reduzido -->
+    <div class="row g-2 mb-2 flex-shrink-0">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-3 border-info">
+                <div class="card-body py-1 px-2">
+                    <span class="text-muted" style="font-size: 0.75rem;">Frete: <strong class="text-info">R$ {{ obra.custo_frete|floatformat:2 }}</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-3 border-warning">
+                <div class="card-body py-1 px-2">
+                    <span class="text-muted" style="font-size: 0.75rem;">Operacional: <strong class="text-warning">R$ {{ obra.custo_operacao|floatformat:2 }}</strong> ({{ dias_trabalho }}d)</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start border-3 border-danger">
+                <div class="card-body py-1 px-2">
+                    <span class="text-muted" style="font-size: 0.75rem;">Total Deslocamento: <strong class="text-danger">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Itens Ocupando Exatamente o Espaço Restante Até o Final da Tela -->
+    <div class="card shadow-sm border-0 card-tabela-wrapper mb-1">
+        <div class="card-header bg-white py-2 flex-shrink-0">
+            <h6 class="fw-bold mb-0" style="font-size: 0.9rem;">Itens da Obra</h6>
+        </div>
+        <div class="table-container-scroll">
+            <table class="table table-striped table-hover align-middle mb-0 table-sm" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Qtd</th>
+                        <th>M² Corte</th>
+                        <th>Peso (kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td class="fw-bold">{{ item.codigo_item }}</td>
+                        <td>{{ item.descricao }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>{{ item.m2_corte }}</td>
+                        <td>{{ item.peso_kg }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-3 text-muted">Nenhum item encontrado nesta obra.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endwith %}
+
+<!-- Modal Personalizado de Confirmação de Salvamento -->
+<div class="modal fade" id="modalSalvarObra" tabindex="-1" aria-labelledby="modalSalvarObraLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: #1a1d24; color: #fff; border: 1px solid #2d323b; border-radius: 8px;">
+      <div class="modal-header py-2" style="border-bottom: 1px solid #2d323b;">
+        <h5 class="modal-title fs-6" id="modalSalvarObraLabel">
+          <i class="fa-solid fa-floppy-disk text-success me-2"></i> Confirmar Salvamento
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body py-3" style="color: #cbd5e1; font-size: 0.9rem;">
+        Tem certeza de que deseja salvar as alterações desta obra? Esta ação atualizará os dados definitivos no sistema.
+      </div>
+      <div class="modal-footer py-2" style="border-top: 1px solid #2d323b;">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" style="background-color: #2d323b; border: none;">Cancelar</button>
+        <button type="button" id="btnConfirmarSalvar" class="btn btn-sm btn-success" style="background-color: #198754; border: none;">Sim, Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script de Sincronização de Distância e Confirmação via Modal -->
+<script>
+    function atualizarHiddenDistancia(valor) {
+        const inputHidden = document.getElementById('input-distancia-hidden');
+        if (inputHidden) {
+            inputHidden.value = valor;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnConfirmar = document.getElementById("btnConfirmarSalvar");
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener("click", function() {
+                const form = document.getElementById("form-salvar");
+                if (form) {
+                    form.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,6 +1,14 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
 from core.views import usuario as views_usuario
+from core.views.frete import (
+    lista_obras,
+    upload_pdf,
+    detalhe_obra_temp,
+    detalhe_obra,
+    editar_obra,
+    excluir_obra,
+)
 from core.views.veiculo import (
     lista_veiculos,
     cadastrar_veiculo,
@@ -12,12 +20,6 @@ from core.views.views import (
     menu_principal,
     login_view,
     logout_view,
-    lista_obras,
-    upload_pdf,
-    detalhe_obra_temp,
-    detalhe_obra,
-    editar_obra,
-    excluir_obra,
     rotinas_view,
     graficos_view,
     relatorios_view,
