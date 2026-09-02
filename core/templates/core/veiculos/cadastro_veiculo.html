@@ -85,6 +85,22 @@
                         </select>
                     </div>
 
+                    <!-- Dimensões do Baú (Adicionadas) -->
+                    <div class="col-md-4">
+                        <label for="comprimento_bau" class="form-label fw-semibold small">Comprimento do Baú (m)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm dim-bau" id="comprimento_bau" name="comprimento_bau" placeholder="Ex: 6.00">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="largura_bau" class="form-label fw-semibold small">Largura do Baú (m)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm dim-bau" id="largura_bau" name="largura_bau" placeholder="Ex: 2.40">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="altura_bau" class="form-label fw-semibold small">Altura do Baú (m)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm dim-bau" id="altura_bau" name="altura_bau" placeholder="Ex: 2.50">
+                    </div>
+
                     <!-- Capacidade Volumétrica -->
                     <div class="col-md-4">
                         <label for="capacidade_volumetrica" class="form-label fw-semibold small">Capacidade Volumétrica (m³) <span class="text-danger">*</span></label>
@@ -143,7 +159,7 @@
     </div>
 </div>
 
-<!-- Script de Validação, Modal e Auto-Close do Alerta -->
+<!-- Script de Validação, Modal, Auto-Close e Cálculo de Cubagem Automática -->
 <script>
     document.getElementById('btnSalvar').addEventListener('click', function () {
         const form = document.getElementById('formVeiculo');
@@ -156,7 +172,21 @@
         }
     });
 
-    // Faz o alerta sumir sozinho após 4 segundos
+    // Cálculo automático da capacidade volumétrica ao digitar as dimensões do baú
+    document.querySelectorAll('.dim-bau').forEach(function(element) {
+        element.addEventListener('input', function() {
+            let comp = parseFloat(document.getElementById('comprimento_bau').value) || 0;
+            let larg = parseFloat(document.getElementById('largura_bau').value) || 0;
+            let alt = parseFloat(document.getElementById('altura_bau').value) || 0;
+
+            if (comp > 0 && larg > 0 && alt > 0) {
+                let volume = comp * larg * alt;
+                document.getElementById('capacidade_volumetrica').value = volume.toFixed(2);
+            }
+        });
+    });
+
+    // Faz o alerta sumir sozinho após 3 segundos
     setTimeout(function() {
         let alertas = document.querySelectorAll('.alert');
         alertas.forEach(function(alerta) {

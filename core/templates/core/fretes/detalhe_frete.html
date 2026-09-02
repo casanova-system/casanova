@@ -3,7 +3,6 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    /* Trava rigorosamente a tela inteira sem transbordar */
     html, body {
         height: 100vh;
         overflow: hidden !important;
@@ -11,24 +10,13 @@
         padding: 0;
     }
 
-    /* Layout Flexível de altura fixa preenchendo a janela */
     .app-layout-flex {
         height: calc(100vh - 60px);
         display: flex;
         flex-direction: column;
         padding: 0.75rem 1.25rem;
         overflow: hidden;
-    }
-
-    .btn-animado {
-        transition: all 0.25s ease-in-out;
-    }
-    .btn-animado:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
-    }
-    .btn-animado:active {
-        transform: translateY(1px);
+        font-size: 0.95rem !important;
     }
 
     .btn-outline-secondary-custom {
@@ -56,7 +44,6 @@
         color: #ffffff !important;
     }
 
-    /* Botões padrão neutro/escuro e ficam verde SOMENTE no hover ou active */
     .btn-hover-success {
         background-color: var(--bs-secondary-bg, #2b3035) !important;
         border-color: var(--bs-border-color, #495057) !important;
@@ -71,13 +58,14 @@
         color: #ffffff !important;
     }
 
-    nav input[type="file"], .navbar input[type="file"], input.form-control {
+    nav input[type="file"], .navbar input[type="file"], input.form-control, select.form-select {
         background-color: var(--bs-body-bg) !important;
         color: var(--bs-body-color) !important;
         border-color: var(--bs-border-color) !important;
+        font-size: 0.9rem !important;
+        padding: 0.45rem 0.75rem !important;
     }
 
-    /* O Card da tabela expande e absorve todo o espaço restante da tela */
     .card-tabela-wrapper {
         display: flex;
         flex-direction: column;
@@ -86,164 +74,253 @@
         overflow: hidden;
     }
 
-    /* A tabela em si ganha o scroll interno e vai até o rodapé */
     .table-container-scroll {
         flex-grow: 1;
         overflow-y: auto;
         min-height: 0;
     }
     
-    /* Fixar o cabeçalho da tabela ao rolar */
     .table-container-scroll thead th {
         position: sticky;
         top: 0;
         z-index: 2;
         background-color: var(--bs-tertiary-bg, #212529) !important;
     }
+
+    .table-container-scroll table td, .table-container-scroll table th {
+        font-size: 0.9rem !important;
+        padding: 0.6rem 0.75rem !important;
+    }
+
+    .badge-cubagem-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        color: #ffffff;
+        font-weight: 500;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+    }
+
+    .alert-warning-custom {
+        background-color: rgba(255, 193, 7, 0.15) !important;
+        border-color: #ffc107 !important;
+        color: var(--bs-body-color, #ffffff) !important;
+        font-size: 0.95rem !important;
+    }
+    .alert-warning-custom .text-muted-custom {
+        color: var(--bs-secondary-color, #adb5bd) !important;
+    }
 </style>
 
-{% comment %} Captura segura da distância independentemente do nome da variável enviada pela View {% endcomment %}
 {% with valor_distancia=distancia_km|default:obra.distancia_km %}
 <div class="container-fluid app-layout-flex">
-    <!-- Cabeçalho com Título e Botões (Super Compacto) -->
     <div class="d-flex justify-content-between align-items-center mb-2 flex-shrink-0">
         <div>
-            <h4 class="fw-bold mb-0 fs-5">Obra: {{ obra.nome }}</h4>
-            <p class="text-muted small mb-0" style="font-size: 0.8rem;">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
+            <h4 class="fw-bold mb-0 fs-4">Obra: {{ obra.nome }}</h4>
+            <p class="text-muted small mb-0" style="font-size: 0.85rem;">Código: <strong>{{ obra.codigo }}</strong> | Cliente: <strong>{{ obra.cliente }}</strong></p>
         </div>
         <div class="d-flex gap-2">
-            {% if is_temp %}
-                <a href="{% url 'upload_pdf' %}" class="btn btn-sm btn-outline-secondary-custom">
-                    <i class="fa-solid fa-plus me-1"></i> Novo Upload
-                </a>
-            {% endif %}
+            <button type="button" class="btn btn-sm btn-outline-secondary-custom px-3 py-1" data-bs-toggle="modal" data-bs-target="#modalMemorialCalculos">
+                Memorial de Cálculos
+            </button>
             
             {% if is_temp or is_edit %}
-                <button type="button" class="btn btn-sm btn-hover-success d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalSalvarObra">
+                <button type="submit" form="form-salvar" class="btn btn-sm btn-hover-success px-3 py-1 d-inline-flex align-items-center gap-1" id="btnSalvarPrincipal">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar
                 </button>
             {% endif %}
-            <a href="{% url 'lista_obras' %}" class="btn btn-sm btn-outline-secondary-custom">
+            <a href="{% url 'lista_obras' %}" class="btn btn-sm btn-outline-secondary-custom px-3 py-1" id="btnVoltar">
                 <i class="fa-solid fa-arrow-left me-1"></i> Voltar
             </a>
         </div>
     </div>
 
-    <!-- Formulário invisível dedicado exclusivamente a efetivar o SAVE no banco -->
     {% if is_temp or is_edit %}
     <form id="form-salvar" method="POST">
         {% csrf_token %}
         <input type="hidden" name="acao" value="salvar">
-        <input type="hidden" name="distancia_km" id="input-distancia-hidden" value="{{ valor_distancia }}">
+        {% if veiculo_selecionado %}
+        <input type="hidden" name="veiculo_id" value="{{ veiculo_selecionado.id }}">
+        {% endif %}
+        {% if calcular_cubagem == 'on' %}
+        <input type="hidden" name="calcular_cubagem" value="on">
+        {% endif %}
+        <input type="hidden" name="distancia_km" value="{{ valor_distancia }}">
+        <input type="hidden" name="tipo_peso_cobranca" id="hiddenTipoPesoCobranca" value="cubado">
     </form>
     {% endif %}
 
-    <!-- Painel de Calculadora Logística / Info (Compacto) -->
     {% if is_temp or is_edit %}
     <div class="card shadow-sm border-0 mb-2 bg-light flex-shrink-0">
-        <div class="card-body py-1 px-3">
+        <div class="card-body py-2 px-3">
             <form id="form-recalcular" method="GET" class="row g-2 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small mb-0" style="font-size: 0.75rem;">CEP Origem:</label>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">CEP Origem:</label>
                     <input type="text" class="form-control form-control-sm" value="78088-800" disabled>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small mb-0" style="font-size: 0.75rem;">Distância (KM):</label>
-                    <input type="number" step="0.1" name="distancia_km" id="input-distancia" class="form-control form-control-sm" value="{{ valor_distancia }}" oninput="atualizarHiddenDistancia(this.value)">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Distância (KM):</label>
+                    <input type="number" step="0.1" name="distancia_km" id="inputDistancia" class="form-control form-control-sm" value="{{ valor_distancia|default:'' }}" {% if not veiculo_selecionado %}disabled placeholder="Selecione o veículo"{% endif %}>
                 </div>
                 <div class="col-md-4">
-                    <button type="submit" class="btn btn-sm btn-hover-success w-100 py-1">Recalcular</button>
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Veículo / Frota:</label>
+                    <select name="veiculo_id" id="selectVeiculo" class="form-select form-select-sm" onchange="toggleDistancia(this)">
+                        <option value="">Selecione um veículo...</option>
+                        {% for v in veiculos_cadastrados %}
+                            <option value="{{ v.id }}" data-cubagem="{{ v.capacidade_volumetrica|default:0 }}" {% if veiculo_selecionado.id == v.id %}selected{% endif %}>
+                                {{ v.marca_modelo }} - Placa: {{ v.placa }} (Capacidade: {{ v.capacidade_volumetrica|default:"0" }} m³)
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-center">
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="calcular_cubagem" id="checkCubagem" {% if calcular_cubagem == 'on' or obra.calcular_cubagem %}checked{% endif %}>
+                        <label class="form-check-label small fw-bold" for="checkCubagem" style="font-size: 0.75rem;" title="Ativar cálculo de cubagem opcional">Cubagem</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" id="btnRecalcular" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border" style="background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff'; this.style.borderColor='#1d4ed8';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6';">Recalcular</button>
+                </div>
+                
+                <div class="col-12 mt-1">
+                    <span class="text-muted small" style="font-size: 0.8rem;" id="infoCapacidadeVeiculo">
+                        {% if veiculo_selecionado %}
+                            <i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³</strong> 
+                            | Viagens Estimadas: <strong class="text-warning">{{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
+                        {% else %}
+                            <i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.
+                        {% endif %}
+                    </span>
                 </div>
             </form>
         </div>
     </div>
     {% else %}
     <div class="card shadow-sm border-0 mb-2 bg-light flex-shrink-0">
-        <div class="card-body py-1 px-3">
+        <div class="card-body py-2 px-3">
             <div class="row align-items-center">
-                <div class="col-md-6">
-                    <span class="text-muted small d-block" style="font-size: 0.7rem;">CEP Origem</span>
-                    <strong class="small">78088-800</strong>
+                <div class="col-md-3">
+                    <span class="text-muted small d-block" style="font-size: 0.75rem;">CEP Origem</span>
+                    <strong class="small" style="font-size: 0.9rem;">78088-800</strong>
                 </div>
-                <div class="col-md-6">
-                    <span class="text-muted small d-block" style="font-size: 0.7rem;">Distância Registrada</span>
-                    <strong class="small">{{ valor_distancia }} KM</strong>
+                <div class="col-md-2">
+                    <span class="text-muted small d-block" style="font-size: 0.75rem;">Distância</span>
+                    <strong class="small" style="font-size: 0.9rem;">{{ valor_distancia }} KM</strong>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted small d-block" style="font-size: 0.75rem;">Veículo Vinculado</span>
+                    <strong class="small" style="font-size: 0.9rem;">{{ veiculo_selecionado.marca_modelo|default:"Não definido" }} {% if veiculo_selecionado.placa %}(Placa: {{ veiculo_selecionado.placa }}){% endif %}</strong>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-muted small d-block" style="font-size: 0.75rem;">Capacidade / Viagens</span>
+                    <strong class="small text-info" style="font-size: 0.9rem;">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³ | {{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
                 </div>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Indicadores Principais (Cards Compactos) -->
+    {% if requer_escolha_peso %}
+    <div class="alert alert-warning-custom border py-2 px-3 mb-2 flex-shrink-0 shadow-sm" role="alert">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
+                <div>
+                    <span class="fw-bold">Atenção: Esta carga ocupa mais espaço no caminhão do que pesa na balança!</span>
+                    <p class="mb-0 text-muted-custom" style="font-size: 0.85rem;">Os vidros são leves ({{ peso_total }} kg), mas ocupam bastante volume no baú (equivalente a {{ peso_cubado }} kg). Selecione qual peso deseja usar para o cálculo:</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm border-warning" id="tipo_peso_cobranca" name="tipo_peso_cobranca" style="width: 240px; font-size: 0.85rem;" onchange="syncTipoPeso(this)">
+                    <option value="cubado" {% if tipo_peso_cobranca == 'cubado' or not tipo_peso_cobranca %}selected{% endif %}>Peso Cubado ({{ peso_cubado }} kg)</option>
+                    <option value="real" {% if tipo_peso_cobranca == 'real' %}selected{% endif %}>Peso Real ({{ peso_total }} kg)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <input type="hidden" name="tipo_peso_cobranca" value="real">
+    {% endif %}
+
     <div class="row g-2 mb-2 flex-shrink-0">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-primary text-white py-1">
-                <div class="card-body py-1 px-3">
-                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Total Peças</span>
-                    <h6 class="fw-bold mb-0">{{ total_pecas }}</h6>
+            <div class="card border-0 shadow-sm bg-primary text-white py-1.5">
+                <div class="card-body py-1.5 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Total Peças</span>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">{{ total_pecas }}</h5>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-secondary text-white py-1">
-                <div class="card-body py-1 px-3">
-                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Área Total M²</span>
-                    <h6 class="fw-bold mb-0">{{ m2_corte_total }} m²</h6>
+            <div class="card border-0 shadow-sm bg-secondary text-white py-1.5">
+                <div class="card-body py-1.5 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Área Total M² {% if obra.calcular_cubagem or calcular_cubagem == 'on' %}| Cubagem{% endif %}</span>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">
+                        {{ m2_corte_total }} m² 
+                        {% if veiculo_selecionado and obra.calcular_cubagem or veiculo_selecionado and calcular_cubagem == 'on' %}
+                            <span class="badge-cubagem-info ms-1 py-0.5 px-1.5" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-cube"></i> {{ cubagem_total }} m³
+                            </span>
+                        {% endif %}
+                    </h5>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-dark text-white py-1">
-                <div class="card-body py-1 px-3">
-                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Peso Total</span>
-                    <h6 class="fw-bold mb-0">{{ peso_total }} kg</h6>
+            <div class="card border-0 shadow-sm bg-dark text-white py-1.5">
+                <div class="card-body py-1.5 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Peso Total {% if requer_escolha_peso %}<span class="text-warning" title="Cubado ativo">*</span>{% endif %}</span>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">{{ peso_total }} kg</h5>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-success text-white py-1">
-                <div class="card-body py-1 px-3">
-                    <span class="text-white-50 small d-block" style="font-size: 0.7rem;">Custo Total Obra</span>
-                    <h6 class="fw-bold mb-0">R$ {{ custo_geral_obra|floatformat:2 }}</h6>
+            <div class="card border-0 shadow-sm bg-success text-white py-1.5">
+                <div class="card-body py-1.5 px-3">
+                    <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Custo Total Obra</span>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">R$ {{ custo_geral_obra|floatformat:2 }}</h5>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Resumo de Custos Reduzido -->
     <div class="row g-2 mb-2 flex-shrink-0">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-info">
-                <div class="card-body py-1 px-2">
-                    <span class="text-muted" style="font-size: 0.75rem;">Frete: <strong class="text-info">R$ {{ obra.custo_frete|floatformat:2 }}</strong></span>
+                <div class="card-body py-1.5 px-2.5">
+                    <span class="text-muted" style="font-size: 0.8rem;">Frete: <strong class="text-info" style="font-size: 0.9rem;">R$ {{ obra.custo_frete|floatformat:2 }}</strong></span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-warning">
-                <div class="card-body py-1 px-2">
-                    <span class="text-muted" style="font-size: 0.75rem;">Operacional: <strong class="text-warning">R$ {{ obra.custo_operacao|floatformat:2 }}</strong> ({{ dias_trabalho }}d)</span>
+                <div class="card-body py-1.5 px-2.5">
+                    <span class="text-muted" style="font-size: 0.8rem;">Operacional: <strong class="text-warning" style="font-size: 0.9rem;">R$ {{ obra.custo_operacao|floatformat:2 }}</strong> ({{ dias_trabalho }}d)</span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-danger">
-                <div class="card-body py-1 px-2">
-                    <span class="text-muted" style="font-size: 0.75rem;">Total Deslocamento: <strong class="text-danger">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</strong></span>
+                <div class="card-body py-1.5 px-2.5">
+                    <span class="text-muted" style="font-size: 0.8rem;">Total Deslocamento: <strong class="text-danger" style="font-size: 0.9rem;">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</strong></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tabela de Itens Ocupando Exatamente o Espaço Restante Até o Final da Tela -->
     <div class="card shadow-sm border-0 card-tabela-wrapper mb-1">
         <div class="card-header bg-white py-2 flex-shrink-0">
-            <h6 class="fw-bold mb-0" style="font-size: 0.9rem;">Itens da Obra</h6>
+            <h6 class="fw-bold mb-0" style="font-size: 0.95rem;">Itens da Obra</h6>
         </div>
         <div class="table-container-scroll">
-            <table class="table table-striped table-hover align-middle mb-0 table-sm" style="font-size: 0.85rem;">
+            <table class="table table-striped table-hover align-middle mb-0 table-sm">
                 <thead>
                     <tr>
+                        <th style="width: 80px;">ID</th>
                         <th>Código</th>
                         <th>Descrição</th>
                         <th>Qtd</th>
@@ -254,6 +331,7 @@
                 <tbody>
                     {% for item in itens %}
                     <tr>
+                        <td><span class="text-muted fw-semibold">#{{ forloop.counter }}</span></td>
                         <td class="fw-bold">{{ item.codigo_item }}</td>
                         <td>{{ item.descricao }}</td>
                         <td>{{ item.quantidade }}</td>
@@ -262,7 +340,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center py-3 text-muted">Nenhum item encontrado nesta obra.</td>
+                        <td colspan="6" class="text-center py-3 text-muted">Nenhum item encontrado nesta obra.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -272,46 +350,195 @@
 </div>
 {% endwith %}
 
-<!-- Modal Personalizado de Confirmação de Salvamento -->
-<div class="modal fade" id="modalSalvarObra" tabindex="-1" aria-labelledby="modalSalvarObraLabel" aria-hidden="true">
+<div class="modal fade" id="modalConfirmacaoSaida" tabindex="-1" aria-labelledby="modalConfirmacaoSaidaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="background-color: #1a1d24; color: #fff; border: 1px solid #2d323b; border-radius: 8px;">
       <div class="modal-header py-2" style="border-bottom: 1px solid #2d323b;">
-        <h5 class="modal-title fs-6" id="modalSalvarObraLabel">
-          <i class="fa-solid fa-floppy-disk text-success me-2"></i> Confirmar Salvamento
+        <h5 class="modal-title fs-6 text-warning" id="modalConfirmacaoSaidaLabel">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i> Alterações não salvas
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
-      <div class="modal-body py-3" style="color: #cbd5e1; font-size: 0.9rem;">
-        Tem certeza de que deseja salvar as alterações desta obra? Esta ação atualizará os dados definitivos no sistema.
+      <div class="modal-body py-3" style="color: #cbd5e1; font-size: 0.95rem;">
+        Você possui alterações não salvas nesta obra. Se sair agora, os dados modificados serão perdidos. Deseja realmente sair sem salvar?
       </div>
       <div class="modal-footer py-2" style="border-top: 1px solid #2d323b;">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" style="background-color: #2d323b; border: none;">Cancelar</button>
-        <button type="button" id="btnConfirmarSalvar" class="btn btn-sm btn-success" style="background-color: #198754; border: none;">Sim, Salvar</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-color: #495057; color: #adb5bd;">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-danger px-3" id="btnConfirmarSaida">Sim, Sair</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Script de Sincronização de Distância e Confirmação via Modal -->
 <script>
-    function atualizarHiddenDistancia(valor) {
-        const inputHidden = document.getElementById('input-distancia-hidden');
-        if (inputHidden) {
-            inputHidden.value = valor;
-        }
-    }
-
     document.addEventListener("DOMContentLoaded", function() {
-        const btnConfirmar = document.getElementById("btnConfirmarSalvar");
-        if (btnConfirmar) {
-            btnConfirmar.addEventListener("click", function() {
-                const form = document.getElementById("form-salvar");
-                if (form) {
-                    form.submit();
+        let hasUnsavedChanges = false;
+        let targetUrlToNavigate = '';
+
+        const markChanged = () => {
+            hasUnsavedChanges = true;
+        };
+
+        // Monitora qualquer input, select ou textarea da tela
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('change', markChanged);
+            el.addEventListener('input', markChanged);
+        });
+
+        const btnRecalcular = document.getElementById('btnRecalcular');
+        if (btnRecalcular) {
+            btnRecalcular.addEventListener('click', () => {
+                hasUnsavedChanges = false;
+            });
+        }
+
+        const btnSalvar = document.getElementById('btnSalvarPrincipal');
+        if (btnSalvar) {
+            btnSalvar.addEventListener('click', () => {
+                hasUnsavedChanges = false;
+            });
+        }
+
+        // Interceptação direta e blindada no botão Voltar e demais links
+        const btnVoltar = document.getElementById('btnVoltar');
+        if (btnVoltar) {
+            btnVoltar.addEventListener('click', function(e) {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    targetUrlToNavigate = this.getAttribute('href');
+                    
+                    const modalElement = document.getElementById('modalConfirmacaoSaida');
+                    let modalSaida = bootstrap.Modal.getInstance(modalElement);
+                    if (!modalSaida) {
+                        modalSaida = new bootstrap.Modal(modalElement);
+                    }
+                    modalSaida.show();
                 }
             });
         }
+
+        // Tratamento global para outros links de navegação
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link && link.id !== 'btnVoltar' && link.getAttribute('href') && !link.getAttribute('href').startsWith('#') && !link.getAttribute('href').startsWith('javascript')) {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    targetUrlToNavigate = link.getAttribute('href');
+                    
+                    const modalElement = document.getElementById('modalConfirmacaoSaida');
+                    let modalSaida = bootstrap.Modal.getInstance(modalElement);
+                    if (!modalSaida) {
+                        modalSaida = new bootstrap.Modal(modalElement);
+                    }
+                    modalSaida.show();
+                }
+            }
+        }, true);
+
+        const btnConfirmarSaida = document.getElementById('btnConfirmarSaida');
+        if (btnConfirmarSaida) {
+            btnConfirmarSaida.addEventListener('click', function() {
+                hasUnsavedChanges = false;
+                window.location.href = targetUrlToNavigate;
+            });
+        }
+
+        // Barreira nativa do navegador caso tente fechar a aba ou recarregar
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
     });
+
+    function toggleDistancia(select) {
+        const inputDist = document.getElementById('inputDistancia');
+        const infoCapacidade = document.getElementById('infoCapacidadeVeiculo');
+        const selectedOption = select.options[select.selectedIndex];
+        
+        if (select.value) {
+            inputDist.removeAttribute('disabled');
+            inputDist.placeholder = "";
+            const cubagem = selectedOption.getAttribute('data-cubagem') || '0';
+            infoCapacidade.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${cubagem} m³</strong> | Clique em Recalcular para atualizar as viagens.`;
+        } else {
+            inputDist.setAttribute('disabled', 'true');
+            inputDist.value = "";
+            inputDist.placeholder = "Selecione o veículo";
+            infoCapacidade.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.`;
+        }
+    }
+
+    function syncTipoPeso(selectElem) {
+        const hiddenInput = document.getElementById('hiddenTipoPesoCobranca');
+        if (hiddenInput) {
+            hiddenInput.value = selectElem.value;
+        }
+    }
 </script>
+
+<div class="modal fade" id="modalMemorialCalculos" tabindex="-1" aria-labelledby="modalMemorialCalculosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="background-color: #1a1d24; color: #fff; border: 1px solid #2d323b; border-radius: 8px;">
+      <div class="modal-header py-2" style="border-bottom: 1px solid #2d323b;">
+        <h5 class="modal-title fs-6" id="modalMemorialCalculosLabel">
+          Memorial de Cálculos e Fórmulas do Sistema
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body py-3" style="color: #cbd5e1; font-size: 0.9rem;">
+        <p class="text-white fw-bold mb-2">1. Detalhamento de Variáveis e Parâmetros Atuais:</p>
+        <ul class="mb-3 ps-3">
+            <li><strong>Distância de Rota:</strong> {{ valor_distancia|default:"0" }} km (Origem CEP: 78088-800)</li>
+            <li><strong>Veículo Selecionado:</strong> {{ veiculo_selecionado.marca_modelo|default:"Não especificado" }}</li>
+            <li><strong>Placa:</strong> {{ veiculo_selecionado.placa|default:"N/A" }}</li>
+            <li><strong>Capacidade Volumétrica:</strong> {{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³</li>
+            <li><strong>Viagens Necessárias:</strong> {{ viagens_necessarias|default:"1" }} viagem(ns)</li>
+            <li><strong>Cubagem Opcional Ativada:</strong> {% if veiculo_selecionado and obra.calcular_cubagem or veiculo_selecionado and calcular_cubagem == 'on' %}Sim ({{ cubagem_total }} m³){% else %}Não{% endif %}</li>
+            {% if requer_escolha_peso %}
+            <li><strong>Peso Cubado Calculado:</strong> {{ peso_cubado }} kg (Superior ao peso real de {{ peso_total }} kg)</li>
+            {% endif %}
+        </ul>
+
+        <p class="text-white fw-bold mb-2">2. Fórmulas Matemáticas Aplicadas (Controladas no Backend):</p>
+        <div class="p-2.5 rounded mb-3" style="background-color: #111318; border: 1px solid #2d323b;">
+            <p class="mb-1 text-info fw-semibold">• Consumo de Combustível:</p>
+            <p class="mb-2 text-muted font-monospace small">Litros Gastos = (Distância Total Ida e Volta / Consumo do Veículo)</p>
+            
+            <p class="mb-1 text-info fw-semibold">• Dimensionamento de Viagens e Cubagem:</p>
+            <p class="mb-2 text-muted font-monospace small">Cubagem Total (m³) = Soma proporcional do volume tridimensional dos itens empilhados/estruturados</p>
+            <p class="mb-2 text-muted font-monospace small">Peso Cubado (kg) = Cubagem Total × Fator de Conversão de Densidade</p>
+            <p class="mb-2 text-muted font-monospace small">Viagens Necessárias = Arredondar Para Cima (Cubagem Total da Obra / Capacidade Volumétrica do Veículo)</p>
+
+            <p class="mb-1 text-info fw-semibold">• Custo Operacional e Deslocamento:</p>
+            <p class="mb-0 text-muted font-monospace small">Custo Total = Custo Frete + Custo Diárias Operacionais + Custos Extras.</p>
+        </div>
+
+        <p class="text-white fw-bold mb-2">3. Resumo Consolidado da Obra:</p>
+        <div class="table-responsive">
+            <table class="table table-dark table-sm table-bordered mb-0" style="font-size: 0.85rem;">
+                <tbody>
+                    <tr><td>Total de Peças</td><td class="text-end">{{ total_pecas }}</td></tr>
+                    <tr><td>Área Total de Corte</td><td class="text-end">{{ m2_corte_total }} m²</td></tr>
+                    {% if veiculo_selecionado and obra.calcular_cubagem or veiculo_selecionado and calcular_cubagem == 'on' %}
+                    <tr><td>Cubagem Total Calculada</td><td class="text-end text-info fw-semibold">{{ cubagem_total }} m³</td></tr>
+                    {% endif %}
+                    <tr><td>Viagens Estimadas do Veículo</td><td class="text-end text-warning fw-semibold">{{ viagens_necessarias|default:"1" }} viagem(ns)</td></tr>
+                    <tr><td>Peso Bruto / Cubado</td><td class="text-end">{{ peso_total }} kg {% if requer_escolha_peso %}(Cubado: {{ peso_cubado }} kg){% endif %}</td></tr>
+                    <tr><td>Custo de Frete</td><td class="text-end">R$ {{ obra.custo_frete|floatformat:2 }}</td></tr>
+                    <tr><td>Custo Total da Obra</td><td class="text-end fw-bold text-success">R$ {{ custo_geral_obra|floatformat:2 }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+      </div>
+      <div class="modal-footer py-2" style="border-top: 1px solid #2d323b;">
+        <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal" style="background-color: #2d323b; border: none;">Fechar</button>
+        <button type="button" class="btn btn-sm btn-info px-3" onclick="window.print();" style="border: none;"><i class="fa-solid fa-print me-1"></i> Imprimir / Exportar Memorial</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

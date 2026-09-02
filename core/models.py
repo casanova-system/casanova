@@ -26,6 +26,15 @@ class Obra(models.Model):
         max_length=10, decimal_places=2, max_digits=12, default=0.0
     )
 
+    # ADICIONE ESTE CAMPO AQUI:
+    veiculo = models.ForeignKey(
+        'Veiculo',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Veículo Selecionado',
+    )
+
     # Registra qual usuário calculou/salvou este frete (obra)
     usuario = models.ForeignKey(
         User,
@@ -128,7 +137,22 @@ class Veiculo(models.Model):
         max_length=50, blank=True, null=True, verbose_name='Tipo de Combustível'
     )
 
-    # Campos obrigatórios adicionados
+    # Campos de capacidade e dimensões físicos atualizados para o baú
+    litros_tanque = models.DecimalField(
+        max_digits=6, decimal_places=2, blank=True, null=True, verbose_name='Litros do Tanque'
+    )
+    
+    # Dimensões do Baú atualizadas para corresponder ao formulário
+    comprimento_bau = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='Comprimento do Baú (m)'
+    )
+    largura_bau = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='Largura do Baú (m)'
+    )
+    altura_bau = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='Altura do Baú (m)'
+    )
+
     capacidade_volumetrica = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name='Capacidade Volumétrica (m³)'
     )
@@ -151,6 +175,9 @@ class Veiculo(models.Model):
         blank=True,
         verbose_name='Cadastrado por',
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.marca_modelo} - {self.placa}'

@@ -61,6 +61,22 @@
                     <input type="text" class="form-control form-control-sm" value="{{ veiculo.tipo_combustivel|default:'-' }}" disabled>
                 </div>
 
+                <!-- Dimensões do Baú -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Comprimento do Baú (m)</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.comprimento_bau|default:'' }}" disabled>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Largura do Baú (m)</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.largura_bau|default:'' }}" disabled>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">Altura do Baú (m)</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ veiculo.altura_bau|default:'' }}" disabled>
+                </div>
+
                 <!-- Capacidade Volumétrica -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold small">Capacidade Volumétrica (m³)</label>

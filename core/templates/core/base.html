@@ -154,6 +154,24 @@
             overflow: hidden;
         }
 
+        .sidebar-brand-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .brand-casanova {
+            color: #0b3882;
+            font-weight: 900; /* Super grosso */
+        }   
+        [data-bs-theme="dark"] .brand-casanova {
+            color: #ffffff; /* Fica branco no tema escuro para leitura */   
+        }
+        .brand-esquadrias {
+            color: #4da6ff; /* Azul mais claro */
+            font-weight: 300; /* Mais fino / light */
+        }
+
         .sidebar-casanova {
             width: 270px;
             background-color: #ffffff;
@@ -370,13 +388,14 @@
             <!-- Header do Menu com Estilo Corporativo -->
             <div class="sidebar-header-box px-3 py-3 border-bottom d-flex align-items-center justify-content-between">
                 <div class="sidebar-brand-container d-flex align-items-center gap-2 overflow-hidden">
-                    <img src="{% static 'img/logo.png' %}" alt="Casanova Esquadrias" class="sidebar-logo-img">
                     <div class="d-flex flex-column text-truncate hide-on-collapse">
-                        <span class="fw-bold text-truncate" style="font-size: 0.8rem; letter-spacing: 0.3px;">Casanova Esquadrias</span>
+                        <span class="sidebar-brand-text text-truncate">
+                            <span class="brand-casanova">CASANOVA</span> <span class="brand-esquadrias">ESQUADRIAS</span>
+                        </span>
                         <span class="text-muted" style="font-size: 0.62rem;">Enterprise System Beta.0.0</span>
                     </div>
                 </div>
-
+            
                 <button class="btn btn-sm btn-outline-secondary border-0 text-secondary p-1" id="toggleSidebarBtn" title="Expandir/Recolher Menu">
                     <i class="fa-solid fa-bars fs-6"></i>
                 </button>

@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from ..models import ItemVidro, Obra
+from ..models import ItemVidro, Obra, Veiculo
 from ..services import calcular_precificacao_operacao, processar_excel_relatorio
 
 
@@ -90,6 +90,26 @@ def detalhe_obra_temp(request):
     if not temp_obra_data:
         return redirect("upload_pdf")
 
+    calcular_cubagem_param = request.GET.get('calcular_cubagem') or request.POST.get('calcular_cubagem')
+    faz_cubagem = True if calcular_cubagem_param == 'on' else False
+
+    veiculos_cadastrados = Veiculo.objects.all()
+    veiculo_id = request.GET.get('veiculo_id') or request.POST.get('veiculo_id')
+    veiculo_selecionado = Veiculo.objects.filter(pk=veiculo_id).first() if veiculo_id else None
+
+    m2_total_temp = float(temp_obra_data['m2_total'])
+    # Cubagem calculada com base na área total (m²) e espessura média de 6 cm (0.06 metros)
+    if veiculo_selecionado and faz_cubagem:
+        cubagem_calc = round(m2_total_temp * 0.06, 4)
+    else:
+        cubagem_calc = 0.0
+
+    viagens_calc = 1
+    if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
+        cap_v = float(veiculo_selecionado.capacidade_volumetrica)
+        if cap_v > 0 and cubagem_calc > 0:
+            viagens_calc = max(1, math.ceil(cubagem_calc / cap_v))
+
     if request.method == "POST" and request.POST.get("acao") == "salvar":
         try:
             disco = shutil.disk_usage("C:\\" if os.name == "nt" else "/")
@@ -108,20 +128,25 @@ def detalhe_obra_temp(request):
         except ValueError:
             dist_km = float(temp_obra_data['distancia_km'])
 
-        res = calcular_precificacao_operacao(dist_km, float(temp_obra_data['m2_total']))
+        res = calcular_precificacao_operacao(dist_km, m2_total_temp)
+        
+        f_frete = float(res["custo_frete"]) * viagens_calc
+        f_operacao = float(res["custo_operacao"]) * viagens_calc
+        f_total = f_frete + f_operacao
 
         obra = Obra(
             codigo=temp_obra_data['codigo'],
             nome=temp_obra_data['nome'],
             cliente=temp_obra_data['cliente'],
             total_pecas=temp_obra_data['total_pecas'],
-            m2_total=Decimal(temp_obra_data['m2_total']),
+            m2_total=Decimal(str(m2_total_temp)),
             peso_total=Decimal(temp_obra_data['peso_total']),
             distancia_km=dist_km,
-            custo_frete=Decimal(str(res["custo_frete"])),
-            custo_operacao=Decimal(str(res["custo_operacao"])),
-            custo_total_deslocamento=Decimal(str(res["custo_total_deslocamento"])),
+            custo_frete=Decimal(str(f_frete)),
+            custo_operacao=Decimal(str(f_operacao)),
+            custo_total_deslocamento=Decimal(str(f_total)),
             usuario=request.user,
+            veiculo=veiculo_selecionado,
         )
         obra.save()
         
@@ -152,19 +177,23 @@ def detalhe_obra_temp(request):
     except ValueError:
         dist_km = float(temp_obra_data['distancia_km'])
 
-    res = calcular_precificacao_operacao(dist_km, float(temp_obra_data['m2_total']))
+    res = calcular_precificacao_operacao(dist_km, m2_total_temp)
+    
+    f_frete = float(res["custo_frete"]) * viagens_calc
+    f_operacao = float(res["custo_operacao"]) * viagens_calc
+    f_total = f_frete + f_operacao
 
     obra = Obra(
         codigo=temp_obra_data['codigo'],
         nome=temp_obra_data['nome'],
         cliente=temp_obra_data['cliente'],
         total_pecas=temp_obra_data['total_pecas'],
-        m2_total=Decimal(temp_obra_data['m2_total']),
+        m2_total=Decimal(str(m2_total_temp)),
         peso_total=Decimal(temp_obra_data['peso_total']),
         distancia_km=dist_km,
-        custo_frete=Decimal(str(res["custo_frete"])),
-        custo_operacao=Decimal(str(res["custo_operacao"])),
-        custo_total_deslocamento=Decimal(str(res["custo_total_deslocamento"])),
+        custo_frete=Decimal(str(f_frete)),
+        custo_operacao=Decimal(str(f_operacao)),
+        custo_total_deslocamento=Decimal(str(f_total)),
     )
     
     itens = [
@@ -184,7 +213,14 @@ def detalhe_obra_temp(request):
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0)
+    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_calc
+
+    cubagem_total = cubagem_calc
+    peso_cubado = round(cubagem_total * 300, 2)
+    peso_real_val = float(peso_total)
+    requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
+
+    viagens_necessarias = viagens_calc
 
     parametros_calculo = {
         "media_hospedagem": 120.00,
@@ -205,6 +241,13 @@ def detalhe_obra_temp(request):
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
         "distancia_km": dist_km,
+        "calcular_cubagem": "on" if faz_cubagem else "off",
+        "cubagem_total": cubagem_total,
+        "peso_cubado": peso_cubado,
+        "requer_escolha_peso": requer_escolha_peso,
+        "veiculos_cadastrados": veiculos_cadastrados,
+        "veiculo_selecionado": veiculo_selecionado,
+        "viagens_necessarias": viagens_necessarias,
         "is_temp": True,
         "is_read_only": False,
         "is_edit": False,
@@ -222,10 +265,32 @@ def detalhe_obra(request, pk):
     peso_total = sum(item.peso_kg for item in itens)
     custo_total_materiais = sum(item.custo_total for item in itens)
 
+    calcular_cubagem_param = request.GET.get('calcular_cubagem')
+    faz_cubagem = True if calcular_cubagem_param == 'on' else getattr(obra, 'calcular_cubagem', False)
+
+    veiculos_cadastrados = Veiculo.objects.all()
+    veiculo_selecionado = getattr(obra, 'veiculo', None)
+    
+    if veiculo_selecionado and faz_cubagem:
+        cubagem_total = round(float(m2_corte_total) * 0.06, 4)
+    else:
+        cubagem_total = 0.0
+
+    peso_cubado = round(cubagem_total * 300, 2)
+    peso_real_val = float(peso_total)
+    requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
+
+    viagens_necessarias = 1
+    if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
+        cap = float(veiculo_selecionado.capacidade_volumetrica)
+        if cap > 0 and cubagem_total > 0:
+            viagens_necessarias = math.ceil(cubagem_total / cap)
+            viagens_necessarias = max(1, viagens_necessarias)
+
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0)
+    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_necessarias
 
     parametros_calculo = {
         "media_hospedagem": 120.00,
@@ -246,6 +311,13 @@ def detalhe_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
         "distancia_km": float(obra.distancia_km),
+        "calcular_cubagem": "on" if faz_cubagem else "off",
+        "cubagem_total": cubagem_total,
+        "peso_cubado": peso_cubado,
+        "requer_escolha_peso": requer_escolha_peso,
+        "veiculos_cadastrados": veiculos_cadastrados,
+        "veiculo_selecionado": veiculo_selecionado,
+        "viagens_necessarias": viagens_necessarias,
         "is_temp": False,
         "is_read_only": True,
         "is_edit": False,
@@ -262,6 +334,24 @@ def editar_obra(request, pk):
     m2_corte_total = sum(item.m2_corte for item in itens)
     peso_total = sum(item.peso_kg for item in itens)
     custo_total_materiais = sum(item.custo_total for item in itens)
+
+    calcular_cubagem_param = request.GET.get('calcular_cubagem') or request.POST.get('calcular_cubagem')
+    faz_cubagem = True if calcular_cubagem_param == 'on' else getattr(obra, 'calcular_cubagem', False)
+
+    veiculos_cadastrados = Veiculo.objects.all()
+    veiculo_id = request.GET.get('veiculo_id') or request.POST.get('veiculo_id')
+    veiculo_selecionado = Veiculo.objects.filter(pk=veiculo_id).first() if veiculo_id else getattr(obra, 'veiculo', None)
+
+    if veiculo_selecionado and faz_cubagem:
+        cubagem_total_ed = round(float(m2_corte_total) * 0.06, 4)
+    else:
+        cubagem_total_ed = 0.0
+
+    viagens_nec_ed = 1
+    if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
+        cap_v_ed = float(veiculo_selecionado.capacidade_volumetrica)
+        if cap_v_ed > 0 and cubagem_total_ed > 0:
+            viagens_nec_ed = max(1, math.ceil(cubagem_total_ed / cap_v_ed))
 
     if request.method == "POST" and request.POST.get("acao") == "salvar":
         try:
@@ -282,12 +372,21 @@ def editar_obra(request, pk):
             dist_km = float(obra.distancia_km)
 
         res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
+        f_frete = float(res["custo_frete"]) * viagens_nec_ed
+        f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
+        f_total = f_frete + f_operacao
 
         obra.distancia_km = dist_km
-        obra.custo_frete = Decimal(str(res["custo_frete"]))
-        obra.custo_operacao = Decimal(str(res["custo_operacao"]))
-        obra.custo_total_deslocamento = Decimal(str(res["custo_total_deslocamento"]))
+        obra.custo_frete = Decimal(str(f_frete))
+        obra.custo_operacao = Decimal(str(f_operacao))
+        obra.custo_total_deslocamento = Decimal(str(f_total))
         obra.usuario = request.user
+        
+        if veiculo_selecionado:
+            obra.veiculo = veiculo_selecionado
+        else:
+            obra.veiculo = None
+
         obra.save()
 
         messages.success(request, "Obra atualizada com sucesso!")
@@ -302,16 +401,25 @@ def editar_obra(request, pk):
         dist_km = float(obra.distancia_km)
 
     res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
+    f_frete = float(res["custo_frete"]) * viagens_nec_ed
+    f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
+    f_total = f_frete + f_operacao
 
     obra.distancia_km = dist_km
-    obra.custo_frete = Decimal(str(res["custo_frete"]))
-    obra.custo_operacao = Decimal(str(res["custo_operacao"]))
-    obra.custo_total_deslocamento = Decimal(str(res["custo_total_deslocamento"]))
+    obra.custo_frete = Decimal(str(f_frete))
+    obra.custo_operacao = Decimal(str(f_operacao))
+    obra.custo_total_deslocamento = Decimal(str(f_total))
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0)
+    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_nec_ed
+
+    cubagem_total = cubagem_total_ed
+    peso_cubado = round(cubagem_total * 300, 2)
+    peso_real_val = float(peso_total)
+    requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
+    viagens_necessarias = viagens_nec_ed
 
     parametros_calculo = {
         "media_hospedagem": 453.00,
@@ -332,6 +440,13 @@ def editar_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
         "distancia_km": dist_km,
+        "calcular_cubagem": "on" if faz_cubagem else "off",
+        "cubagem_total": cubagem_total,
+        "peso_cubado": peso_cubado,
+        "requer_escolha_peso": requer_escolha_peso,
+        "veiculos_cadastrados": veiculos_cadastrados,
+        "veiculo_selecionado": veiculo_selecionado,
+        "viagens_necessarias": viagens_necessarias,
         "is_temp": False,
         "is_read_only": False,
         "is_edit": True,

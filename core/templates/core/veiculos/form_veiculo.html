@@ -51,7 +51,7 @@
                     <!-- Chassi -->
                     <div class="col-md-8">
                         <label for="chassi" class="form-label fw-semibold small">Chassi</label>
-                        <input type="text" class="form-control form-control-sm" id="chassi" name="chassi" value="{{ veiculo.chassi|default:'' }}" placeholder="Número do chassi">
+                        <input type="text" class="form-control form-control-sm" id="chassi" name="chassi" value="{{ veiculo.chassi|default_if_none:'' }}" placeholder="Número do chassi">
                     </div>
 
                     <!-- Marca / Modelo -->
@@ -63,13 +63,13 @@
                     <!-- Ano de Fabricação -->
                     <div class="col-md-3">
                         <label for="ano_fabricacao" class="form-label fw-semibold small">Ano de Fabricação <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control form-control-sm" id="ano_fabricacao" name="ano_fabricacao" value="{{ veiculo.ano_fabricacao }}" required placeholder="Ex: 2026">
+                        <input type="number" class="form-control form-control-sm" id="ano_fabricacao" name="ano_fabricacao" value="{{ veiculo.ano_fabricacao|default_if_none:'' }}" required placeholder="Ex: 2026">
                     </div>
 
                     <!-- Cor -->
                     <div class="col-md-3">
                         <label for="cor" class="form-label fw-semibold small">Cor</label>
-                        <input type="text" class="form-control form-control-sm" id="cor" name="cor" value="{{ veiculo.cor|default:'' }}" placeholder="Ex: Prata">
+                        <input type="text" class="form-control form-control-sm" id="cor" name="cor" value="{{ veiculo.cor|default_if_none:'' }}" placeholder="Ex: Prata">
                     </div>
 
                     <!-- Tipo de Combustível -->
@@ -84,23 +84,47 @@
                             <option value="Elétrico" {% if veiculo.tipo_combustivel == "Elétrico" %}selected{% endif %}>Elétrico</option>
                         </select>
                     </div>
+<!--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////-->>
+ <!-- Litros do Tanque -->
+ <div class="col-md-4">
+    <label for="litros_tanque" class="form-label fw-semibold small">Litros do Tanque (L)</label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="litros_tanque" name="litros_tanque" value="{% if veiculo.litros_tanque %}{{ veiculo.litros_tanque|stringformat:'s' }}{% endif %}" placeholder="Ex: 80.00">
+</div>
 
-                    <!-- Capacidade Volumétrica -->
-                    <div class="col-md-4">
-                        <label for="capacidade_volumetrica" class="form-label fw-semibold small">Capacidade Volumétrica (m³) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" id="capacidade_volumetrica" name="capacidade_volumetrica" value="{{ veiculo.capacidade_volumetrica }}" required placeholder="Ex: 12.50">
-                    </div>
+<!-- Consumo de Combustível -->
+<div class="col-md-4">
+    <label for="consumo_combustivel" class="form-label fw-semibold small">Consumo de Combustível (km/L) <span class="text-danger">*</span></label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="consumo_combustivel" name="consumo_combustivel" value="{% if veiculo.consumo_combustivel %}{{ veiculo.consumo_combustivel|stringformat:'s' }}{% endif %}" required placeholder="Ex: 8.50">
+</div>
 
-                    <!-- Consumo de Combustível -->
-                    <div class="col-md-4">
-                        <label for="consumo_combustivel" class="form-label fw-semibold small">Consumo de Combustível (km/L) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" id="consumo_combustivel" name="consumo_combustivel" value="{{ veiculo.consumo_combustivel }}" required placeholder="Ex: 8.50">
-                    </div>
+<!-- Largura do Baú -->
+<div class="col-md-3">
+    <label for="largura_bau" class="form-label fw-semibold small">Largura do Baú (m)</label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="largura_bau" name="largura_bau" value="{% if veiculo.largura_bau %}{{ veiculo.largura_bau|stringformat:'s' }}{% endif %}" placeholder="Ex: 2.40">
+</div>
 
+<!-- Altura do Baú -->
+<div class="col-md-3">
+    <label for="altura_bau" class="form-label fw-semibold small">Altura do Baú (m)</label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="altura_bau" name="altura_bau" value="{% if veiculo.altura_bau %}{{ veiculo.altura_bau|stringformat:'s' }}{% endif %}" placeholder="Ex: 2.60">
+</div>
+
+<!-- Comprimento do Baú -->
+<div class="col-md-3">
+    <label for="comprimento_bau" class="form-label fw-semibold small">Comprimento do Baú (m)</label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="comprimento_bau" name="comprimento_bau" value="{% if veiculo.comprimento_bau %}{{ veiculo.comprimento_bau|stringformat:'s' }}{% endif %}" placeholder="Ex: 6.00">
+</div>
+
+<!-- Capacidade Volumétrica -->
+<div class="col-md-3">
+    <label for="capacidade_volumetrica" class="form-label fw-semibold small">Capacidade Volumétrica (m³) <span class="text-danger">*</span></label>
+    <input type="number" step="0.01" class="form-control form-control-sm" id="capacidade_volumetrica" name="capacidade_volumetrica" value="{% if veiculo.capacidade_volumetrica %}{{ veiculo.capacidade_volumetrica|stringformat:'s' }}{% endif %}" required placeholder="Ex: 12.50">
+</div>
+<!--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
                     <!-- Especificação Técnica -->
                     <div class="col-12">
                         <label for="especificacao_tecnica" class="form-label fw-semibold small">Especificação Técnica</label>
-                        <textarea class="form-control form-control-sm" id="especificacao_tecnica" name="especificacao_tecnica" rows="3" placeholder="Detalhes técnicos adicionais sobre o veículo...">{{ veiculo.especificacao_tecnica|default:'' }}</textarea>
+                        <textarea class="form-control form-control-sm" id="especificacao_tecnica" name="especificacao_tecnica" rows="3" placeholder="Detalhes técnicos adicionais sobre o veículo...">{{ veiculo.especificacao_tecnica|default_if_none:'' }}</textarea>
                     </div>
 
                     <!-- Ativo -->
@@ -156,7 +180,7 @@
         }
     });
 
-    // Faz o alerta sumir sozinho após 4 segundos
+    // Faz o alerta sumir sozinho após 2 segundos
     setTimeout(function() {
         let alertas = document.querySelectorAll('.alert');
         alertas.forEach(function(alerta) {
