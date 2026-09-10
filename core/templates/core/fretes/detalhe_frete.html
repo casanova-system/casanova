@@ -118,7 +118,7 @@
 {% with valor_distancia=distancia_km|default:obra.distancia_km %}
 <div class="container-fluid app-layout-flex">
     
-    <!-- Bloco de Alerta Crítico Customizado (Exibe a mensagem formatada na tela de detalhes) -->
+    <!-- Bloco de Alerta Crítico Customizado -->
     {% if erro_custos_obrigatorios %}
     <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between mb-2 flex-shrink-0 shadow-sm" role="alert" style="background-color: rgba(220, 53, 69, 0.15); border: 1px solid #dc3545; color: #ff8080; border-radius: 8px; font-size: 0.9rem;">
         <div class="d-flex align-items-center gap-2">
@@ -366,18 +366,18 @@
 
 <div class="modal fade" id="modalConfirmacaoSaida" tabindex="-1" aria-labelledby="modalConfirmacaoSaidaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background-color: #1a1d24; color: #fff; border: 1px solid #2d323b; border-radius: 8px;">
-      <div class="modal-header py-2" style="border-bottom: 1px solid #2d323b;">
+    <div class="modal-content" style="background-color: var(--bs-body-bg); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-radius: 8px;">
+      <div class="modal-header py-2" style="border-bottom: 1px solid var(--bs-border-color);">
         <h5 class="modal-title fs-6 text-warning" id="modalConfirmacaoSaidaLabel">
           <i class="fa-solid fa-triangle-exclamation me-1"></i> Alterações não salvas
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
-      <div class="modal-body py-3" style="color: #cbd5e1; font-size: 0.95rem;">
+      <div class="modal-body py-3" style="font-size: 0.95rem;">
         Você possui alterações não salvas nesta obra. Se sair agora, os dados modificados serão perdidos. Deseja realmente sair sem salvar?
       </div>
-      <div class="modal-footer py-2" style="border-top: 1px solid #2d323b;">
-        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-color: #495057; color: #adb5bd;">Cancelar</button>
+      <div class="modal-footer py-2" style="border-top: 1px solid var(--bs-border-color);">
+        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-sm btn-danger px-3" id="btnConfirmarSaida">Sim, Sair</button>
       </div>
     </div>
@@ -490,50 +490,51 @@
     }
 </script>
 
+<!-- Memorial de Cálculos Modal (Tema adaptativo integrado com as variáveis Bootstrap) -->
 <div class="modal fade" id="modalMemorialCalculos" tabindex="-1" aria-labelledby="modalMemorialCalculosLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content" style="background-color: #121418; color: #f8f9fa; border: 1px solid #2d323b; border-radius: 12px; box-shadow: 0 1rem 3rem rgba(0,0,0,0.5);">
+    <div class="modal-content bg-body text-body border shadow-lg" style="border-radius: 12px;">
       
       <!-- Cabeçalho do Modal -->
-      <div class="modal-header py-3 px-4" style="border-bottom: 1px solid #2d323b; background-color: #181b22;">
+      <div class="modal-header py-3 px-4 border-bottom bg-body-tertiary">
         <div>
-          <h5 class="modal-title fw-bold text-white mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
+          <h5 class="modal-title fw-bold mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
             <i class="fa-solid fa-calculator text-primary me-2"></i> Memorial de Cálculo Analítico — Custos e Logística
           </h5>
           <small class="text-muted">Detalhamento completo das fórmulas, parâmetros e valores aplicados pelo sistema para esta obra.</small>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
 
       <!-- Corpo do Modal -->
-      <div class="modal-body p-4" style="background-color: #121418; font-size: 0.9rem;">
+      <div class="modal-body p-4" style="font-size: 0.9rem;">
         
-        <!-- Seção 1: Resumo Parametrizado (Cards Limpos) -->
+        <!-- Seção 1: Resumo Parametrizado -->
         <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">1. Parâmetros de Entrada da Rota e Carga</h6>
         <div class="row g-3 mb-4">
           <div class="col-md-3">
-            <div class="p-3 rounded border border-secondary border-opacity-25" style="background-color: #181b22;">
+            <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Distância (Ida / Rota)</span>
-              <strong class="text-white fs-6">{{ valor_distancia|default:"0" }} km</strong>
+              <strong class="fs-6">{{ valor_distancia|default:"0" }} km</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Origem: 78088-800</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="p-3 rounded border border-secondary border-opacity-25" style="background-color: #181b22;">
+            <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Veículo / Frota</span>
-              <strong class="text-white fs-6 text-truncate d-block">{{ veiculo_selecionado.marca_modelo|default:"Não especificado" }}</strong>
+              <strong class="fs-6 text-truncate d-block">{{ veiculo_selecionado.marca_modelo|default:"Não especificado" }}</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Placa: {{ veiculo_selecionado.placa|default:"N/A" }}</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="p-3 rounded border border-secondary border-opacity-25" style="background-color: #181b22;">
+            <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Capacidade Volumétrica</span>
               <strong class="text-info fs-6">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Viagens: {{ viagens_necessarias|default:"1" }} estimada(s)</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="p-3 rounded border border-secondary border-opacity-25" style="background-color: #181b22;">
+            <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Carga Processada</span>
               <strong class="text-warning fs-6">{{ peso_total }} kg</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado ({{ peso_cubado }} kg){% else %}Base: Peso Real{% endif %}</small>
@@ -541,13 +542,13 @@
           </div>
         </div>
 
-        <!-- Seção 2: Composição de Custos Detalhada com Valores Reais das Variáveis -->
+        <!-- Seção 2: Composição de Custos Detalhada -->
         <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">2. Composição e Fórmulas de Custos (Frete, Operacional e Deslocamento)</h6>
         
         <div class="row g-3 mb-4">
           <!-- Card Frete -->
           <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-primary border-opacity-25 d-flex flex-column justify-content-between" style="background-color: #181b22;">
+            <div class="h-100 p-3 rounded border border-primary border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold text-primary"><i class="fa-solid fa-truck-fast me-1"></i> Custo de Frete</span>
@@ -556,7 +557,7 @@
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
                   Calculado multiplicando a quilometragem total, o fator de viagens e a tarifa quilométrica cadastrada.
                 </p>
-                <div class="mb-3 p-2 rounded bg-dark border border-secondary border-opacity-25 text-white small">
+                <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted">Tarifa Km (Veículo):</span>
                     <strong class="text-info">R$ {% if tarifa_km %}{{ tarifa_km }}{% elif veiculo_selecionado and veiculo_selecionado.custo_km %}{{ veiculo_selecionado.custo_km }}{% else %}0,00{% endif %}</strong>
@@ -567,7 +568,7 @@
                   </div>
                 </div>
               </div>
-              <div class="p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-10 font-monospace text-muted" style="font-size: 0.75rem;">
+              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
                 Fórmula: Distância Total × Tarifa Km × Viagens
               </div>
             </div>
@@ -575,7 +576,7 @@
 
           <!-- Card Operacional -->
           <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-warning border-opacity-25 d-flex flex-column justify-content-between" style="background-color: #181b22;">
+            <div class="h-100 p-3 rounded border border-warning border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold text-warning"><i class="fa-solid fa-clock me-1"></i> Custo Operacional</span>
@@ -584,18 +585,18 @@
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
                   Refere-se ao total proporcional baseado nos dias de trabalho estimados e no valor unitário da diária operacional.
                 </p>
-                <div class="mb-3 p-2 rounded bg-dark border border-secondary border-opacity-25 text-white small">
+                <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted">Valor da Diária:</span>
                     <strong class="text-warning">R$ {{ valor_diaria_operacional|default:"0,00" }}</strong>
                   </div>
                   <div class="d-flex justify-content-between">
                     <span class="text-muted">Dias de Trabalho:</span>
-                    <strong class="text-white">{{ dias_trabalho }} dia(s)</strong>
+                    <strong class="text-body">{{ dias_trabalho }} dia(s)</strong>
                   </div>
                 </div>
               </div>
-              <div class="p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-10 font-monospace text-muted" style="font-size: 0.75rem;">
+              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
                 Fórmula: Dias de Trabalho × Valor Diária Operacional
               </div>
             </div>
@@ -603,28 +604,28 @@
 
           <!-- Card Deslocamento / Geral -->
           <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-danger border-opacity-25 d-flex flex-column justify-content-between" style="background-color: #181b22;">
+            <div class="h-100 p-3 rounded border border-danger border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="fw-bold text-danger"><i class="fa-solid fa-route me-1"></i> Custo Total Deslocamento</span>
+                  <span class="fw-bold text-danger"><i class="fa-solid fa-route me-1"></i> Total Deslocamento</span>
                   <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</span>
                 </div>
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
-                  Soma total agregada correspondente à logística de transporte e despesas de deslocamento da equipe.
+                  Soma consolidada dos custos de translado, diárias e despesas logísticas envolvidas no atendimento da obra.
                 </p>
-                <div class="mb-3 p-2 rounded bg-dark border border-secondary border-opacity-25 text-white small">
+                <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Frete:</span>
-                    <strong class="text-info">R$ {{ obra.custo_frete|floatformat:2 }}</strong>
+                    <span class="text-muted">Custo Geral Final:</span>
+                    <strong class="text-success">R$ {{ custo_geral_obra|floatformat:2 }}</strong>
                   </div>
                   <div class="d-flex justify-content-between">
-                    <span class="text-muted">Operacional:</span>
-                    <strong class="text-warning">R$ {{ obra.custo_operacao|floatformat:2 }}</strong>
+                    <span class="text-muted">Status do Cálculo:</span>
+                    <strong class="text-success">Consolidado</strong>
                   </div>
                 </div>
               </div>
-              <div class="p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-10 font-monospace text-muted" style="font-size: 0.75rem;">
-                Fórmula: Custo de Frete + Custo Operacional
+              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
+                Fórmula: Custo Frete + Custo Operacional
               </div>
             </div>
           </div>
@@ -632,11 +633,13 @@
 
       </div>
 
-      <!-- Rodapé do Modal -->
-      <div class="modal-footer py-2 px-4" style="border-top: 1px solid #2d323b; background-color: #181b22;">
-        <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
-      </div>
-    </div>
+<!-- Rodapé do Modal -->
+<div class="modal-footer py-2 px-4 border-top bg-body-tertiary">
+    <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
   </div>
+  
 </div>
+</div>
+</div>
+
 {% endblock %}

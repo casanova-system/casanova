@@ -1,34 +1,38 @@
 {% extends 'core/base.html' %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="card shadow-sm border-0 bg-dark text-light p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Detalhes do Custo #{{ custo.id }}</h2>
-            <a href="{% url 'lista_custo' %}" class="btn btn-secondary btn-sm">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar
-            </a>
-        </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border bg-body text-body p-4" style="border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold mb-0" style="font-size: 1.4rem;">Detalhes do Custo #{{ custo.id }}</h2>
+                    <a href="{% url 'lista_custo' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+                    </a>
+                </div>
 
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="text-muted small">Tipo</label>
-                <p class="fs-5 fw-bold mb-0 text-white">{{ custo.tipo|default:"Não informado" }}</p>
-            </div>
-            
-            <div class="col-md-6">
-                <label class="text-muted small">Valor</label>
-                <p class="fs-5 text-success fw-bold mb-0">R$ {{ custo.valor|default:"0,00" }}</p>
-            </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Tipo</label>
+                        <p class="fs-5 fw-bold mb-0">{{ custo.tipo|default:"Não informado" }}</p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="text-muted small">Valor</label>
+                        <p class="fs-5 text-success fw-bold mb-0">R$ {{ custo.valor|default:"0,00" }}</p>
+                    </div>
 
-            <!-- Adicionado o campo de data de criação também na tela de detalhes -->
-            <div class="col-md-6">
-                <label class="text-muted small">Data de Cadastro</label>
-                <p class="fs-5 text-white mb-0">{{ custo.data_criacao|date:"d/m/Y H:i"|default:"Não informada" }}</p>
-            </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Data de Cadastro</label>
+                        <p class="fs-6 mb-0">{{ custo.data_criacao|date:"d/m/Y H:i"|default:"Não informada" }}</p>
+                    </div>
 
-            <div class="col-12">
-                <label class="text-muted small">Descrição</label>
-                <p class="fs-5 mb-0 text-white">{{ custo.descricao|default:"Sem descrição" }}</p>
+                    <div class="col-12">
+                        <label class="text-muted small">Descrição</label>
+                        <p class="fs-6 mb-0">{{ custo.descricao|default:"Sem descrição" }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

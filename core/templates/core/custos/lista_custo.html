@@ -36,6 +36,17 @@
         </div>
     </div>
 
+    <!-- ALERTA DE CUSTOS OBRIGATÓRIOS (TÍTULO CLARO E TEXTO CINZA) -->
+    <div class="alert alert-warning border shadow-sm d-flex align-items-center mb-4 py-2 px-3" role="alert" style="background-color: rgba(255, 193, 7, 0.08); border-color: #ffc107 !important;">
+        <i class="fa-solid fa-triangle-exclamation fs-5 me-3 text-warning"></i>
+        <div>
+            <span class="fw-bold text-body" style="font-size: 0.88rem;">Atenção: Custos Obrigatórios do Sistema!</span>
+            <p class="mb-0 text-muted" style="font-size: 0.82rem;">
+                 (<strong>Díesel</strong>, <strong>Gasolina</strong>, <strong>Alimentação</strong>, <strong>Hospedagem</strong> e  <strong>Locomoção</strong>)
+            </p>
+        </div>
+    </div>
+
     <!-- Tabela de Custos com a Barra de Busca e Menu de Ordenação Integrados -->
     <div class="card shadow-lg">
         <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3">
@@ -171,10 +182,10 @@
     </div>
 </div>
 
-<!-- Script para sumir com o alerta automaticamente -->
+<!-- Script para sumir com os alertas temporários do sistema -->
 <script>
     setTimeout(function() {
-        let alertas = document.querySelectorAll('.alert');
+        let alertas = document.querySelectorAll('.alert:not(.alert-warning)');
         alertas.forEach(function(alerta) {
             let bsAlert = new bootstrap.Alert(alerta);
             bsAlert.close();

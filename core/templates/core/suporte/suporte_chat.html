@@ -1,0 +1,168 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Cabeçalho da Página de Suporte -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-body fw-bold mb-1" style="font-size: 1.5rem;">Central de Suporte</h2>
+            <p class="text-muted small mb-0">Tire suas dúvidas com nosso assistente virtual especializado.</p>
+        </div>
+        <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+            <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
+        </a>
+    </div>
+
+    <!-- Área de introdução / Dica -->
+    <div class="card shadow-lg border-0 bg-dark text-light p-4 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="fs-1 text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
+                <i class="fa-solid fa-hard-hat"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1">Precisa de ajuda rápida?</h5>
+                <p class="text-muted mb-0 small">Clique no ícone de chat flutuante no canto inferior direito da tela para abrir o assistente virtual com capacete de trabalhador e escolha uma das perguntas prontas!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- COMPONENTE DO CHAT FLUTUANTE DE SUPORTE    -->
+<!-- ========================================== -->
+
+<!-- Botão Flutuante do Chat -->
+<div id="chat-toggle-btn" class="position-fixed bottom-0 end-0 m-4 shadow-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: #3b82f6; cursor: pointer; z-index: 1050; transition: transform 0.2s ease;" onclick="toggleChat()" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1.0)';">
+    <i class="fa-solid fa-comments text-white fs-4"></i>
+</div>
+
+<!-- Janela do Chat (Modal Flutuante) -->
+<div id="chat-window" class="position-fixed bottom-0 end-0 m-4 shadow-lg rounded-4 overflow-hidden bg-dark border border-secondary d-none flex-column" style="width: 360px; height: 520px; z-index: 1055;">
+    
+    <!-- Cabeçalho do Chat com o Assistente Animado -->
+    <div class="bg-primary bg-opacity-75 p-3 text-white d-flex align-items-center justify-content-between border-bottom border-secondary">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Avatar animado com capacete de trabalhador -->
+            <div class="position-relative bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                <i class="fa-solid fa-hard-hat fs-5"></i>
+                <!-- Ponto verde de online -->
+                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-light rounded-circle" style="width: 12px; height: 12px;"></span>
+            </div>
+            <div>
+                <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">Bocão (Assistente)</h6>
+                <span class="text-white-50" style="font-size: 0.75rem;">Online • Especialista em Obras</span>
+            </div>
+        </div>
+        <button class="btn btn-sm text-white p-1" onclick="toggleChat()" title="Fechar Chat">
+            <i class="fa-solid fa-xmark fs-5"></i>
+        </button>
+    </div>
+
+    <!-- Corpo do Chat (Mensagens) -->
+    <div id="chat-body" class="p-3 flex-grow-1 overflow-auto d-flex flex-column gap-3" style="font-size: 0.85rem; background-color: #121212;">
+        
+        <!-- Mensagem de Boas-Vindas do Assistente -->
+        <div class="d-flex align-items-start gap-2">
+            <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; min-width: 32px;">
+                <i class="fa-solid fa-hard-hat" style="font-size: 0.8rem;"></i>
+            </div>
+            <div class="bg-secondary bg-opacity-25 text-light p-3 rounded-4 rounded-start-0 shadow-sm border border-secondary border-opacity-50">
+                <p class="mb-1 fw-semibold text-warning">E aí, chefe! Firmeza?</p>
+                <p class="mb-2">Sou o assistente virtual da Casanova Esquadrias. Como posso te dar uma força hoje?</p>
+                <span class="text-muted" style="font-size: 0.65rem;">Agora mesmo</span>
+            </div>
+        </div>
+
+        <!-- Bloco de Perguntas Prontas -->
+        <div id="quick-questions" class="d-flex flex-column gap-2 mt-2 ps-4">
+            <span class="text-muted fw-bold" style="font-size: 0.75rem;">ESCOLHA UMA DÚVIDA FREQUENTE:</span>
+            
+            <button class="btn btn-sm btn-outline-warning text-start py-2 px-3 rounded-pill shadow-sm" style="font-size: 0.78rem; border-color: #ffc107;" onclick="enviarPergunta('Como cadastrar um custo de frete?')">
+                <i class="fa-solid fa-truck me-2"></i> Como cadastrar um custo de frete?
+            </button>
+            
+            <button class="btn btn-sm btn-outline-warning text-start py-2 px-3 rounded-pill shadow-sm" style="font-size: 0.78rem; border-color: #ffc107;" onclick="enviarPergunta('Como cadastrar um novo custo?')">
+                <i class="fa-solid fa-coins me-2"></i> Como cadastrar um novo custo?
+            </button>
+
+            <button class="btn btn-sm btn-outline-warning text-start py-2 px-3 rounded-pill shadow-sm" style="font-size: 0.78rem; border-color: #ffc107;" onclick="enviarPergunta('Como cadastrar um novo veículo?')">
+                <i class="fa-solid fa-car me-2"></i> Como cadastrar um novo veículo?
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Rodapé do Chat (Campo de Digitação Falso/Simulado) -->
+    <div class="p-3 bg-dark border-top border-secondary d-flex align-items-center gap-2">
+        <input type="text" id="chat-input" class="form-control form-control-sm bg-black text-light border-secondary" placeholder="Escolha uma opção acima..." disabled style="font-size: 0.8rem;">
+        <button class="btn btn-sm btn-primary px-3" disabled title="Enviar">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+
+</div>
+
+<!-- Script de Controle do Chat e Respostas Automáticas -->
+<script>
+    function toggleChat() {
+        const chatWindow = document.getElementById('chat-window');
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        
+        if (chatWindow.classList.contains('d-none')) {
+            chatWindow.classList.remove('d-none');
+            chatWindow.classList.add('d-flex');
+            chatToggleBtn.style.display = 'none'; // Esconde o botão flutuante quando abre
+        } else {
+            chatWindow.classList.remove('d-flex');
+            chatWindow.classList.add('d-none');
+            chatToggleBtn.style.display = 'flex'; // Mostra o botão novamente
+        }
+    }
+
+    function enviarPergunta(pergunta) {
+        const chatBody = document.getElementById('chat-body');
+        
+        // 1. Adiciona a mensagem do usuário no chat
+        const userMsgHTML = `
+            <div class="d-flex align-items-start gap-2 justify-content-end">
+                <div class="bg-primary text-light p-3 rounded-4 rounded-end-0 shadow-sm">
+                    <p class="mb-0">${pergunta}</p>
+                </div>
+                <div class="bg-primary bg-opacity-25 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; min-width: 32px;">
+                    <i class="fa-solid fa-user" style="font-size: 0.8rem;"></i>
+                </div>
+            </div>
+        `;
+        chatBody.insertAdjacentHTML('beforeend', userMsgHTML);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        // Simula resposta do assistente baseada na escolha
+        setTimeout(() => {
+            let resposta = "";
+            if (pergunta.includes('frete')) {
+                resposta = "Para cadastrar um custo de frete, vá no menu lateral esquerdo em <strong>[001] Custo de Frete</strong>, depois clique no botão azul <strong>+ Novo Frete</strong> no canto superior direito e preencha os dados da obra, cliente e distância!";
+            } else if (pergunta.includes('novo custo')) {
+                resposta = "Para cadastrar um novo custo operacional, acesse <strong>[004] Cadastro Custo</strong> no menu lateral, clique em <strong>Novo Custo</strong> e informe o nome, valor e descrição detalhada.";
+            } else if (pergunta.includes('veículo')) {
+                resposta = "Para gerenciar ou adicionar veículos, clique em <strong>[003] Cadastro Veículo</strong> no menu lateral e preencha as informações da frota.";
+            } else {
+                resposta = "Entendido! Se precisar de mais detalhes sobre o sistema, é só me chamar.";
+            }
+
+            const botMsgHTML = `
+                <div class="d-flex align-items-start gap-2">
+                    <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; min-width: 32px;">
+                        <i class="fa-solid fa-hard-hat" style="font-size: 0.8rem;"></i>
+                    </div>
+                    <div class="bg-secondary bg-opacity-25 text-light p-3 rounded-4 rounded-start-0 shadow-sm border border-secondary border-opacity-50">
+                        <p class="mb-0">${resposta}</p>
+                    </div>
+                </div>
+            `;
+            chatBody.insertAdjacentHTML('beforeend', botMsgHTML);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }, 600);
+    }
+</script>
+{% endcontent %}
