@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+{% load l10n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow bg-dark text-light border-secondary">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4 text-light fw-bold">
+                        {% if custo %}Editar Custo{% else %}Cadastrar Novo Custo{% endif %}
+                    </h3>
+                    
+                    {% if erro %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ erro }}
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" id="formCusto">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-light">Tipo / Categoria:</label>
+                            <input type="text" name="tipo" value="{{ custo.tipo|default:'' }}" class="form-control bg-dark text-light border-secondary campo-navegavel" placeholder="Ex: Combustível, Hospedagem" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light">Descrição:</label>
+                            <input type="text" name="descricao" value="{{ custo.descricao|default:'' }}" class="form-control bg-dark text-light border-secondary campo-navegavel" placeholder="Detalhes do custo" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light">Valor (R$):</label>
+                            <input type="text" id="valorInput" name="valor" value="{{ custo.valor|unlocalize|stringformat:'s' }}" class="form-control bg-dark text-light border-secondary campo-navegavel" placeholder="0,00" required>
+                        </div>
+
+                        <!-- Botões de Ação (Voltar e Salvar) alinhados lado a lado -->
+                        <div class="d-flex justify-content-between align-items-center mt-3 gap-2">
+                            <a href="{% url 'lista_custo' %}" class="btn fw-semibold px-3 shadow-sm border w-50" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: #adb5bd; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#adb5bd';">
+                                <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+                            </a>
+                            <button type="submit" id="btnSalvar" class="btn btn-primary fw-semibold px-3 shadow-sm w-50" style="font-size: 0.85rem;">Salvar Custo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script da Máscara de Moeda e Navegação por Enter -->
+<script>
+    // Máscara de Moeda (0,00)
+    document.getElementById('valorInput').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value === "") {
+            e.target.value = "";
+            return;
+        }
+        value = (parseInt(value) / 100).toFixed(2);
+        value = value.replace('.', ',');
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        e.target.value = value;
+    });
+
+    // Navegar entre os campos apertando Enter
+    const campos = document.querySelectorAll('.campo-navegavel');
+    campos.forEach((campo, index) => {
+        campo.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Evita o envio automático do formulário
+                const proximoCampo = campos[index + 1];
+                if (proximoCampo) {
+                    proximoCampo.focus(); // Vai para o próximo input
+                } else {
+                    document.getElementById('btnSalvar').focus(); // Se for o último input, foca no botão Salvar
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

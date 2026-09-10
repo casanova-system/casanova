@@ -1,4 +1,5 @@
 import json
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -50,6 +51,7 @@ def rotinas_view(request):
     return render(request, "core/rotinas.html")
 
 
+# ADICIONADO DE VOLTA: View genérica da página de gráficos do menu
 @login_required(login_url='login')
 def graficos_view(request):
     return render(request, "core/graficos.html")
@@ -67,24 +69,3 @@ def relatorio_fretes_mes(request):
     exibindo a página correspondente sem quebrar a estrutura existente.
     """
     return render(request, "core/relatorio_fretes_mes.html")
-
-
-@login_required(login_url='login')
-def grafico_custo_frete(request):
-    """
-    View que serializa as obras em formato JSON limpo para consumo direto do Chart.js.
-    """
-    obras_qs = Obra.objects.all().order_by('-id')
-    
-    obras_lista = [
-        {
-            "nome": obra.nome,
-            "custo_total_deslocamento": float(obra.custo_total_deslocamento)
-        }
-        for obra in obras_qs
-    ]
-    
-    context = {
-        "obras_json": json.dumps(obras_lista),
-    }
-    return render(request, "core/grafico_custo_frete.html", context)

@@ -5,7 +5,7 @@ import re
 import urllib.parse
 import urllib.request
 import pdfplumber
-from .models import ItemVidro, Obra
+from .models import ItemVidro, Obra, Custo
 
 CEP_MATRIZ = "78088-800"
 
@@ -53,20 +53,33 @@ def calcular_distancia_automatica(origem_cep, endereco_destino):
 
 
 def calcular_precificacao_operacao(distancia_km, m2_total):
-    """Calcula custos de frete e operação com base nas regras de negócio."""
+    """Calcula custos de frete e operação buscando o parâmetro fixo da tabela Custo no banco de dados."""
+    
+    # Busca o registro fixo do sistema. Se não existir, lança o erro solicitando o cadastro.
+    try:
+        ultimo_custo = Custo.objects.get(fixo=True)
+    except Custo.DoesNotExist:
+        try:
+            # Fallback seguro caso o registro fixo ainda não tenha sido marcado, pega o último criado
+            ultimo_custo = Custo.objects.latest('id')
+        except Custo.DoesNotExist:
+            raise ValueError("Não há custos cadastrados no sistema! Por favor, cadastre os custos operacionais antes de calcular o frete.")
+
     m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
 
-    CONSUMO_DIESEL = 8.0
-    CONSUMO_GASOLINA = 11.0
-    PRECO_DIESEL = 7.55 #
-    PRECO_GASOLINA = 7.99#
+    # ATENÇÃO: Ajuste os nomes dos atributos abaixo se forem diferentes na sua tabela Custo do models.py
+    CONSUMO_DIESEL = float(getattr(ultimo_custo, 'consumo_medio_caminhao', 3.5)) 
+    CONSUMO_GASOLINA = float(getattr(ultimo_custo, 'consumo_medio_carro', 10.0))
+    
+    PRECO_DIESEL = float(ultimo_custo.preco_diesel) if hasattr(ultimo_custo, 'preco_diesel') else float(ultimo_custo.valor)
+    PRECO_GASOLINA = float(ultimo_custo.preco_gasolina) if hasattr(ultimo_custo, 'preco_gasolina') else float(ultimo_custo.valor)
 
-    TARIFA_PEDAGIO_CARRO = 12.00
-    TARIFA_PEDAGIO_CAMINHAO = 65.00
+    TARIFA_PEDAGIO_CARRO = float(getattr(ultimo_custo, 'valor_pedagio_carro', 10.0))
+    TARIFA_PEDAGIO_CAMINHAO = float(getattr(ultimo_custo, 'valor_pedagio_caminhao', 20.0))
 
-    CUSTO_DIARIA_HOTEL = 453.00#
-    CUSTO_ALIMENTACAO = 50.00
-    CUSTO_AUX_DESLOCAMENTO = 50.00
+    CUSTO_DIARIA_HOTEL = float(getattr(ultimo_custo, 'valor_diaria_hotel', 120.0))
+    CUSTO_ALIMENTACAO = float(getattr(ultimo_custo, 'valor_alimentacao_diaria', 50.0))
+    CUSTO_AUX_DESLOCAMENTO = float(getattr(ultimo_custo, 'valor_auxilio_deslocamento', 30.0))
 
     visitas_supervisao = math.ceil(m2_real / 300.0) * 3
     deslocamentos_instalacao = math.ceil(m2_real / 300.0)
@@ -154,7 +167,7 @@ def converter_para_decimal(valor):
 
 
 def validar_codigo_esquadria(codigo):
-    """Filtra e valida se o código extraído segue o padrão real de esquadria (ex: J03_1, PF4, OF5)."""
+    """Filtra e valida se o código extraído segue o padrão real de esquadria."""
     if not codigo:
         return False
     
@@ -206,7 +219,6 @@ def processar_excel_relatorio(file_stream):
             if match_end:
                 endereco_cliente = match_end.group(1).strip()
 
-    # BLOQUEIO DE DUPLICIDADE: Impede processar se a obra já estiver salva no banco
     if Obra.objects.filter(codigo=codigo_obra).exists():
         raise ValueError(f"A obra com o código {codigo_obra} já existe no sistema e não pode ser duplicada!")
 
@@ -240,7 +252,6 @@ def processar_excel_relatorio(file_stream):
 
     dist_calc = calcular_distancia_automatica(CEP_MATRIZ, endereco_cliente or cliente)
 
-    # Cria o objeto Obra apenas em memória (sem .save() ou update_or_create)
     obra_obj = Obra(
         codigo=codigo_obra,
         nome=nome_obra,
@@ -275,7 +286,6 @@ def processar_excel_relatorio(file_stream):
                     raw_qtd = partes[1] if len(partes) > 1 else "1"
                     qtd = int(float(raw_qtd.replace(",", ".")))
 
-                    # CORREÇÃO DA MÊTRAGEM (Blindada com try-except individual)
                     m2 = Decimal("0.00")
                     for parte in partes[2:]:
                         try:
@@ -286,7 +296,6 @@ def processar_excel_relatorio(file_stream):
                         except Exception:
                             continue
 
-                    # Tratamento seguro para o peso
                     peso = Decimal("0.00")
                     if len(partes) > 4:
                         try:
@@ -294,7 +303,6 @@ def processar_excel_relatorio(file_stream):
                         except Exception:
                             peso = Decimal("0.00")
 
-                    # Cria o item em memória vinculado à obra (sem .create() no banco)
                     item_obj = ItemVidro(
                         obra=obra_obj,
                         codigo_item=col0_val,
@@ -325,12 +333,11 @@ def processar_excel_relatorio(file_stream):
         if itens_processados
         else m2_total_geral
     )
+    
     res = calcular_precificacao_operacao(obra_obj.distancia_km, float(m2_total))
 
     obra_obj.custo_frete = res["custo_frete"]
     obra_obj.custo_operacao = res["custo_operacao"]
     obra_obj.custo_total_deslocamento = res["custo_total_deslocamento"]
-    
-    # ATENÇÃO: Nenhum .save() é executado aqui! Tudo fica guardado na memória.
 
     return obra_obj, itens_processados

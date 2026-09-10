@@ -18,54 +18,65 @@
         </div>
     {% endif %}
 
-    <!-- Cabeçalho da Página -->
+    <!-- Cabeçalho com o Título e os Botões de Ação -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Cadastro de Veículos</h2>
+            <h2 class="text-body fw-bold mb-1" style="font-size: 1.5rem;">Cadastro de Veículos</h2>
             <p class="text-muted small mb-0">Gerencie a frota de veículos, placas, chassi e especificações.</p>
         </div>
         <div class="d-flex gap-2">
+            <!-- BOTÃO NOVO VEÍCULO PADRONIZADO -->
             <a href="{% url 'cadastrar_veiculo' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6';">
                 <i class="fa-solid fa-plus me-1"></i> Novo Veículo
             </a>
+
             <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
                 <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
             </a>
         </div>
     </div>
 
-    <!-- Caixa da Tabela / Card Principal -->
-    <div class="card shadow-sm rounded-3">
-        <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;">
-                <i class="fa-solid fa-list text-primary"></i> Veículos Cadastrados
-            </div>
+    <!-- Tabela de Veículos com a Barra de Busca e Menu de Ordenação Integrados -->
+    <div class="card shadow-lg">
+        <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3">
+            <h5 class="mb-0 fw-bold text-nowrap" style="font-size: 0.9rem;"><i class="fa-solid fa-list me-2 text-primary"></i> Veículos Cadastrados</h5>
             
-            <div class="d-flex align-items-center gap-2" style="max-width: 450px; width: 100%;">
-                <form method="GET" class="d-flex gap-2 flex-grow-1">
-                    {% if request.GET.ordenar %}
-                        <input type="hidden" name="ordenar" value="{{ request.GET.ordenar }}">
+            <!-- Agrupador da Busca e Ordenação -->
+            <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto justify-content-end">
+                <!-- Barra de Pesquisa Integrada -->
+                <form method="GET" action="" class="d-flex align-items-center gap-2" style="max-width: 350px;">
+                    {% if ordenacao_atual %}
+                        <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
                     {% endif %}
+
                     <div class="input-group input-group-sm">
-                        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control" placeholder="Buscar por placa, modelo...">
+                        <input type="text" name="q" class="form-control" value="{{ request.GET.q|default:'' }}" placeholder="Buscar por placa, modelo...">
                         <button class="btn btn-primary px-3" type="submit">
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    {% if request.GET.q %}
+                        <a href="{% url 'lista_veiculos' %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtro">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    {% endif %}
                 </form>
 
+                <!-- MENU DE ORDENAÇÃO CUSTOMIZADO -->
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
-                        <i class="fa-solid fa-arrow-down-wide-short"></i> Ordenar
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
+                        <i class="fas fa-sort me-1"></i> Ordenar
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                        <li><h6 class="dropdown-header text-uppercase fs-7 fw-bold">Ordenar por</h6></li>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 230px;">
+                        <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'recentes' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=recentes"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'antigos' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=antigos"><i class="fas fa-clock me-2"></i> Mais Antigos</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=recentes"><i class="fa-solid fa-clock-rotate-left"></i> Mais Recentes</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=antigos"><i class="fa-solid fa-clock"></i> Mais Antigos</a></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'modelo_asc' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=modelo_asc"><i class="fas fa-sort-alpha-down me-2"></i> Modelo (A-Z)</a></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'modelo_desc' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=modelo_desc"><i class="fas fa-sort-alpha-up me-2"></i> Modelo (Z-A)</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=modelo_asc"><i class="fa-solid fa-arrow-down-a-z"></i> Modelo (A-Z)</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=modelo_desc"><i class="fa-solid fa-arrow-up-z-a"></i> Modelo (Z-A)</a></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'id_asc' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=id_asc"><i class="fas fa-hashtag me-2"></i> Código (Crescente)</a></li>
+                        <li><a class="dropdown-item {% if request.GET.ordenar == 'id_desc' %}active{% endif %}" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}ordenar=id_desc"><i class="fas fa-hashtag me-2"></i> Código (Decrescente)</a></li>
                     </ul>
                 </div>
             </div>
@@ -95,13 +106,15 @@
                             <td><span class="text-muted">{{ veiculo.tipo_combustivel|default:"-" }}</span></td>
                             <td><span class="text-muted">{% if veiculo.capacidade_volumetrica %}{{ veiculo.capacidade_volumetrica }} m³{% else %}-{% endif %}</span></td>
                             <td><span class="text-muted">{% if veiculo.consumo_combustivel %}{{ veiculo.consumo_combustivel }} km/L{% else %}-{% endif %}</span></td>
+                            
+                            <!-- Usuário padronizado idêntico ao restante do sistema -->
                             <td>
                                 {% if veiculo.usuario_responsavel %}
-                                    <span class="badge text-white px-2 py-1" style="background-color: #0d6efd; font-size: 0.75rem; font-weight: 500;">
-                                        <i class="fa-solid fa-user me-1" style="font-size: 0.65rem;"></i> {{ veiculo.usuario_responsavel.username }}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 text-truncate" style="max-width: 100px;" title="{{ veiculo.usuario_responsavel.username }}">
+                                        <i class="fa-solid fa-user me-1"></i> {{ veiculo.usuario_responsavel.username }}
                                     </span>
                                 {% else %}
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted small">Não registrado</span>
                                 {% endif %}
                             </td>
                             
@@ -159,7 +172,7 @@
     </div>
 </div>
 
-<!-- Script para sumir com o alerta automaticamente após 4 segundos -->
+<!-- Script para sumir com o alerta automaticamente -->
 <script>
     setTimeout(function() {
         let alertas = document.querySelectorAll('.alert');

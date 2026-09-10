@@ -7,44 +7,57 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from ..models import ItemVidro, Obra, Veiculo
+from ..models import ItemVidro, Obra, Veiculo, Custo
 from ..services import calcular_precificacao_operacao, processar_excel_relatorio
 
-
-@login_required(login_url='login')
-def lista_obras(request):
-    query = request.GET.get('q', '')
-    sort_by = request.GET.get('sort', '-id')
-    
-    sort_options = {
-        'recentes': '-id',
-        'antigos': 'id',
-        'nome_asc': 'nome',
-        'nome_desc': '-nome',
-        'cliente_asc': 'cliente',
-        'cliente_desc': '-cliente',
-        'codigo_asc': 'codigo',
-        'codigo_desc': '-codigo',
+def obter_parametros_custo_do_banco(request):
+    tipos_desejados = {
+        "media_hospedagem": ["hospedagem", "hotel"],
+        "media_gasolina": ["gasolina"],
+        "media_diesel": ["diesel"],
+        "media_alimentacao": ["alimentacao", "alimentação", "refeicao"],
+        "media_locomocao": ["locomocao", "locomoção", "transporte", "uber", "taxi"]
     }
     
-    django_order = sort_options.get(sort_by, '-id')
-    obras = Obra.objects.all()
-    
-    if query:
-        obras = obras.filter(
-            Q(codigo__icontains=query) | 
-            Q(nome__icontains=query) | 
-            Q(cliente__icontains=query)
-        )
-        
-    obras = obras.order_by(django_order)
-        
-    return render(request, 'core/fretes/lista_frete.html', {
-        "obras": obras, 
-        "query": query, 
-        "current_sort": sort_by
-    })
+    parametros = {}
+    faltando = []
 
+    # Identifica se está em uma tela onde queremos exibir logs e avisos
+    eh_tela_de_detalhe = any(termo in request.path for termo in ["detalhe", "editar", "obra"])
+
+    if eh_tela_de_detalhe:
+        print("\n--- [LOG DE CUSTOS] Verificando integridade (Tela de Detalhes) ---")
+
+    for chave, termos in tipos_desejados.items():
+        custo_obj = None
+        for termo in termos:
+            custo_obj = Custo.objects.filter(
+                Q(tipo__icontains=termo) | Q(descricao__icontains=termo)
+            ).first()
+            if custo_obj:
+                break
+        
+        if custo_obj:
+            parametros[chave] = float(custo_obj.valor)
+            if eh_tela_de_detalhe:
+                print(f" [OK] '{chave}' -> R$ {custo_obj.valor} (Encontrado: {custo_obj.descricao or custo_obj.tipo})")
+        else:
+            faltando.append(chave)
+            parametros[chave] = 0.0
+            if eh_tela_de_detalhe:
+                print(f" [FALHA] '{chave}' -> Não encontrado!")
+
+    if eh_tela_de_detalhe:
+        print("-----------------------------------------------------------\n")
+
+    if faltando and eh_tela_de_detalhe:
+        parametros["_bloqueado"] = True
+        parametros["_faltando_str"] = ", ".join(faltando)
+    else:
+        parametros["_bloqueado"] = False
+        parametros["_faltando_str"] = ""
+
+    return parametros
 
 @login_required(login_url='login')
 def upload_pdf(request):
@@ -98,7 +111,6 @@ def detalhe_obra_temp(request):
     veiculo_selecionado = Veiculo.objects.filter(pk=veiculo_id).first() if veiculo_id else None
 
     m2_total_temp = float(temp_obra_data['m2_total'])
-    # Cubagem calculada com base na área total (m²) e espessura média de 6 cm (0.06 metros)
     if veiculo_selecionado and faz_cubagem:
         cubagem_calc = round(m2_total_temp * 0.06, 4)
     else:
@@ -110,7 +122,31 @@ def detalhe_obra_temp(request):
         if cap_v > 0 and cubagem_calc > 0:
             viagens_calc = max(1, math.ceil(cubagem_calc / cap_v))
 
+    dist_str = request.GET.get("distancia_km") or request.POST.get("distancia_km")
+    if not dist_str:
+        dist_str = str(temp_obra_data['distancia_km'])
+    try:
+        dist_km = float(dist_str.replace(",", "."))
+    except ValueError:
+        dist_km = float(temp_obra_data['distancia_km'])
+
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    if parametros_calculo.get("_bloqueado"):
+        f_frete = 0.0
+        f_operacao = 0.0
+        f_total = 0.0
+    else:
+        res = calcular_precificacao_operacao(dist_km, m2_total_temp)
+        f_frete = float(res["custo_frete"]) * viagens_calc
+        f_operacao = float(res["custo_operacao"]) * viagens_calc
+        f_total = f_frete + f_operacao
+
     if request.method == "POST" and request.POST.get("acao") == "salvar":
+        if parametros_calculo.get("_bloqueado"):
+            messages.error(request, "Não é possível salvar a obra com custos pendentes/zerados.")
+            return redirect("detalhe_obra_temp")
+
         try:
             disco = shutil.disk_usage("C:\\" if os.name == "nt" else "/")
             espaco_livre_mb = disco.free / (1024 * 1024)
@@ -119,20 +155,6 @@ def detalhe_obra_temp(request):
                 return redirect("detalhe_obra_temp")
         except Exception:
             pass
-
-        dist_str = request.POST.get("distancia_km")
-        if not dist_str:
-            dist_str = str(temp_obra_data['distancia_km'])
-        try:
-            dist_km = float(dist_str.replace(",", "."))
-        except ValueError:
-            dist_km = float(temp_obra_data['distancia_km'])
-
-        res = calcular_precificacao_operacao(dist_km, m2_total_temp)
-        
-        f_frete = float(res["custo_frete"]) * viagens_calc
-        f_operacao = float(res["custo_operacao"]) * viagens_calc
-        f_total = f_frete + f_operacao
 
         obra = Obra(
             codigo=temp_obra_data['codigo'],
@@ -168,20 +190,6 @@ def detalhe_obra_temp(request):
             
         messages.success(request, "Obra salva com sucesso!")
         return redirect("lista_obras")
-
-    dist_str = request.GET.get("distancia_km")
-    if not dist_str:
-        dist_str = str(temp_obra_data['distancia_km'])
-    try:
-        dist_km = float(dist_str.replace(",", "."))
-    except ValueError:
-        dist_km = float(temp_obra_data['distancia_km'])
-
-    res = calcular_precificacao_operacao(dist_km, m2_total_temp)
-    
-    f_frete = float(res["custo_frete"]) * viagens_calc
-    f_operacao = float(res["custo_operacao"]) * viagens_calc
-    f_total = f_frete + f_operacao
 
     obra = Obra(
         codigo=temp_obra_data['codigo'],
@@ -219,16 +227,17 @@ def detalhe_obra_temp(request):
     peso_cubado = round(cubagem_total * 300, 2)
     peso_real_val = float(peso_total)
     requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
-
     viagens_necessarias = viagens_calc
 
-    parametros_calculo = {
-        "media_hospedagem": 120.00,
-        "media_gasolina": 5.89,
-        "media_diesel": 6.19,
-        "media_alimentacao": 50.00,
-        "media_locomocao": 30.00,
-    }
+    # Cálculo seguro dos parâmetros auxiliares para o template
+    valor_diaria_operacional = (
+        parametros_calculo.get("media_hospedagem", 0.0) + 
+        parametros_calculo.get("media_alimentacao", 0.0)
+    )
+    if valor_diaria_operacional == 0.0:
+        valor_diaria_operacional = 350.00
+
+    tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
     context = {
         "obra": obra,
@@ -240,6 +249,8 @@ def detalhe_obra_temp(request):
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
+        "tarifa_km": tarifa_km_veiculo,
+        "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
         "calcular_cubagem": "on" if faz_cubagem else "off",
         "cubagem_total": cubagem_total,
@@ -251,6 +262,7 @@ def detalhe_obra_temp(request):
         "is_temp": True,
         "is_read_only": False,
         "is_edit": False,
+        "erro_custos_obrigatorios": parametros_calculo.get("_faltando_str") if parametros_calculo.get("_bloqueado") else None,
     }
     return render(request, "core/fretes/detalhe_frete.html", context)
 
@@ -284,21 +296,29 @@ def detalhe_obra(request, pk):
     if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
         cap = float(veiculo_selecionado.capacidade_volumetrica)
         if cap > 0 and cubagem_total > 0:
-            viagens_necessarias = math.ceil(cubagem_total / cap)
-            viagens_necessarias = max(1, viagens_necessarias)
+            viagens_necessarias = max(1, math.ceil(cubagem_total / cap))
+
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    if parametros_calculo.get("_bloqueado"):
+        obra.custo_frete = Decimal("0.00")
+        obra.custo_operacao = Decimal("0.00")
+        obra.custo_total_deslocamento = Decimal("0.00")
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
     dias_trabalho = math.ceil(m2_real / 15.0) * viagens_necessarias
 
-    parametros_calculo = {
-        "media_hospedagem": 120.00,
-        "media_gasolina": 5.89,
-        "media_diesel": 6.19,
-        "media_alimentacao": 50.00,
-        "media_locomocao": 30.00,
-    }
+    # Cálculo seguro dos parâmetros auxiliares para o template
+    valor_diaria_operacional = (
+        parametros_calculo.get("media_hospedagem", 0.0) + 
+        parametros_calculo.get("media_alimentacao", 0.0)
+    )
+    if valor_diaria_operacional == 0.0:
+        valor_diaria_operacional = 350.00
+
+    tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
     context = {
         "obra": obra,
@@ -310,6 +330,8 @@ def detalhe_obra(request, pk):
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
+        "tarifa_km": tarifa_km_veiculo,
+        "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": float(obra.distancia_km),
         "calcular_cubagem": "on" if faz_cubagem else "off",
         "cubagem_total": cubagem_total,
@@ -321,6 +343,7 @@ def detalhe_obra(request, pk):
         "is_temp": False,
         "is_read_only": True,
         "is_edit": False,
+        "erro_custos_obrigatorios": parametros_calculo.get("_faltando_str") if parametros_calculo.get("_bloqueado") else None,
     }
     return render(request, "core/fretes/detalhe_frete.html", context)
 
@@ -353,7 +376,31 @@ def editar_obra(request, pk):
         if cap_v_ed > 0 and cubagem_total_ed > 0:
             viagens_nec_ed = max(1, math.ceil(cubagem_total_ed / cap_v_ed))
 
+    dist_str = request.GET.get("distancia_km") or request.POST.get("distancia_km")
+    if not dist_str:
+        dist_str = str(obra.distancia_km)
+    try:
+        dist_km = float(dist_str.replace(",", "."))
+    except ValueError:
+        dist_km = float(obra.distancia_km)
+
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    if parametros_calculo.get("_bloqueado"):
+        f_frete = 0.0
+        f_operacao = 0.0
+        f_total = 0.0
+    else:
+        res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
+        f_frete = float(res["custo_frete"]) * viagens_nec_ed
+        f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
+        f_total = f_frete + f_operacao
+
     if request.method == "POST" and request.POST.get("acao") == "salvar":
+        if parametros_calculo.get("_bloqueado"):
+            messages.error(request, "Não é possível salvar a obra com custos pendentes/zerados.")
+            return redirect("editar_obra", pk=obra.pk)
+
         try:
             disco = shutil.disk_usage("C:\\" if os.name == "nt" else "/")
             espaco_livre_mb = disco.free / (1024 * 1024)
@@ -363,47 +410,16 @@ def editar_obra(request, pk):
         except Exception:
             pass
 
-        dist_str = request.POST.get("distancia_km")
-        if not dist_str:
-            dist_str = str(obra.distancia_km)
-        try:
-            dist_km = float(dist_str.replace(",", "."))
-        except ValueError:
-            dist_km = float(obra.distancia_km)
-
-        res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
-        f_frete = float(res["custo_frete"]) * viagens_nec_ed
-        f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
-        f_total = f_frete + f_operacao
-
         obra.distancia_km = dist_km
         obra.custo_frete = Decimal(str(f_frete))
         obra.custo_operacao = Decimal(str(f_operacao))
         obra.custo_total_deslocamento = Decimal(str(f_total))
         obra.usuario = request.user
-        
-        if veiculo_selecionado:
-            obra.veiculo = veiculo_selecionado
-        else:
-            obra.veiculo = None
-
+        obra.veiculo = veiculo_selecionado if veiculo_selecionado else None
         obra.save()
 
         messages.success(request, "Obra atualizada com sucesso!")
         return redirect("lista_obras")
-
-    dist_str = request.GET.get("distancia_km")
-    if not dist_str:
-        dist_str = str(obra.distancia_km)
-    try:
-        dist_km = float(dist_str.replace(",", "."))
-    except ValueError:
-        dist_km = float(obra.distancia_km)
-
-    res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
-    f_frete = float(res["custo_frete"]) * viagens_nec_ed
-    f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
-    f_total = f_frete + f_operacao
 
     obra.distancia_km = dist_km
     obra.custo_frete = Decimal(str(f_frete))
@@ -421,13 +437,15 @@ def editar_obra(request, pk):
     requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
     viagens_necessarias = viagens_nec_ed
 
-    parametros_calculo = {
-        "media_hospedagem": 453.00,
-        "media_gasolina": 7.99,
-        "media_diesel": 7.55,
-        "media_alimentacao": 50.00,
-        "media_locomocao": 50.00,
-    }
+    # Cálculo seguro dos parâmetros auxiliares para o template
+    valor_diaria_operacional = (
+        parametros_calculo.get("media_hospedagem", 0.0) + 
+        parametros_calculo.get("media_alimentacao", 0.0)
+    )
+    if valor_diaria_operacional == 0.0:
+        valor_diaria_operacional = 350.00
+
+    tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
     context = {
         "obra": obra,
@@ -439,6 +457,8 @@ def editar_obra(request, pk):
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
         "parametros": parametros_calculo,
+        "tarifa_km": tarifa_km_veiculo,
+        "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
         "calcular_cubagem": "on" if faz_cubagem else "off",
         "cubagem_total": cubagem_total,
@@ -450,6 +470,7 @@ def editar_obra(request, pk):
         "is_temp": False,
         "is_read_only": False,
         "is_edit": True,
+        "erro_custos_obrigatorios": parametros_calculo.get("_faltando_str") if parametros_calculo.get("_bloqueado") else None,
     }
     return render(request, "core/fretes/detalhe_frete.html", context)
 
@@ -460,3 +481,13 @@ def excluir_obra(request, pk):
     obra.delete()
     messages.success(request, "Registro excluído com sucesso!")
     return redirect("lista_obras")
+
+
+@login_required(login_url='login')
+def lista_obras(request):
+    """View para listar as obras cadastradas."""
+    obras = Obra.objects.filter(usuario=request.user) if hasattr(Obra, 'usuario') else Obra.objects.all()
+    context = {
+        "obras": obras,
+    }
+    return render(request, "core/fretes/lista_frete.html", context)

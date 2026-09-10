@@ -1,6 +1,7 @@
 from datetime import date
 from django.contrib.auth.models import User
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Obra(models.Model):
@@ -26,7 +27,6 @@ class Obra(models.Model):
         max_length=10, decimal_places=2, max_digits=12, default=0.0
     )
 
-    # ADICIONE ESTE CAMPO AQUI:
     veiculo = models.ForeignKey(
         'Veiculo',
         on_delete=models.SET_NULL,
@@ -137,12 +137,10 @@ class Veiculo(models.Model):
         max_length=50, blank=True, null=True, verbose_name='Tipo de Combustível'
     )
 
-    # Campos de capacidade e dimensões físicos atualizados para o baú
     litros_tanque = models.DecimalField(
         max_digits=6, decimal_places=2, blank=True, null=True, verbose_name='Litros do Tanque'
     )
     
-    # Dimensões do Baú atualizadas para corresponder ao formulário
     comprimento_bau = models.DecimalField(
         max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='Comprimento do Baú (m)'
     )
@@ -181,3 +179,41 @@ class Veiculo(models.Model):
 
     def __str__(self):
         return f'{self.marca_modelo} - {self.placa}'
+
+# ==========================================
+# MODELO: Custo
+# ==========================================
+class Custo(models.Model):
+    tipo = models.CharField(max_length=100, verbose_name='Tipo de Custo')
+    descricao = models.CharField(max_length=255, verbose_name='Descrição')
+    valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor (R$)')
+    
+    # Campo adicionado para proteger registros essenciais contra exclusão
+    fixo = models.BooleanField(default=False, verbose_name='Custo Fixo do Sistema')
+
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name='Data de Criação')    
+
+    usuario_responsavel = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Cadastrado por',
+    )
+
+    # Propriedade para compatibilidade com a chamada {{ c.usuario }} no template
+    @property
+    def usuario(self):
+        return self.usuario_responsavel
+
+    def delete(self, *args, **kwargs):
+        # Bloqueia a exclusão se o registro estiver marcado como fixo
+        if self.fixo:
+            raise ValidationError("Este custo é fixo do sistema e não pode ser excluído. Você pode apenas editá-lo.")
+        super().delete(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.tipo} - {self.valor}'
