@@ -67,6 +67,38 @@
         padding: 0.45rem 0.75rem !important;
     }
 
+    /* Cursor personalizado para campos desabilitados */
+    #inputDistancia:disabled, #inputDesconto:disabled {
+        cursor: not-allowed !important;
+    }
+
+    /* Balão de aviso flutuante acima do cursor */
+    #custom-tooltip-aviso {
+        position: absolute;
+        display: none;
+        background-color: #1e293b;
+        color: #f8fafc;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.3);
+        z-index: 99999;
+        border: 1px solid #334155;
+        pointer-events: none;
+        white-space: nowrap;
+        transition: opacity 0.15s ease-in-out;
+    }
+    #custom-tooltip-aviso::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 20px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #1e293b transparent transparent transparent;
+    }
+
     .card-tabela-wrapper {
         display: flex;
         flex-direction: column;
@@ -116,6 +148,11 @@
     }
 </style>
 
+<!-- Elemento flutuante de aviso -->
+<div id="custom-tooltip-aviso">
+    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Preencha o veículo e a distância primeiro!
+</div>
+
 {% with valor_distancia=distancia_km|default:obra.distancia_km %}
 <div class="container-fluid app-layout-flex">
     
@@ -159,9 +196,7 @@
         {% if veiculo_selecionado %}
         <input type="hidden" name="veiculo_id" value="{{ veiculo_selecionado.id }}">
         {% endif %}
-        {% if calcular_cubagem == 'on' %}
-        <input type="hidden" name="calcular_cubagem" value="on">
-        {% endif %}
+        <input type="hidden" name="calcular_cubagem" id="hiddenSalvarCubagem" value="{% if calcular_cubagem == 'on' or obra.calcular_cubagem %}on{% endif %}">
         <input type="hidden" name="distancia_km" value="{{ valor_distancia }}">
         <input type="hidden" name="tipo_peso_cobranca" id="hiddenTipoPesoCobranca" value="cubado">
         <input type="hidden" name="percentual_desconto" value="{{ percentual_desconto|default:0 }}">
@@ -171,14 +206,14 @@
     {% if is_temp or is_edit %}
     <div class="card shadow-sm border-0 mb-2 bg-light flex-shrink-0">
         <div class="card-body py-2 px-3">
-            <form id="form-recalcular" method="GET" class="row g-2 align-items-end">
+            <form id="form-recalcular" method="GET" class="row g-2 align-items-end" onsubmit="return validarRecalculo(event)">
                 <div class="col-md-3">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">CEP Origem:</label>
                     <input type="text" class="form-control form-control-sm" value="78088-800" disabled>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Distância (KM):</label>
-                    <input type="number" step="0.1" name="distancia_km" id="inputDistancia" class="form-control form-control-sm" value="{{ valor_distancia|default:'' }}" {% if not veiculo_selecionado %}disabled placeholder="Selecione o veículo"{% endif %}>
+                    <input type="number" step="0.1" name="distancia_km" id="inputDistancia" class="form-control form-control-sm" value="{{ valor_distancia|default:'' }}" oninput="verificarDistanciaPreenchida()" {% if not veiculo_selecionado %}disabled placeholder="Selecione o veículo"{% endif %}>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Veículo / Frota:</label>
@@ -193,16 +228,23 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Desconto Frete (%):</label>
-                    <input type="number" step="0.01" min="0" max="100" name="percentual_desconto" id="inputDesconto" class="form-control form-control-sm" value="{{ percentual_desconto|default:0 }}">
-                </div>
-                <div class="col-md-1 d-flex align-items-center">
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="calcular_cubagem" id="checkCubagem" {% if calcular_cubagem == 'on' or obra.calcular_cubagem %}checked{% endif %}>
-                        <label class="form-check-label small fw-bold" for="checkCubagem" style="font-size: 0.75rem;" title="Ativar cálculo de cubagem opcional">Cubagem</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" step="0.01" min="0" max="100" name="percentual_desconto" id="inputDesconto" class="form-control form-control-sm" value="{{ percentual_desconto|default:0 }}" {% if not valor_distancia or not veiculo_selecionado %}disabled placeholder="Calcule o frete"{% endif %}>
+                        <span class="input-group-text bg-body text-body" style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
                 <div class="col-md-1">
-                    <button type="submit" id="btnRecalcular" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border" style="background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff'; this.style.borderColor='#1d4ed8';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6';">Recalcular</button>
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Cubagem:</label>
+                    <!-- Checkbox oculto original para submissão correta no form GET -->
+                    <input type="checkbox" name="calcular_cubagem" id="checkCubagem" class="d-none" {% if calcular_cubagem == 'on' or obra.calcular_cubagem %}checked{% endif %}>
+                    
+                    <!-- Botão de alternância estilizado alinhado com o Recalcular -->
+                    <button type="button" id="btnToggleCubagem" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border d-flex align-items-center justify-content-center gap-1" onclick="alternarCubagem()" style="font-size: 0.85rem; transition: all 0.2s ease-in-out;">
+                        <i class="fa-solid fa-cube"></i> <span id="txtStatusCubagem">{% if calcular_cubagem == 'on' or obra.calcular_cubagem %}Ativo{% else %}Inativo{% endif %}</span>
+                    </button>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" id="btnRecalcular" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border" style="background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="if(!this.disabled){this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff'; this.style.borderColor='#1d4ed8';}" onmouseout="if(!this.disabled){this.style.backgroundColor='transparent'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6';}">Recalcular</button>
                 </div>
                 
                 <div class="col-12 mt-1">
@@ -410,10 +452,47 @@
                 let attrDecimals = el.getAttribute('data-decimals');
                 let decimals = attrDecimals ? parseInt(attrDecimals) : defaultDecimals;
                 
-                // Arredonda usando toFixed para cortar as dízimas infinitas indesejadas (ex: .99999997 vira .57)
                 let fixedVal = Number(val.toFixed(decimals));
-                
                 el.textContent = fixedVal.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            }
+        });
+
+        // Inicializa o estilo visual do botão de cubagem
+        atualizarEstiloBotaoCubagem();
+
+        // Executa a verificação inicial do botão Recalcular e Desconto
+        verificarDistanciaPreenchida();
+
+        // Lógica do tooltip/balão flutuante acima do cursor quando clicar no input desabilitado
+        const inputDist = document.getElementById('inputDistancia');
+        const inputDesconto = document.getElementById('inputDesconto');
+        const tooltipAviso = document.getElementById('custom-tooltip-aviso');
+
+        [inputDist, inputDesconto].forEach(el => {
+            if (el) {
+                el.addEventListener('mousemove', function(e) {
+                    if (el.hasAttribute('disabled')) {
+                        tooltipAviso.style.display = 'block';
+                        tooltipAviso.style.left = (e.pageX + 10) + 'px';
+                        tooltipAviso.style.top = (e.pageY - 45) + 'px';
+                    }
+                });
+
+                el.addEventListener('mouseleave', function() {
+                    tooltipAviso.style.display = 'none';
+                });
+
+                el.addEventListener('click', function(e) {
+                    if (el.hasAttribute('disabled')) {
+                        tooltipAviso.style.display = 'block';
+                        tooltipAviso.style.left = (e.pageX + 10) + 'px';
+                        tooltipAviso.style.top = (e.pageY - 45) + 'px';
+                        
+                        setTimeout(() => {
+                            tooltipAviso.style.display = 'none';
+                        }, 3000);
+                    }
+                });
             }
         });
 
@@ -425,8 +504,10 @@
         };
 
         document.querySelectorAll('input, select, textarea').forEach(el => {
-            el.addEventListener('change', markChanged);
-            el.addEventListener('input', markChanged);
+            if (el.id !== 'inputDistancia' && el.id !== 'inputDesconto' && el.id !== 'checkCubagem') {
+                el.addEventListener('change', markChanged);
+                el.addEventListener('input', markChanged);
+            }
         });
 
         const btnRecalcular = document.getElementById('btnRecalcular');
@@ -495,22 +576,113 @@
         });
     });
 
+    function alternarCubagem() {
+        const checkbox = document.getElementById('checkCubagem');
+        const hiddenSalvar = document.getElementById('hiddenSalvarCubagem');
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            if (hiddenSalvar) {
+                hiddenSalvar.value = checkbox.checked ? 'on' : '';
+            }
+            atualizarEstiloBotaoCubagem();
+            
+            // Marca alteração pendente
+            const event = new Event('change', { bubbles: true });
+            checkbox.dispatchEvent(event);
+        }
+    }
+
+    function atualizarEstiloBotaoCubagem() {
+        const checkbox = document.getElementById('checkCubagem');
+        const btn = document.getElementById('btnToggleCubagem');
+        const txt = document.getElementById('txtStatusCubagem');
+        
+        if (!checkbox || !btn || !txt) return;
+
+        if (checkbox.checked) {
+            txt.textContent = "Ativo";
+            btn.style.backgroundColor = '#0ea5e9';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#0ea5e9';
+        } else {
+            txt.textContent = "Inativo";
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = '#6c757d';
+            btn.style.borderColor = '#6c757d';
+        }
+    }
+
     function toggleDistancia(select) {
         const inputDist = document.getElementById('inputDistancia');
+        const inputDesconto = document.getElementById('inputDesconto');
         const infoCapacidade = document.getElementById('infoCapacidadeVeiculo');
+        const tooltipAviso = document.getElementById('custom-tooltip-aviso');
         const selectedOption = select.options[select.selectedIndex];
         
         if (select.value) {
             inputDist.removeAttribute('disabled');
             inputDist.placeholder = "";
+            tooltipAviso.style.display = 'none';
             const cubagem = selectedOption.getAttribute('data-cubagem') || '0';
             infoCapacidade.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${cubagem} m³</strong> | Clique em Recalcular para atualizar as viagens.`;
         } else {
             inputDist.setAttribute('disabled', 'true');
             inputDist.value = "";
             inputDist.placeholder = "Selecione o veículo";
+            inputDesconto.setAttribute('disabled', 'true');
+            inputDesconto.value = "0";
+            inputDesconto.placeholder = "Calcule o frete";
             infoCapacidade.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.`;
         }
+        verificarDistanciaPreenchida();
+    }
+
+    function verificarDistanciaPreenchida() {
+        const inputDist = document.getElementById('inputDistancia');
+        const inputDesconto = document.getElementById('inputDesconto');
+        const btnRecalcular = document.getElementById('btnRecalcular');
+        
+        if (!btnRecalcular) return;
+
+        const valorKm = inputDist.value.trim();
+        const estaDesabilitado = inputDist.hasAttribute('disabled');
+
+        if (estaDesabilitado || valorKm === "" || parseFloat(valorKm) <= 0) {
+            btnRecalcular.setAttribute('disabled', 'true');
+            btnRecalcular.style.opacity = '0.5';
+            btnRecalcular.style.cursor = 'not-allowed';
+            btnRecalcular.style.backgroundColor = 'transparent';
+            btnRecalcular.style.color = '#6c757d';
+            btnRecalcular.style.borderColor = '#6c757d !important';
+
+            if (inputDesconto) {
+                inputDesconto.setAttribute('disabled', 'true');
+                inputDesconto.placeholder = "Calcule o frete";
+            }
+        } else {
+            btnRecalcular.removeAttribute('disabled');
+            btnRecalcular.style.opacity = '1';
+            btnRecalcular.style.cursor = 'pointer';
+            btnRecalcular.style.backgroundColor = 'transparent';
+            btnRecalcular.style.color = '#3b82f6';
+            btnRecalcular.style.borderColor = '#3b82f6';
+
+            if (inputDesconto) {
+                inputDesconto.removeAttribute('disabled');
+                inputDesconto.placeholder = "";
+            }
+        }
+    }
+
+    function validarRecalculo(event) {
+        const inputDist = document.getElementById('inputDistancia');
+        const valorKm = inputDist.value.trim();
+        if (inputDist.hasAttribute('disabled') || valorKm === "" || parseFloat(valorKm) <= 0) {
+            event.preventDefault();
+            alert("Informe a distância em KM antes de recalcular o frete.");
+            return false;
+        }
+        return true;
     }
 
     function syncTipoPeso(selectElem) {
