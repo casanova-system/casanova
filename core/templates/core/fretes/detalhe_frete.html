@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load l10n %}
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -118,7 +119,6 @@
 {% with valor_distancia=distancia_km|default:obra.distancia_km %}
 <div class="container-fluid app-layout-flex">
     
-    <!-- Bloco de Alerta Crítico Customizado -->
     {% if erro_custos_obrigatorios %}
     <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between mb-2 flex-shrink-0 shadow-sm" role="alert" style="background-color: rgba(220, 53, 69, 0.15); border: 1px solid #dc3545; color: #ff8080; border-radius: 8px; font-size: 0.9rem;">
         <div class="d-flex align-items-center gap-2">
@@ -164,7 +164,6 @@
         {% endif %}
         <input type="hidden" name="distancia_km" value="{{ valor_distancia }}">
         <input type="hidden" name="tipo_peso_cobranca" id="hiddenTipoPesoCobranca" value="cubado">
-        <!-- Correção aplicada abaixo (Uso do |default seguro) -->
         <input type="hidden" name="percentual_desconto" value="{{ percentual_desconto|default:0 }}">
     </form>
     {% endif %}
@@ -255,13 +254,13 @@
                 <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
                 <div>
                     <span class="fw-bold">Atenção: Esta carga ocupa mais espaço no caminhão do que pesa na balança!</span>
-                    <p class="mb-0 text-muted-custom" style="font-size: 0.85rem;">Os vidros são leves ({{ peso_total }} kg), mais ocupam bastante volume no baú (equivalente a {{ peso_cubado }} kg). Selecione qual peso deseja usar para o cálculo:</p>
+                    <p class="mb-0 text-muted-custom" style="font-size: 0.85rem;">Os vidros são leves (<span class="fmt-num" data-decimals="2">{{ peso_total|unlocalize }}</span> kg), mas ocupam bastante volume no baú (equivalente a <span class="fmt-num" data-decimals="2">{{ peso_cubado|unlocalize }}</span> kg). Selecione qual peso deseja usar para o cálculo:</p>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <select class="form-select form-select-sm border-warning" id="tipo_peso_cobranca" name="tipo_peso_cobranca" style="width: 240px; font-size: 0.85rem;" onchange="syncTipoPeso(this)">
-                    <option value="cubado" {% if tipo_peso_cobranca == 'cubado' or not tipo_peso_cobranca %}selected{% endif %}>Peso Cubado ({{ peso_cubado }} kg)</option>
-                    <option value="real" {% if tipo_peso_cobranca == 'real' %}selected{% endif %}>Peso Real ({{ peso_total }} kg)</option>
+                    <option value="cubado" {% if tipo_peso_cobranca == 'cubado' or not tipo_peso_cobranca %}selected{% endif %}>Peso Cubado (<span class="fmt-num" data-decimals="2">{{ peso_cubado|unlocalize }}</span> kg)</option>
+                    <option value="real" {% if tipo_peso_cobranca == 'real' %}selected{% endif %}>Peso Real (<span class="fmt-num" data-decimals="2">{{ peso_total|unlocalize }}</span> kg)</option>
                 </select>
             </div>
         </div>
@@ -284,10 +283,10 @@
                 <div class="card-body py-1.5 px-3">
                     <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Área Total M² {% if obra.calcular_cubagem or calcular_cubagem == 'on' %}| Cubagem{% endif %}</span>
                     <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">
-                        {{ m2_corte_total }} m² 
+                        <span class="fmt-num" data-decimals="2">{{ m2_corte_total|unlocalize }}</span> m² 
                         {% if veiculo_selecionado and obra.calcular_cubagem or veiculo_selecionado and calcular_cubagem == 'on' %}
                             <span class="badge-cubagem-info ms-1 py-0.5 px-1.5" style="font-size: 0.75rem;">
-                                <i class="fa-solid fa-cube"></i> {{ cubagem_total }} m³
+                                <i class="fa-solid fa-cube"></i> <span class="fmt-num" data-decimals="2">{{ cubagem_total|unlocalize }}</span> m³
                             </span>
                         {% endif %}
                     </h5>
@@ -298,7 +297,7 @@
             <div class="card border-0 shadow-sm bg-dark text-white py-1.5">
                 <div class="card-body py-1.5 px-3">
                     <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Peso Total {% if requer_escolha_peso %}<span class="text-warning" title="Cubado ativo">*</span>{% endif %}</span>
-                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">{{ peso_total }} kg</h5>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;"><span class="fmt-num" data-decimals="2">{{ peso_total|unlocalize }}</span> kg</h5>
                 </div>
             </div>
         </div>
@@ -306,7 +305,7 @@
             <div class="card border-0 shadow-sm bg-success text-white py-1.5">
                 <div class="card-body py-1.5 px-3">
                     <span class="text-white-50 small d-block" style="font-size: 0.75rem;">Custo Total da Obra</span>
-                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">R$ {{ custo_geral_obra|floatformat:2 }}</h5>
+                    <h5 class="fw-bold mb-0" style="font-size: 1.25rem;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_geral_obra|unlocalize }}</span></h5>
                 </div>
             </div>
         </div>
@@ -318,9 +317,9 @@
                 <div class="card-body py-1.5 px-2.5">
                     <span class="text-muted" style="font-size: 0.8rem;">
                         Frete: 
-                        <strong class="text-info" style="font-size: 0.9rem;">R$ {{ obra.custo_frete|floatformat:2 }}</strong>
+                        <strong class="text-info" style="font-size: 0.9rem;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_frete|unlocalize }}</span></strong>
                         {% if obra.percentual_desconto and obra.percentual_desconto > 0 %}
-                            <span class="badge bg-danger text-white ms-1" style="font-size: 0.7rem;">-{{ obra.percentual_desconto }}% desc.</span>
+                            <span class="badge bg-danger text-white ms-1" style="font-size: 0.7rem;">-<span class="fmt-num" data-decimals="2">{{ obra.percentual_desconto|unlocalize }}</span>% desc.</span>
                         {% endif %}
                     </span>
                 </div>
@@ -329,14 +328,14 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-warning">
                 <div class="card-body py-1.5 px-2.5">
-                    <span class="text-muted" style="font-size: 0.8rem;">Operacional: <strong class="text-warning" style="font-size: 0.9rem;">R$ {{ obra.custo_operacao|floatformat:2 }}</strong> ({{ dias_trabalho }}d)</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Operacional: <strong class="text-warning" style="font-size: 0.9rem;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_operacao|unlocalize }}</span></strong> ({{ dias_trabalho }}d)</span>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-danger">
                 <div class="card-body py-1.5 px-2.5">
-                    <span class="text-muted" style="font-size: 0.8rem;">Total de Deslocamento: <strong class="text-danger" style="font-size: 0.9rem;">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</strong></span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Total de Deslocamento: <strong class="text-danger" style="font-size: 0.9rem;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_total_deslocamento|unlocalize }}</span></strong></span>
                 </div>
             </div>
         </div>
@@ -364,9 +363,9 @@
                         <td><span class="text-muted fw-semibold">#{{ forloop.counter }}</span></td>
                         <td class="fw-bold">{{ item.codigo_item }}</td>
                         <td>{{ item.descricao }}</td>
-                        <td>{{ item.quantidade }}</td>
-                        <td>{{ item.m2_corte }}</td>
-                        <td>{{ item.peso_kg }}</td>
+                        <td><span class="fmt-num" data-decimals="2">{{ item.quantidade|unlocalize }}</span></td>
+                        <td><span class="fmt-num" data-decimals="2">{{ item.m2_corte|unlocalize }}</span></td>
+                        <td><span class="fmt-num" data-decimals="3">{{ item.peso_kg|unlocalize }}</span></td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -402,6 +401,22 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Formata os números de forma limpa corrigindo o arredondamento de ponto flutuante do JavaScript
+        document.querySelectorAll('.fmt-moeda, .fmt-num').forEach(el => {
+            let rawText = el.textContent.trim().replace(',', '.');
+            let val = parseFloat(rawText);
+            if (!isNaN(val)) {
+                let defaultDecimals = el.classList.contains('fmt-moeda') ? 2 : 2;
+                let attrDecimals = el.getAttribute('data-decimals');
+                let decimals = attrDecimals ? parseInt(attrDecimals) : defaultDecimals;
+                
+                // Arredonda usando toFixed para cortar as dízimas infinitas indesejadas (ex: .99999997 vira .57)
+                let fixedVal = Number(val.toFixed(decimals));
+                
+                el.textContent = fixedVal.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            }
+        });
+
         let hasUnsavedChanges = false;
         let targetUrlToNavigate = '';
 
@@ -506,12 +521,11 @@
     }
 </script>
 
-<!-- Memorial de Cálculos Modal (Tema adaptativo integrado com as variáveis Bootstrap) -->
+<!-- Memorial de Cálculos Modal -->
 <div class="modal fade" id="modalMemorialCalculos" tabindex="-1" aria-labelledby="modalMemorialCalculosLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content bg-body text-body border shadow-lg" style="border-radius: 12px;">
       
-      <!-- Cabeçalho do Modal -->
       <div class="modal-header py-3 px-4 border-bottom bg-body-tertiary">
         <div>
           <h5 class="modal-title fw-bold mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
@@ -522,16 +536,14 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
 
-      <!-- Corpo do Modal -->
       <div class="modal-body p-4" style="font-size: 0.9rem;">
         
-        <!-- Seção 1: Resumo Parametrizado -->
         <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">1. Parâmetros de Entrada da Rota e Carga</h6>
         <div class="row g-3 mb-4">
           <div class="col-md-3">
             <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Distância (Ida / Rota)</span>
-              <strong class="fs-6">{{ valor_distancia|default:"0" }} km</strong>
+              <strong class="fs-6"><span class="fmt-num" data-decimals="1">{{ valor_distancia|default:"0"|unlocalize }}</span> km</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Origem: 78088-800</small>
             </div>
           </div>
@@ -545,30 +557,28 @@
           <div class="col-md-3">
             <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Capacidade Volumétrica</span>
-              <strong class="text-info fs-6">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³</strong>
+              <strong class="text-info fs-6"><span class="fmt-num" data-decimals="2">{{ veiculo_selecionado.capacidade_volumetrica|default:"0"|unlocalize }}</span> m³</strong>
               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Viagens: {{ viagens_necessarias|default:"1" }} estimada(s)</small>
             </div>
           </div>
           <div class="col-md-3">
             <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Carga Processada</span>
-              <strong class="text-warning fs-6">{{ peso_total }} kg</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado ({{ peso_cubado }} kg)[cite: 1]{% else %}Base: Peso Real{% endif %}</small>
+              <strong class="text-warning fs-6"><span class="fmt-num" data-decimals="2">{{ peso_total|unlocalize }}</span> kg</strong>
+              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado (<span class="fmt-num" data-decimals="2">{{ peso_cubado|unlocalize }}</span> kg){% else %}Base: Peso Real{% endif %}</small>
             </div>
           </div>
         </div>
 
-        <!-- Seção 2: Composição de Custos Detalhada -->
         <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">2. Composição e Fórmulas de Custos (Frete, Operacional e Deslocamento)</h6>
         
         <div class="row g-3 mb-4">
-          <!-- Card Frete -->
           <div class="col-md-4">
             <div class="h-100 p-3 rounded border border-primary border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold text-primary"><i class="fa-solid fa-truck-fast me-1"></i> Custo de Frete</span>
-                  <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">R$ {{ obra.custo_frete|floatformat:2 }}</span>
+                  <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_frete|unlocalize }}</span></span>
                 </div>
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
                   Calculado multiplicando a quilometragem total, o fator de viagens e a tarifa quilométrica cadastrada.
@@ -576,7 +586,7 @@
                 <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted">Tarifa Km (Veículo):</span>
-                    <strong class="text-info">R$ {% if tarifa_km %}{{ tarifa_km }}{% elif veiculo_selecionado and veiculo_selecionado.custo_km %}{{ veiculo_selecionado.custo_km }}{% else %}0,00{% endif %}</strong>
+                    <strong class="text-info">R$ <span class="fmt-moeda" data-decimals="2">{% if tarifa_km %}{{ tarifa_km|unlocalize }}{% elif veiculo_selecionado and veiculo_selecionado.custo_km %}{{ veiculo_selecionado.custo_km|unlocalize }}{% else %}0.00{% endif %}</span></strong>
                   </div>
                   <div class="d-flex justify-content-between">
                     <span class="text-muted">Viagens Aplicadas:</span>
@@ -590,13 +600,12 @@
             </div>
           </div>
 
-          <!-- Card Operacional -->
           <div class="col-md-4">
             <div class="h-100 p-3 rounded border border-warning border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold text-warning"><i class="fa-solid fa-clock me-1"></i> Custo Operacional</span>
-                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">R$ {{ obra.custo_operacao|floatformat:2 }}</span>
+                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_operacao|unlocalize }}</span></span>
                 </div>
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
                   Refere-se ao total proporcional baseado nos dias de trabalho estimados e no valor unitário da diária operacional.
@@ -604,7 +613,7 @@
                 <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted">Valor da Diária:</span>
-                    <strong class="text-warning">R$ {{ valor_diaria_operacional|default:"0,00" }}</strong>
+                    <strong class="text-warning">R$ <span class="fmt-moeda" data-decimals="2">{{ valor_diaria_operacional|default:"0.00"|unlocalize }}</span></strong>
                   </div>
                   <div class="d-flex justify-content-between">
                     <span class="text-muted">Dias de Trabalho:</span>
@@ -618,13 +627,12 @@
             </div>
           </div>
 
-          <!-- Card Deslocamento / Geral -->
           <div class="col-md-4">
             <div class="h-100 p-3 rounded border border-danger border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold text-danger"><i class="fa-solid fa-route me-1"></i> Total Deslocamento</span>
-                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</span>
+                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_total_deslocamento|unlocalize }}</span></span>
                 </div>
                 <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
                   Soma consolidada dos custos de translado, diárias e despesas logísticas envolvidas no atendimento da obra.
@@ -632,7 +640,7 @@
                 <div class="mb-3 p-2 rounded border bg-body small">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="text-muted">Custo Geral Final:</span>
-                    <strong class="text-success">R$ {{ custo_geral_obra|floatformat:2 }}</strong>
+                    <strong class="text-success">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_geral_obra|unlocalize }}</span></strong>
                   </div>
                   <div class="d-flex justify-content-between">
                     <span class="text-muted">Status do Cálculo:</span>
@@ -649,13 +657,12 @@
 
       </div>
 
-<!-- Rodapé do Modal -->
-<div class="modal-footer py-2 px-4 border-top bg-body-tertiary">
-    <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+      <div class="modal-footer py-2 px-4 border-top bg-body-tertiary">
+        <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+      </div>
+      
+    </div>
   </div>
-  
-</div>
-</div>
 </div>
 
 {% endblock %}

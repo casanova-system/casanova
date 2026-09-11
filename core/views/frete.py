@@ -12,11 +12,11 @@ from ..services import calcular_precificacao_operacao, processar_excel_relatorio
 
 def obter_parametros_custo_do_banco(request):
     tipos_desejados = {
-        "media_hospedagem": ["hospedagem", "hotel"],
-        "media_gasolina": ["gasolina"],
-        "media_diesel": ["diesel"],
-        "media_alimentacao": ["alimentacao", "alimentação", "refeicao"],
-        "media_locomocao": ["locomocao", "locomoção", "transporte", "uber", "taxi"]
+        "media_hospedagem": ["hospedagem", "hotel", "HOSPEDAGEM", "Hospedagem", "Hotel", "HOTEL"],
+        "media_gasolina": ["gasolina", "GASOLINA", "Gasolina", "gASOLINA", "gasosa", "GASOSA"],
+        "media_diesel": ["diesel", "DIESEL", "Diesel", "díesel", "DÍESEL", "Díesel"],
+        "media_alimentacao": ["alimentacao", "alimentação", "ALIMENTAÇÃO" "ALIMENTACAO", "Alimentação", "Alimentacao", "almoço", "ALMOÇO", "Almoço", "almoco", "ALMOCO", "Almoco", "refeicao", "REFEICAO", "Refeicao", "refeição", "REFEIÇÃO", "Refeição"],
+        "media_locomocao": ["locomocao", "locomoção", "LOCOMOÇÃO", "LOCOMOCAO", "Locomocao", "Locomoção", "TRANSPORTE", "Transporte", "Uber", "UBER", "TAXI", "TÁXI", "Táxi", "Taxi", "táxi", "transporte", "uber", "taxi"]
     }
     
     parametros = {}
