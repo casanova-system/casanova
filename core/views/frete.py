@@ -130,6 +130,13 @@ def detalhe_obra_temp(request):
     except ValueError:
         dist_km = float(temp_obra_data['distancia_km'])
 
+    # CAPTURA DO PERCENTUAL DE DESCONTO
+    desconto_str = request.GET.get('percentual_desconto') or request.POST.get('percentual_desconto')
+    try:
+        percentual_desconto = float(str(desconto_str).replace(',', '.')) if desconto_str else 0.0
+    except ValueError:
+        percentual_desconto = 0.0
+
     parametros_calculo = obter_parametros_custo_do_banco(request)
 
     if parametros_calculo.get("_bloqueado"):
@@ -138,8 +145,12 @@ def detalhe_obra_temp(request):
         f_total = 0.0
     else:
         res = calcular_precificacao_operacao(dist_km, m2_total_temp)
-        f_frete = float(res["custo_frete"]) * viagens_calc
-        f_operacao = float(res["custo_operacao"]) * viagens_calc
+        f_frete_bruto = float(res["custo_frete"]) * viagens_calc
+        f_operacao_bruto = float(res["custo_operacao"]) * viagens_calc
+        
+        # APLICAÇÃO DO DESCONTO NO CÁLCULO
+        f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
+        f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
         f_total = f_frete + f_operacao
 
     if request.method == "POST" and request.POST.get("acao") == "salvar":
@@ -167,6 +178,7 @@ def detalhe_obra_temp(request):
             custo_frete=Decimal(str(f_frete)),
             custo_operacao=Decimal(str(f_operacao)),
             custo_total_deslocamento=Decimal(str(f_total)),
+            percentual_desconto=Decimal(str(percentual_desconto)), # <-- CORREÇÃO AQUI
             usuario=request.user,
             veiculo=veiculo_selecionado,
         )
@@ -202,6 +214,7 @@ def detalhe_obra_temp(request):
         custo_frete=Decimal(str(f_frete)),
         custo_operacao=Decimal(str(f_operacao)),
         custo_total_deslocamento=Decimal(str(f_total)),
+        percentual_desconto=Decimal(str(percentual_desconto)), # <-- E AQUI TAMBÉM (PARA O OBJETO TEMPORÁRIO DE RENDERIZAÇÃO)
     )
     
     itens = [
@@ -229,7 +242,6 @@ def detalhe_obra_temp(request):
     requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
     viagens_necessarias = viagens_calc
 
-    # Cálculo seguro dos parâmetros auxiliares para o template
     valor_diaria_operacional = (
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
@@ -259,6 +271,7 @@ def detalhe_obra_temp(request):
         "veiculos_cadastrados": veiculos_cadastrados,
         "veiculo_selecionado": veiculo_selecionado,
         "viagens_necessarias": viagens_necessarias,
+        "percentual_desconto": percentual_desconto,
         "is_temp": True,
         "is_read_only": False,
         "is_edit": False,
@@ -310,7 +323,6 @@ def detalhe_obra(request, pk):
     m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
     dias_trabalho = math.ceil(m2_real / 15.0) * viagens_necessarias
 
-    # Cálculo seguro dos parâmetros auxiliares para o template
     valor_diaria_operacional = (
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
@@ -340,6 +352,7 @@ def detalhe_obra(request, pk):
         "veiculos_cadastrados": veiculos_cadastrados,
         "veiculo_selecionado": veiculo_selecionado,
         "viagens_necessarias": viagens_necessarias,
+        "percentual_desconto": float(obra.percentual_desconto) if hasattr(obra, 'percentual_desconto') else 0.0,
         "is_temp": False,
         "is_read_only": True,
         "is_edit": False,
@@ -384,6 +397,13 @@ def editar_obra(request, pk):
     except ValueError:
         dist_km = float(obra.distancia_km)
 
+    # CAPTURA DO PERCENTUAL DE DESCONTO NA EDIÇÃO
+    desconto_str = request.GET.get('percentual_desconto') or request.POST.get('percentual_desconto')
+    try:
+        percentual_desconto = float(str(desconto_str).replace(',', '.')) if desconto_str else float(obra.percentual_desconto)
+    except ValueError:
+        percentual_desconto = float(obra.percentual_desconto)
+
     parametros_calculo = obter_parametros_custo_do_banco(request)
 
     if parametros_calculo.get("_bloqueado"):
@@ -392,8 +412,12 @@ def editar_obra(request, pk):
         f_total = 0.0
     else:
         res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
-        f_frete = float(res["custo_frete"]) * viagens_nec_ed
-        f_operacao = float(res["custo_operacao"]) * viagens_nec_ed
+        f_frete_bruto = float(res["custo_frete"]) * viagens_nec_ed
+        f_operacao_bruto = float(res["custo_operacao"]) * viagens_nec_ed
+        
+        # APLICAÇÃO DO DESCONTO NO CÁLCULO
+        f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
+        f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
         f_total = f_frete + f_operacao
 
     if request.method == "POST" and request.POST.get("acao") == "salvar":
@@ -414,6 +438,7 @@ def editar_obra(request, pk):
         obra.custo_frete = Decimal(str(f_frete))
         obra.custo_operacao = Decimal(str(f_operacao))
         obra.custo_total_deslocamento = Decimal(str(f_total))
+        obra.percentual_desconto = Decimal(str(percentual_desconto)) # <-- CORREÇÃO AQUI NA EDIÇÃO
         obra.usuario = request.user
         obra.veiculo = veiculo_selecionado if veiculo_selecionado else None
         obra.save()
@@ -425,6 +450,7 @@ def editar_obra(request, pk):
     obra.custo_frete = Decimal(str(f_frete))
     obra.custo_operacao = Decimal(str(f_operacao))
     obra.custo_total_deslocamento = Decimal(str(f_total))
+    obra.percentual_desconto = Decimal(str(percentual_desconto))
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
@@ -437,7 +463,6 @@ def editar_obra(request, pk):
     requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
     viagens_necessarias = viagens_nec_ed
 
-    # Cálculo seguro dos parâmetros auxiliares para o template
     valor_diaria_operacional = (
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
@@ -467,6 +492,7 @@ def editar_obra(request, pk):
         "veiculos_cadastrados": veiculos_cadastrados,
         "veiculo_selecionado": veiculo_selecionado,
         "viagens_necessarias": viagens_necessarias,
+        "percentual_desconto": percentual_desconto,
         "is_temp": False,
         "is_read_only": False,
         "is_edit": True,

@@ -14,6 +14,7 @@ class Obra(models.Model):
     total_pecas = models.IntegerField(default=0)
     m2_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     peso_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    percentual_desconto = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     # Campos de Logística e Precificação
     distancia_km = models.FloatField(default=15.0)
@@ -42,7 +43,7 @@ class Obra(models.Model):
         null=True,
         blank=True,
         verbose_name='Usuário Responsável',
-    )
+    )    
 
     def __str__(self):
         return f'{self.codigo} - {self.nome}'
@@ -179,6 +180,7 @@ class Veiculo(models.Model):
 
     def __str__(self):
         return f'{self.marca_modelo} - {self.placa}'
+
 
 # ==========================================
 # MODELO: Custo

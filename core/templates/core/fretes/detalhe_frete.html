@@ -164,6 +164,8 @@
         {% endif %}
         <input type="hidden" name="distancia_km" value="{{ valor_distancia }}">
         <input type="hidden" name="tipo_peso_cobranca" id="hiddenTipoPesoCobranca" value="cubado">
+        <!-- Correção aplicada abaixo (Uso do |default seguro) -->
+        <input type="hidden" name="percentual_desconto" value="{{ percentual_desconto|default:0 }}">
     </form>
     {% endif %}
 
@@ -179,7 +181,7 @@
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Distância (KM):</label>
                     <input type="number" step="0.1" name="distancia_km" id="inputDistancia" class="form-control form-control-sm" value="{{ valor_distancia|default:'' }}" {% if not veiculo_selecionado %}disabled placeholder="Selecione o veículo"{% endif %}>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Veículo / Frota:</label>
                     <select name="veiculo_id" id="selectVeiculo" class="form-select form-select-sm" onchange="toggleDistancia(this)">
                         <option value="">Selecione um veículo...</option>
@@ -190,13 +192,17 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Desconto Frete (%):</label>
+                    <input type="number" step="0.01" min="0" max="100" name="percentual_desconto" id="inputDesconto" class="form-control form-control-sm" value="{{ percentual_desconto|default:0 }}">
+                </div>
                 <div class="col-md-1 d-flex align-items-center">
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" name="calcular_cubagem" id="checkCubagem" {% if calcular_cubagem == 'on' or obra.calcular_cubagem %}checked{% endif %}>
                         <label class="form-check-label small fw-bold" for="checkCubagem" style="font-size: 0.75rem;" title="Ativar cálculo de cubagem opcional">Cubagem</label>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" id="btnRecalcular" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border" style="background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff'; this.style.borderColor='#1d4ed8';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6'; this.style.borderColor='#3b82f6';">Recalcular</button>
                 </div>
                 
@@ -225,11 +231,15 @@
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Distância</span>
                     <strong class="small" style="font-size: 0.9rem;">{{ valor_distancia }} KM</strong>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Veículo Vinculado</span>
                     <strong class="small" style="font-size: 0.9rem;">{{ veiculo_selecionado.marca_modelo|default:"Não definido" }} {% if veiculo_selecionado.placa %}(Placa: {{ veiculo_selecionado.placa }}){% endif %}</strong>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <span class="text-muted small d-block" style="font-size: 0.75rem;">Desconto Frete</span>
+                    <strong class="small text-danger" style="font-size: 0.9rem;">{{ obra.percentual_desconto|default:"0" }}%</strong>
+                </div>
+                <div class="col-md-2">
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Capacidade / Viagens</span>
                     <strong class="small text-info" style="font-size: 0.9rem;">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³ | {{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
                 </div>
@@ -306,7 +316,13 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm border-start border-3 border-info">
                 <div class="card-body py-1.5 px-2.5">
-                    <span class="text-muted" style="font-size: 0.8rem;">Frete: <strong class="text-info" style="font-size: 0.9rem;">R$ {{ obra.custo_frete|floatformat:2 }}</strong></span>
+                    <span class="text-muted" style="font-size: 0.8rem;">
+                        Frete: 
+                        <strong class="text-info" style="font-size: 0.9rem;">R$ {{ obra.custo_frete|floatformat:2 }}</strong>
+                        {% if obra.percentual_desconto and obra.percentual_desconto > 0 %}
+                            <span class="badge bg-danger text-white ms-1" style="font-size: 0.7rem;">-{{ obra.percentual_desconto }}% desc.</span>
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </div>
@@ -537,7 +553,7 @@
             <div class="p-3 rounded border bg-body-secondary">
               <span class="text-muted d-block small mb-1">Carga Processada</span>
               <strong class="text-warning fs-6">{{ peso_total }} kg</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado ({{ peso_cubado }} kg){% else %}Base: Peso Real{% endif %}</small>
+              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado ({{ peso_cubado }} kg)[cite: 1]{% else %}Base: Peso Real{% endif %}</small>
             </div>
           </div>
         </div>

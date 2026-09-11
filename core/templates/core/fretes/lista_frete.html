@@ -88,12 +88,13 @@
                 <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
                     <thead>
                         <tr>
-                            <th class="ps-3 text-nowrap" style="width: 135px;">Código</th>
-                            <th class="text-nowrap" style="width: 25%;">Nome da Obra</th>
-                            <th class="text-nowrap" style="width: 22%;">Cliente</th>
-                            <th class="text-nowrap" style="width: 90px;">Distância</th>
-                            <th class="text-nowrap" style="width: 140px;">Tot. Deslocamento</th>
-                            <th class="text-nowrap" style="width: 110px;">Usuário</th>
+                            <th class="ps-3 text-nowrap" style="width: 120px;">Código</th>
+                            <th class="text-nowrap" style="width: 23%;">Nome da Obra</th>
+                            <th class="text-nowrap" style="width: 20%;">Cliente</th>
+                            <th class="text-nowrap" style="width: 85px;">Distância</th>
+                            <th class="text-nowrap" style="width: 130px;">Tot. Deslocamento</th>
+                            <th class="text-nowrap" style="width: 90px;">Desconto</th>
+                            <th class="text-nowrap" style="width: 100px;">Usuário</th>
                             <th class="text-end pe-3 text-nowrap" style="width: 120px;">Ações</th>
                         </tr>
                     </thead>
@@ -105,6 +106,15 @@
                             <td class="text-truncate" title="{{ obra.cliente|default:'Não informado' }}">{{ obra.cliente|default:"Não informado" }}</td>
                             <td><span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1 text-nowrap">{{ obra.distancia_km }} KM</span></td>
                             <td class="fw-bold text-success text-nowrap">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</td>
+                            
+                            <!-- Desconto com a mesma cor azul da tag de usuário -->
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 text-nowrap">
+                                    {{ obra.percentual_desconto|default:0|floatformat:2 }}%
+                                </span>
+                            </td>
+
+                            <!-- Usuário alinhado logo após o desconto -->
                             <td>
                                 {% if obra.usuario %}
                                     <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 text-truncate" style="max-width: 100px;" title="{{ obra.usuario.username }}">
@@ -157,7 +167,7 @@
 
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-folder-open fa-2x mb-3 d-block"></i>
                                 {% if query %}
                                     Nenhum frete encontrado para "<strong>{{ query }}</strong>".<br>
@@ -181,7 +191,6 @@
     document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('td.text-success').forEach(function(el) {
             let texto = el.textContent.replace('R$', '').trim();
-            // Converte o número para o padrão pt-BR se vier em ponto flutuante puro do python
             let numero = parseFloat(texto.replace(',', '.'));
             if (!isNaN(numero)) {
                 el.textContent = 'R$ ' + numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
