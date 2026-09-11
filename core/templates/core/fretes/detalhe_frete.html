@@ -67,12 +67,10 @@
         padding: 0.45rem 0.75rem !important;
     }
 
-    /* Cursor personalizado para campos desabilitados */
     #inputDistancia:disabled, #inputDesconto:disabled {
         cursor: not-allowed !important;
     }
 
-    /* Balão de aviso flutuante acima do cursor */
     #custom-tooltip-aviso {
         position: absolute;
         display: none;
@@ -148,12 +146,11 @@
     }
 </style>
 
-<!-- Elemento flutuante de aviso -->
 <div id="custom-tooltip-aviso">
     <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Preencha o veículo e a distância primeiro!
 </div>
 
-{% with valor_distancia=distancia_km|default:obra.distancia_km %}
+{% with valor_distancia=request.GET.distancia_km|default:distancia_km|default:obra.distancia_km valor_desconto=request.GET.percentual_desconto|default:percentual_desconto|default:obra.percentual_desconto|default:0 %}
 <div class="container-fluid app-layout-flex">
     
     {% if erro_custos_obrigatorios %}
@@ -199,7 +196,7 @@
         <input type="hidden" name="calcular_cubagem" id="hiddenSalvarCubagem" value="{% if calcular_cubagem == 'on' or obra.calcular_cubagem %}on{% endif %}">
         <input type="hidden" name="distancia_km" value="{{ valor_distancia }}">
         <input type="hidden" name="tipo_peso_cobranca" id="hiddenTipoPesoCobranca" value="cubado">
-        <input type="hidden" name="percentual_desconto" value="{{ percentual_desconto|default:0 }}">
+        <input type="hidden" name="percentual_desconto" value="{{ valor_desconto }}">
     </form>
     {% endif %}
 
@@ -229,16 +226,14 @@
                 <div class="col-md-2">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Desconto Frete (%):</label>
                     <div class="input-group input-group-sm">
-                        <input type="number" step="0.01" min="0" max="100" name="percentual_desconto" id="inputDesconto" class="form-control form-control-sm" value="{{ percentual_desconto|default:0 }}" {% if not valor_distancia or not veiculo_selecionado %}disabled placeholder="Calcule o frete"{% endif %}>
+                        <input type="number" step="0.01" min="0" max="100" name="percentual_desconto" id="inputDesconto" class="form-control form-control-sm" value="{{ valor_desconto }}" {% if not valor_distancia or not veiculo_selecionado %}disabled placeholder="Calcule o frete"{% endif %}>
                         <span class="input-group-text bg-body text-body" style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
                 <div class="col-md-1">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.8rem;">Cubagem:</label>
-                    <!-- Checkbox oculto original para submissão correta no form GET -->
                     <input type="checkbox" name="calcular_cubagem" id="checkCubagem" class="d-none" {% if calcular_cubagem == 'on' or obra.calcular_cubagem %}checked{% endif %}>
                     
-                    <!-- Botão de alternância estilizado alinhado com o Recalcular -->
                     <button type="button" id="btnToggleCubagem" class="btn btn-sm w-100 py-1.5 fw-semibold shadow-sm border d-flex align-items-center justify-content-center gap-1" onclick="alternarCubagem()" style="font-size: 0.85rem; transition: all 0.2s ease-in-out;">
                         <i class="fa-solid fa-cube"></i> <span id="txtStatusCubagem">{% if calcular_cubagem == 'on' or obra.calcular_cubagem %}Ativo{% else %}Inativo{% endif %}</span>
                     </button>
@@ -278,7 +273,7 @@
                 </div>
                 <div class="col-md-2">
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Desconto Frete</span>
-                    <strong class="small text-danger" style="font-size: 0.9rem;">{{ obra.percentual_desconto|default:"0" }}%</strong>
+                    <strong class="small text-danger" style="font-size: 0.9rem;">{{ valor_desconto }}%</strong>
                 </div>
                 <div class="col-md-2">
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Capacidade / Viagens</span>
@@ -360,8 +355,8 @@
                     <span class="text-muted" style="font-size: 0.8rem;">
                         Frete: 
                         <strong class="text-info" style="font-size: 0.9rem;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_frete|unlocalize }}</span></strong>
-                        {% if obra.percentual_desconto and obra.percentual_desconto > 0 %}
-                            <span class="badge bg-danger text-white ms-1" style="font-size: 0.7rem;">-<span class="fmt-num" data-decimals="2">{{ obra.percentual_desconto|unlocalize }}</span>% desc.</span>
+                        {% if valor_desconto and valor_desconto > 0 %}
+                            <span class="badge bg-danger text-white ms-1" style="font-size: 0.7rem;">-<span class="fmt-num" data-decimals="2">{{ valor_desconto|unlocalize }}</span>% desc.</span>
                         {% endif %}
                     </span>
                 </div>
@@ -421,6 +416,7 @@
 </div>
 {% endwith %}
 
+<!-- Modal de Confirmação de Saída -->
 <div class="modal fade" id="modalConfirmacaoSaida" tabindex="-1" aria-labelledby="modalConfirmacaoSaidaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="background-color: var(--bs-body-bg); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-radius: 8px;">
@@ -441,9 +437,28 @@
   </div>
 </div>
 
+<!-- Modal Padrão do Sistema para Alerta de Distância -->
+<div class="modal fade" id="modalAlertaSistema" tabindex="-1" aria-labelledby="modalAlertaSistemaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: var(--bs-body-bg); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-radius: 8px;">
+      <div class="modal-header py-2" style="border-bottom: 1px solid var(--bs-border-color);">
+        <h5 class="modal-title fs-6 text-warning" id="modalAlertaSistemaLabel">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i> Atenção
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body py-3" style="font-size: 0.95rem;" id="modalAlertaTexto">
+        Informe a distância em KM antes de recalcular o frete.
+      </div>
+      <div class="modal-footer py-2" style="border-top: 1px solid var(--bs-border-color);">
+        <button type="button" class="btn btn-sm btn-danger px-4" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Formata os números de forma limpa corrigindo o arredondamento de ponto flutuante do JavaScript
         document.querySelectorAll('.fmt-moeda, .fmt-num').forEach(el => {
             let rawText = el.textContent.trim().replace(',', '.');
             let val = parseFloat(rawText);
@@ -457,13 +472,23 @@
             }
         });
 
-        // Inicializa o estilo visual do botão de cubagem
         atualizarEstiloBotaoCubagem();
-
-        // Executa a verificação inicial do botão Recalcular e Desconto
         verificarDistanciaPreenchida();
 
-        // Lógica do tooltip/balão flutuante acima do cursor quando clicar no input desabilitado
+        const formRecalcular = document.getElementById('form-recalcular');
+        if (formRecalcular) {
+            formRecalcular.querySelectorAll('input').forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (validarRecalculo(e)) {
+                            formRecalcular.submit();
+                        }
+                    }
+                });
+            });
+        }
+
         const inputDist = document.getElementById('inputDistancia');
         const inputDesconto = document.getElementById('inputDesconto');
         const tooltipAviso = document.getElementById('custom-tooltip-aviso');
@@ -586,7 +611,6 @@
             }
             atualizarEstiloBotaoCubagem();
             
-            // Marca alteração pendente
             const event = new Event('change', { bubbles: true });
             checkbox.dispatchEvent(event);
         }
@@ -624,7 +648,7 @@
             inputDist.placeholder = "";
             tooltipAviso.style.display = 'none';
             const cubagem = selectedOption.getAttribute('data-cubagem') || '0';
-            infoCapacidade.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${cubagem} m³</strong> | Clique em Recalcular para atualizar as viagens.`;
+            infoCapacidade.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${cubagem} m³</strong> | Pressione Enter ou clique em Recalcular para atualizar.`;
         } else {
             inputDist.setAttribute('disabled', 'true');
             inputDist.value = "";
@@ -679,7 +703,13 @@
         const valorKm = inputDist.value.trim();
         if (inputDist.hasAttribute('disabled') || valorKm === "" || parseFloat(valorKm) <= 0) {
             event.preventDefault();
-            alert("Informe a distância em KM antes de recalcular o frete.");
+            
+            const modalElement = document.getElementById('modalAlertaSistema');
+            let modalAlerta = bootstrap.Modal.getInstance(modalElement);
+            if (!modalAlerta) {
+                modalAlerta = new bootstrap.Modal(modalElement);
+            }
+            modalAlerta.show();
             return false;
         }
         return true;
@@ -701,7 +731,7 @@
       <div class="modal-header py-3 px-4 border-bottom bg-body-tertiary">
         <div>
           <h5 class="modal-title fw-bold mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
-            <i class="fa-solid fa-calculator text-primary me-2"></i> Memorial de Cálculo Analítico — Custos e Logística
+            Memorial de Cálculo Analítico — Custos e Logística
           </h5>
           <small class="text-muted">Detalhamento completo das fórmulas, parâmetros e valores aplicados pelo sistema para esta obra.</small>
         </div>
