@@ -8,25 +8,26 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from ..models import ItemVidro, Obra, Veiculo, Custo
-from ..services import calcular_precificacao_operacao, processar_excel_relatorio
+from ..services import processar_excel_relatorio
 
 def obter_parametros_custo_do_banco(request):
     tipos_desejados = {
         "media_hospedagem": ["hospedagem", "hotel", "HOSPEDAGEM", "Hospedagem", "Hotel", "HOTEL"],
         "media_gasolina": ["gasolina", "GASOLINA", "Gasolina", "gASOLINA", "gasosa", "GASOSA"],
         "media_diesel": ["diesel", "DIESEL", "Diesel", "díesel", "DÍESEL", "Díesel"],
-        "media_alimentacao": ["alimentacao", "alimentação", "ALIMENTAÇÃO" "ALIMENTACAO", "Alimentação", "Alimentacao", "almoço", "ALMOÇO", "Almoço", "almoco", "ALMOCO", "Almoco", "refeicao", "REFEICAO", "Refeicao", "refeição", "REFEIÇÃO", "Refeição"],
-        "media_locomocao": ["locomocao", "locomoção", "LOCOMOÇÃO", "LOCOMOCAO", "Locomocao", "Locomoção", "TRANSPORTE", "Transporte", "Uber", "UBER", "TAXI", "TÁXI", "Táxi", "Taxi", "táxi", "transporte", "uber", "taxi"]
+        "media_alimentacao": ["alimentacao", "alimentação", "ALIMENTAÇÃO", "ALIMENTACAO", "Alimentação", "Alimentacao", "almoço", "ALMOÇO", "Almoço", "almoco", "ALMOCO", "Almoco", "refeicao", "REFEICAO", "Refeicao", "refeição", "REFEIÇÃO", "Refeição"],
+        "media_locomocao": ["locomocao", "locomoção", "LOCOMOÇÃO", "LOCOMOCAO", "Locomocao", "Locomoção", "TRANSPORTE", "Transporte", "Uber", "UBER", "TAXI", "TÁXI", "Táxi", "Taxi", "táxi", "transporte", "uber", "taxi"],
+        "tarifa_pedagio_carro": ["pedagio carro", "pedágio carro", "Tarifa Pedágio Carro"],
+        "tarifa_pedagio_caminhao": ["pedagio caminhao", "pedágio caminhão", "Tarifa Pedágio Caminhão"],
+        "consumo_gasolina": ["consumo gasolina", "Consumo Gasolina"],
+        "num_colab_supervisao": ["número colaboradores supervisão", "numero colaboradores supervisao", "Sup. Técnica"],
+        "num_colab_instalacao": ["número colaboradores instalação", "numero colaboradores instalacao", "Instalação"],
     }
     
     parametros = {}
     faltando = []
 
-    # Identifica se está em uma tela onde queremos exibir logs e avisos
     eh_tela_de_detalhe = any(termo in request.path for termo in ["detalhe", "editar", "obra"])
-
-    if eh_tela_de_detalhe:
-        print("\n--- [LOG DE CUSTOS] Verificando integridade (Tela de Detalhes) ---")
 
     for chave, termos in tipos_desejados.items():
         custo_obj = None
@@ -39,16 +40,21 @@ def obter_parametros_custo_do_banco(request):
         
         if custo_obj:
             parametros[chave] = float(custo_obj.valor)
-            if eh_tela_de_detalhe:
-                print(f" [OK] '{chave}' -> R$ {custo_obj.valor} (Encontrado: {custo_obj.descricao or custo_obj.tipo})")
         else:
             faltando.append(chave)
             parametros[chave] = 0.0
-            if eh_tela_de_detalhe:
-                print(f" [FALHA] '{chave}' -> Não encontrado!")
 
-    if eh_tela_de_detalhe:
-        print("-----------------------------------------------------------\n")
+    # Definir valores padrão caso algum parâmetro opcional não seja encontrado
+    parametros.setdefault("tarifa_pedagio_carro", 5.80)
+    parametros.setdefault("tarifa_pedagio_caminhao", 9.60)
+    parametros.setdefault("consumo_gasolina", 11.0)
+    parametros.setdefault("media_diesel", 7.55)
+    parametros.setdefault("media_gasolina", 5.10)
+    parametros.setdefault("media_hospedagem", 130.0)
+    parametros.setdefault("media_alimentacao", 55.0)
+    parametros.setdefault("media_locomocao", 35.0) # Auxílio Deslocamento
+    parametros.setdefault("num_colab_supervisao", 1.0)
+    parametros.setdefault("num_colab_instalacao", 4.0)
 
     if faltando and eh_tela_de_detalhe:
         parametros["_bloqueado"] = True
@@ -58,6 +64,114 @@ def obter_parametros_custo_do_banco(request):
         parametros["_faltando_str"] = ""
 
     return parametros
+
+
+def calcular_custos_detalhados(dist_km, m2_total, parametros):
+    """
+    Replica exatamente o cálculo da planilha de Excel:
+    Frente A (Frete / Combustíveis / Pedágios)
+    Frente B (Operação / Estadias / Alimentação / Auxílios)
+    """
+    # 1. Parâmetros base da planilha
+    consumo_diesel = 6.5
+    consumo_gasolina = parametros.get("consumo_gasolina", 11.0)
+    
+    preco_diesel = parametros.get("media_diesel", 7.55)
+    preco_gasolina = parametros.get("media_gasolina", 5.10)
+    
+    tarifa_pedagio_caminhao = parametros.get("tarifa_pedagio_caminhao", 9.60)
+    tarifa_pedagio_carro = parametros.get("tarifa_pedagio_carro", 5.80)
+    
+    custo_hospedagem = parametros.get("media_hospedagem", 130.0)
+    custo_alimentacao = parametros.get("media_alimentacao", 55.0)
+    custo_auxilio = parametros.get("media_locomocao", 35.0)
+    
+    colab_supervisao = int(parametros.get("num_colab_supervisao", 1))
+    colab_instalacao = int(parametros.get("num_colab_instalacao", 4))
+    motorista_auxiliar = 2 # Padrão caminhão (motorista + auxiliar)
+
+    # Critérios proporcionais baseados na metragem quadrada (M2)
+    # Considera-se 1 visita/deslocamento a cada 300 m² (mínimo 1)
+    num_visitas_supervisao = max(1, math.ceil(m2_total / 300.0)) * 3 # 3 visitas base ou proporcional
+    num_desloc_instalacao = max(1, math.ceil(m2_total / 300.0))
+    num_entregas_caminhao = max(1, math.ceil(m2_total / 150.0))
+    
+    # Dias trabalhados (produção média diária de 15m² para equipe de 4)
+    m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
+    dias_trabalho = max(1, math.ceil(m2_real / 15.0))
+
+    # Distâncias totais (Ida e Volta = * 2)
+    distancia_caminhao = dist_km * 2 * num_entregas_caminhao
+    distancia_supervisao = dist_km * 2 * num_visitas_supervisao
+    distancia_instalacao = dist_km * 2 * num_desloc_instalacao
+
+    # Pedágios (8 praças padrão de referência ou proporcional à distância)
+    pracas_pedagio = max(1, round(dist_km / 80.0)) * 2 # Ida e volta
+
+    # --- RESULTADOS - CUSTOS (FRENTE A) ---
+    combustivel_caminhao = (distancia_caminhao / consumo_diesel) * preco_diesel
+    combustivel_supervisao = (distancia_supervisao / consumo_gasolina) * preco_gasolina
+    combustivel_instalacao = (distancia_instalacao / consumo_gasolina) * preco_gasolina
+    
+    pedagio_caminhao = pracas_pedagio * tarifa_pedagio_caminhao * num_entregas_caminhao
+    pedagio_supervisao = pracas_pedagio * tarifa_pedagio_carro * num_visitas_supervisao
+    pedagio_instalacao = pracas_pedagio * tarifa_pedagio_carro * num_desloc_instalacao
+
+    total_frete_a = (
+        combustivel_caminhao + combustivel_supervisao + combustivel_instalacao +
+        pedagio_caminhao + pedagio_supervisao + pedagio_instalacao
+    )
+
+    # --- RESULTADOS - CUSTOS (FRENTE B - OPERAÇÃO) ---
+    # Estadias (Hotel) - Supervisão considera 2 diárias por visita
+    dias_supervisao = num_visitas_supervisao * 2
+
+    estadia_supervisao = custo_hospedagem * colab_supervisao * dias_supervisao
+    estadia_caminhao = custo_hospedagem * motorista_auxiliar * num_entregas_caminhao
+    estadia_instalacao = custo_hospedagem * colab_instalacao * dias_trabalho
+
+    # Alimentação
+    alimentacao_supervisao = custo_alimentacao * colab_supervisao * dias_supervisao
+    alimentacao_caminhao = custo_alimentacao * motorista_auxiliar * num_entregas_caminhao
+    alimentacao_instalacao = custo_alimentacao * colab_instalacao * dias_trabalho
+
+    # Auxílio Deslocamento Instalação
+    auxilio_instalacao = custo_auxilio * colab_instalacao * dias_trabalho
+
+    total_operacao_b = (
+        estadia_supervisao + estadia_caminhao + estadia_instalacao +
+        alimentacao_supervisao + alimentacao_caminhao + alimentacao_instalacao +
+        auxilio_instalacao
+    )
+
+    # --- LOGS DETALHADOS PARA APARECER NO TERMINAL DO DJANGO ---
+    print("\n" + "="*50)
+    print("--- [DEBUG PRECIFICAÇÃO E CUSTOS (FRETES.PY)] ---")
+    print(f"Distância informada: {dist_km} km")
+    print(f"Área Total (m²): {m2_real}")
+    print(f"Dias de Trabalho calculados: {dias_trabalho}")
+    print(f"Viagens de Caminhão: {num_entregas_caminhao}")
+    print(f"Custo Diesel: R$ {combustivel_caminhao:.2f}")
+    print(f"Custo Gasolina Supervisão: R$ {combustivel_supervisao:.2f}")
+    print(f"Custo Gasolina Instalação: R$ {combustivel_instalacao:.2f}")
+    print(f"Custo Pedágio Caminhão: R$ {pedagio_caminhao:.2f}")
+    print(f"Custo Pedágio Carro: R$ {pedagio_supervisao + pedagio_instalacao:.2f}")
+    print(f"-> TOTAL FRETE: R$ {total_frete_a:.2f}")
+    print("-" * 30)
+    print(f"Custo Estadia (Hotel): R$ {estadia_supervisao + estadia_caminhao + estadia_instalacao:.2f}")
+    print(f"Custo Alimentação: R$ {alimentacao_supervisao + alimentacao_caminhao + alimentacao_instalacao:.2f}")
+    print(f"Custo Auxílio Deslocamento: R$ {auxilio_instalacao:.2f}")
+    print(f"-> TOTAL OPERAÇÃO: R$ {total_operacao_b:.2f}")
+    print("="*50 + "\n")
+    # -----------------------------------------------------------
+
+    return {
+        "custo_frete": round(total_frete_a, 2),
+        "custo_operacao": round(total_operacao_b, 2),
+        "custo_total_deslocamento": round(total_frete_a + total_operacao_b, 2),
+        "dias_trabalho": dias_trabalho,
+    }
+
 
 @login_required(login_url='login')
 def upload_pdf(request):
@@ -130,7 +244,6 @@ def detalhe_obra_temp(request):
     except ValueError:
         dist_km = float(temp_obra_data['distancia_km'])
 
-    # CAPTURA DO PERCENTUAL DE DESCONTO
     desconto_str = request.GET.get('percentual_desconto') or request.POST.get('percentual_desconto')
     try:
         percentual_desconto = float(str(desconto_str).replace(',', '.')) if desconto_str else 0.0
@@ -143,12 +256,15 @@ def detalhe_obra_temp(request):
         f_frete = 0.0
         f_operacao = 0.0
         f_total = 0.0
+        dias_trabalho = 1
     else:
-        res = calcular_precificacao_operacao(dist_km, m2_total_temp)
-        f_frete_bruto = float(res["custo_frete"]) * viagens_calc
-        f_operacao_bruto = float(res["custo_operacao"]) * viagens_calc
+        # Cálculo completo baseado na planilha de custos detalhados
+        custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo)
         
-        # APLICAÇÃO DO DESCONTO NO CÁLCULO
+        f_frete_bruto = custos_calculados["custo_frete"]
+        f_operacao_bruto = custos_calculados["custo_operacao"]
+        dias_trabalho = custos_calculados["dias_trabalho"]
+        
         f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
         f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
         f_total = f_frete + f_operacao
@@ -178,7 +294,7 @@ def detalhe_obra_temp(request):
             custo_frete=Decimal(str(f_frete)),
             custo_operacao=Decimal(str(f_operacao)),
             custo_total_deslocamento=Decimal(str(f_total)),
-            percentual_desconto=Decimal(str(percentual_desconto)), # <-- CORREÇÃO AQUI
+            percentual_desconto=Decimal(str(percentual_desconto)),
             usuario=request.user,
             veiculo=veiculo_selecionado,
         )
@@ -214,7 +330,7 @@ def detalhe_obra_temp(request):
         custo_frete=Decimal(str(f_frete)),
         custo_operacao=Decimal(str(f_operacao)),
         custo_total_deslocamento=Decimal(str(f_total)),
-        percentual_desconto=Decimal(str(percentual_desconto)), # <-- E AQUI TAMBÉM (PARA O OBJETO TEMPORÁRIO DE RENDERIZAÇÃO)
+        percentual_desconto=Decimal(str(percentual_desconto)),
     )
     
     itens = [
@@ -233,9 +349,6 @@ def detalhe_obra_temp(request):
     custo_total_materiais = Decimal("0.00")
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
-    m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_calc
-
     cubagem_total = cubagem_calc
     peso_cubado = round(cubagem_total * 300, 2)
     peso_real_val = float(peso_total)
@@ -246,8 +359,6 @@ def detalhe_obra_temp(request):
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
     )
-    if valor_diaria_operacional == 0.0:
-        valor_diaria_operacional = 350.00
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
@@ -317,18 +428,17 @@ def detalhe_obra(request, pk):
         obra.custo_frete = Decimal("0.00")
         obra.custo_operacao = Decimal("0.00")
         obra.custo_total_deslocamento = Decimal("0.00")
+        dias_trabalho = 1
+    else:
+        custos_calculados = calcular_custos_detalhados(float(obra.distancia_km), float(m2_corte_total), parametros_calculo)
+        dias_trabalho = custos_calculados["dias_trabalho"]
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
-
-    m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_necessarias
 
     valor_diaria_operacional = (
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
     )
-    if valor_diaria_operacional == 0.0:
-        valor_diaria_operacional = 350.00
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
@@ -397,7 +507,6 @@ def editar_obra(request, pk):
     except ValueError:
         dist_km = float(obra.distancia_km)
 
-    # CAPTURA DO PERCENTUAL DE DESCONTO NA EDIÇÃO
     desconto_str = request.GET.get('percentual_desconto') or request.POST.get('percentual_desconto')
     try:
         percentual_desconto = float(str(desconto_str).replace(',', '.')) if desconto_str else float(obra.percentual_desconto)
@@ -410,12 +519,14 @@ def editar_obra(request, pk):
         f_frete = 0.0
         f_operacao = 0.0
         f_total = 0.0
+        dias_trabalho = 1
     else:
-        res = calcular_precificacao_operacao(dist_km, float(m2_corte_total))
-        f_frete_bruto = float(res["custo_frete"]) * viagens_nec_ed
-        f_operacao_bruto = float(res["custo_operacao"]) * viagens_nec_ed
+        custos_calculados = calcular_custos_detalhados(dist_km, float(m2_corte_total), parametros_calculo)
         
-        # APLICAÇÃO DO DESCONTO NO CÁLCULO
+        f_frete_bruto = custos_calculados["custo_frete"]
+        f_operacao_bruto = custos_calculados["custo_operacao"]
+        dias_trabalho = custos_calculados["dias_trabalho"]
+        
         f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
         f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
         f_total = f_frete + f_operacao
@@ -438,7 +549,7 @@ def editar_obra(request, pk):
         obra.custo_frete = Decimal(str(f_frete))
         obra.custo_operacao = Decimal(str(f_operacao))
         obra.custo_total_deslocamento = Decimal(str(f_total))
-        obra.percentual_desconto = Decimal(str(percentual_desconto)) # <-- CORREÇÃO AQUI NA EDIÇÃO
+        obra.percentual_desconto = Decimal(str(percentual_desconto))
         obra.usuario = request.user
         obra.veiculo = veiculo_selecionado if veiculo_selecionado else None
         obra.save()
@@ -454,9 +565,6 @@ def editar_obra(request, pk):
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
-    m2_real = float(m2_corte_total) if float(m2_corte_total) > 0 else 1.0
-    dias_trabalho = math.ceil(m2_real / 15.0) * viagens_nec_ed
-
     cubagem_total = cubagem_total_ed
     peso_cubado = round(cubagem_total * 300, 2)
     peso_real_val = float(peso_total)
@@ -467,8 +575,6 @@ def editar_obra(request, pk):
         parametros_calculo.get("media_hospedagem", 0.0) + 
         parametros_calculo.get("media_alimentacao", 0.0)
     )
-    if valor_diaria_operacional == 0.0:
-        valor_diaria_operacional = 350.00
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
 
@@ -511,7 +617,6 @@ def excluir_obra(request, pk):
 
 @login_required(login_url='login')
 def lista_obras(request):
-    """View para listar as obras cadastradas."""
     obras = Obra.objects.filter(usuario=request.user) if hasattr(Obra, 'usuario') else Obra.objects.all()
     context = {
         "obras": obras,

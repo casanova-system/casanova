@@ -150,7 +150,7 @@
     <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Preencha o veículo e a distância primeiro!
 </div>
 
-{% with valor_distancia=request.GET.distancia_km|default:distancia_km|default:obra.distancia_km valor_desconto=request.GET.percentual_desconto|default:percentual_desconto|default:obra.percentual_desconto|default:0 %}
+{% with valor_distancia=request.GET.distancia_km|default:distancia_km|default:obra.distancia_km|default:'' valor_desconto=request.GET.percentual_desconto|default:percentual_desconto|default:obra.percentual_desconto|default:0 %}
 <div class="container-fluid app-layout-flex">
     
     {% if erro_custos_obrigatorios %}

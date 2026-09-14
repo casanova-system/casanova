@@ -55,19 +55,16 @@ def calcular_distancia_automatica(origem_cep, endereco_destino):
 def calcular_precificacao_operacao(distancia_km, m2_total):
     """Calcula custos de frete e operação buscando o parâmetro fixo da tabela Custo no banco de dados."""
     
-    # Busca o registro fixo do sistema. Se não existir, lança o erro solicitando o cadastro.
     try:
         ultimo_custo = Custo.objects.get(fixo=True)
     except Custo.DoesNotExist:
         try:
-            # Fallback seguro caso o registro fixo ainda não tenha sido marcado, pega o último criado
             ultimo_custo = Custo.objects.latest('id')
         except Custo.DoesNotExist:
             raise ValueError("Não há custos cadastrados no sistema! Por favor, cadastre os custos operacionais antes de calcular o frete.")
 
     m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
 
-    # ATENÇÃO: Ajuste os nomes dos atributos abaixo se forem diferentes na sua tabela Custo do models.py
     CONSUMO_DIESEL = float(getattr(ultimo_custo, 'consumo_medio_caminhao', 3.5)) 
     CONSUMO_GASOLINA = float(getattr(ultimo_custo, 'consumo_medio_carro', 10.0))
     
@@ -128,6 +125,27 @@ def calcular_precificacao_operacao(distancia_km, m2_total):
     custo_auxilio = dias_trabalho * equipe_instalacao * CUSTO_AUX_DESLOCAMENTO
 
     total_operacao = custo_estadia + custo_alimentacao + custo_auxilio
+
+    # --- LOGS DETALHADOS PARA APARECER NO TERMINAL DO DJANGO ---
+    print("\n" + "="*50)
+    print("--- [DEBUG PRECIFICAÇÃO E CUSTOS] ---")
+    print(f"Distância informada: {distancia_km} km")
+    print(f"Área Total (m²): {m2_real}")
+    print(f"Dias de Trabalho calculados: {dias_trabalho}")
+    print(f"Viagens de Caminhão: {viagens_caminhao}")
+    print(f"Custo Diesel: R$ {custo_diesel:.2f}")
+    print(f"Custo Gasolina Supervisão: R$ {custo_gasolina_supervisao:.2f}")
+    print(f"Custo Gasolina Instalação: R$ {custo_gasolina_instalacao:.2f}")
+    print(f"Custo Pedágio Caminhão: R$ {custo_pedagio_caminhao:.2f}")
+    print(f"Custo Pedágio Carro: R$ {custo_pedagio_carro:.2f}")
+    print(f"-> TOTAL FRETE: R$ {total_frete:.2f}")
+    print("-" * 30)
+    print(f"Custo Estadia (Hotel): R$ {custo_estadia:.2f} (Diária: {diaria_hotel_aplicada}, Pessoas: {total_pessoas})")
+    print(f"Custo Alimentação: R$ {custo_alimentacao:.2f}")
+    print(f"Custo Auxílio Deslocamento: R$ {custo_auxilio:.2f}")
+    print(f"-> TOTAL OPERAÇÃO: R$ {total_operacao:.2f}")
+    print("="*50 + "\n")
+    # -----------------------------------------------------------
 
     return {
         "distancia_km": distancia_km,
