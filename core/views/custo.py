@@ -1,4 +1,4 @@
-from core.models import Custo  
+from core.models import Custo 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -16,7 +16,6 @@ def lista_custo(request):
     else:
         custo = Custo.objects.all()
 
-    # Correção dos campos de ordenação para os nomes reais dos atributos do model
     if ordenar == 'tipo_asc' or ordenar == 'nome_asc':
         custo = custo.order_by('tipo')
     elif ordenar == 'tipo_desc' or ordenar == 'nome_desc':
@@ -28,7 +27,7 @@ def lista_custo(request):
     elif ordenar == 'valor':
         custo = custo.order_by('valor')
     else:
-        custo = custo.order_by('-id')  # Padrão mais recentes
+        custo = custo.order_by('-id')  
 
     context = {'custos': custo, 'query': query, 'ordenacao_atual': ordenar}
     return render(request, 'core/custos/lista_custo.html', context)
@@ -38,9 +37,8 @@ def lista_custo(request):
 def cadastrar_custo(request):
     if request.method == "POST":
         descricao = request.POST.get("descricao")
-        tipo = request.POST.get("tipo")  # Ex: combustível, hospedagem...
+        tipo = request.POST.get("tipo")  
         
-        # Tratamento da máscara de valor (ex: "1.234,56" -> 1234.56)
         valor_raw = request.POST.get("valor", "0")
         try:
             valor_tratado = valor_raw.replace('.', '').replace(',', '.')
@@ -70,7 +68,6 @@ def editar_custo(request, pk):
         custo.descricao = request.POST.get("descricao")
         custo.tipo = request.POST.get("tipo")
         
-        # Tratamento da máscara de valor para edição
         valor_raw = request.POST.get("valor", "0")
         try:
             valor_tratado = valor_raw.replace('.', '').replace(',', '.')
@@ -86,16 +83,6 @@ def editar_custo(request, pk):
             messages.error(request, f"Erro ao atualizar custo: {e}")
             
     return render(request, "core/custos/form_custo.html", {"custo": custo})
-
-
-@login_required(login_url='login')
-def excluir_custo(request, pk):
-    custo = get_object_or_404(Custo, pk=pk)
-    if request.method == "POST":
-        custo.delete()
-        messages.success(request, "Custo excluído com sucesso!")
-        return redirect("lista_custo")
-    return render(request, "core/custos/detalhe_custo.html", {"custo": custo})
 
 
 @login_required(login_url='login')

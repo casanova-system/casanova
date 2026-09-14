@@ -123,20 +123,27 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros):
     )
 
     # --- RESULTADOS - CUSTOS (FRENTE B - OPERAÇÃO) ---
-    # Estadias (Hotel) - Supervisão considera 2 diárias por visita
-    dias_supervisao = num_visitas_supervisao * 2
+    # Regra: Estadia, alimentação e deslocamento só ocorrem se a distância for maior que 200 km
+    if dist_km > 200.0:
+        dias_supervisao = num_visitas_supervisao * 2
 
-    estadia_supervisao = custo_hospedagem * colab_supervisao * dias_supervisao
-    estadia_caminhao = custo_hospedagem * motorista_auxiliar * num_entregas_caminhao
-    estadia_instalacao = custo_hospedagem * colab_instalacao * dias_trabalho
+        estadia_supervisao = custo_hospedagem * colab_supervisao * dias_supervisao
+        estadia_caminhao = custo_hospedagem * motorista_auxiliar * num_entregas_caminhao
+        estadia_instalacao = custo_hospedagem * colab_instalacao * dias_trabalho
 
-    # Alimentação
-    alimentacao_supervisao = custo_alimentacao * colab_supervisao * dias_supervisao
-    alimentacao_caminhao = custo_alimentacao * motorista_auxiliar * num_entregas_caminhao
-    alimentacao_instalacao = custo_alimentacao * colab_instalacao * dias_trabalho
+        alimentacao_supervisao = custo_alimentacao * colab_supervisao * dias_supervisao
+        alimentacao_caminhao = custo_alimentacao * motorista_auxiliar * num_entregas_caminhao
+        alimentacao_instalacao = custo_alimentacao * colab_instalacao * dias_trabalho
 
-    # Auxílio Deslocamento Instalação
-    auxilio_instalacao = custo_auxilio * colab_instalacao * dias_trabalho
+        auxilio_instalacao = custo_auxilio * colab_instalacao * dias_trabalho
+    else:
+        estadia_supervisao = 0.0
+        estadia_caminhao = 0.0
+        estadia_instalacao = 0.0
+        alimentacao_supervisao = 0.0
+        alimentacao_caminhao = 0.0
+        alimentacao_instalacao = 0.0
+        auxilio_instalacao = 0.0
 
     total_operacao_b = (
         estadia_supervisao + estadia_caminhao + estadia_instalacao +
@@ -258,7 +265,6 @@ def detalhe_obra_temp(request):
         f_total = 0.0
         dias_trabalho = 1
     else:
-        # Cálculo completo baseado na planilha de custos detalhados
         custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo)
         
         f_frete_bruto = custos_calculados["custo_frete"]
