@@ -2,107 +2,275 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3">
-    <!-- Cabeçalho da Página (A cor do título agora se adapta automaticamente ao tema claro/escuro) -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container-fluid px-3 py-2" style="max-height: 96vh; overflow-y: auto;">
+    <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h2 class="fw-bold mb-1 text-body">Gráfico: Custo de Frete</h2>
-            <p class="text-muted small mb-0">Visualização gráfica dos custos de deslocamento por obra.</p>
+            <h3 class="fw-bold mb-0 text-body" style="letter-spacing: -0.5px;"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Dashboard: Custos de Frete</h3>
+            <p class="text-muted small mb-0" style="font-size: 0.9rem;">Painel analítico corporativo de custos de deslocamento e métricas logísticas por obra.</p>
         </div>
-        <!-- Botão [001] removido conforme solicitado -->
+        <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary btn-sm py-1.5 px-3 shadow-sm" style="font-size: 0.85rem;">
+            <i class="fa-solid fa-arrow-left me-1"></i> Ver Tabela
+        </a>
     </div>
 
-    <!-- Card Principal do Gráfico -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-custom p-4 border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-semibold text-body mb-0">Evolução e Comparativo de Custos por Frete</h5>
-                    <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Ver Tabela Completa
-                    </a>
+    <!-- Cards de Indicadores (KPIs) Adaptados ao Tema -->
+    <div class="row g-3 mb-3">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-primary border-4 bg-body">
+                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Custo Total de Fretes</div>
+                <div class="h4 fw-bold text-primary mb-0 mt-1" id="kpiCustoTotal">R$ 0,00</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-success border-4 bg-body">
+                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Média de Custo por Obra</div>
+                <div class="h4 fw-bold text-success mb-0 mt-1" id="kpiMediaCusto">R$ 0,00</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-warning border-4 bg-body">
+                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total de Obras Analisadas</div>
+                <div class="h4 fw-bold text-body mb-0 mt-1" id="kpiTotalObras">0</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-info border-4 bg-body">
+                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Média de Distância (KM)</div>
+                <div class="h4 fw-bold text-info mb-0 mt-1" id="kpiMediaKm">0 km</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linha 1: Gráfico de Barras e Gráfico de Rosca -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-7">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 310px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-column text-primary me-1"></i> Comparativo de Custo Total por Obra</h6>
+                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Visão Geral</span>
                 </div>
-                <hr class="text-muted opacity-25">
-                
-                <!-- Área do Gráfico -->
-                <div style="height: 380px; position: relative;" class="w-100">
-                    <canvas id="graficoFrete"></canvas>
+                <hr class="text-muted opacity-25 my-2">
+                <div style="height: 230px; position: relative;" class="w-100">
+                    <canvas id="graficoBarrasFrete"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 310px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-pie text-primary me-1"></i> Distribuição Percentual de Custos</h6>
+                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Participação</span>
+                </div>
+                <hr class="text-muted opacity-25 my-2">
+                <div style="height: 225px; position: relative;" class="w-100 d-flex justify-content-center align-items-center">
+                    <canvas id="graficoRoscaFrete"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linha 2: Gráfico de Linha (Tendência) -->
+    <div class="row g-3 mb-2">
+        <div class="col-12">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 260px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-line text-primary me-1"></i> Tendência e Evolução de Custos por Lançamento</h6>
+                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Evolução Temporal</span>
+                </div>
+                <hr class="text-muted opacity-25 my-2">
+                <div style="height: 180px; position: relative;" class="w-100">
+                    <canvas id="graficoLinhaFrete"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Importação do Chart.js via CDN -->
+<!-- Importação do Chart.js e Plugin ChartDataLabels via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const canvasElement = document.getElementById('graficoFrete');
-        if (!canvasElement) return;
-
-        const ctx = canvasElement.getContext('2d');
-
-        // Recebendo os dados limpos enviados pela View do Django
         const obrasList = JSON.parse('{{ obras_json|safe }}');
+        if (!obrasList || obrasList.length === 0) return;
+
+        // Processamento de Dados para os KPIs
+        const totalCusto = obrasList.reduce((acc, item) => acc + item.custo_total_deslocamento, 0);
+        const mediaCusto = totalCusto / obrasList.length;
+        const totalKm = obrasList.reduce((acc, item) => acc + item.distancia, 0);
+        const mediaKm = totalKm / obrasList.length;
+
+        document.getElementById('kpiCustoTotal').innerText = 'R$ ' + totalCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        document.getElementById('kpiMediaCusto').innerText = 'R$ ' + mediaCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        document.getElementById('kpiTotalObras').innerText = obrasList.length;
+        document.getElementById('kpiMediaKm').innerText = mediaKm.toFixed(1) + ' km';
 
         const labelsNomes = obrasList.map(item => item.nome);
         const dadosCustos = obrasList.map(item => item.custo_total_deslocamento);
 
-        // Detectar se o sistema está em modo claro ou escuro para ajustar as cores dos eixos do gráfico dinamicamente
-        const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        // Ou verificando classe do body se o seu template usar classes como 'dark-mode' / 'light-mode'
-        const textColor = document.body.classList.contains('bg-dark') || document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#adb5bd' : '#495057';
-        const gridColor = document.createElement('div'); // cor neutra adaptável
-        
-        new Chart(ctx, {
+        // Detecção de Tema
+        const isDarkMode = document.body.classList.contains('bg-dark') || 
+                           document.documentElement.getAttribute('data-bs-theme') === 'dark' ||
+                           window.getComputedStyle(document.body).backgroundColor.includes('rgb(33, 37, 41)') ||
+                           window.getComputedStyle(document.body).backgroundColor.includes('rgb(18, 18, 18)');
+
+        const textColor = isDarkMode ? '#cbd5e1' : '#495057';
+        const gridColor = isDarkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(0, 0, 0, 0.06)';
+
+        const modernBluePalette = [
+            'rgba(13, 110, 253, 0.9)',
+            'rgba(13, 202, 240, 0.9)',
+            'rgba(30, 144, 255, 0.9)',
+            'rgba(0, 123, 255, 0.9)',
+            'rgba(70, 130, 180, 0.9)',
+            'rgba(95, 158, 160, 0.9)'
+        ];
+
+        // 1. Gráfico de Barras
+        const ctxBar = document.getElementById('graficoBarrasFrete').getContext('2d');
+        const gradientBar = ctxBar.createLinearGradient(0, 0, 0, 220);
+        gradientBar.addColorStop(0, 'rgba(13, 110, 253, 0.9)');
+        gradientBar.addColorStop(1, 'rgba(13, 110, 253, 0.2)');
+
+        new Chart(ctxBar, {
             type: 'bar',
             data: {
                 labels: labelsNomes,
                 datasets: [{
-                    label: 'Custo Total de Deslocamento (R$)',
+                    label: 'Custo Total (R$)',
                     data: dadosCustos,
-                    backgroundColor: 'rgba(13, 110, 253, 0.75)',
+                    backgroundColor: gradientBar,
                     borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 2,
+                    borderWidth: 1.5,
                     borderRadius: 6,
-                    hoverBackgroundColor: 'rgba(13, 110, 253, 0.95)'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor,
-                            font: { family: 'Inter', size: 12 }
-                        }
-                    },
+                    legend: { display: false },
                     tooltip: {
+                        backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(33, 37, 41, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
-                                let value = context.parsed.y || 0;
-                                return ' Custo: R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                return ' Custo: R$ ' + context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                             }
                         }
                     }
                 },
                 scales: {
-                    x: {
-                        ticks: { color: textColor, font: { size: 11 } },
-                        grid: { color: 'rgba(108, 117, 125, 0.15)' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { 
+                    x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { color: textColor, font: { size: 11 }, callback: value => 'R$ ' + value.toLocaleString('pt-BR') }, grid: { color: gridColor } }
+                }
+            }
+        });
+
+        // 2. Gráfico de Rosca (Com Valores e Percentuais Diretamente no Disco via ChartDataLabels)
+        new Chart(document.getElementById('graficoRoscaFrete').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labelsNomes,
+                datasets: [{
+                    data: dadosCustos,
+                    backgroundColor: modernBluePalette,
+                    borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
                             color: textColor,
-                            callback: function(value) {
-                                return 'R$ ' + value.toLocaleString('pt-BR');
-                            }
+                            boxWidth: 12,
+                            font: { size: 11 },
+                            padding: 10
+                        }
+                    },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: {
+                            weight: 'bold',
+                            size: 11
                         },
-                        grid: { color: 'rgba(108, 117, 125, 0.15)' }
+                        formatter: (value, ctx) => {
+                            const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            // Exibe o percentual direto no disco se for maior que 3% (evita sobreposição em fatias muito pequenas)
+                            return percentage > 3 ? `${percentage}%` : '';
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(33, 37, 41, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const value = context.parsed;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return ` R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
+                            }
+                        }
                     }
+                },
+                cutout: '68%'
+            }
+        });
+
+        // 3. Gráfico de Linha (Tendência)
+        const ctxLine = document.getElementById('graficoLinhaFrete').getContext('2d');
+        const gradientLine = ctxLine.createLinearGradient(0, 0, 0, 150);
+        gradientLine.addColorStop(0, 'rgba(13, 110, 253, 0.35)');
+        gradientLine.addColorStop(1, 'rgba(13, 110, 253, 0.0)');
+
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: labelsNomes,
+                datasets: [{
+                    label: 'Tendência de Custo (R$)',
+                    data: dadosCustos,
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    backgroundColor: gradientLine,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                    pointBorderColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(33, 37, 41, 0.95)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ' Custo: R$ ' + context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { color: textColor, font: { size: 11 }, callback: value => 'R$ ' + value.toLocaleString('pt-BR') }, grid: { color: gridColor } }
                 }
             }
         });

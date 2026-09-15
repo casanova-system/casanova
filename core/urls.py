@@ -18,6 +18,7 @@ from core.views.frete import (
     upload_pdf,
 )
 from core.views.grafico_frete import grafico_custo_frete
+from core.views.relatorio import relatorio_fretes_mes  # <-- Importado do arquivo relatorio.py recém criado
 from core.views.veiculo import (
     cadastrar_veiculo,
     detalhe_veiculo,
@@ -31,7 +32,6 @@ from core.views.views import (
     login_view,
     logout_view,
     menu_principal,
-    relatorio_fretes_mes,
     relatorios_view,
     rotinas_view,
 )
