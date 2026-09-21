@@ -589,6 +589,24 @@ nav input[type="file"], .navbar input[type="file"], input.form-control, select.f
             inputDesconto.placeholder = "Calcule o frete";
         }
     }
+
+    function alternarCubagem() {
+        const checkCubagem = document.getElementById('checkCubagem');
+        const txtStatusCubagem = document.getElementById('txtStatusCubagem');
+        const formRecalcular = document.getElementById('form-recalcular');
+
+        if (checkCubagem) {
+            checkCubagem.checked = !checkCubagem.checked;
+            if (checkCubagem.checked) {
+                txtStatusCubagem.textContent = "Ativo";
+            } else {
+                txtStatusCubagem.textContent = "Inativo";
+            }
+            if (formRecalcular) {
+                formRecalcular.submit();
+            }
+        }
+    }
     
     document.addEventListener('DOMContentLoaded', function() {
         const selectVeiculo = document.getElementById('selectVeiculo');

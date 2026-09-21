@@ -67,14 +67,12 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     Replica exatamente o cálculo e as fórmulas da planilha utilizando
     exclusivamente os parâmetros vindos do banco de dados e retorna os totais e os detalhes.
     """
-    # 1. Parâmetros recuperados do Banco de Dados baseados na sua imagem
     carga_media = parametros.get("carga_media", 150.0)
     pedagio_carro = parametros.get("pedagio_carro", 5.80)
     pedagio_caminhao = parametros.get("pedagio_caminhao", 9.60)
     valor_gasolina = parametros.get("valor_gasolina", 5.10)
     valor_diesel = parametros.get("valor_diesel", 7.55)
     
-    # Consumo obtido diretamente do veículo selecionado ou valores padrão
     consumo_diesel = float(veiculo_selecionado.consumo_combustivel) if (veiculo_selecionado and getattr(veiculo_selecionado, 'consumo_combustivel', None)) else 6.5
     consumo_gasolina = 11.0 
     
@@ -86,7 +84,6 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     custo_alimentacao = parametros.get("custo_diaria_alimentacao", 55.0)
     custo_auxilio = parametros.get("auxilio_deslocamento_diario", 35.0)
 
-    # Critérios proporcionais baseados na metragem quadrada (M2) e nas fórmulas da planilha
     m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
     
     num_visitas_supervisao = parametros.get("num_visita_supervisao", 3.0)
@@ -94,12 +91,10 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     num_entregas_caminhao = parametros.get("num_entrega_caminhao", 1.0)
     dias_trabalho = parametros.get("num_dia_trabalhado_equipe", 1.0)
 
-    # Distâncias totais (Ida e Volta = * 2) aplicadas corretamente com o consumo do veículo
     distancia_caminhao = (dist_km * 2) / consumo_diesel
     distancia_supervisao = (dist_km * 2) / consumo_gasolina
     distancia_instalacao = (dist_km * 2) / consumo_gasolina
 
-    # --- RESULTADOS - CUSTOS (FRENTE A - FRETE) ---
     combustivel_caminhao = distancia_caminhao * valor_diesel * num_entregas_caminhao
     combustivel_supervisao = distancia_supervisao * valor_gasolina * num_visitas_supervisao
     combustivel_instalacao = distancia_instalacao * valor_gasolina * num_desloc_instalacao
@@ -113,7 +108,6 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
         pedagio_total_caminhao + pedagio_total_supervisão + pedagio_total_instalacao
     )
 
-    # --- RESULTADOS - CUSTOS (FRENTE B - OPERAÇÃO) ---
     estadia_supervisao = num_visitas_supervisao * custo_hospedagem * colab_supervisao * 2
     estadia_caminhao = 2 * num_entregas_caminhao * custo_hospedagem
     estadia_instalacao = dias_trabalho * colab_instalacao * custo_hospedagem
@@ -130,7 +124,6 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
         auxilio_instalacao
     )
 
-    # Geração das strings detalhadas com os valores reais para exibição no memorial de cálculo (Seção A)
     formula_diesel_caminhao = f"({dist_km * 2:.1f} km / {consumo_diesel} km/L) × R$ {valor_diesel:.2f}"
     formula_gasolina_supervisao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_visitas_supervisao}"
     formula_gasolina_instalacao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_desloc_instalacao}"
@@ -138,7 +131,6 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     formula_pedagio_supervisao = f"{num_pedagio_80km} × R$ {pedagio_carro:.2f} × {num_visitas_supervisao}"
     formula_pedagio_instalacao = f"{num_pedagio_80km} × R$ {pedagio_carro:.2f} × {num_desloc_instalacao}"
 
-    # Geração das strings detalhadas com os valores reais para exibição no memorial de cálculo (Seção B)
     formula_estadia_supervisao = f"{num_visitas_supervisao} visitas × {colab_supervisao} colab × R$ {custo_hospedagem:.2f} × 2"
     formula_estadia_caminhao = f"2 × {num_entregas_caminhao} entregas × R$ {custo_hospedagem:.2f}"
     formula_estadia_instalacao = f"{dias_trabalho} dias × {colab_instalacao} colab × R$ {custo_hospedagem:.2f}"
@@ -149,7 +141,6 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
 
     formula_auxilio_instalacao = f"{dias_trabalho} dias × {colab_instalacao} colab × R$ {custo_auxilio:.2f}"
 
-    # Dicionário detalhado contendo todos os custos unitários/isolados e as fórmulas preenchidas com os valores
     custo_detalhado = {
         "combustivel_caminhao": round(combustivel_caminhao, 2),
         "combustivel_diesel_caminhao": round(combustivel_caminhao, 2),
@@ -224,6 +215,7 @@ def upload_pdf(request):
                 'custo_frete': '0.00',
                 'custo_operacao': '0.00',
                 'custo_total_deslocamento': '0.00',
+                'calcular_cubagem': False,
             }
             request.session['temp_itens'] = [
                 {
@@ -251,7 +243,12 @@ def detalhe_obra_temp(request):
         return redirect("upload_pdf")
 
     calcular_cubagem_param = request.GET.get('calcular_cubagem') or request.POST.get('calcular_cubagem')
-    faz_cubagem = True if calcular_cubagem_param == 'on' else False
+    if calcular_cubagem_param is not None:
+        faz_cubagem = True if calcular_cubagem_param == 'on' else False
+        temp_obra_data['calcular_cubagem'] = faz_cubagem
+        request.session['temp_obra'] = temp_obra_data
+    else:
+        faz_cubagem = temp_obra_data.get('calcular_cubagem', False)
 
     veiculos_cadastrados = Veiculo.objects.all()
     veiculo_id = request.GET.get('veiculo_id') or request.POST.get('veiculo_id')
@@ -437,7 +434,7 @@ def detalhe_obra(request, pk):
     custo_total_materiais = sum(item.custo_total for item in itens)
 
     calcular_cubagem_param = request.GET.get('calcular_cubagem')
-    faz_cubagem = True if calcular_cubagem_param == 'on' else getattr(obra, 'calcular_cubagem', False)
+    faz_cubagem = True if calcular_cubagem_param == 'on' else False
 
     veiculos_cadastrados = Veiculo.objects.all()
     veiculo_selecionado = getattr(obra, 'veiculo', None)
@@ -520,7 +517,7 @@ def editar_obra(request, pk):
     custo_total_materiais = sum(item.custo_total for item in itens)
 
     calcular_cubagem_param = request.GET.get('calcular_cubagem') or request.POST.get('calcular_cubagem')
-    faz_cubagem = True if calcular_cubagem_param == 'on' else getattr(obra, 'calcular_cubagem', False)
+    faz_cubagem = True if calcular_cubagem_param == 'on' else False
 
     veiculos_cadastrados = Veiculo.objects.all()
     veiculo_id = request.GET.get('veiculo_id') or request.POST.get('veiculo_id')
