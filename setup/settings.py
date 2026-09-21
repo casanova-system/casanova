@@ -1,13 +1,14 @@
 from pathlib import Path
 import os
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # A chave do Render será lida da variável de ambiente se existir, senão usa a padrão
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-temporaria-para-desenvolvimento-local')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-chave-temporaria-para-desenvolvimento-local')
 
 # Forçado como True temporariamente para exibir a tela de erro detalhada do Django
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Permite acesso de qualquer host para testes
 ALLOWED_HOSTS = ['*']
@@ -55,8 +56,12 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 

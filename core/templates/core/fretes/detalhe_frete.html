@@ -2,157 +2,148 @@
 {% load l10n %}
 
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    html, body {
-        height: 100vh;
-        overflow: hidden !important;
-        margin: 0;
-        padding: 0;
-    }
+.app-layout-flex {
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1.25rem;
+    overflow: hidden;
+    font-size: 0.95rem !important;
+}
 
-    .app-layout-flex {
-        height: calc(100vh - 60px);
-        display: flex;
-        flex-direction: column;
-        padding: 0.75rem 1.25rem;
-        overflow: hidden;
-        font-size: 0.95rem !important;
-    }
+.btn-outline-secondary-custom {
+    border-width: 1px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+[data-bs-theme="light"] .btn-outline-secondary-custom {
+    color: #495057 !important;
+    background-color: #ffffff !important;
+    border-color: #ced4da !important;
+}
+[data-bs-theme="light"] .btn-outline-secondary-custom:hover {
+    color: #212529 !important;
+    background-color: #e2e6ea !important;
+    border-color: #dae0e5 !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary-custom {
+    color: #f8f9fa !important;
+    background-color: #1e2638 !important;
+    border-color: #2d3748 !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary-custom:hover {
+    background-color: #2d3748 !important;
+    color: #ffffff !important;
+}
 
-    .btn-outline-secondary-custom {
-        border-width: 1px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    [data-bs-theme="light"] .btn-outline-secondary-custom {
-        color: #495057 !important;
-        background-color: #ffffff !important;
-        border-color: #ced4da !important;
-    }
-    [data-bs-theme="light"] .btn-outline-secondary-custom:hover {
-        color: #212529 !important;
-        background-color: #e2e6ea !important;
-        border-color: #dae0e5 !important;
-    }
-    [data-bs-theme="dark"] .btn-outline-secondary-custom {
-        color: #f8f9fa !important;
-        background-color: #1e2638 !important;
-        border-color: #2d3748 !important;
-    }
-    [data-bs-theme="dark"] .btn-outline-secondary-custom:hover {
-        background-color: #2d3748 !important;
-        color: #ffffff !important;
-    }
+.btn-hover-success {
+    background-color: var(--bs-secondary-bg, #2b3035) !important;
+    border-color: var(--bs-border-color, #495057) !important;
+    color: #ffffff !important;
+    transition: all 0.25s ease-in-out;
+}
+.btn-hover-success:hover, 
+.btn-hover-success:focus, 
+.btn-hover-success:active {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+}
 
-    .btn-hover-success {
-        background-color: var(--bs-secondary-bg, #2b3035) !important;
-        border-color: var(--bs-border-color, #495057) !important;
-        color: #ffffff !important;
-        transition: all 0.25s ease-in-out;
-    }
-    .btn-hover-success:hover, 
-    .btn-hover-success:focus, 
-    .btn-hover-success:active {
-        background-color: #198754 !important;
-        border-color: #198754 !important;
-        color: #ffffff !important;
-    }
+nav input[type="file"], .navbar input[type="file"], input.form-control, select.form-select {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+    font-size: 0.9rem !important;
+    padding: 0.45rem 0.75rem !important;
+}
 
-    nav input[type="file"], .navbar input[type="file"], input.form-control, select.form-select {
-        background-color: var(--bs-body-bg) !important;
-        color: var(--bs-body-color) !important;
-        border-color: var(--bs-border-color) !important;
-        font-size: 0.9rem !important;
-        padding: 0.45rem 0.75rem !important;
-    }
+#inputDistancia:disabled, #inputDesconto:disabled {
+    cursor: not-allowed !important;
+}
 
-    #inputDistancia:disabled, #inputDesconto:disabled {
-        cursor: not-allowed !important;
-    }
+.card-tabela-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    overflow: hidden;
+}
 
-    #custom-tooltip-aviso {
-        position: absolute;
-        display: none;
-        background-color: #1e293b;
-        color: #f8fafc;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.3);
-        z-index: 99999;
-        border: 1px solid #334155;
-        pointer-events: none;
-        white-space: nowrap;
-        transition: opacity 0.15s ease-in-out;
-    }
-    #custom-tooltip-aviso::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 20px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #1e293b transparent transparent transparent;
-    }
+.table-container-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
 
-    .card-tabela-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        min-height: 0;
-        overflow: hidden;
-    }
+.table-container-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--bs-tertiary-bg, #212529) !important;
+}
 
-    .table-container-scroll {
-        flex-grow: 1;
-        overflow-y: auto;
-        min-height: 0;
-    }
-    
-    .table-container-scroll thead th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        background-color: var(--bs-tertiary-bg, #212529) !important;
-    }
+.table-container-scroll table td, .table-container-scroll table th {
+    font-size: 0.9rem !important;
+    padding: 0.6rem 0.75rem !important;
+}
 
-    .table-container-scroll table td, .table-container-scroll table th {
-        font-size: 0.9rem !important;
-        padding: 0.6rem 0.75rem !important;
-    }
+.badge-cubagem-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    color: #ffffff;
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+}
 
-    .badge-cubagem-info {
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        color: #ffffff;
-        font-weight: 500;
-        padding: 0.35rem 0.65rem;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
-    }
+.alert-warning-custom {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    border-color: #ffc107 !important;
+    color: var(--bs-body-color, #ffffff) !important;
+    font-size: 0.95rem !important;
+}
+.alert-warning-custom .text-muted-custom {
+    color: var(--bs-secondary-color, #adb5bd) !important;
+}
 
-    .alert-warning-custom {
-        background-color: rgba(255, 193, 7, 0.15) !important;
-        border-color: #ffc107 !important;
-        color: var(--bs-body-color, #ffffff) !important;
-        font-size: 0.95rem !important;
-    }
-    .alert-warning-custom .text-muted-custom {
-        color: var(--bs-secondary-color, #adb5bd) !important;
-    }
+/* Spreadsheet Cost Table Styling */
+.sheet-table {
+    font-size: 0.85rem;
+    border-collapse: collapse;
+    width: 100%;
+}
+.sheet-table th, .sheet-table td {
+    border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+.sheet-table th {
+    background-color: #e9ecef;
+    color: #212529;
+    font-weight: bold;
+    text-align: center;
+}
+.sheet-group-cell {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    width: 60px;
+}
+.sheet-total-row {
+    background-color: #fef08a !important;
+    font-weight: bold;
+}
 </style>
 
-<div id="custom-tooltip-aviso">
-    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Preencha o veículo e a distância primeiro!
-</div>
-
 {% with valor_distancia=request.GET.distancia_km|default:distancia_km|default:obra.distancia_km|default:'' valor_desconto=request.GET.percentual_desconto|default:percentual_desconto|default:obra.percentual_desconto|default:0 %}
-<div class="container-fluid app-layout-flex">
-    
+
+<div class="app-layout-flex">
     {% if erro_custos_obrigatorios %}
     <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between mb-2 flex-shrink-0 shadow-sm" role="alert" style="background-color: rgba(220, 53, 69, 0.15); border: 1px solid #dc3545; color: #ff8080; border-radius: 8px; font-size: 0.9rem;">
         <div class="d-flex align-items-center gap-2">
@@ -172,7 +163,7 @@
         </div>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-sm btn-outline-secondary-custom px-3 py-1" data-bs-toggle="modal" data-bs-target="#modalMemorialCalculos">
-                Memorial de Cálculos
+                Resultados - Custos (Planilha)
             </button>
             
             {% if is_temp or is_edit %}
@@ -414,457 +405,202 @@
         </div>
     </div>
 </div>
-{% endwith %}
 
-<!-- Modal de Confirmação de Saída -->
-<div class="modal fade" id="modalConfirmacaoSaida" tabindex="-1" aria-labelledby="modalConfirmacaoSaidaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background-color: var(--bs-body-bg); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-radius: 8px;">
-      <div class="modal-header py-2" style="border-bottom: 1px solid var(--bs-border-color);">
-        <h5 class="modal-title fs-6 text-warning" id="modalConfirmacaoSaidaLabel">
-          <i class="fa-solid fa-triangle-exclamation me-1"></i> Alterações não salvas
-        </h5>
+<div class="modal fade" id="modalMemorialCalculos" tabindex="-1" aria-labelledby="modalMemorialCalculosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header py-3 px-4 border-bottom bg-body-tertiary">
+        <div>
+          <h5 class="modal-title fw-bold mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
+            Resultados - Custos (Custo Operação e Frete)
+          </h5>
+          <small class="text-muted">Espelhamento exato da planilha Excel com as fórmulas e exatamente dois totais (Frete e Operação).</small>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
-      <div class="modal-body py-3" style="font-size: 0.95rem;">
-        Você possui alterações não salvas nesta obra. Se sair agora, os dados modificados serão perdidos. Deseja realmente sair sem salvar?
-      </div>
-      <div class="modal-footer py-2" style="border-top: 1px solid var(--bs-border-color);">
-        <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-sm btn-danger px-3" id="btnConfirmarSaida">Sim, Sair</button>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Modal Padrão do Sistema para Alerta de Distância -->
-<div class="modal fade" id="modalAlertaSistema" tabindex="-1" aria-labelledby="modalAlertaSistemaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background-color: var(--bs-body-bg); color: var(--bs-body-color); border: 1px solid var(--bs-border-color); border-radius: 8px;">
-      <div class="modal-header py-2" style="border-bottom: 1px solid var(--bs-border-color);">
-        <h5 class="modal-title fs-6 text-warning" id="modalAlertaSistemaLabel">
-          <i class="fa-solid fa-triangle-exclamation me-1"></i> Atenção
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      <div class="modal-body p-4" style="font-size: 0.9rem;">
+        <div class="table-responsive">
+          <table class="table sheet-table">
+            <thead>
+              <tr>
+                <th colspan="3" style="text-align: center; background-color: #d1d5db; font-size: 1rem;">Custo Operação e Frete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Seção A: FRETE -->
+              <tr>
+                <td rowspan="7" class="sheet-group-cell">A</td>
+                <td>
+                  Custo Combustível - Diesel Caminhão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_diesel_caminhao|default:"(Distância Total / Consumo Caminhão) × Preço Diesel" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.combustivel_caminhao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Combustível - Gasolina Carro Supervisão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_gasolina_supervisao|default:"(Distância Total / Consumo Carro) × Preço Gasolina" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.combustivel_supervisao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Combustível - Gasolina Carro Instalação
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_gasolina_instalacao|default:"(Distância Total / Consumo Carro) × Preço Gasolina" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.combustivel_instalacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Pedágio - Caminhão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_pedagio_caminhao|default:"(Distância Total / Fator Km Praça) × Tarifa Eixos Caminhão" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.pedagio_total_caminhao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Pedágio - Carro Supervisão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_pedagio_supervisao|default:"(Distância Total / Fator Km Praça) × Tarifa Carro" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.pedagio_total_supervisao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Pedágio - Carro Instalação
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_pedagio_instalacao|default:"(Distância Total / Fator Km Praça) × Tarifa Carro" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.pedagio_total_instalacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr class="sheet-total-row">
+                <td style="font-weight: bold; text-transform: uppercase;">FRETE — CUSTO TOTAL</td>
+                <td style="text-align: right; font-weight: bold;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_frete|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+
+              <!-- Seção B: OPERAÇÃO -->
+              <tr>
+                <td rowspan="8" class="sheet-group-cell">B</td>
+                <td>
+                  Custo Estadia - Supervisão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_estadia_supervisao|default:"Dias de Trabalho × Valor Diária Hospedagem" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.estadia_supervisao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Estadia - Caminhão Motorista e Auxiliar
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_estadia_caminhao|default:"Dias de Trabalho × (Diária Motorista + Diária Auxiliar)" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.estadia_caminhao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Estadia - Instalação
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_estadia_instalacao|default:"Dias de Trabalho × Valor Diária Hospedagem (Equipe)" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.estadia_instalacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Alimentação - Supervisão
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_alimentacao_supervisao|default:"Dias de Trabalho × Valor Alimentação Diária" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.alimentacao_supervisao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Alimentação - Caminhão Motorista e Auxiliar
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_alimentacao_caminhao|default:"Dias de Trabalho × (Alimentação Motorista + Auxiliar)" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.alimentacao_caminhao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Alimentação - Instalação
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_alimentacao_instalacao|default:"Dias de Trabalho × Valor Alimentação Equipe" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.alimentacao_instalacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr>
+                <td>
+                  Custo Auxílio Deslocamento - Instalação
+                  <div class="text-muted mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-calculator me-1"></i>Fórmula: {{ custo_detalhado.formula_auxilio_instalacao|default:"Dias de Trabalho × Taxa de Deslocamento Local" }}</div>
+                </td>
+                <td style="text-align: right; font-weight: 500; vertical-align: middle;">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_detalhado.auxilio_instalacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+              <tr class="sheet-total-row">
+                <td style="font-weight: bold; text-transform: uppercase;">OPERAÇÃO — CUSTO TOTAL</td>
+                <td style="text-align: right; font-weight: bold;">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_operacao|default:"0.00"|unlocalize }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="modal-body py-3" style="font-size: 0.95rem;" id="modalAlertaTexto">
-        Informe a distância em KM antes de recalcular o frete.
-      </div>
-      <div class="modal-footer py-2" style="border-top: 1px solid var(--bs-border-color);">
-        <button type="button" class="btn btn-sm btn-danger px-4" data-bs-dismiss="modal">OK</button>
+
+      <div class="modal-footer py-2 px-4 border-top bg-body-tertiary">
+        <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll('.fmt-moeda, .fmt-num').forEach(el => {
-            let rawText = el.textContent.trim().replace(',', '.');
-            let val = parseFloat(rawText);
-            if (!isNaN(val)) {
-                let defaultDecimals = el.classList.contains('fmt-moeda') ? 2 : 2;
-                let attrDecimals = el.getAttribute('data-decimals');
-                let decimals = attrDecimals ? parseInt(attrDecimals) : defaultDecimals;
-                
-                let fixedVal = Number(val.toFixed(decimals));
-                el.textContent = fixedVal.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-            }
-        });
-
-        atualizarEstiloBotaoCubagem();
-        verificarDistanciaPreenchida();
-
-        const formRecalcular = document.getElementById('form-recalcular');
-        if (formRecalcular) {
-            formRecalcular.querySelectorAll('input').forEach(input => {
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (validarRecalculo(e)) {
-                            formRecalcular.submit();
-                        }
-                    }
-                });
-            });
-        }
-
-        const inputDist = document.getElementById('inputDistancia');
+    function toggleDistancia(selectElem) {
+        const inputDistancia = document.getElementById('inputDistancia');
         const inputDesconto = document.getElementById('inputDesconto');
-        const tooltipAviso = document.getElementById('custom-tooltip-aviso');
-
-        [inputDist, inputDesconto].forEach(el => {
-            if (el) {
-                el.addEventListener('mousemove', function(e) {
-                    if (el.hasAttribute('disabled')) {
-                        tooltipAviso.style.display = 'block';
-                        tooltipAviso.style.left = (e.pageX + 10) + 'px';
-                        tooltipAviso.style.top = (e.pageY - 45) + 'px';
-                    }
-                });
-
-                el.addEventListener('mouseleave', function() {
-                    tooltipAviso.style.display = 'none';
-                });
-
-                el.addEventListener('click', function(e) {
-                    if (el.hasAttribute('disabled')) {
-                        tooltipAviso.style.display = 'block';
-                        tooltipAviso.style.left = (e.pageX + 10) + 'px';
-                        tooltipAviso.style.top = (e.pageY - 45) + 'px';
-                        
-                        setTimeout(() => {
-                            tooltipAviso.style.display = 'none';
-                        }, 3000);
-                    }
-                });
-            }
-        });
-
-        let hasUnsavedChanges = false;
-        let targetUrlToNavigate = '';
-
-        const markChanged = () => {
-            hasUnsavedChanges = true;
-        };
-
-        document.querySelectorAll('input, select, textarea').forEach(el => {
-            if (el.id !== 'inputDistancia' && el.id !== 'inputDesconto' && el.id !== 'checkCubagem') {
-                el.addEventListener('change', markChanged);
-                el.addEventListener('input', markChanged);
-            }
-        });
-
-        const btnRecalcular = document.getElementById('btnRecalcular');
-        if (btnRecalcular) {
-            btnRecalcular.addEventListener('click', () => {
-                hasUnsavedChanges = false;
-            });
-        }
-
-        const btnSalvar = document.getElementById('btnSalvarPrincipal');
-        if (btnSalvar) {
-            btnSalvar.addEventListener('click', () => {
-                hasUnsavedChanges = false;
-            });
-        }
-
-        const btnVoltar = document.getElementById('btnVoltar');
-        if (btnVoltar) {
-            btnVoltar.addEventListener('click', function(e) {
-                if (hasUnsavedChanges) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    targetUrlToNavigate = this.getAttribute('href');
-                    
-                    const modalElement = document.getElementById('modalConfirmacaoSaida');
-                    let modalSaida = bootstrap.Modal.getInstance(modalElement);
-                    if (!modalSaida) {
-                        modalSaida = new bootstrap.Modal(modalElement);
-                    }
-                    modalSaida.show();
-                }
-            });
-        }
-
-        document.addEventListener('click', function(e) {
-            const link = e.target.closest('a');
-            if (link && link.id !== 'btnVoltar' && link.getAttribute('href') && !link.getAttribute('href').startsWith('#') && !link.getAttribute('href').startsWith('javascript')) {
-                if (hasUnsavedChanges) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    targetUrlToNavigate = link.getAttribute('href');
-                    
-                    const modalElement = document.getElementById('modalConfirmacaoSaida');
-                    let modalSaida = bootstrap.Modal.getInstance(modalElement);
-                    if (!modalSaida) {
-                        modalSaida = new bootstrap.Modal(modalElement);
-                    }
-                    modalSaida.show();
-                }
-            }
-        }, true);
-
-        const btnConfirmarSaida = document.getElementById('btnConfirmarSaida');
-        if (btnConfirmarSaida) {
-            btnConfirmarSaida.addEventListener('click', function() {
-                hasUnsavedChanges = false;
-                window.location.href = targetUrlToNavigate;
-            });
-        }
-
-        window.addEventListener('beforeunload', function (e) {
-            if (hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    });
-
-    function alternarCubagem() {
-        const checkbox = document.getElementById('checkCubagem');
-        const hiddenSalvar = document.getElementById('hiddenSalvarCubagem');
-        if (checkbox) {
-            checkbox.checked = !checkbox.checked;
-            if (hiddenSalvar) {
-                hiddenSalvar.value = checkbox.checked ? 'on' : '';
-            }
-            atualizarEstiloBotaoCubagem();
+        const infoMsg = document.getElementById('infoCapacidadeVeiculo');
+        
+        if (selectElem && selectElem.value !== "") {
+            inputDistancia.disabled = false;
+            inputDistancia.placeholder = "0.0";
+            inputDistancia.focus();
             
-            const event = new Event('change', { bubbles: true });
-            checkbox.dispatchEvent(event);
-        }
-    }
-
-    function atualizarEstiloBotaoCubagem() {
-        const checkbox = document.getElementById('checkCubagem');
-        const btn = document.getElementById('btnToggleCubagem');
-        const txt = document.getElementById('txtStatusCubagem');
-        
-        if (!checkbox || !btn || !txt) return;
-
-        if (checkbox.checked) {
-            txt.textContent = "Ativo";
-            btn.style.backgroundColor = '#0ea5e9';
-            btn.style.color = '#ffffff';
-            btn.style.borderColor = '#0ea5e9';
+            if (infoMsg) {
+                const selectedOption = selectElem.options[selectElem.selectedIndex];
+                const capacidade = selectedOption.getAttribute('data-cubagem') || "0";
+                infoMsg.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${capacidade} m³</strong>`;
+            }
         } else {
-            txt.textContent = "Inativo";
-            btn.style.backgroundColor = 'transparent';
-            btn.style.color = '#6c757d';
-            btn.style.borderColor = '#6c757d';
+            inputDistancia.disabled = true;
+            inputDistancia.value = "";
+            inputDistancia.placeholder = "Selecione o veículo";
+            
+            if(inputDesconto) {
+                inputDesconto.disabled = true;
+                inputDesconto.placeholder = "Calcule o frete";
+            }
+            if (infoMsg) {
+                infoMsg.innerHTML = '<i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.';
+            }
         }
-    }
-
-    function toggleDistancia(select) {
-        const inputDist = document.getElementById('inputDistancia');
-        const inputDesconto = document.getElementById('inputDesconto');
-        const infoCapacidade = document.getElementById('infoCapacidadeVeiculo');
-        const tooltipAviso = document.getElementById('custom-tooltip-aviso');
-        const selectedOption = select.options[select.selectedIndex];
-        
-        if (select.value) {
-            inputDist.removeAttribute('disabled');
-            inputDist.placeholder = "";
-            tooltipAviso.style.display = 'none';
-            const cubagem = selectedOption.getAttribute('data-cubagem') || '0';
-            infoCapacidade.innerHTML = `<i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>${cubagem} m³</strong> | Pressione Enter ou clique em Recalcular para atualizar.`;
-        } else {
-            inputDist.setAttribute('disabled', 'true');
-            inputDist.value = "";
-            inputDist.placeholder = "Selecione o veículo";
-            inputDesconto.setAttribute('disabled', 'true');
-            inputDesconto.value = "0";
-            inputDesconto.placeholder = "Calcule o frete";
-            infoCapacidade.innerHTML = `<i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.`;
-        }
-        verificarDistanciaPreenchida();
     }
 
     function verificarDistanciaPreenchida() {
-        const inputDist = document.getElementById('inputDistancia');
+        const inputDistancia = document.getElementById('inputDistancia');
         const inputDesconto = document.getElementById('inputDesconto');
-        const btnRecalcular = document.getElementById('btnRecalcular');
         
-        if (!btnRecalcular) return;
-
-        const valorKm = inputDist.value.trim();
-        const estaDesabilitado = inputDist.hasAttribute('disabled');
-
-        if (estaDesabilitado || valorKm === "" || parseFloat(valorKm) <= 0) {
-            btnRecalcular.setAttribute('disabled', 'true');
-            btnRecalcular.style.opacity = '0.5';
-            btnRecalcular.style.cursor = 'not-allowed';
-            btnRecalcular.style.backgroundColor = 'transparent';
-            btnRecalcular.style.color = '#6c757d';
-            btnRecalcular.style.borderColor = '#6c757d !important';
-
-            if (inputDesconto) {
-                inputDesconto.setAttribute('disabled', 'true');
-                inputDesconto.placeholder = "Calcule o frete";
+        if (inputDistancia && inputDistancia.value && parseFloat(inputDistancia.value) >= 0) {
+            if(inputDesconto) {
+                inputDesconto.disabled = false;
+                inputDesconto.placeholder = "0";
             }
-        } else {
-            btnRecalcular.removeAttribute('disabled');
-            btnRecalcular.style.opacity = '1';
-            btnRecalcular.style.cursor = 'pointer';
-            btnRecalcular.style.backgroundColor = 'transparent';
-            btnRecalcular.style.color = '#3b82f6';
-            btnRecalcular.style.borderColor = '#3b82f6';
-
-            if (inputDesconto) {
-                inputDesconto.removeAttribute('disabled');
-                inputDesconto.placeholder = "";
-            }
+        } else if (inputDesconto) {
+            inputDesconto.disabled = true;
+            inputDesconto.placeholder = "Calcule o frete";
         }
     }
-
-    function validarRecalculo(event) {
-        const inputDist = document.getElementById('inputDistancia');
-        const valorKm = inputDist.value.trim();
-        if (inputDist.hasAttribute('disabled') || valorKm === "" || parseFloat(valorKm) <= 0) {
-            event.preventDefault();
-            
-            const modalElement = document.getElementById('modalAlertaSistema');
-            let modalAlerta = bootstrap.Modal.getInstance(modalElement);
-            if (!modalAlerta) {
-                modalAlerta = new bootstrap.Modal(modalElement);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectVeiculo = document.getElementById('selectVeiculo');
+        if (selectVeiculo && selectVeiculo.value) {
+            const inputDistancia = document.getElementById('inputDistancia');
+            if(inputDistancia) {
+                inputDistancia.disabled = false;
+                verificarDistanciaPreenchida();
             }
-            modalAlerta.show();
-            return false;
         }
-        return true;
-    }
-
-    function syncTipoPeso(selectElem) {
-        const hiddenInput = document.getElementById('hiddenTipoPesoCobranca');
-        if (hiddenInput) {
-            hiddenInput.value = selectElem.value;
-        }
-    }
+    });
 </script>
 
-<!-- Memorial de Cálculos Modal -->
-<div class="modal fade" id="modalMemorialCalculos" tabindex="-1" aria-labelledby="modalMemorialCalculosLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content bg-body text-body border shadow-lg" style="border-radius: 12px;">
-      
-      <div class="modal-header py-3 px-4 border-bottom bg-body-tertiary">
-        <div>
-          <h5 class="modal-title fw-bold mb-0" id="modalMemorialCalculosLabel" style="font-size: 1.1rem;">
-            Memorial de Cálculo Analítico — Custos e Logística
-          </h5>
-          <small class="text-muted">Detalhamento completo das fórmulas, parâmetros e valores aplicados pelo sistema para esta obra.</small>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-      </div>
-
-      <div class="modal-body p-4" style="font-size: 0.9rem;">
-        
-        <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">1. Parâmetros de Entrada da Rota e Carga</h6>
-        <div class="row g-3 mb-4">
-          <div class="col-md-3">
-            <div class="p-3 rounded border bg-body-secondary">
-              <span class="text-muted d-block small mb-1">Distância (Ida / Rota)</span>
-              <strong class="fs-6"><span class="fmt-num" data-decimals="1">{{ valor_distancia|default:"0"|unlocalize }}</span> km</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Origem: 78088-800</small>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="p-3 rounded border bg-body-secondary">
-              <span class="text-muted d-block small mb-1">Veículo / Frota</span>
-              <strong class="fs-6 text-truncate d-block">{{ veiculo_selecionado.marca_modelo|default:"Não especificado" }}</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Placa: {{ veiculo_selecionado.placa|default:"N/A" }}</small>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="p-3 rounded border bg-body-secondary">
-              <span class="text-muted d-block small mb-1">Capacidade Volumétrica</span>
-              <strong class="text-info fs-6"><span class="fmt-num" data-decimals="2">{{ veiculo_selecionado.capacidade_volumetrica|default:"0"|unlocalize }}</span> m³</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Viagens: {{ viagens_necessarias|default:"1" }} estimada(s)</small>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="p-3 rounded border bg-body-secondary">
-              <span class="text-muted d-block small mb-1">Carga Processada</span>
-              <strong class="text-warning fs-6"><span class="fmt-num" data-decimals="2">{{ peso_total|unlocalize }}</span> kg</strong>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{% if requer_escolha_peso %}Base: Peso Cubado (<span class="fmt-num" data-decimals="2">{{ peso_cubado|unlocalize }}</span> kg){% else %}Base: Peso Real{% endif %}</small>
-            </div>
-          </div>
-        </div>
-
-        <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">2. Composição e Fórmulas de Custos (Frete, Operacional e Deslocamento)</h6>
-        
-        <div class="row g-3 mb-4">
-          <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-primary border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
-              <div>
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="fw-bold text-primary"><i class="fa-solid fa-truck-fast me-1"></i> Custo de Frete</span>
-                  <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_frete|unlocalize }}</span></span>
-                </div>
-                <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
-                  Calculado multiplicando a quilometragem total, o fator de viagens e a tarifa quilométrica cadastrada.
-                </p>
-                <div class="mb-3 p-2 rounded border bg-body small">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Tarifa Km (Veículo):</span>
-                    <strong class="text-info">R$ <span class="fmt-moeda" data-decimals="2">{% if tarifa_km %}{{ tarifa_km|unlocalize }}{% elif veiculo_selecionado and veiculo_selecionado.custo_km %}{{ veiculo_selecionado.custo_km|unlocalize }}{% else %}0.00{% endif %}</span></strong>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Viagens Aplicadas:</span>
-                    <strong class="text-warning">{{ viagens_necessarias|default:"1" }}x</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
-                Fórmula: Distância Total × Tarifa Km × Viagens
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-warning border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
-              <div>
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="fw-bold text-warning"><i class="fa-solid fa-clock me-1"></i> Custo Operacional</span>
-                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_operacao|unlocalize }}</span></span>
-                </div>
-                <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
-                  Refere-se ao total proporcional baseado nos dias de trabalho estimados e no valor unitário da diária operacional.
-                </p>
-                <div class="mb-3 p-2 rounded border bg-body small">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Valor da Diária:</span>
-                    <strong class="text-warning">R$ <span class="fmt-moeda" data-decimals="2">{{ valor_diaria_operacional|default:"0.00"|unlocalize }}</span></strong>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Dias de Trabalho:</span>
-                    <strong class="text-body">{{ dias_trabalho }} dia(s)</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
-                Fórmula: Dias de Trabalho × Valor Diária Operacional
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="h-100 p-3 rounded border border-danger border-opacity-25 d-flex flex-column justify-content-between bg-body-secondary">
-              <div>
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="fw-bold text-danger"><i class="fa-solid fa-route me-1"></i> Total Deslocamento</span>
-                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">R$ <span class="fmt-moeda" data-decimals="2">{{ obra.custo_total_deslocamento|unlocalize }}</span></span>
-                </div>
-                <p class="text-muted small mb-3" style="font-size: 0.85rem; line-height: 1.4;">
-                  Soma consolidada dos custos de translado, diárias e despesas logísticas envolvidas no atendimento da obra.
-                </p>
-                <div class="mb-3 p-2 rounded border bg-body small">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted">Custo Geral Final:</span>
-                    <strong class="text-success">R$ <span class="fmt-moeda" data-decimals="2">{{ custo_geral_obra|unlocalize }}</span></strong>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-muted">Status do Cálculo:</span>
-                    <strong class="text-success">Consolidado</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="p-2 rounded border font-monospace text-muted bg-body" style="font-size: 0.75rem;">
-                Fórmula: Custo Frete + Custo Operacional
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="modal-footer py-2 px-4 border-top bg-body-tertiary">
-        <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
-      </div>
-      
-    </div>
-  </div>
-</div>
-
+{% endwith %}
 {% endblock %}

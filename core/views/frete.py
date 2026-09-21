@@ -11,17 +11,25 @@ from ..models import ItemVidro, Obra, Veiculo, Custo
 from ..services import processar_excel_relatorio
 
 def obter_parametros_custo_do_banco(request):
+    """
+    Busca os custos cadastrados no banco utilizando os campos reais do modelo Custo ('descricao' e 'tipo').
+    """
     tipos_desejados = {
-        "media_hospedagem": ["hospedagem", "hotel", "HOSPEDAGEM", "Hospedagem", "Hotel", "HOTEL"],
-        "media_gasolina": ["gasolina", "GASOLINA", "Gasolina", "gASOLINA", "gasosa", "GASOSA"],
-        "media_diesel": ["diesel", "DIESEL", "Diesel", "díesel", "DÍESEL", "Díesel"],
-        "media_alimentacao": ["alimentacao", "alimentação", "ALIMENTAÇÃO", "ALIMENTACAO", "Alimentação", "Alimentacao", "almoço", "ALMOÇO", "Almoço", "almoco", "ALMOCO", "Almoco", "refeicao", "REFEICAO", "Refeicao", "refeição", "REFEIÇÃO", "Refeição"],
-        "media_locomocao": ["locomocao", "locomoção", "LOCOMOÇÃO", "LOCOMOCAO", "Locomocao", "Locomoção", "TRANSPORTE", "Transporte", "Uber", "UBER", "TAXI", "TÁXI", "Táxi", "Taxi", "táxi", "transporte", "uber", "taxi"],
-        "tarifa_pedagio_carro": ["pedagio carro", "pedágio carro", "Tarifa Pedágio Carro"],
-        "tarifa_pedagio_caminhao": ["pedagio caminhao", "pedágio caminhão", "Tarifa Pedágio Caminhão"],
-        "consumo_gasolina": ["consumo gasolina", "Consumo Gasolina"],
-        "num_colab_supervisao": ["número colaboradores supervisão", "numero colaboradores supervisao", "Sup. Técnica"],
-        "num_colab_instalacao": ["número colaboradores instalação", "numero colaboradores instalacao", "Instalação"],
+        "carga_media": ["carga média", "carga media", "media_locomocao", "média locomoção"],
+        "pedagio_carro": ["pedágio carro", "pedagio carro"],
+        "pedagio_caminhao": ["pedágio caminhão", "pedagio caminhao"],
+        "valor_gasolina": ["valor gasolina"],
+        "valor_diesel": ["valor diesel"],
+        "numero_pedagio_80km": ["numero pedagio a cada 80km", "número pedágio a cada 80km"],
+        "num_colab_supervisao": ["num colaborador supervisao tecnica", "número colaborador supervisão técnica", "num_colab_supervisao"],
+        "num_colab_instalacao": ["num colaborador instalador", "número colaborador instalador", "num_colab_instalacao"],
+        "custo_diaria_hotel": ["custo diaria hotel por pessoa", "custo diária hotel por pessoa"],
+        "custo_diaria_alimentacao": ["custo diaria de alimentacao por pessoa", "custo diária de alimentação por pessoa"],
+        "auxilio_deslocamento_diario": ["auxilio deslocamento diario por pessoa", "auxílio deslocamento diário por pessoa"],
+        "num_visita_supervisao": ["num visita supervisao tecnica", "num visita supervisao técnica", "número visita supervisão técnica"],
+        "num_deslocamento_instalacao": ["num deslocamento eqp instalador", "número deslocamento eqp instalador"],
+        "num_entrega_caminhao": ["num entrega carro furgao", "número entrega carro furgão"],
+        "num_dia_trabalhado_equipe": ["numero dia trabalhado pela equipe", "número dia trabalhado pela equipe"],
     }
     
     parametros = {}
@@ -33,7 +41,7 @@ def obter_parametros_custo_do_banco(request):
         custo_obj = None
         for termo in termos:
             custo_obj = Custo.objects.filter(
-                Q(tipo__icontains=termo) | Q(descricao__icontains=termo)
+                Q(descricao__icontains=termo) | Q(tipo__icontains=termo)
             ).first()
             if custo_obj:
                 break
@@ -43,18 +51,6 @@ def obter_parametros_custo_do_banco(request):
         else:
             faltando.append(chave)
             parametros[chave] = 0.0
-
-    # Definir valores padrão caso algum parâmetro opcional não seja encontrado
-    parametros.setdefault("tarifa_pedagio_carro", 5.80)
-    parametros.setdefault("tarifa_pedagio_caminhao", 9.60)
-    parametros.setdefault("consumo_gasolina", 11.0)
-    parametros.setdefault("media_diesel", 7.55)
-    parametros.setdefault("media_gasolina", 5.10)
-    parametros.setdefault("media_hospedagem", 130.0)
-    parametros.setdefault("media_alimentacao", 55.0)
-    parametros.setdefault("media_locomocao", 35.0) # Auxílio Deslocamento
-    parametros.setdefault("num_colab_supervisao", 1.0)
-    parametros.setdefault("num_colab_instalacao", 4.0)
 
     if faltando and eh_tela_de_detalhe:
         parametros["_bloqueado"] = True
@@ -66,84 +62,67 @@ def obter_parametros_custo_do_banco(request):
     return parametros
 
 
-def calcular_custos_detalhados(dist_km, m2_total, parametros):
+def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionado=None):
     """
-    Replica exatamente o cálculo da planilha de Excel:
-    Frente A (Frete / Combustíveis / Pedágios)
-    Frente B (Operação / Estadias / Alimentação / Auxílios)
+    Replica exatamente o cálculo e as fórmulas da planilha utilizando
+    exclusivamente os parâmetros vindos do banco de dados e retorna os totais e os detalhes.
     """
-    # 1. Parâmetros base da planilha
-    consumo_diesel = 6.5
-    consumo_gasolina = parametros.get("consumo_gasolina", 11.0)
+    # 1. Parâmetros recuperados do Banco de Dados baseados na sua imagem
+    carga_media = parametros.get("carga_media", 150.0)
+    pedagio_carro = parametros.get("pedagio_carro", 5.80)
+    pedagio_caminhao = parametros.get("pedagio_caminhao", 9.60)
+    valor_gasolina = parametros.get("valor_gasolina", 5.10)
+    valor_diesel = parametros.get("valor_diesel", 7.55)
     
-    preco_diesel = parametros.get("media_diesel", 7.55)
-    preco_gasolina = parametros.get("media_gasolina", 5.10)
+    # Consumo obtido diretamente do veículo selecionado ou valores padrão
+    consumo_diesel = float(veiculo_selecionado.consumo_combustivel) if (veiculo_selecionado and getattr(veiculo_selecionado, 'consumo_combustivel', None)) else 6.5
+    consumo_gasolina = 11.0 
     
-    tarifa_pedagio_caminhao = parametros.get("tarifa_pedagio_caminhao", 9.60)
-    tarifa_pedagio_carro = parametros.get("tarifa_pedagio_carro", 5.80)
-    
-    custo_hospedagem = parametros.get("media_hospedagem", 130.0)
-    custo_alimentacao = parametros.get("media_alimentacao", 55.0)
-    custo_auxilio = parametros.get("media_locomocao", 35.0)
-    
+    num_pedagio_80km = parametros.get("numero_pedagio_80km", 1.0)
     colab_supervisao = int(parametros.get("num_colab_supervisao", 1))
     colab_instalacao = int(parametros.get("num_colab_instalacao", 4))
-    motorista_auxiliar = 2 # Padrão caminhão (motorista + auxiliar)
-
-    # Critérios proporcionais baseados na metragem quadrada (M2)
-    # Considera-se 1 visita/deslocamento a cada 300 m² (mínimo 1)
-    num_visitas_supervisao = max(1, math.ceil(m2_total / 300.0)) * 3 # 3 visitas base ou proporcional
-    num_desloc_instalacao = max(1, math.ceil(m2_total / 300.0))
-    num_entregas_caminhao = max(1, math.ceil(m2_total / 150.0))
     
-    # Dias trabalhados (produção média diária de 15m² para equipe de 4)
+    custo_hospedagem = parametros.get("custo_diaria_hotel", 130.0)
+    custo_alimentacao = parametros.get("custo_diaria_alimentacao", 55.0)
+    custo_auxilio = parametros.get("auxilio_deslocamento_diario", 35.0)
+
+    # Critérios proporcionais baseados na metragem quadrada (M2) e nas fórmulas da planilha
     m2_real = float(m2_total) if float(m2_total) > 0 else 1.0
-    dias_trabalho = max(1, math.ceil(m2_real / 15.0))
-
-    # Distâncias totais (Ida e Volta = * 2)
-    distancia_caminhao = dist_km * 2 * num_entregas_caminhao
-    distancia_supervisao = dist_km * 2 * num_visitas_supervisao
-    distancia_instalacao = dist_km * 2 * num_desloc_instalacao
-
-    # Pedágios (8 praças padrão de referência ou proporcional à distância)
-    pracas_pedagio = max(1, round(dist_km / 80.0)) * 2 # Ida e volta
-
-    # --- RESULTADOS - CUSTOS (FRENTE A) ---
-    combustivel_caminhao = (distancia_caminhao / consumo_diesel) * preco_diesel
-    combustivel_supervisao = (distancia_supervisao / consumo_gasolina) * preco_gasolina
-    combustivel_instalacao = (distancia_instalacao / consumo_gasolina) * preco_gasolina
     
-    pedagio_caminhao = pracas_pedagio * tarifa_pedagio_caminhao * num_entregas_caminhao
-    pedagio_supervisao = pracas_pedagio * tarifa_pedagio_carro * num_visitas_supervisao
-    pedagio_instalacao = pracas_pedagio * tarifa_pedagio_carro * num_desloc_instalacao
+    num_visitas_supervisao = parametros.get("num_visita_supervisao", 3.0)
+    num_desloc_instalacao = parametros.get("num_deslocamento_instalacao", 1.0)
+    num_entregas_caminhao = parametros.get("num_entrega_caminhao", 1.0)
+    dias_trabalho = parametros.get("num_dia_trabalhado_equipe", 1.0)
+
+    # Distâncias totais (Ida e Volta = * 2) aplicadas corretamente com o consumo do veículo
+    distancia_caminhao = (dist_km * 2) / consumo_diesel
+    distancia_supervisao = (dist_km * 2) / consumo_gasolina
+    distancia_instalacao = (dist_km * 2) / consumo_gasolina
+
+    # --- RESULTADOS - CUSTOS (FRENTE A - FRETE) ---
+    combustivel_caminhao = distancia_caminhao * valor_diesel * num_entregas_caminhao
+    combustivel_supervisao = distancia_supervisao * valor_gasolina * num_visitas_supervisao
+    combustivel_instalacao = distancia_instalacao * valor_gasolina * num_desloc_instalacao
+    
+    pedagio_total_caminhao = num_pedagio_80km * num_entregas_caminhao * pedagio_caminhao
+    pedagio_total_supervisão = num_pedagio_80km * pedagio_carro * num_visitas_supervisao
+    pedagio_total_instalacao = num_pedagio_80km * pedagio_carro * num_desloc_instalacao
 
     total_frete_a = (
         combustivel_caminhao + combustivel_supervisao + combustivel_instalacao +
-        pedagio_caminhao + pedagio_supervisao + pedagio_instalacao
+        pedagio_total_caminhao + pedagio_total_supervisão + pedagio_total_instalacao
     )
 
     # --- RESULTADOS - CUSTOS (FRENTE B - OPERAÇÃO) ---
-    # Regra: Estadia, alimentação e deslocamento só ocorrem se a distância for maior que 200 km
-    if dist_km > 200.0:
-        dias_supervisao = num_visitas_supervisao * 2
+    estadia_supervisao = num_visitas_supervisao * custo_hospedagem * colab_supervisao * 2
+    estadia_caminhao = 2 * num_entregas_caminhao * custo_hospedagem
+    estadia_instalacao = dias_trabalho * colab_instalacao * custo_hospedagem
 
-        estadia_supervisao = custo_hospedagem * colab_supervisao * dias_supervisao
-        estadia_caminhao = custo_hospedagem * motorista_auxiliar * num_entregas_caminhao
-        estadia_instalacao = custo_hospedagem * colab_instalacao * dias_trabalho
+    alimentacao_supervisao = num_visitas_supervisao * colab_supervisao * custo_alimentacao
+    alimentacao_caminhao = 2 * num_entregas_caminhao * custo_alimentacao
+    alimentacao_instalacao = dias_trabalho * colab_instalacao * custo_alimentacao
 
-        alimentacao_supervisao = custo_alimentacao * colab_supervisao * dias_supervisao
-        alimentacao_caminhao = custo_alimentacao * motorista_auxiliar * num_entregas_caminhao
-        alimentacao_instalacao = custo_alimentacao * colab_instalacao * dias_trabalho
-
-        auxilio_instalacao = custo_auxilio * colab_instalacao * dias_trabalho
-    else:
-        estadia_supervisao = 0.0
-        estadia_caminhao = 0.0
-        estadia_instalacao = 0.0
-        alimentacao_supervisao = 0.0
-        alimentacao_caminhao = 0.0
-        alimentacao_instalacao = 0.0
-        auxilio_instalacao = 0.0
+    auxilio_instalacao = dias_trabalho * colab_instalacao * custo_auxilio
 
     total_operacao_b = (
         estadia_supervisao + estadia_caminhao + estadia_instalacao +
@@ -151,34 +130,81 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros):
         auxilio_instalacao
     )
 
-    # --- LOGS DETALHADOS PARA APARECER NO TERMINAL DO DJANGO ---
-    print("\n" + "="*50)
-    print("--- [DEBUG PRECIFICAÇÃO E CUSTOS (FRETES.PY)] ---")
-    print(f"Distância informada: {dist_km} km")
-    print(f"Área Total (m²): {m2_real}")
-    print(f"Dias de Trabalho calculados: {dias_trabalho}")
-    print(f"Viagens de Caminhão: {num_entregas_caminhao}")
-    print(f"Custo Diesel: R$ {combustivel_caminhao:.2f}")
-    print(f"Custo Gasolina Supervisão: R$ {combustivel_supervisao:.2f}")
-    print(f"Custo Gasolina Instalação: R$ {combustivel_instalacao:.2f}")
-    print(f"Custo Pedágio Caminhão: R$ {pedagio_caminhao:.2f}")
-    print(f"Custo Pedágio Carro: R$ {pedagio_supervisao + pedagio_instalacao:.2f}")
-    print(f"-> TOTAL FRETE: R$ {total_frete_a:.2f}")
-    print("-" * 30)
-    print(f"Custo Estadia (Hotel): R$ {estadia_supervisao + estadia_caminhao + estadia_instalacao:.2f}")
-    print(f"Custo Alimentação: R$ {alimentacao_supervisao + alimentacao_caminhao + alimentacao_instalacao:.2f}")
-    print(f"Custo Auxílio Deslocamento: R$ {auxilio_instalacao:.2f}")
-    print(f"-> TOTAL OPERAÇÃO: R$ {total_operacao_b:.2f}")
-    print("="*50 + "\n")
-    # -----------------------------------------------------------
+    # Geração das strings detalhadas com os valores reais para exibição no memorial de cálculo (Seção A)
+    formula_diesel_caminhao = f"({dist_km * 2:.1f} km / {consumo_diesel} km/L) × R$ {valor_diesel:.2f}"
+    formula_gasolina_supervisao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_visitas_supervisao}"
+    formula_gasolina_instalacao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_desloc_instalacao}"
+    formula_pedagio_caminhao = f"{num_pedagio_80km} × {num_entregas_caminhao} × R$ {pedagio_caminhao:.2f}"
+    formula_pedagio_supervisao = f"{num_pedagio_80km} × R$ {pedagio_carro:.2f} × {num_visitas_supervisao}"
+    formula_pedagio_instalacao = f"{num_pedagio_80km} × R$ {pedagio_carro:.2f} × {num_desloc_instalacao}"
+
+    # Geração das strings detalhadas com os valores reais para exibição no memorial de cálculo (Seção B)
+    formula_estadia_supervisao = f"{num_visitas_supervisao} visitas × {colab_supervisao} colab × R$ {custo_hospedagem:.2f} × 2"
+    formula_estadia_caminhao = f"2 × {num_entregas_caminhao} entregas × R$ {custo_hospedagem:.2f}"
+    formula_estadia_instalacao = f"{dias_trabalho} dias × {colab_instalacao} colab × R$ {custo_hospedagem:.2f}"
+
+    formula_alimentacao_supervisao = f"{num_visitas_supervisao} visitas × {colab_supervisao} colab × R$ {custo_alimentacao:.2f}"
+    formula_alimentacao_caminhao = f"2 × {num_entregas_caminhao} entregas × R$ {custo_alimentacao:.2f}"
+    formula_alimentacao_instalacao = f"{dias_trabalho} dias × {colab_instalacao} colab × R$ {custo_alimentacao:.2f}"
+
+    formula_auxilio_instalacao = f"{dias_trabalho} dias × {colab_instalacao} colab × R$ {custo_auxilio:.2f}"
+
+    # Dicionário detalhado contendo todos os custos unitários/isolados e as fórmulas preenchidas com os valores
+    custo_detalhado = {
+        "combustivel_caminhao": round(combustivel_caminhao, 2),
+        "combustivel_diesel_caminhao": round(combustivel_caminhao, 2),
+        "custo_combustivel_caminhao": round(combustivel_caminhao, 2),
+        "formula_diesel_caminhao": formula_diesel_caminhao,
+        
+        "combustivel_supervisao": round(combustivel_supervisao, 2),
+        "custo_combustivel_supervisao": round(combustivel_supervisao, 2),
+        "formula_gasolina_supervisao": formula_gasolina_supervisao,
+        
+        "combustivel_instalacao": round(combustivel_instalacao, 2),
+        "custo_combustivel_instalacao": round(combustivel_instalacao, 2),
+        "formula_gasolina_instalacao": formula_gasolina_instalacao,
+        
+        "pedagio_total_caminhao": round(pedagio_total_caminhao, 2),
+        "custo_pedagio_caminhao": round(pedagio_total_caminhao, 2),
+        "formula_pedagio_caminhao": formula_pedagio_caminhao,
+        
+        "pedagio_total_supervisao": round(pedagio_total_supervisão, 2),
+        "custo_pedagio_supervisao": round(pedagio_total_supervisão, 2),
+        "formula_pedagio_supervisao": formula_pedagio_supervisao,
+        
+        "pedagio_total_instalacao": round(pedagio_total_instalacao, 2),
+        "custo_pedagio_instalacao": round(pedagio_total_instalacao, 2),
+        "formula_pedagio_instalacao": formula_pedagio_instalacao,
+        
+        "estadia_supervisao": round(estadia_supervisao, 2),
+        "formula_estadia_supervisao": formula_estadia_supervisao,
+
+        "estadia_caminhao": round(estadia_caminhao, 2),
+        "formula_estadia_caminhao": formula_estadia_caminhao,
+
+        "estadia_instalacao": round(estadia_instalacao, 2),
+        "formula_estadia_instalacao": formula_estadia_instalacao,
+        
+        "alimentacao_supervisao": round(alimentacao_supervisao, 2),
+        "formula_alimentacao_supervisao": formula_alimentacao_supervisao,
+
+        "alimentacao_caminhao": round(alimentacao_caminhao, 2),
+        "formula_alimentacao_caminhao": formula_alimentacao_caminhao,
+
+        "alimentacao_instalacao": round(alimentacao_instalacao, 2),
+        "formula_alimentacao_instalacao": formula_alimentacao_instalacao,
+        
+        "auxilio_instalacao": round(auxilio_instalacao, 2),
+        "formula_auxilio_instalacao": formula_auxilio_instalacao,
+    }
 
     return {
         "custo_frete": round(total_frete_a, 2),
         "custo_operacao": round(total_operacao_b, 2),
         "custo_total_deslocamento": round(total_frete_a + total_operacao_b, 2),
-        "dias_trabalho": dias_trabalho,
+        "dias_trabalho": int(dias_trabalho),
+        "custo_detalhado": custo_detalhado,
     }
-
 
 @login_required(login_url='login')
 def upload_pdf(request):
@@ -264,12 +290,14 @@ def detalhe_obra_temp(request):
         f_operacao = 0.0
         f_total = 0.0
         dias_trabalho = 1
+        custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo)
+        custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo, veiculo_selecionado)
         
         f_frete_bruto = custos_calculados["custo_frete"]
         f_operacao_bruto = custos_calculados["custo_operacao"]
         dias_trabalho = custos_calculados["dias_trabalho"]
+        custo_detalhado = custos_calculados["custo_detalhado"]
         
         f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
         f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
@@ -362,8 +390,8 @@ def detalhe_obra_temp(request):
     viagens_necessarias = viagens_calc
 
     valor_diaria_operacional = (
-        parametros_calculo.get("media_hospedagem", 0.0) + 
-        parametros_calculo.get("media_alimentacao", 0.0)
+        parametros_calculo.get("custo_diaria_hotel", 0.0) + 
+        parametros_calculo.get("custo_diaria_alimentacao", 0.0)
     )
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
@@ -377,6 +405,7 @@ def detalhe_obra_temp(request):
         "custo_total_materiais": custo_total_materiais,
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
+        "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
@@ -435,15 +464,17 @@ def detalhe_obra(request, pk):
         obra.custo_operacao = Decimal("0.00")
         obra.custo_total_deslocamento = Decimal("0.00")
         dias_trabalho = 1
+        custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(float(obra.distancia_km), float(m2_corte_total), parametros_calculo)
+        custos_calculados = calcular_custos_detalhados(float(obra.distancia_km), float(m2_corte_total), parametros_calculo, veiculo_selecionado)
         dias_trabalho = custos_calculados["dias_trabalho"]
+        custo_detalhado = custos_calculados["custo_detalhado"]
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
     valor_diaria_operacional = (
-        parametros_calculo.get("media_hospedagem", 0.0) + 
-        parametros_calculo.get("media_alimentacao", 0.0)
+        parametros_calculo.get("custo_diaria_hotel", 0.0) + 
+        parametros_calculo.get("custo_diaria_alimentacao", 0.0)
     )
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
@@ -457,6 +488,7 @@ def detalhe_obra(request, pk):
         "custo_total_materiais": custo_total_materiais,
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
+        "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
@@ -526,12 +558,14 @@ def editar_obra(request, pk):
         f_operacao = 0.0
         f_total = 0.0
         dias_trabalho = 1
+        custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(dist_km, float(m2_corte_total), parametros_calculo)
+        custos_calculados = calcular_custos_detalhados(dist_km, float(m2_corte_total), parametros_calculo, veiculo_selecionado)
         
         f_frete_bruto = custos_calculados["custo_frete"]
         f_operacao_bruto = custos_calculados["custo_operacao"]
         dias_trabalho = custos_calculados["dias_trabalho"]
+        custo_detalhado = custos_calculados["custo_detalhado"]
         
         f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
         f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
@@ -578,8 +612,8 @@ def editar_obra(request, pk):
     viagens_necessarias = viagens_nec_ed
 
     valor_diaria_operacional = (
-        parametros_calculo.get("media_hospedagem", 0.0) + 
-        parametros_calculo.get("media_alimentacao", 0.0)
+        parametros_calculo.get("custo_diaria_hotel", 0.0) + 
+        parametros_calculo.get("custo_diaria_alimentacao", 0.0)
     )
 
     tarifa_km_veiculo = float(veiculo_selecionado.custo_km) if veiculo_selecionado and hasattr(veiculo_selecionado, 'custo_km') and veiculo_selecionado.custo_km else 2.50
@@ -593,6 +627,7 @@ def editar_obra(request, pk):
         "custo_total_materiais": custo_total_materiais,
         "custo_geral_obra": custo_geral_obra,
         "dias_trabalho": dias_trabalho,
+        "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
