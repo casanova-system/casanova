@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from ..models import Obra
+from ..models import Obra, PerfilUsuario
 
 
 def login_view(request):
@@ -36,7 +36,8 @@ def atualizar_foto_perfil(request):
     """
     if request.method == 'POST' and request.FILES.get('foto'):
         try:
-            perfil = request.user.perfil
+            # Usa get_or_create para garantir que o perfil existe em qualquer circunstância
+            perfil, created = PerfilUsuario.objects.get_or_create(user=request.user)
             perfil.foto = request.FILES['foto']
             perfil.save()
             messages.success(request, "Foto de perfil atualizada com sucesso!")
