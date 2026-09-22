@@ -2,6 +2,8 @@ from datetime import date
 from django.contrib.auth.models import User
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Obra(models.Model):
@@ -113,6 +115,21 @@ class PerfilUsuario(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.nivel_acesso} ({self.setor})'
+
+
+# Signals para criar e salvar o perfil automaticamente ao criar um User
+@receiver(post_save, sender=User)
+def criar_perfil_usuario(sender, instance, created, **kwargs):
+    if created:
+        PerfilUsuario.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def salvar_perfil_usuario(sender, instance, **kwargs):
+    try:
+        instance.perfil.save()
+    except PerfilUsuario.DoesNotExist:
+        PerfilUsuario.objects.create(user=instance)
 
 
 # ==========================================
