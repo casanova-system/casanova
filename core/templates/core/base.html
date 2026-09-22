@@ -162,14 +162,14 @@
         }
         .brand-casanova {
             color: #0b3882;
-            font-weight: 900; /* Super grosso */
+            font-weight: 900;
         }   
         [data-bs-theme="dark"] .brand-casanova {
-            color: #ffffff; /* Fica branco no tema escuro para leitura */   
+            color: #ffffff;   
         }
         .brand-esquadrias {
-            color: #4da6ff; /* Azul mais claro */
-            font-weight: 300; /* Mais fino / light */
+            color: #4da6ff;
+            font-weight: 300;
         }
 
         .sidebar-casanova {
@@ -225,7 +225,6 @@
             pointer-events: auto !important;
         }
         
-        /* Ajustes do Header da Sidebar ao recolher */
         .sidebar-casanova.sidebar-collapsed .sidebar-header-box {
             justify-content: center !important;
             padding-left: 0 !important;
@@ -238,7 +237,6 @@
             margin: 0 auto;
         }
 
-        /* Estilo da Logo */
         .sidebar-logo-img {
             height: 30px;
             width: auto;
@@ -285,7 +283,6 @@
             background: #ffffff;
         }
 
-        /* ITENS INTERNOS DA SIDEBAR */
         .sidebar-item-compacto {
             background-color: transparent !important;
             color: inherit !important;
@@ -415,7 +412,6 @@
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <!-- CORRIGIDO: Verificação precisa por nome de rota para não conflitar com a palavra 'custo' dos gráficos -->
                         <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas" data-bs-parent="#sidebarMenu">
                             <div class="px-2 mb-2 hide-on-collapse">
                                 <input type="text" id="buscaRotina" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarRotinas()" style="font-size: 0.75rem;">
@@ -425,7 +421,6 @@
                                     <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
                                 
-                                <!-- Rotina 02 - Cadastro Usuário (Apenas para Administradores ou Superusers) -->
                                 {% if request.user.is_superuser or request.user.perfilusuario.nivel_acesso == 'ADMINISTRACAO' %}
                                 <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
@@ -536,7 +531,7 @@
     <!-- Modal para Alterar Foto de Perfil -->
     <div class="modal fade" id="modalFotoPerfil" tabindex="-1" aria-labelledby="modalFotoPerfilLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <!-- Transforme em um form para enviar via POST para o Django -->
+            <!-- CORREÇÃO APLICADA: enctype="multipart/form-data" adicionado para permitir o envio do ficheiro de imagem via POST -->
             <form method="POST" action="{% url 'atualizar_foto_perfil' %}" enctype="multipart/form-data" class="modal-content rounded-4 border-0 shadow">
                 {% csrf_token %}
                 <div class="modal-header border-bottom-0 pb-0">
@@ -546,7 +541,6 @@
                 <div class="modal-body text-center py-4">
                     <div class="mb-3">
                         <div class="mx-auto rounded-circle overflow-hidden border shadow-sm d-flex align-items-center justify-content-center bg-light mb-3" style="width: 100px; height: 100px;">
-                            <!-- Se já tiver foto no banco, exibe ela na prévia do modal -->
                             {% if request.user.perfil and request.user.perfil.foto %}
                                 <img src="{{ request.user.perfil.foto.url }}" alt="Pré-visualização" class="w-100 h-100 object-fit-cover">
                             {% else %}
@@ -557,19 +551,19 @@
                     </div>
                     <div class="mb-3 text-start px-3">
                         <label for="inputArquivoFoto" class="form-label small fw-semibold">Selecionar Imagem</label>
-                        <!-- O name="foto" deve bater com o que você vai receber no views.py -->
                         <input class="form-control form-control-sm" type="file" id="inputArquivoFoto" name="foto" accept="image/*" required>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- O botão agora é type="submit" para submeter o form corretamente ao Django -->
                     <button type="submit" class="btn btn-casanova btn-sm px-4">Salvar Foto de Perfil</button>
                 </div>
             </form>
         </div>
     </div>
 
-<!-- Bootstrap 5 JS -->    
+    <!-- Bootstrap 5 JS -->    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -605,34 +599,24 @@
             }
         }
 
-// CORREÇÃO DA PESQUISA DE ROTINAS
-function filtrarRotinas() {
+        // PESQUISA DE ROTINAS
+        function filtrarRotinas() {
             const input = document.getElementById('buscaRotina');
             if (!input) return;
             
             const filtro = input.value.toLowerCase().trim();
-            
-            // Pega diretamente todos os links ou itens que estão dentro do menu de rotinas
-            // Vamos buscar por tags <a> dentro da sidebar ou elementos que parecem rotinas
-            const listaRotinasContainer = document.getElementById('listaRotinas') || input.parentElement;
-            
-            // Seleciona todos os links de rotina possíveis
             const itens = document.querySelectorAll('#listaRotinas a, .rotina-item, [id*="rotina"], .sidebar nav a');
-
-            // Se ainda assim não achar pelos seletores acima, pega todos os 'a' logo abaixo do input
             const elementosParaFiltrar = itens.length > 0 ? itens : input.parentElement.querySelectorAll('a');
 
             elementosParaFiltrar.forEach(item => {
                 const texto = item.textContent.toLowerCase();
-
                 if (filtro === "") {
-                    item.style.display = ""; // Mostra tudo se o input estiver limpo
+                    item.style.display = ""; 
                 } else {
-                    // Se o texto do item contiver o que você digitou (ex: "4", "frete", "usuario"), ele exibe
                     if (texto.includes(filtro)) {
                         item.style.display = ""; 
                     } else {
-                        item.style.display = "none"; // Esconde os outros
+                        item.style.display = "none"; 
                     }
                 }
             });
@@ -651,71 +635,6 @@ function filtrarRotinas() {
                 } else {
                     itens[i].style.display = "none";
                 }
-            }
-        }
-
-        const inputArquivoFoto = document.getElementById('inputArquivoFoto');
-        const modalPreviewImg = document.getElementById('modalPreviewImg');
-        const modalPreviewIcon = document.getElementById('modalPreviewIcon');
-        const navAvatarImg = document.getElementById('navAvatarImg');
-        const navAvatarIcon = document.getElementById('navAvatarIcon');
-        const salvarFotoBtn = document.getElementById('salvarFotoBtn');
-
-        const fotoSalva = localStorage.getItem('casanova_user_avatar');
-        if (fotoSalva) {
-            aplicarFotoPerfil(fotoSalva);
-        }
-
-        let novaFotoBase64 = null;
-
-        if (inputArquivoFoto) {
-            inputArquivoFoto.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        novaFotoBase64 = e.target.result;
-                        if (modalPreviewImg) modalPreviewImg.src = novaFotoBase64;
-                        if (modalPreviewImg) modalPreviewImg.classList.remove('d-none');
-                        if (modalPreviewIcon) modalPreviewIcon.classList.add('d-none');
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        if (salvarFotoBtn) {
-            salvarFotoBtn.addEventListener('click', function() {
-                if (novaFotoBase64) {
-                    localStorage.setItem('casanova_user_avatar', novaFotoBase64);
-                    aplicarFotoPerfil(novaFotoBase64);
-                    
-                    const modalEl = document.getElementById('modalFotoPerfil');
-                    if (modalEl) {
-                        const modalObj = bootstrap.Modal.getInstance(modalEl);
-                        if (modalObj) modalObj.hide();
-                    }
-                } else {
-                    alert('Por favor, selecione uma imagem primeiro.');
-                }
-            });
-        }
-
-        function aplicarFotoPerfil(src) {
-            if (navAvatarImg) {
-                navAvatarImg.src = src;
-                navAvatarImg.classList.remove('d-none');
-            }
-            if (navAvatarIcon) {
-                navAvatarIcon.classList.add('d-none');
-            }
-
-            if (modalPreviewImg) {
-                modalPreviewImg.src = src;
-                modalPreviewImg.classList.remove('d-none');
-            }
-            if (modalPreviewIcon) {
-                modalPreviewIcon.classList.add('d-none');
             }
         }
     </script>
