@@ -30,6 +30,7 @@ def obter_parametros_custo_do_banco(request):
         "num_deslocamento_instalacao": ["num deslocamento eqp instalador", "número deslocamento eqp instalador"],
         "num_entrega_caminhao": ["num entrega carro furgao", "número entrega carro furgão"],
         "num_dia_trabalhado_equipe": ["numero dia trabalhado pela equipe", "número dia trabalhado pela equipe"],
+        "taxa_espaco_veicular": ["taxa de espaco veicular", "taxa espaço veicular", "taxa espaco veicular"],
     }
     
     parametros = {}
@@ -62,10 +63,10 @@ def obter_parametros_custo_do_banco(request):
     return parametros
 
 
-def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionado=None):
+def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionado=None, num_viagens=1):
     """
-    Replica exatamente o cálculo e as fórmulas da planilha utilizando
-    exclusivamente os parâmetros vindos do banco de dados e retorna os totais e os detalhes.
+    Replica exatamente o cálculo e as fórmulas utilizando os parâmetros do banco 
+    e atualizando o consumo e quilometragem conforme informados na rotina de frete.
     """
     carga_media = parametros.get("carga_media", 150.0)
     pedagio_carro = parametros.get("pedagio_carro", 5.80)
@@ -73,7 +74,9 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     valor_gasolina = parametros.get("valor_gasolina", 5.10)
     valor_diesel = parametros.get("valor_diesel", 7.55)
     
-    consumo_diesel = float(veiculo_selecionado.consumo_combustivel) if (veiculo_selecionado and getattr(veiculo_selecionado, 'consumo_combustivel', None)) else 6.5
+    # Consumo do veículo específico selecionado na rotina de frete (protegido contra zero ou None)
+    consumo_val = getattr(veiculo_selecionado, 'consumo_combustivel', None) if veiculo_selecionado else None
+    consumo_diesel = float(consumo_val) if consumo_val and float(consumo_val) > 0 else 6.5
     consumo_gasolina = 11.0 
     
     num_pedagio_80km = parametros.get("numero_pedagio_80km", 1.0)
@@ -88,7 +91,7 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     
     num_visitas_supervisao = parametros.get("num_visita_supervisao", 3.0)
     num_desloc_instalacao = parametros.get("num_deslocamento_instalacao", 1.0)
-    num_entregas_caminhao = parametros.get("num_entrega_caminhao", 1.0)
+    num_entregas_caminhao = parametros.get("num_entrega_caminhao", 1.0) * num_viagens
     dias_trabalho = parametros.get("num_dia_trabalhado_equipe", 1.0)
 
     distancia_caminhao = (dist_km * 2) / consumo_diesel
@@ -124,7 +127,8 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
         auxilio_instalacao
     )
 
-    formula_diesel_caminhao = f"({dist_km * 2:.1f} km / {consumo_diesel} km/L) × R$ {valor_diesel:.2f}"
+    # Fórmulas atualizadas refletindo a distância em km e o consumo específico do veículo
+    formula_diesel_caminhao = f"({dist_km * 2:.1f} km / {consumo_diesel} km/L) × R$ {valor_diesel:.2f} × {num_viagens} viag."
     formula_gasolina_supervisao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_visitas_supervisao}"
     formula_gasolina_instalacao = f"({dist_km * 2:.1f} km / {consumo_gasolina} km/L) × R$ {valor_gasolina:.2f} × {num_desloc_instalacao}"
     formula_pedagio_caminhao = f"{num_pedagio_80km} × {num_entregas_caminhao} × R$ {pedagio_caminhao:.2f}"
@@ -260,9 +264,16 @@ def detalhe_obra_temp(request):
     else:
         cubagem_calc = 0.0
 
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
+    fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
+
     viagens_calc = 1
     if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
-        cap_v = float(veiculo_selecionado.capacidade_volumetrica)
+        cap_v_nominal = float(veiculo_selecionado.capacidade_volumetrica)
+        cap_v = cap_v_nominal * fator_aproveitamento_util
         if cap_v > 0 and cubagem_calc > 0:
             viagens_calc = max(1, math.ceil(cubagem_calc / cap_v))
 
@@ -280,8 +291,6 @@ def detalhe_obra_temp(request):
     except ValueError:
         percentual_desconto = 0.0
 
-    parametros_calculo = obter_parametros_custo_do_banco(request)
-
     if parametros_calculo.get("_bloqueado"):
         f_frete = 0.0
         f_operacao = 0.0
@@ -289,7 +298,7 @@ def detalhe_obra_temp(request):
         dias_trabalho = 1
         custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo, veiculo_selecionado)
+        custos_calculados = calcular_custos_detalhados(dist_km, m2_total_temp, parametros_calculo, veiculo_selecionado, num_viagens=viagens_calc)
         
         f_frete_bruto = custos_calculados["custo_frete"]
         f_operacao_bruto = custos_calculados["custo_operacao"]
@@ -404,6 +413,7 @@ def detalhe_obra_temp(request):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
+        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
@@ -448,13 +458,18 @@ def detalhe_obra(request, pk):
     peso_real_val = float(peso_total)
     requer_escolha_peso = bool(veiculo_selecionado) and (peso_cubado > peso_real_val)
 
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
+    fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
+
     viagens_necessarias = 1
     if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
-        cap = float(veiculo_selecionado.capacidade_volumetrica)
+        cap_nominal = float(veiculo_selecionado.capacidade_volumetrica)
+        cap = cap_nominal * fator_aproveitamento_util
         if cap > 0 and cubagem_total > 0:
             viagens_necessarias = max(1, math.ceil(cubagem_total / cap))
-
-    parametros_calculo = obter_parametros_custo_do_banco(request)
 
     if parametros_calculo.get("_bloqueado"):
         obra.custo_frete = Decimal("0.00")
@@ -463,9 +478,22 @@ def detalhe_obra(request, pk):
         dias_trabalho = 1
         custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(float(obra.distancia_km), float(m2_corte_total), parametros_calculo, veiculo_selecionado)
+        custos_calculados = calcular_custos_detalhados(float(obra.distancia_km), float(m2_corte_total), parametros_calculo, veiculo_selecionado, num_viagens=viagens_necessarias)
+        
+        f_frete_bruto = custos_calculados["custo_frete"]
+        f_operacao_bruto = custos_calculados["custo_operacao"]
         dias_trabalho = custos_calculados["dias_trabalho"]
         custo_detalhado = custos_calculados["custo_detalhado"]
+        
+        percentual_desconto = float(obra.percentual_desconto) if hasattr(obra, 'percentual_desconto') and obra.percentual_desconto else 0.0
+        
+        f_frete = f_frete_bruto * (1 - (percentual_desconto / 100))
+        f_operacao = f_operacao_bruto * (1 - (percentual_desconto / 100))
+        f_total = f_frete + f_operacao
+        
+        obra.custo_frete = Decimal(str(f_frete))
+        obra.custo_operacao = Decimal(str(f_operacao))
+        obra.custo_total_deslocamento = Decimal(str(f_total))
 
     custo_geral_obra = custo_total_materiais + obra.custo_total_deslocamento
 
@@ -487,6 +515,7 @@ def detalhe_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
+        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": float(obra.distancia_km),
@@ -528,9 +557,16 @@ def editar_obra(request, pk):
     else:
         cubagem_total_ed = 0.0
 
+    parametros_calculo = obter_parametros_custo_do_banco(request)
+
+    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
+    fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
+
     viagens_nec_ed = 1
     if veiculo_selecionado and faz_cubagem and getattr(veiculo_selecionado, 'capacidade_volumetrica', None):
-        cap_v_ed = float(veiculo_selecionado.capacidade_volumetrica)
+        cap_v_nominal = float(veiculo_selecionado.capacidade_volumetrica)
+        cap_v_ed = cap_v_nominal * fator_aproveitamento_util
         if cap_v_ed > 0 and cubagem_total_ed > 0:
             viagens_nec_ed = max(1, math.ceil(cubagem_total_ed / cap_v_ed))
 
@@ -548,8 +584,6 @@ def editar_obra(request, pk):
     except ValueError:
         percentual_desconto = float(obra.percentual_desconto)
 
-    parametros_calculo = obter_parametros_custo_do_banco(request)
-
     if parametros_calculo.get("_bloqueado"):
         f_frete = 0.0
         f_operacao = 0.0
@@ -557,7 +591,7 @@ def editar_obra(request, pk):
         dias_trabalho = 1
         custo_detalhado = {}
     else:
-        custos_calculados = calcular_custos_detalhados(dist_km, float(m2_corte_total), parametros_calculo, veiculo_selecionado)
+        custos_calculados = calcular_custos_detalhados(dist_km, float(m2_corte_total), parametros_calculo, veiculo_selecionado, num_viagens=viagens_nec_ed)
         
         f_frete_bruto = custos_calculados["custo_frete"]
         f_operacao_bruto = custos_calculados["custo_operacao"]
@@ -626,6 +660,7 @@ def editar_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
+        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
