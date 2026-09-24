@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enterprise Login - CASANOVA</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_semfundo.png' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -55,7 +56,7 @@
             animation: fadeInScale 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Lado esquerdo - Identidade Visual Vetorial */
+        /* Lado esquerdo - Identidade Visual */
         .login-left {
             flex: 1.1;
             background: linear-gradient(145deg, #0f172a 0%, #090d16 100%);
@@ -83,6 +84,12 @@
         .brand-logo-wrapper {
             margin-bottom: 20px;
             filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.3));
+        }
+
+        .brand-logo-wrapper img {
+            max-height: 100px;
+            width: auto;
+            object-fit: contain;
         }
 
         .brand-title {
@@ -123,7 +130,6 @@
             color: #f3f4f6;
         }
 
-        /* Cabeçalho do formulário mais elaborado */
         .login-header {
             margin-bottom: 25px;
         }
@@ -244,14 +250,10 @@
 <body>
 
     <div class="login-container">
-        <!-- Lado Esquerdo: Logo Vetorial -->
+        <!-- Lado Esquerdo: Logo em Imagem -->
         <div class="login-left">
             <div class="brand-logo-wrapper">
-                <svg width="85" height="55" viewBox="0 0 110 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 70L75 15C77 11 83 11 85 15L110 70H50Z" fill="#1e3a8a" stroke="#1e3a8a" stroke-width="8" stroke-linejoin="round"/>
-                    <path d="M30 70L55 15C57 11 63 11 65 15L90 70H30Z" fill="#94a3b8" stroke="#94a3b8" stroke-width="8" stroke-linejoin="round"/>
-                    <path d="M10 70L35 15C37 11 43 11 45 15L70 70H10Z" fill="#2563eb" stroke="#2563eb" stroke-width="8" stroke-linejoin="round"/>
-                </svg>
+                <img src="{% static 'img/logo_semfundo.png' %}" alt="Casanova Esquadrias">
             </div>
             <h1 class="brand-title">CASANOVA</h1>
             <span class="brand-subtitle">ESQUADRIAS</span>
