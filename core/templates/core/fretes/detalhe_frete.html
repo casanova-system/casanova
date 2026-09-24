@@ -237,7 +237,7 @@ nav input[type="file"], .navbar input[type="file"], input.form-control, select.f
                     <span class="text-muted small" style="font-size: 0.8rem;" id="infoCapacidadeVeiculo">
                         {% if veiculo_selecionado %}
                             <i class="fa-solid fa-truck text-info"></i> Capacidade do Veículo Selecionado: <strong>{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³</strong> 
-                            | Taxa de Espaço Veicular: <strong class="text-secondary">{{ taxa_espaco_veicular|default:"27" }}%</strong>
+                            | Taxa de Espaço Veicular: <strong class="text-secondary">{{ taxa_espaco_veicular|floatformat:0 }}%</strong>
                             | Viagens Estimadas: <strong class="text-warning">{{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
                         {% else %}
                             <i class="fa-solid fa-info-circle"></i> Selecione um veículo para habilitar a distância e calcular a cubagem/viagens.
@@ -269,7 +269,7 @@ nav input[type="file"], .navbar input[type="file"], input.form-control, select.f
                 </div>
                 <div class="col-md-2">
                     <span class="text-muted small d-block" style="font-size: 0.75rem;">Capacidade / Taxa / Viagens</span>
-                    <strong class="small text-info" style="font-size: 0.9rem;">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³ | {{ taxa_espaco_veicular|default:"27" }}% | {{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
+                    <strong class="small text-info" style="font-size: 0.9rem;">{{ veiculo_selecionado.capacidade_volumetrica|default:"0" }} m³ | {{ taxa_espaco_veicular|floatformat:0 }}% | {{ viagens_necessarias|default:"1" }} viagem(ns)</strong>
                 </div>
             </div>
         </div>

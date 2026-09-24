@@ -48,7 +48,11 @@ def obter_parametros_custo_do_banco(request):
                 break
         
         if custo_obj:
-            parametros[chave] = float(custo_obj.valor)
+            # Correção: Se o valor cadastrado for None ou vazio, assume 0.0 em vez de ignorar ou dar erro
+            try:
+                parametros[chave] = float(custo_obj.valor) if custo_obj.valor is not None else 0.0
+            except (ValueError, TypeError):
+                parametros[chave] = 0.0
         else:
             faltando.append(chave)
             parametros[chave] = 0.0
@@ -266,7 +270,8 @@ def detalhe_obra_temp(request):
 
     parametros_calculo = obter_parametros_custo_do_banco(request)
 
-    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    # Correção: Respeita o valor obtido do banco (incluindo 0.0), removendo o fallback rígido de 27.0
+    taxa_espaco_val = float(parametros_calculo.get("taxa_espaco_veicular", 0.0))
     fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
     fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
 
@@ -413,7 +418,7 @@ def detalhe_obra_temp(request):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
-        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
+        "taxa_espaco_veicular": taxa_espaco_val,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
@@ -460,7 +465,8 @@ def detalhe_obra(request, pk):
 
     parametros_calculo = obter_parametros_custo_do_banco(request)
 
-    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    # Correção: Respeita o valor obtido do banco (incluindo 0.0), removendo o fallback rígido de 27.0
+    taxa_espaco_val = float(parametros_calculo.get("taxa_espaco_veicular", 0.0))
     fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
     fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
 
@@ -515,7 +521,7 @@ def detalhe_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
-        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
+        "taxa_espaco_veicular": taxa_espaco_val,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": float(obra.distancia_km),
@@ -559,7 +565,8 @@ def editar_obra(request, pk):
 
     parametros_calculo = obter_parametros_custo_do_banco(request)
 
-    taxa_espaco_val = parametros_calculo.get("taxa_espaco_veicular", 27.0)
+    # Correção: Respeita o valor obtido do banco (incluindo 0.0), removendo o fallback rígido de 27.0
+    taxa_espaco_val = float(parametros_calculo.get("taxa_espaco_veicular", 0.0))
     fator_perda = taxa_espaco_val / 100.0 if taxa_espaco_val > 1 else taxa_espaco_val
     fator_aproveitamento_util = max(0.01, 1.0 - fator_perda)
 
@@ -660,7 +667,7 @@ def editar_obra(request, pk):
         "dias_trabalho": dias_trabalho,
         "custo_detalhado": custo_detalhado,
         "parametros": parametros_calculo,
-        "taxa_espaco_veicular": taxa_espaco_val,  # Correção aplicada aqui
+        "taxa_espaco_veicular": taxa_espaco_val,
         "tarifa_km": tarifa_km_veiculo,
         "valor_diaria_operacional": valor_diaria_operacional,
         "distancia_km": dist_km,
