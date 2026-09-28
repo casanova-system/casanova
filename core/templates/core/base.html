@@ -181,6 +181,7 @@
             justify-content: space-between;
             flex-shrink: 0;
             z-index: 10;
+            position: relative; /* Ajustado para permitir posicionamento absoluto seguro do menu suspenso */
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -375,6 +376,17 @@
         .dropdown-toggle::after {
             display: none !important;
         }
+
+        /* Correção para o menu dropdown flutuar corretamente ao lado quando a sidebar estiver encolhida */
+        .sidebar-casanova.sidebar-collapsed .sidebar-bottom-container .dropdown-menu {
+            position: absolute !important;
+            left: 76px !important;
+            bottom: 12px !important;
+            top: auto !important;
+            right: auto !important;
+            width: 220px !important;
+            transform: none !important;
+        }
     </style>
 </head>
 <body>
@@ -486,14 +498,9 @@
                 {% endblock %}
             </div>
 
-            <!-- Footer da Sidebar (Copyright e Perfil do Usuário) -->
+            <!-- Footer da Sidebar (Perfil do Usuário em cima e Copyright embaixo) -->
             <div class="sidebar-bottom-container">
-                <div class="hide-on-collapse text-muted mb-2 text-center" style="font-size: 0.62rem; line-height: 1.3;">
-                    <div>&copy; 2026 Casanova Esquadrias</div>
-                    <div style="opacity: 0.6;">Todos os direitos reservados</div>
-                </div>
-
-                <div class="dropdown">
+                <div class="dropdown mb-2">
                     <div class="user-profile-box dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Menu do Usuário">
                         <div class="user-avatar-container">
                             {% if request.user.perfil and request.user.perfil.foto %}
@@ -509,7 +516,7 @@
                         <i class="fa-solid fa-chevron-up text-muted small hide-on-collapse" style="font-size: 0.7rem;"></i>
                     </div>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mb-2 rounded-3 w-100" aria-labelledby="userDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 w-100" aria-labelledby="userDropdown">
                         <li>
                             <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" data-bs-toggle="modal" data-bs-target="#modalFotoPerfil">
                                 <i class="fa-solid fa-camera text-primary" style="width: 16px;"></i> Alterar Foto de Perfil
@@ -527,6 +534,11 @@
                             </a>
                         </li>
                     </ul>
+                </div>
+
+                <div class="hide-on-collapse text-muted text-center" style="font-size: 0.62rem; line-height: 1.3;">
+                    <div>&copy; 2026 Casanova Esquadrias</div>
+                    <div style="opacity: 0.6;">Todos os direitos reservados</div>
                 </div>
             </div>
         </aside>
