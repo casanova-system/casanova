@@ -67,6 +67,18 @@ class ItemVidro(models.Model):
 
 
 # ==========================================
+# MODELO DE ROTINAS DO SISTEMA
+# ==========================================
+class Rotina(models.Model):
+    codigo = models.CharField(max_length=10, unique=True, verbose_name='Código da Rotina')
+    nome = models.CharField(max_length=100, verbose_name='Nome da Rotina')
+    url_name = models.CharField(max_length=100, verbose_name='URL Name')
+
+    def __str__(self):
+        return f'{self.codigo} - {self.nome}'
+
+
+# ==========================================
 # MODELO DE PERFIL PARA OS USUÁRIOS
 # ==========================================
 class PerfilUsuario(models.Model):
@@ -95,6 +107,11 @@ class PerfilUsuario(models.Model):
     )
     setor = models.CharField(
         max_length=50, choices=SETOR_CHOICES, default='COMERCIAL'
+    )
+
+    # Novo campo adicionado para gerenciar as rotinas permitidas
+    rotinas_permitidas = models.ManyToManyField(
+        Rotina, blank=True, verbose_name='Rotinas Permitidas'
     )
 
     foto = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True)

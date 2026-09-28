@@ -1,4 +1,5 @@
 from core.views import usuario as views_usuario
+from core.views import permissao
 from django.urls import path
 from django.views.generic.base import RedirectView
 
@@ -79,6 +80,9 @@ urlpatterns = [
         views_usuario.excluir_usuario,
         name='excluir_usuario',
     ),
+    # ROTINA DE PERMISSÃO DE ROTINAS
+    path('permissoes/', permissao.lista_permissao, name='lista_permissao'),
+    path('permissoes/<int:user_id>/editar/', permissao.form_permissao, name='form_permissao'),
     # GRAFICO
     path('graficos/custo-frete/', grafico_custo_frete, name='grafico_custo_frete'),
     # PERFIL / FOTO
