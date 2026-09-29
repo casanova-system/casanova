@@ -15,7 +15,14 @@ def login_view(request):
             login(request, user)
             return redirect("menu_principal")
         else:
-            return render(request, "core/login.html", {"erro": "Usuário ou senha inválidos!"})
+            return render(
+                request,
+                "core/login.html",
+                {
+                    "erro": "Usuário ou senha inválidos.",
+                    "username": usuario,
+                },
+            )
     return render(request, "core/login.html")
 
 
