@@ -1,10 +1,12 @@
 from core.models import Custo 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from core.views.permissao import requer_rotina
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 @login_required
+@requer_rotina('lista_custo')
 def lista_custo(request):
     query = request.GET.get('q', '')
     ordenar = request.GET.get('ordenar', '')
@@ -34,6 +36,7 @@ def lista_custo(request):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_custo')
 def cadastrar_custo(request):
     if request.method == "POST":
         descricao = request.POST.get("descricao")
@@ -62,6 +65,7 @@ def cadastrar_custo(request):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_custo')
 def editar_custo(request, pk):
     custo = get_object_or_404(Custo, pk=pk)
     if request.method == "POST":
@@ -86,6 +90,7 @@ def editar_custo(request, pk):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_custo')
 def detalhe_custo(request, pk):
     """Exibe os detalhes de um custo específico."""
     custo = get_object_or_404(Custo, pk=pk)

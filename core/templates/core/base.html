@@ -181,7 +181,7 @@
             justify-content: space-between;
             flex-shrink: 0;
             z-index: 10;
-            position: relative; /* Ajustado para permitir posicionamento absoluto seguro do menu suspenso */
+            position: relative;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -424,36 +424,38 @@
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas" data-bs-parent="#sidebarMenu">
-                            <div class="px-2 mb-2 hide-on-collapse">
-                                <input type="text" id="buscaRotina" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarRotinas()" style="font-size: 0.75rem;">
-                            </div>
-                            <div class="rotinas-collapse-body d-flex flex-column gap-1" id="listaRotinas">
-                                {% if request.user.is_superuser or perms.sua_app.pode_ver_frete or permissao_frete %}
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas">
+                            <div class="rotinas-collapse-body d-flex flex-column gap-1 pt-1" id="listaRotinas">
+                                <!-- Custo de Frete -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras or request.user.perfil.tem_rotina.001 %}
                                 <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
                                 {% endif %}
                                 
-                                {% if request.user.is_superuser or request.user.perfilusuario.nivel_acesso == 'ADMINISTRACAO' or perms.sua_app.pode_ver_usuarios or permissao_usuario %}
+                                <!-- Cadastro de Usuário -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.002 %}
                                 <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
                                 </a>          
                                 {% endif %}
-                
-                                {% if request.user.is_superuser or perms.sua_app.pode_ver_veiculos or permissao_veiculos %}
+                            
+                                <!-- Cadastro Veículo -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos or request.user.perfil.tem_rotina.003 %}
                                 <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastro Veículo</span>
                                 </a>      
                                 {% endif %}
-                
-                                {% if request.user.is_superuser or perms.sua_app.pode_ver_custos or permissao_custos %}
+                            
+                                <!-- Cadastro Custo -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo or request.user.perfil.tem_rotina.004 %}
                                 <a href="{% url 'lista_custo' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}active{% endif %}" data-id="4" data-nome="custos" title="Custos">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[004]</span> <span class="hide-on-collapse">Cadastro Custo</span>
                                 </a>
                                 {% endif %}
-
-                                {% if request.user.is_superuser or perms.sua_app.pode_ver_permissoes or permissao_gerenciar %}
+                            
+                                <!-- Permissões -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.005 %}
                                 <a href="{% url 'lista_permissao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'permissao' in request.resolver_match.url_name %}active{% endif %}" data-id="5" data-nome="gerenciar permissoes" title="Gerenciar Permissões">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[005]</span> <span class="hide-on-collapse">Permissões</span>
                                 </a>
@@ -468,8 +470,8 @@
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <div class="collapse {% if 'graficos' in request.path %}show{% endif %}" id="menuGraficos" data-bs-parent="#sidebarMenu">
-                            <div class="px-2 mb-2 hide-on-collapse">
+                        <div class="collapse {% if 'graficos' in request.path %}show{% endif %}" id="menuGraficos">
+                            <div class="px-2 mb-2 hide-on-collapse pt-1">
                                 <input type="text" id="buscaGrafico" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarGraficos()" style="font-size: 0.75rem;">
                             </div>
                             <div class="graficos-collapse-body d-flex flex-column gap-1" id="listaGraficos">
@@ -486,8 +488,8 @@
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <div class="collapse {% if 'relatorios' in request.path %}show{% endif %}" id="menuRelatorios" data-bs-parent="#sidebarMenu">
-                            <div class="relatorios-collapse-body d-flex flex-column gap-1" id="listaRelatorios">
+                        <div class="collapse {% if 'relatorios' in request.path %}show{% endif %}" id="menuRelatorios">
+                            <div class="relatorios-collapse-body d-flex flex-column gap-1 pt-1" id="listaRelatorios">
                                 <a href="{% url 'relatorio_fretes_mes' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none relatorio-item sidebar-item-compacto {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
                                     <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Relatórios de Frete</span>
                                 </a>

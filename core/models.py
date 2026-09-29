@@ -69,6 +69,28 @@ class ItemVidro(models.Model):
 # ==========================================
 # MODELO DE ROTINAS DO SISTEMA
 # ==========================================
+ROTINAS_PADRAO = [
+    ('001', 'Custo de Frete', 'lista_obras'),
+    ('002', 'Cadastro de Usuário', 'lista_usuarios'),
+    ('003', 'Cadastro de Veículo', 'lista_veiculos'),
+    ('004', 'Cadastro de Custo', 'lista_custo'),
+    ('005', 'Gerenciar Permissões', 'lista_permissao'),
+]
+
+
+def garantir_rotinas_padrao():
+    """Garante que as rotinas do menu existam e estejam com o url_name correto."""
+    for codigo, nome, url_name in ROTINAS_PADRAO:
+        rotina, created = Rotina.objects.get_or_create(
+            codigo=codigo,
+            defaults={'nome': nome, 'url_name': url_name},
+        )
+        if not created and (rotina.url_name != url_name or rotina.nome != nome):
+            rotina.url_name = url_name
+            rotina.nome = nome
+            rotina.save(update_fields=['url_name', 'nome'])
+
+
 class Rotina(models.Model):
     codigo = models.CharField(max_length=10, unique=True, verbose_name='Código da Rotina')
     nome = models.CharField(max_length=100, verbose_name='Nome da Rotina')
@@ -76,6 +98,37 @@ class Rotina(models.Model):
 
     def __str__(self):
         return f'{self.codigo} - {self.nome}'
+
+
+class AcessoRotinas:
+    """Permite {% if perfil.tem_rotina.lista_obras %} e perfil.tem_rotina('lista_obras') no Python."""
+
+    do_not_call_in_templates = True
+
+    def __init__(self, perfil):
+        object.__setattr__(self, '_perfil', perfil)
+
+    def _checa(self, valor):
+        perfil = object.__getattribute__(self, '_perfil')
+        if perfil.user.is_superuser:
+            return True
+        valor = str(valor)
+        return perfil.rotinas_permitidas.filter(
+            models.Q(url_name=valor) | models.Q(codigo=valor)
+        ).exists()
+
+    def __call__(self, valor):
+        return self._checa(valor)
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            raise AttributeError(name)
+        return self._checa(name)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._checa(f'{key:03d}') or self._checa(str(key))
+        return self._checa(key)
 
 
 # ==========================================
@@ -115,6 +168,12 @@ class PerfilUsuario(models.Model):
     )
 
     foto = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True)
+
+    @property
+    def tem_rotina(self):
+        """Uso no template: perfil.tem_rotina.lista_obras / perfil.tem_rotina.001
+        Uso no Python: perfil.tem_rotina('lista_obras')"""
+        return AcessoRotinas(self)
 
     @property
     def idade(self):

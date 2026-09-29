@@ -4,6 +4,7 @@ import math
 import os
 import shutil
 from django.contrib.auth.decorators import login_required
+from core.views.permissao import requer_rotina
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -206,6 +207,7 @@ def calcular_custos_detalhados(dist_km, m2_total, parametros, veiculo_selecionad
     }
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def upload_pdf(request):
     if request.method == "POST" and request.FILES.get("excel_file"):
         excel_file = request.FILES["excel_file"]
@@ -243,6 +245,7 @@ def upload_pdf(request):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def detalhe_obra_temp(request):
     temp_obra_data = request.session.get('temp_obra')
     temp_itens_data = request.session.get('temp_itens')
@@ -439,6 +442,7 @@ def detalhe_obra_temp(request):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def detalhe_obra(request, pk):
     obra = get_object_or_404(Obra, pk=pk)
     itens = obra.itens.all()
@@ -542,6 +546,7 @@ def detalhe_obra(request, pk):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def editar_obra(request, pk):
     obra = get_object_or_404(Obra, pk=pk)
     itens = obra.itens.all()
@@ -688,6 +693,7 @@ def editar_obra(request, pk):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def excluir_obra(request, pk):
     obra = get_object_or_404(Obra, pk=pk)
     obra.delete()
@@ -696,6 +702,7 @@ def excluir_obra(request, pk):
 
 
 @login_required(login_url='login')
+@requer_rotina('lista_obras')
 def lista_obras(request):
     obras = Obra.objects.filter(usuario=request.user) if hasattr(Obra, 'usuario') else Obra.objects.all()
     context = {

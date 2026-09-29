@@ -4,7 +4,7 @@
         <i class="fa-solid fa-house me-2"></i> Início
     </a>
     
-    {% if request.user.is_superuser or request.user.perfil.rotinas_permitidas.filter(url_name='lista_obras').exists %}
+    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras %}
     <a href="{% url 'lista_obras' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}">
         <i class="fa-solid fa-truck me-2"></i> Custo de Frete
     </a>

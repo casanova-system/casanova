@@ -1,11 +1,13 @@
 from core.models import Veiculo
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from core.views.permissao import requer_rotina
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 
 @login_required
+@requer_rotina('lista_veiculos')
 def lista_veiculos(request):
     query = request.GET.get('q', '')
     ordenar = request.GET.get('ordenar', '')
@@ -37,6 +39,7 @@ def lista_veiculos(request):
 
 
 @login_required
+@requer_rotina('lista_veiculos')
 def cadastrar_veiculo(request):
     if request.method == 'POST':
         placa = request.POST.get('placa')
@@ -90,12 +93,14 @@ def cadastrar_veiculo(request):
 
 
 @login_required
+@requer_rotina('lista_veiculos')
 def detalhe_veiculo(request, pk):
     veiculo = get_object_or_404(Veiculo, pk=pk)
     return render(request, 'core/veiculos/detalhe_veiculo.html', {'veiculo': veiculo})
 
 
 @login_required
+@requer_rotina('lista_veiculos')
 def editar_veiculo(request, pk):
     veiculo = get_object_or_404(Veiculo, pk=pk)
 
@@ -151,6 +156,7 @@ def editar_veiculo(request, pk):
 
 
 @login_required
+@requer_rotina('lista_veiculos')
 def excluir_veiculo(request, pk):
     veiculo = get_object_or_404(Veiculo, pk=pk)
     if request.method == 'POST':

@@ -3,28 +3,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from functools import wraps
-from core.models import PerfilUsuario  # Ajuste o import conforme a estrutura do seu projeto
-
-def apenas_administracao(view_func):
-    """Decorador personalizado para permitir acesso apenas a administradores."""
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated:
-            if request.user.is_superuser:
-                return view_func(request, *args, **kwargs)
-            try:
-                if request.user.perfilusuario.nivel_acesso == 'ADMINISTRACAO':
-                    return view_func(request, *args, **kwargs)
-            except Exception:
-                pass
-        
-        messages.error(request, "Acesso negado! Apenas usuários com nível de administração podem acessar esta rotina.")
-        return redirect('menu_principal')  # Certifique-se de que a rota 'menu_principal' existe no seu projeto
-    return _wrapped_view
+from core.models import PerfilUsuario
+from core.views.permissao import requer_rotina
 
 @login_required(login_url='login')
-@apenas_administracao
+@requer_rotina('lista_usuarios')
 def lista_usuarios(request):
     query = request.GET.get('q', '')
     ordenacao = request.GET.get('ordenar', 'recentes')
@@ -62,7 +45,7 @@ def lista_usuarios(request):
     return render(request, "core/usuarios/lista_usuarios.html", context)
 
 @login_required(login_url='login')
-@apenas_administracao
+@requer_rotina('lista_usuarios')
 def criar_usuario(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -116,13 +99,13 @@ def criar_usuario(request):
     return render(request, "core/usuarios/form_usuario.html", {"acao": "Cadastrar"})
 
 @login_required(login_url='login')
-@apenas_administracao
+@requer_rotina('lista_usuarios')
 def detalhe_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     return render(request, "core/usuarios/detalhe_usuario.html", {"usuario": usuario})
 
 @login_required(login_url='login')
-@apenas_administracao
+@requer_rotina('lista_usuarios')
 def editar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     
@@ -172,7 +155,7 @@ def editar_usuario(request, pk):
     return render(request, "core/usuarios/form_usuario.html", {"usuario": usuario, "acao": "Editar"})
 
 @login_required(login_url='login')
-@apenas_administracao
+@requer_rotina('lista_usuarios')
 def excluir_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     if usuario == request.user:
