@@ -85,7 +85,7 @@
 
         <div class="card-body p-0 flex-grow-1 overflow-hidden d-flex flex-column">
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
-                <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+                <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%; min-width: 980px;">
                     <thead class="table-light sticky-top">
                         <tr>
                             <th class="ps-3 text-nowrap" style="width: 120px;">Código</th>
@@ -167,15 +167,25 @@
 
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-folder-open fa-2x mb-3 d-block"></i>
-                                {% if query %}
-                                    Nenhum frete encontrado para "<strong>{{ query }}</strong>".<br>
-                                    <a href="{% url 'lista_obras' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="btn btn-sm btn-outline-secondary mt-2">Limpar busca</a>
-                                {% else %}
-                                    Nenhum frete cadastrado ainda.<br>
-                                    <a href="{% url 'upload_pdf' %}" class="btn btn-sm btn-primary mt-2">Clique aqui para enviar o primeiro arquivo</a>
-                                {% endif %}
+                            <td colspan="8" class="p-0">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </div>
+                                    {% if query %}
+                                        <h6 class="empty-state-title">Nenhum frete encontrado</h6>
+                                        <p class="empty-state-text">Não há resultados para "<strong>{{ query }}</strong>".</p>
+                                        <a href="{% url 'lista_obras' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Limpar busca
+                                        </a>
+                                    {% else %}
+                                        <h6 class="empty-state-title">Nenhum frete cadastrado ainda</h6>
+                                        <p class="empty-state-text">Importe um relatório em PDF para calcular o frete e a operação.</p>
+                                        <a href="{% url 'upload_pdf' %}" class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Enviar primeiro arquivo
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

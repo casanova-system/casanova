@@ -4,25 +4,29 @@
 {% block content %}
 <style>
     .upload-card {
-        background: var(--bs-card-bg);
-        border: 1px solid var(--bs-border-color);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        background: var(--cv-surface, #fff);
+        border: 1px solid var(--cv-line, #e6ebf2);
+        box-shadow: var(--cv-shadow-md, 0 4px 12px rgba(15,23,42,.07));
     }
 
     .dropzone-container {
         position: relative;
         cursor: pointer;
-        padding: 30px 20px;
+        padding: 34px 24px;
         text-align: center;
-        border-radius: 16px;
-        transition: all 0.3s ease;
-        background: var(--bs-tertiary-bg, rgba(255, 255, 255, 0.01));
-        border: 2px dashed var(--bs-border-color, #4a5568);
+        border-radius: var(--cv-radius-lg, 16px);
+        transition: border-color 0.25s var(--cv-ease, ease),
+                    background-color 0.25s var(--cv-ease, ease),
+                    transform 0.25s var(--cv-ease-out, ease);
+        background: var(--cv-surface-2, #f8fafc);
+        border: 2px dashed var(--cv-line-strong, #d7dee8);
     }
 
-    .dropzone-container:hover {
-        border-color: #3182ce;
-        background: rgba(49, 130, 206, 0.03);
+    .dropzone-container:hover,
+    .dropzone-container.is-dragover {
+        border-color: var(--cv-blue, #0b3882);
+        background: var(--cv-blue-soft, rgba(11,56,130,.08));
+        transform: translateY(-2px);
     }
 
     .orbit-wrapper {
@@ -36,43 +40,47 @@
     }
 
     .central-file-icon {
-        width: 60px;
-        height: 60px;
-        background: var(--bs-body-bg, #161e2d);
-        border: 1px solid #3182ce;
-        border-radius: 16px;
+        width: 64px;
+        height: 64px;
+        background: var(--cv-surface, #fff);
+        border: 1px solid var(--cv-blue, #0b3882);
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #63b3ed;
-        font-size: 1.4rem;
-        box-shadow: 0 0 20px rgba(49, 130, 206, 0.3);
+        color: var(--cv-blue, #0b3882);
+        font-size: 1.5rem;
+        box-shadow: 0 0 0 6px var(--cv-blue-soft, rgba(11,56,130,.08));
         z-index: 2;
-        animation: floatIcon 3s ease-in-out infinite;
+        animation: floatIcon 3.4s ease-in-out infinite;
+    }
+    [data-bs-theme="dark"] .central-file-icon {
+        color: var(--cv-accent, #4da6ff);
+        border-color: var(--cv-accent, #4da6ff);
     }
 
     @keyframes floatIcon {
         0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
+        50% { transform: translateY(-6px); }
     }
 
     .orbit-ring {
         position: absolute;
-        border: 1px dashed rgba(49, 130, 206, 0.25);
+        border: 1px dashed var(--cv-line-strong, #d7dee8);
         border-radius: 50%;
         pointer-events: none;
     }
 
     .ring-1 {
-        width: 130px;
-        height: 130px;
-        animation: spinClockwise 20s linear infinite;
+        width: 132px;
+        height: 132px;
+        animation: spinClockwise 22s linear infinite;
     }
 
     .ring-2 {
-        width: 205px;
-        height: 205px;
-        animation: spinCounter 30s linear infinite;
+        width: 208px;
+        height: 208px;
+        animation: spinCounter 32s linear infinite;
     }
 
     @keyframes spinClockwise {
@@ -87,17 +95,17 @@
 
     .orbit-item {
         position: absolute;
-        width: 28px;
-        height: 28px;
-        background: var(--bs-body-bg, #161e2d);
-        border: 1px solid #3182ce;
+        width: 30px;
+        height: 30px;
+        background: var(--cv-surface, #fff);
+        border: 1px solid var(--cv-line-strong, #d7dee8);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.75rem;
-        color: #63b3ed;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        color: var(--cv-text-muted, #64748b);
+        box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15,23,42,.06));
     }
 
     .item-1 { top: 10px; left: 30px; }
@@ -106,21 +114,53 @@
     .item-4 { bottom: 15px; right: 25px; }
 
     .btn-custom-blue {
-        background: linear-gradient(135deg, #3182ce, #2b6cb0);
+        background: linear-gradient(135deg, var(--cv-blue, #0b3882) 0%, var(--cv-blue-dark, #062254) 100%);
         border: none;
-        color: white;
+        color: #fff;
         font-weight: 600;
-        border-radius: 30px;
-        padding: 12px 35px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
+        border-radius: 10px;
+        padding: 12px 32px;
+        transition: transform 0.2s var(--cv-ease, ease),
+                    box-shadow 0.25s var(--cv-ease, ease),
+                    filter 0.2s var(--cv-ease, ease);
+        box-shadow: var(--cv-shadow-blue, 0 8px 22px rgba(11,56,130,.22));
     }
 
     .btn-custom-blue:hover {
-        background: linear-gradient(135deg, #4299e1, #3182ce);
-        box-shadow: 0 6px 20px rgba(49, 130, 206, 0.6);
+        color: #fff;
+        filter: brightness(1.08);
+        box-shadow: 0 12px 28px rgba(11, 56, 130, 0.32);
         transform: translateY(-2px);
-        color: white;
+    }
+    .btn-custom-blue:active {
+        transform: translateY(0) scale(0.99);
+    }
+
+    /* Dicas de formato */
+    .upload-hints {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+    }
+    .upload-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--cv-text-muted, #64748b);
+        background: var(--cv-surface-2, #f8fafc);
+        border: 1px solid var(--cv-line, #e6ebf2);
+        border-radius: 999px;
+        padding: 0.3rem 0.7rem;
+    }
+    .upload-hint i {
+        color: var(--cv-blue, #0b3882);
+    }
+    [data-bs-theme="dark"] .upload-hint i {
+        color: var(--cv-accent, #4da6ff);
     }
 
     .enterprise-alert {
@@ -159,18 +199,18 @@
     }
 
     .progress-floating-box {
-        background: var(--bs-card-bg, #161e2d);
-        border: 1px solid var(--bs-border-color, #2d3748);
+        background: var(--cv-surface, #161e2d);
+        border: 1px solid var(--cv-line, #2d3748);
         border-radius: 16px;
         padding: 22px 28px;
         width: 100%;
         max-width: 500px;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+        box-shadow: var(--cv-shadow-lg, 0 14px 32px rgba(0,0,0,.5));
     }
 
     .progress-bar-track {
         height: 6px;
-        background: var(--bs-secondary-bg, #2d3748);
+        background: var(--cv-surface-2, #2d3748);
         border-radius: 3px;
         overflow: hidden;
     }
@@ -178,9 +218,16 @@
     .progress-bar-fill {
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, #3182ce, #63b3ed);
+        background: linear-gradient(90deg, var(--cv-blue, #0b3882), var(--cv-accent, #4da6ff));
         border-radius: 3px;
         transition: width 0.4s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .central-file-icon,
+        .ring-1,
+        .ring-2 { animation: none; }
+        .dropzone-container:hover { transform: none; }
     }
 </style>
 
@@ -217,7 +264,7 @@
                 <p class="text-muted small mb-0">Envie o arquivo PDF para processamento e cálculo de rotas.</p>
             </div>
             <div>
-                <a href="{% url 'lista_obras' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                <a href="{% url 'lista_obras' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit;">
                     <i class="fa-solid fa-arrow-left me-1"></i> Voltar
                 </a>
             </div>
@@ -263,13 +310,19 @@
 
                         <!-- Títulos adaptáveis ao tema claro/escuro via Bootstrap -->
                         <h5 class="fw-bold mb-1 text-body">Arraste seu PDF aqui ou clique para enviar</h5>
-                        <p class="text-muted small mb-4" style="font-size: 0.6rem;">
-                            © 2026 Casanova Esquadrias
+                        <p class="text-muted small mb-4" style="font-size: 0.8rem;">
+                            O sistema lê as tabelas do relatório e calcula automaticamente o frete e a operação.
                         </p>
 
                         <button type="button" class="btn btn-custom-blue mb-2" onclick="document.getElementById('pdf_file').click()">
                             <i class="fa-solid fa-folder-open me-2"></i> Selecionar Arquivo PDF
                         </button>
+
+                        <div class="upload-hints">
+                            <span class="upload-hint"><i class="fa-solid fa-file-pdf"></i> Somente PDF</span>
+                            <span class="upload-hint"><i class="fa-solid fa-table-list"></i> Relatório de esquadrias</span>
+                            <span class="upload-hint"><i class="fa-solid fa-calculator"></i> Cálculo automático</span>
+                        </div>
                     </div>
                 </form>
 
@@ -291,15 +344,20 @@
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
             e.preventDefault();
-            dropzone.style.opacity = '0.8';
+            dropzone.classList.add('is-dragover');
         }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
             e.preventDefault();
-            dropzone.style.opacity = '1';
+            dropzone.classList.remove('is-dragover');
         }, false);
+    });
+
+    dropzone.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        fileInput.click();
     });
 
     dropzone.addEventListener('drop', (e) => {

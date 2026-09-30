@@ -17,43 +17,73 @@ ITENS_POR_PAGINA = 12
 
 def obter_parametros_custo_do_banco(request):
     """
-    Busca os custos cadastrados no banco utilizando os campos reais do modelo Custo ('descricao' e 'tipo').
+    Busca os custos cadastrados no banco pela CHAVE estável do sistema.
+
+    A busca por chave garante que renomear a descrição/tipo de um custo não
+    quebre o cálculo do frete. Caso um custo ainda não tenha chave (registro
+    legado), faz um fallback por descrição/tipo para não travar o sistema.
     """
-    tipos_desejados = {
-        "carga_media": ["carga média", "carga media", "media_locomocao", "média locomoção"],
+    chaves_desejadas = [
+        "carga_media",
+        "pedagio_carro",
+        "pedagio_caminhao",
+        "valor_gasolina",
+        "valor_diesel",
+        "numero_pedagio_80km",
+        "num_colab_supervisao",
+        "num_colab_instalacao",
+        "custo_diaria_hotel",
+        "custo_diaria_alimentacao",
+        "auxilio_deslocamento_diario",
+        "num_visita_supervisao",
+        "num_deslocamento_instalacao",
+        "num_entrega_caminhao",
+        "num_dia_trabalhado_equipe",
+        "taxa_espaco_veicular",
+    ]
+
+    # Fallback legado: termos usados apenas se o custo ainda não tiver chave.
+    termos_legado = {
+        "carga_media": ["carga média", "carga media"],
         "pedagio_carro": ["pedágio carro", "pedagio carro"],
         "pedagio_caminhao": ["pedágio caminhão", "pedagio caminhao"],
         "valor_gasolina": ["valor gasolina"],
         "valor_diesel": ["valor diesel"],
         "numero_pedagio_80km": ["numero pedagio a cada 80km", "número pedágio a cada 80km"],
-        "num_colab_supervisao": ["num colaborador supervisao tecnica", "número colaborador supervisão técnica", "num_colab_supervisao"],
-        "num_colab_instalacao": ["num colaborador instalador", "número colaborador instalador", "num_colab_instalacao"],
+        "num_colab_supervisao": ["num colaborador supervisao tecnica", "número colaborador supervisão técnica"],
+        "num_colab_instalacao": ["num colaborador instalador"],
         "custo_diaria_hotel": ["custo diaria hotel por pessoa", "custo diária hotel por pessoa"],
         "custo_diaria_alimentacao": ["custo diaria de alimentacao por pessoa", "custo diária de alimentação por pessoa"],
         "auxilio_deslocamento_diario": ["auxilio deslocamento diario por pessoa", "auxílio deslocamento diário por pessoa"],
-        "num_visita_supervisao": ["num visita supervisao tecnica", "num visita supervisao técnica", "número visita supervisão técnica"],
-        "num_deslocamento_instalacao": ["num deslocamento eqp instalador", "número deslocamento eqp instalador"],
-        "num_entrega_caminhao": ["num entrega carro furgao", "número entrega carro furgão"],
+        "num_visita_supervisao": ["num visita supervisao tecnica", "num visita supervisão técnica"],
+        "num_deslocamento_instalacao": ["num deslocamento eqp instalador"],
+        "num_entrega_caminhao": ["num entrega carro furgao", "num entrega carro furgão"],
         "num_dia_trabalhado_equipe": ["numero dia trabalhado pela equipe", "número dia trabalhado pela equipe"],
         "taxa_espaco_veicular": ["taxa de espaco veicular", "taxa espaço veicular", "taxa espaco veicular"],
     }
-    
+
     parametros = {}
     faltando = []
 
     eh_tela_de_detalhe = any(termo in request.path for termo in ["detalhe", "editar", "obra"])
 
-    for chave, termos in tipos_desejados.items():
-        custo_obj = None
-        for termo in termos:
-            custo_obj = Custo.objects.filter(
-                Q(descricao__icontains=termo) | Q(tipo__icontains=termo)
-            ).first()
-            if custo_obj:
-                break
-        
+    for chave in chaves_desejadas:
+        # 1) Busca preferencial pela chave estável
+        custo_obj = Custo.objects.filter(chave=chave).first()
+
+        # 2) Fallback legado por descrição/tipo (apenas se não achou pela chave)
+        if custo_obj is None:
+            for termo in termos_legado.get(chave, []):
+                custo_obj = Custo.objects.filter(
+                    Q(descricao__icontains=termo) | Q(tipo__icontains=termo)
+                ).first()
+                if custo_obj:
+                    # Auto-vincula a chave para as próximas consultas
+                    custo_obj.chave = chave
+                    custo_obj.save(update_fields=['chave'])
+                    break
+
         if custo_obj:
-            # Correção: Se o valor cadastrado for None ou vazio, assume 0.0 em vez de ignorar ou dar erro
             try:
                 parametros[chave] = float(custo_obj.valor) if custo_obj.valor is not None else 0.0
             except (ValueError, TypeError):

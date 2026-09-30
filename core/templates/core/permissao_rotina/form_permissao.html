@@ -10,7 +10,7 @@
                 <i class="fas fa-user-lock me-2 text-primary"></i> Configurar Permissões
             </h2>
             <p class="text-muted small mb-0">
-                Usuário: <strong>{{ usuario_obj.username }}</strong> · defina o nível, o setor e as rotinas liberadas.
+                Usuário: <strong>{{ usuario_obj.username }}</strong> · defina o nível e as rotinas liberadas.
             </p>
         </div>
         <a href="{% url 'lista_permissao' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit;">
@@ -34,15 +34,13 @@
                         </select>
                     </div>
 
-                    <!-- Setor -->
+                    <!-- Setor (somente leitura — alterado no cadastro de usuário) -->
                     <div class="col-md-6">
-                        <label class="form-label">Setor <span class="text-danger">*</span></label>
-                        <select name="setor" class="form-select">
-                            <option value="COMERCIAL" {% if perfil.setor == 'COMERCIAL' %}selected{% endif %}>Comercial</option>
-                            <option value="FINANCEIRO" {% if perfil.setor == 'FINANCEIRO' %}selected{% endif %}>Financeiro</option>
-                            <option value="OPERACAO" {% if perfil.setor == 'OPERACAO' %}selected{% endif %}>Operação</option>
-                            <option value="ADMINISTRACAO" {% if perfil.setor == 'ADMINISTRACAO' %}selected{% endif %}>Administração</option>
-                        </select>
+                        <label class="form-label">Setor</label>
+                        <input type="text" class="form-control" value="{{ perfil.get_setor_display|default:'—' }}" disabled>
+                        <div class="form-text">
+                            O setor é definido na rotina de <strong>Cadastro de Usuário</strong>.
+                        </div>
                     </div>
                 </div>
 

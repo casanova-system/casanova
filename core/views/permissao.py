@@ -92,7 +92,7 @@ def lista_permissao(request):
 @login_required(login_url='login')
 @requer_rotina('lista_permissao')
 def form_permissao(request, user_id):
-    """Gerencia nível de acesso, setor e as rotinas permitidas para o usuário."""
+    """Gerencia nível de acesso e as rotinas permitidas para o usuário."""
     garantir_rotinas_padrao()
     usuario_obj = get_object_or_404(User, id=user_id)
     perfil, _created = PerfilUsuario.objects.get_or_create(user=usuario_obj)
@@ -100,7 +100,6 @@ def form_permissao(request, user_id):
 
     if request.method == 'POST':
         perfil.nivel_acesso = request.POST.get('nivel_acesso') or perfil.nivel_acesso
-        perfil.setor = request.POST.get('setor') or perfil.setor
         perfil.save()
 
         rotinas_ids = [

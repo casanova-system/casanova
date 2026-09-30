@@ -362,7 +362,17 @@ class Custo(models.Model):
     tipo = models.CharField(max_length=100, verbose_name='Tipo de Custo')
     descricao = models.CharField(max_length=255, verbose_name='Descrição')
     valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor (R$)')
-    
+
+    # Chave estável usada pelo cálculo de frete (não muda quando o nome/descrição é editado)
+    chave = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name='Chave do Sistema',
+        help_text='Identificador fixo usado pelo cálculo de frete. Não altere.',
+    )
+
     # Campo adicionado para proteger registros essenciais contra exclusão
     fixo = models.BooleanField(default=False, verbose_name='Custo Fixo do Sistema')
 

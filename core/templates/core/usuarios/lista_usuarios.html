@@ -127,7 +127,24 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">Nenhum usuário encontrado.</td>
+                            <td colspan="9" class="p-0">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="fa-solid fa-users"></i></div>
+                                    {% if query %}
+                                        <h6 class="empty-state-title">Nenhum usuário encontrado</h6>
+                                        <p class="empty-state-text">Não há resultados para "<strong>{{ query }}</strong>".</p>
+                                        <a href="{% url 'lista_usuarios' %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Limpar busca
+                                        </a>
+                                    {% else %}
+                                        <h6 class="empty-state-title">Nenhum usuário cadastrado</h6>
+                                        <p class="empty-state-text">Cadastre o primeiro usuário para liberar o acesso ao sistema.</p>
+                                        <a href="{% url 'criar_usuario' %}" class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-plus me-1"></i> Novo Usuário
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

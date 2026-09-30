@@ -133,8 +133,23 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                Nenhum custo cadastrado até o momento.
+                            <td colspan="7" class="p-0">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="fa-solid fa-coins"></i></div>
+                                    {% if query %}
+                                        <h6 class="empty-state-title">Nenhum custo encontrado</h6>
+                                        <p class="empty-state-text">Não há resultados para "<strong>{{ query }}</strong>".</p>
+                                        <a href="{% url 'lista_custo' %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Limpar busca
+                                        </a>
+                                    {% else %}
+                                        <h6 class="empty-state-title">Nenhum custo cadastrado</h6>
+                                        <p class="empty-state-text">Cadastre os parâmetros de custo usados no cálculo do frete.</p>
+                                        <a href="{% url 'cadastrar_custo' %}" class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-plus me-1"></i> Novo Custo
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
