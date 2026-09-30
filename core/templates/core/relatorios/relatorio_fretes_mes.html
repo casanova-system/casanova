@@ -75,10 +75,10 @@
                     <tbody>  
                         {% for frete in fretes %}
                         <tr>
-                            <td class="ps-3 fw-medium">{{ frete.data|date:"d/m/Y" }}</td>
-                            <td>{{ frete.obra.nome|default:"-" }}</td>
-                            <td>{{ frete.veiculo.modelo|default:"-" }}</td>
-                            <td class="text-center">{{ frete.distancia }} km</td>
+                            <td class="ps-3 fw-medium">{{ frete.data_emissao|date:"d/m/Y"|default:"-" }}</td>
+                            <td>{{ frete.nome|default:"-" }}</td>
+                            <td>{{ frete.veiculo.marca_modelo|default:"-" }}</td>
+                            <td class="text-center">{{ frete.distancia_km|floatformat:1 }} km</td>
                             <td class="text-end pe-3 fw-bold text-primary">R$ {{ frete.custo_total_deslocamento|floatformat:2 }}</td>
                         </tr>
                         {% empty %}

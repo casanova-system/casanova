@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render
 
+from core.views.permissao import requer_rotina
 
-@login_required
+
+@login_required(login_url='login')
+@requer_rotina('grafico_custo_frete')
 def grafico_custo_frete(request):
   obras = Obra.objects.all().order_by('-id')
 
@@ -22,11 +25,7 @@ def grafico_custo_frete(request):
         cliente_nome = str(obra.cliente)
 
     # Tratamento seguro para o nome da obra
-    nome_obra = (
-        obra.nome_obra
-        if hasattr(obra, 'nome_obra') and obra.nome_obra
-        else str(obra)
-    )
+    nome_obra = obra.nome if obra.nome else str(obra)
 
     obras_data.append({
         'nome': nome_obra,

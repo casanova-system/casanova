@@ -69,32 +69,51 @@ class ItemVidro(models.Model):
 # ==========================================
 # MODELO DE ROTINAS DO SISTEMA
 # ==========================================
+CATEGORIAS_ROTINA = [
+    ('ROTINA', 'Rotina'),
+    ('GRAFICO', 'Gráfico'),
+    ('RELATORIO', 'Relatório'),
+]
+
 ROTINAS_PADRAO = [
-    ('001', 'Custo de Frete', 'lista_obras'),
-    ('002', 'Cadastro de Usuário', 'lista_usuarios'),
-    ('003', 'Cadastro de Veículo', 'lista_veiculos'),
-    ('004', 'Cadastro de Custo', 'lista_custo'),
-    ('005', 'Gerenciar Permissões', 'lista_permissao'),
+    ('001', 'Custo de Frete', 'lista_obras', 'ROTINA'),
+    ('002', 'Cadastro de Usuário', 'lista_usuarios', 'ROTINA'),
+    ('003', 'Cadastro de Veículo', 'lista_veiculos', 'ROTINA'),
+    ('004', 'Cadastro de Custo', 'lista_custo', 'ROTINA'),
+    ('005', 'Gerenciar Permissões', 'lista_permissao', 'ROTINA'),
+    ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO'),
+    ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO'),
 ]
 
 
 def garantir_rotinas_padrao():
-    """Garante que as rotinas do menu existam e estejam com o url_name correto."""
-    for codigo, nome, url_name in ROTINAS_PADRAO:
+    """Garante que as rotinas do menu existam e estejam com os dados corretos."""
+    for codigo, nome, url_name, categoria in ROTINAS_PADRAO:
         rotina, created = Rotina.objects.get_or_create(
             codigo=codigo,
-            defaults={'nome': nome, 'url_name': url_name},
+            defaults={'nome': nome, 'url_name': url_name, 'categoria': categoria},
         )
-        if not created and (rotina.url_name != url_name or rotina.nome != nome):
+        if not created and (
+            rotina.url_name != url_name
+            or rotina.nome != nome
+            or rotina.categoria != categoria
+        ):
             rotina.url_name = url_name
             rotina.nome = nome
-            rotina.save(update_fields=['url_name', 'nome'])
+            rotina.categoria = categoria
+            rotina.save(update_fields=['url_name', 'nome', 'categoria'])
 
 
 class Rotina(models.Model):
     codigo = models.CharField(max_length=10, unique=True, verbose_name='Código da Rotina')
     nome = models.CharField(max_length=100, verbose_name='Nome da Rotina')
     url_name = models.CharField(max_length=100, verbose_name='URL Name')
+    categoria = models.CharField(
+        max_length=20,
+        choices=CATEGORIAS_ROTINA,
+        default='ROTINA',
+        verbose_name='Categoria',
+    )
 
     def __str__(self):
         return f'{self.codigo} - {self.nome}'
@@ -126,9 +145,28 @@ class AcessoRotinas:
         return self._checa(name)
 
     def __getitem__(self, key):
+        # O Django tenta __getitem__ ANTES de atributos/propriedades.
+        # Se a chave for uma propriedade real da classe (ex.: tem_graficos),
+        # devolvemos o valor dela em vez de tratar como código de rotina.
+        if isinstance(key, str) and hasattr(type(self), key):
+            return getattr(self, key)
         if isinstance(key, int):
             return self._checa(f'{key:03d}') or self._checa(str(key))
         return self._checa(key)
+
+    def _tem_categoria(self, categoria):
+        perfil = object.__getattribute__(self, '_perfil')
+        if perfil.user.is_superuser:
+            return True
+        return perfil.rotinas_permitidas.filter(categoria=categoria).exists()
+
+    @property
+    def tem_graficos(self):
+        return self._tem_categoria('GRAFICO')
+
+    @property
+    def tem_relatorios(self):
+        return self._tem_categoria('RELATORIO')
 
 
 # ==========================================

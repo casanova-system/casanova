@@ -62,6 +62,17 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+    },
+    'faktory': {
+        'ENGINE': 'mssql',
+        'NAME': 'faktory_CASANOVA',
+        'USER': config('FAKTORY_DB_USER', default='pb'),
+        'PASSWORD': config('FAKTORY_DB_PASSWORD', default='prefbrasil'),
+        'HOST': config('FAKTORY_DB_HOST', default='10.12.50.90'),
+        'PORT': config('FAKTORY_DB_PORT', default='1433'),
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
     }
 }
 
@@ -79,6 +90,11 @@ TIME_ZONE = 'America/Cuiaba'
 USE_I18N = True
 
 USE_TZ = True
+
+# Autenticação: rota de login padrão usada pelo @login_required
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'menu_principal'
+LOGOUT_REDIRECT_URL = 'login'
 
 # Arquivos Estáticos (CSS, JavaScript, Imagens)
 STATIC_URL = '/static/'

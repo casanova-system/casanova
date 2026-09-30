@@ -56,24 +56,15 @@ def atualizar_foto_perfil(request):
 
 @login_required(login_url='login')
 def rotinas_view(request):
-    return render(request, "core/rotinas.html")
+    return redirect("menu_principal")
 
 
 # ADICIONADO DE VOLTA: View genérica da página de gráficos do menu
 @login_required(login_url='login')
 def graficos_view(request):
-    return render(request, "core/graficos.html")
-
-
-@login_required(login_url='relatorio_fretes_mes')
-def relatorios_view(request):
-    return render(request, "core/relatorios.html")
+    return redirect("grafico_custo_frete")
 
 
 @login_required(login_url='login')
-def relatorio_fretes_mes(request):
-    """
-    View adicionada para atender a rota de relatório de fretes do mês,
-    exibindo a página correspondente sem quebrar a estrutura existente.
-    """
-    return render(request, "core/relatorio_fretes_mes.html")
+def relatorios_view(request):
+    return redirect("relatorio_fretes_mes")

@@ -78,9 +78,17 @@ def form_permissao(request, user_id):
         )
         return redirect('lista_permissao')
 
+    # Agrupa as rotinas por categoria para exibição organizada no formulário
+    rotinas_por_categoria = {
+        'ROTINA': todas_rotinas.filter(categoria='ROTINA'),
+        'GRAFICO': todas_rotinas.filter(categoria='GRAFICO'),
+        'RELATORIO': todas_rotinas.filter(categoria='RELATORIO'),
+    }
+
     context = {
         'usuario_obj': usuario_obj,
         'perfil': perfil,
         'todas_rotinas': todas_rotinas,
+        'rotinas_por_categoria': rotinas_por_categoria,
     }
     return render(request, 'core/permissao_rotina/form_permissao.html', context)

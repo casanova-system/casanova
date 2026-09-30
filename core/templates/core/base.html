@@ -475,9 +475,11 @@
                                 <input type="text" id="buscaGrafico" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarGraficos()" style="font-size: 0.75rem;">
                             </div>
                             <div class="graficos-collapse-body d-flex flex-column gap-1" id="listaGraficos">
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
                                 <a href="{% url 'grafico_custo_frete' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none grafico-item sidebar-item-compacto {% if request.resolver_match.url_name == 'grafico_custo_frete' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[006]</span> <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -490,9 +492,11 @@
                 
                         <div class="collapse {% if 'relatorios' in request.path %}show{% endif %}" id="menuRelatorios">
                             <div class="relatorios-collapse-body d-flex flex-column gap-1 pt-1" id="listaRelatorios">
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_relatorios %}
                                 <a href="{% url 'relatorio_fretes_mes' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none relatorio-item sidebar-item-compacto {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Relatórios de Frete</span>
+                                    <span class="text-muted small" style="font-size: 0.7rem;">[007]</span> <span class="hide-on-collapse">Relatórios de Frete</span>
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

@@ -3,6 +3,7 @@ import json
 import math
 import os
 import shutil
+from datetime import date
 from django.contrib.auth.decorators import login_required
 from core.views.permissao import requer_rotina
 from django.contrib import messages
@@ -343,6 +344,7 @@ def detalhe_obra_temp(request):
             custo_operacao=Decimal(str(f_operacao)),
             custo_total_deslocamento=Decimal(str(f_total)),
             percentual_desconto=Decimal(str(percentual_desconto)),
+            data_emissao=date.today(),
             usuario=request.user,
             veiculo=veiculo_selecionado,
         )
@@ -704,8 +706,33 @@ def excluir_obra(request, pk):
 @login_required(login_url='login')
 @requer_rotina('lista_obras')
 def lista_obras(request):
-    obras = Obra.objects.filter(usuario=request.user) if hasattr(Obra, 'usuario') else Obra.objects.all()
+    query = request.GET.get('q', '').strip()
+    current_sort = request.GET.get('sort', 'recentes')
+
+    obras = Obra.objects.all()
+
+    if query:
+        obras = obras.filter(
+            Q(codigo__icontains=query)
+            | Q(nome__icontains=query)
+            | Q(cliente__icontains=query)
+        )
+
+    mapa_ordenacao = {
+        'recentes': '-id',
+        'antigos': 'id',
+        'nome_asc': 'nome',
+        'nome_desc': '-nome',
+        'cliente_asc': 'cliente',
+        'cliente_desc': '-cliente',
+        'codigo_asc': 'codigo',
+        'codigo_desc': '-codigo',
+    }
+    obras = obras.order_by(mapa_ordenacao.get(current_sort, '-id'))
+
     context = {
         "obras": obras,
+        "query": query,
+        "current_sort": current_sort,
     }
     return render(request, "core/fretes/lista_frete.html", context)
