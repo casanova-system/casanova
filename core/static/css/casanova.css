@@ -376,6 +376,43 @@ body {
     background: var(--cv-line);
 }
 
+/* Subgrupos de setor colapsáveis */
+.setor-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cv-text-faint);
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.18s var(--cv-ease), color 0.18s var(--cv-ease);
+}
+.setor-toggle:hover {
+    background-color: var(--cv-blue-soft);
+    color: var(--cv-blue);
+}
+[data-bs-theme="dark"] .setor-toggle:hover {
+    color: var(--cv-accent);
+}
+.setor-chevron {
+    font-size: 0.55rem;
+    transition: transform 0.25s var(--cv-ease);
+}
+.setor-toggle[aria-expanded="true"] .setor-chevron {
+    transform: rotate(180deg);
+}
+.setor-grupo .collapse.show {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 4px;
+}
+
 /* Avatar do usuário com anel de status */
 .user-avatar-container {
     transition: transform var(--cv-dur) var(--cv-ease-out),
