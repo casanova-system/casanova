@@ -75,33 +75,47 @@ CATEGORIAS_ROTINA = [
     ('RELATORIO', 'Relatório'),
 ]
 
+SETORES_ROTINA = [
+    ('COMERCIAL', 'Comercial'),
+    ('FINANCEIRO', 'Financeiro'),
+    ('FROTAS', 'Frotas'),
+    ('ADMINISTRADOR', 'Administrador'),
+]
+
 ROTINAS_PADRAO = [
-    ('001', 'Custo de Frete', 'lista_obras', 'ROTINA'),
-    ('002', 'Cadastro de Usuário', 'lista_usuarios', 'ROTINA'),
-    ('003', 'Cadastro de Veículo', 'lista_veiculos', 'ROTINA'),
-    ('004', 'Cadastro de Custo', 'lista_custo', 'ROTINA'),
-    ('005', 'Gerenciar Permissões', 'lista_permissao', 'ROTINA'),
-    ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO'),
-    ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO'),
+    ('001', 'Custo de Frete', 'lista_obras', 'ROTINA', 'COMERCIAL'),
+    ('002', 'Cadastro de Usuário', 'lista_usuarios', 'ROTINA', 'ADMINISTRADOR'),
+    ('003', 'Cadastro de Veículo', 'lista_veiculos', 'ROTINA', 'FROTAS'),
+    ('004', 'Cadastro de Custo', 'lista_custo', 'ROTINA', 'FINANCEIRO'),
+    ('005', 'Gerenciar Permissões', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
+    ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO', 'COMERCIAL'),
+    ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO', 'COMERCIAL'),
 ]
 
 
 def garantir_rotinas_padrao():
     """Garante que as rotinas do menu existam e estejam com os dados corretos."""
-    for codigo, nome, url_name, categoria in ROTINAS_PADRAO:
+    for codigo, nome, url_name, categoria, setor in ROTINAS_PADRAO:
         rotina, created = Rotina.objects.get_or_create(
             codigo=codigo,
-            defaults={'nome': nome, 'url_name': url_name, 'categoria': categoria},
+            defaults={
+                'nome': nome,
+                'url_name': url_name,
+                'categoria': categoria,
+                'setor': setor,
+            },
         )
         if not created and (
             rotina.url_name != url_name
             or rotina.nome != nome
             or rotina.categoria != categoria
+            or rotina.setor != setor
         ):
             rotina.url_name = url_name
             rotina.nome = nome
             rotina.categoria = categoria
-            rotina.save(update_fields=['url_name', 'nome', 'categoria'])
+            rotina.setor = setor
+            rotina.save(update_fields=['url_name', 'nome', 'categoria', 'setor'])
 
 
 class Rotina(models.Model):
@@ -113,6 +127,12 @@ class Rotina(models.Model):
         choices=CATEGORIAS_ROTINA,
         default='ROTINA',
         verbose_name='Categoria',
+    )
+    setor = models.CharField(
+        max_length=20,
+        choices=SETORES_ROTINA,
+        default='COMERCIAL',
+        verbose_name='Setor',
     )
 
     def __str__(self):
@@ -160,6 +180,12 @@ class AcessoRotinas:
             return True
         return perfil.rotinas_permitidas.filter(categoria=categoria).exists()
 
+    def _tem_setor(self, setor):
+        perfil = object.__getattribute__(self, '_perfil')
+        if perfil.user.is_superuser:
+            return True
+        return perfil.rotinas_permitidas.filter(setor=setor).exists()
+
     @property
     def tem_graficos(self):
         return self._tem_categoria('GRAFICO')
@@ -167,6 +193,22 @@ class AcessoRotinas:
     @property
     def tem_relatorios(self):
         return self._tem_categoria('RELATORIO')
+
+    @property
+    def tem_comercial(self):
+        return self._tem_setor('COMERCIAL')
+
+    @property
+    def tem_financeiro(self):
+        return self._tem_setor('FINANCEIRO')
+
+    @property
+    def tem_frotas(self):
+        return self._tem_setor('FROTAS')
+
+    @property
+    def tem_administrador(self):
+        return self._tem_setor('ADMINISTRADOR')
 
 
 # ==========================================

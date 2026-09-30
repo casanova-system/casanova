@@ -1,28 +1,89 @@
 import json
+import time
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from ..models import Obra, PerfilUsuario
 
+# Segurança do login
+MAX_TENTATIVAS_LOGIN = 3
+BLOQUEIO_SEGUNDOS = 300  # 5 minutos de bloqueio após exceder as tentativas
+
 
 def login_view(request):
     if request.method == "POST":
         usuario = request.POST.get("username")
         senha = request.POST.get("password")
-        user = authenticate(request, username=usuario, password=senha)
-        if user is not None:
-            login(request, user)
-            return redirect("menu_principal")
-        else:
+
+        tentativas = request.session.get("tentativas_login", 0)
+        bloqueado_ate = request.session.get("login_bloqueado_ate", 0)
+
+        # Verifica se ainda está bloqueado
+        if bloqueado_ate and time.time() < bloqueado_ate:
+            restante = int(bloqueado_ate - time.time())
+            minutos = restante // 60
+            segundos = restante % 60
             return render(
                 request,
                 "core/login.html",
                 {
-                    "erro": "Usuário ou senha inválidos.",
+                    "erro": (
+                        "Acesso temporariamente bloqueado por excesso de tentativas. "
+                        f"Tente novamente em {minutos}m {segundos}s."
+                    ),
                     "username": usuario,
+                    "bloqueado": True,
                 },
             )
+
+        # Bloqueio expirou: zera o contador
+        if bloqueado_ate and time.time() >= bloqueado_ate:
+            request.session["tentativas_login"] = 0
+            request.session["login_bloqueado_ate"] = 0
+            tentativas = 0
+
+        user = authenticate(request, username=usuario, password=senha)
+        if user is not None:
+            # Login bem-sucedido: limpa o contador
+            request.session["tentativas_login"] = 0
+            request.session["login_bloqueado_ate"] = 0
+            login(request, user)
+            return redirect("menu_principal")
+
+        # Login falhou
+        tentativas += 1
+        request.session["tentativas_login"] = tentativas
+        restantes = MAX_TENTATIVAS_LOGIN - tentativas
+
+        if restantes <= 0:
+            request.session["login_bloqueado_ate"] = time.time() + BLOQUEIO_SEGUNDOS
+            return render(
+                request,
+                "core/login.html",
+                {
+                    "erro": (
+                        "Número máximo de tentativas excedido. "
+                        "Acesso bloqueado por 5 minutos."
+                    ),
+                    "username": usuario,
+                    "bloqueado": True,
+                },
+            )
+
+        return render(
+            request,
+            "core/login.html",
+            {
+                "erro": (
+                    "Usuário ou senha inválidos. "
+                    f"Você tem {restantes} tentativa(s) restante(s)."
+                ),
+                "username": usuario,
+                "tentativas_restantes": restantes,
+            },
+        )
+
     return render(request, "core/login.html")
 
 

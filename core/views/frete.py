@@ -7,10 +7,13 @@ from datetime import date
 from django.contrib.auth.decorators import login_required
 from core.views.permissao import requer_rotina
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from ..models import ItemVidro, Obra, Veiculo, Custo
 from ..services import processar_excel_relatorio
+
+ITENS_POR_PAGINA = 12
 
 def obter_parametros_custo_do_banco(request):
     """
@@ -730,8 +733,17 @@ def lista_obras(request):
     }
     obras = obras.order_by(mapa_ordenacao.get(current_sort, '-id'))
 
+    paginator = Paginator(obras, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+
     context = {
-        "obras": obras,
+        "obras": page_obj,
+        "page_obj": page_obj,
+        "querystring": querystring,
         "query": query,
         "current_sort": current_sort,
     }

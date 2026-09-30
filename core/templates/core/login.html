@@ -347,7 +347,12 @@
             <h2 class="form-title">Entrar no sistema</h2>
             <p class="form-lead">Informe usuário e senha para acessar as rotinas liberadas para o seu perfil.</p>
 
-            
+            {% if erro %}
+            <div class="alert {% if bloqueado %}alert-danger{% else %}alert-warning{% endif %} d-flex align-items-center gap-2 py-2 px-3 mb-3" role="alert" style="font-size: 0.85rem; border-radius: 10px;">
+                <i class="fa-solid {% if bloqueado %}fa-lock{% else %}fa-triangle-exclamation{% endif %}"></i>
+                <span>{{ erro }}</span>
+            </div>
+            {% endif %}
 
             <form method="POST" autocomplete="on">
                 {% csrf_token %}
@@ -355,7 +360,7 @@
                     <label class="form-label" for="id_username">Usuário</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" name="username" id="id_username" class="form-control" placeholder="Nome de usuário" value="" required="" autofocus="">
+                        <input type="text" name="username" id="id_username" class="form-control" placeholder="Nome de usuário" value="{{ username|default:'' }}" required="" autofocus="" {% if bloqueado %}disabled{% endif %}>
                     </div>
                 </div>
 
@@ -363,14 +368,14 @@
                     <label class="form-label" for="id_password">Senha</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" name="password" id="id_password" class="form-control" placeholder="Digite sua senha" required="">
+                        <input type="password" name="password" id="id_password" class="form-control" placeholder="Digite sua senha" required="" {% if bloqueado %}disabled{% endif %}>
                         <button class="btn btn-toggle-pass" type="button" id="btn-toggle-senha" title="Mostrar senha" aria-label="Mostrar senha">
                             <i class="fa-regular fa-eye" id="icone-senha"></i>
                         </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-login w-100">
+                <button type="submit" class="btn btn-login w-100" {% if bloqueado %}disabled{% endif %}>
                     <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Acessar sistema
                 </button>
             </form>

@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from core.models import PerfilUsuario
 from core.views.permissao import requer_rotina
+
+ITENS_POR_PAGINA = 12
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
@@ -36,9 +39,18 @@ def lista_usuarios(request):
     
     campo_ordenacao = opcoes_ordenacao.get(ordenacao, '-date_joined')
     usuarios = usuarios.order_by(campo_ordenacao)
+
+    paginator = Paginator(usuarios, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
         
     context = {
-        "usuarios": usuarios,
+        "usuarios": page_obj,
+        "page_obj": page_obj,
+        "querystring": querystring,
         "query": query,
         "ordenacao_atual": ordenacao,
     }

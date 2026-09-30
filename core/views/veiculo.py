@@ -2,8 +2,11 @@ from core.models import Veiculo
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from core.views.permissao import requer_rotina
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+
+ITENS_POR_PAGINA = 12
 
 
 @login_required
@@ -34,7 +37,21 @@ def lista_veiculos(request):
     else:
         veiculos = veiculos.order_by('-id')
 
-    context = {'veiculos': veiculos, 'query': query}
+    paginator = Paginator(veiculos, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Querystring preservando filtros (sem o parâmetro page)
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+
+    context = {
+        'veiculos': page_obj,
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'query': query,
+        'ordenacao_atual': ordenar,
+    }
     return render(request, 'core/veiculos/lista_veiculo.html', context)
 
 

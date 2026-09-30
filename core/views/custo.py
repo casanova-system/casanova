@@ -2,8 +2,11 @@ from core.models import Custo
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from core.views.permissao import requer_rotina
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+
+ITENS_POR_PAGINA = 12
 
 @login_required
 @requer_rotina('lista_custo')
@@ -31,7 +34,20 @@ def lista_custo(request):
     else:
         custo = custo.order_by('-id')  
 
-    context = {'custos': custo, 'query': query, 'ordenacao_atual': ordenar}
+    paginator = Paginator(custo, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+
+    context = {
+        'custos': page_obj,
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'query': query,
+        'ordenacao_atual': ordenar,
+    }
     return render(request, 'core/custos/lista_custo.html', context)
 
 

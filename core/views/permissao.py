@@ -4,9 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from core.models import PerfilUsuario, Rotina, garantir_rotinas_padrao
+
+ITENS_POR_PAGINA = 12
 
 
 def requer_rotina(url_name):
@@ -43,11 +47,44 @@ def requer_rotina(url_name):
 def lista_permissao(request):
     """Lista todos os usuários para gerenciamento de permissões."""
     garantir_rotinas_padrao()
+    query = request.GET.get('q', '')
+    ordenar = request.GET.get('ordenar', '')
+
     usuarios = User.objects.select_related('perfil').prefetch_related(
         'perfil__rotinas_permitidas'
     ).all()
+
+    if query:
+        usuarios = usuarios.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(perfil__setor__icontains=query)
+        )
+
+    mapa_ordenacao = {
+        'recentes': '-date_joined',
+        'antigos': 'date_joined',
+        'usuario_asc': 'username',
+        'usuario_desc': '-username',
+        'id_asc': 'id',
+        'id_desc': '-id',
+    }
+    usuarios = usuarios.order_by(mapa_ordenacao.get(ordenar, '-date_joined'))
+
+    paginator = Paginator(usuarios, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+
     context = {
-        'usuarios': usuarios,
+        'usuarios': page_obj,
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'query': query,
+        'ordenacao_atual': ordenar,
     }
     return render(request, 'core/permissao_rotina/lista_permissao.html', context)
 
@@ -78,11 +115,19 @@ def form_permissao(request, user_id):
         )
         return redirect('lista_permissao')
 
-    # Agrupa as rotinas por categoria para exibição organizada no formulário
+    # Agrupa as rotinas por categoria e, dentro de cada uma, por setor
+    def agrupar_por_setor(queryset):
+        return {
+            'COMERCIAL': queryset.filter(setor='COMERCIAL'),
+            'FINANCEIRO': queryset.filter(setor='FINANCEIRO'),
+            'FROTAS': queryset.filter(setor='FROTAS'),
+            'ADMINISTRADOR': queryset.filter(setor='ADMINISTRADOR'),
+        }
+
     rotinas_por_categoria = {
-        'ROTINA': todas_rotinas.filter(categoria='ROTINA'),
-        'GRAFICO': todas_rotinas.filter(categoria='GRAFICO'),
-        'RELATORIO': todas_rotinas.filter(categoria='RELATORIO'),
+        'ROTINA': agrupar_por_setor(todas_rotinas.filter(categoria='ROTINA')),
+        'GRAFICO': agrupar_por_setor(todas_rotinas.filter(categoria='GRAFICO')),
+        'RELATORIO': agrupar_por_setor(todas_rotinas.filter(categoria='RELATORIO')),
     }
 
     context = {

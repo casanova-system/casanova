@@ -47,25 +47,98 @@
                         Usuários novos começam <strong>sem nenhuma permissão</strong>.
                     </p>
 
-                    <!-- Seção: Rotinas -->
+                    <!-- Seção: Rotinas (agrupadas por setor) -->
                     <div class="p-3 border border-secondary rounded bg-black bg-opacity-25 mb-3">
                         <h6 class="text-info fw-bold mb-3">
                             <i class="fas fa-gears me-2"></i> Rotinas
                         </h6>
-                        <div class="row">
-                            {% for rotina in rotinas_por_categoria.ROTINA %}
-                                <div class="col-md-4 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                            {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                        <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                            <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                        </label>
+
+                        <!-- Comercial -->
+                        <div class="mb-3">
+                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary mb-2">
+                                <i class="fas fa-briefcase me-1"></i> Comercial
+                            </span>
+                            <div class="row">
+                                {% for rotina in rotinas_por_categoria.ROTINA.COMERCIAL %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
-                            {% empty %}
-                                <p class="text-muted mb-0">Nenhuma rotina cadastrada.</p>
-                            {% endfor %}
+                                {% empty %}
+                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Financeiro -->
+                        <div class="mb-3">
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success mb-2">
+                                <i class="fas fa-coins me-1"></i> Financeiro
+                            </span>
+                            <div class="row">
+                                {% for rotina in rotinas_por_categoria.ROTINA.FINANCEIRO %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Frotas -->
+                        <div class="mb-3">
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning mb-2">
+                                <i class="fas fa-truck me-1"></i> Frotas
+                            </span>
+                            <div class="row">
+                                {% for rotina in rotinas_por_categoria.ROTINA.FROTAS %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Administrador -->
+                        <div>
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger mb-2">
+                                <i class="fas fa-user-shield me-1"></i> Administrador
+                            </span>
+                            <div class="row">
+                                {% for rotina in rotinas_por_categoria.ROTINA.ADMINISTRADOR %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 
@@ -75,16 +148,19 @@
                             <i class="fas fa-chart-pie me-2"></i> Gráficos
                         </h6>
                         <div class="row">
-                            {% for rotina in rotinas_por_categoria.GRAFICO %}
-                                <div class="col-md-4 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                            {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                        <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                            <span class="text-success fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                        </label>
+                            {% for setor_key, rotinas_setor in rotinas_por_categoria.GRAFICO.items %}
+                                {% for rotina in rotinas_setor %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-success fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                                <span class="badge bg-secondary bg-opacity-25 text-muted ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
+                                {% endfor %}
                             {% empty %}
                                 <p class="text-muted mb-0">Nenhum gráfico cadastrado.</p>
                             {% endfor %}
@@ -97,16 +173,19 @@
                             <i class="fas fa-file-lines me-2"></i> Relatórios
                         </h6>
                         <div class="row">
-                            {% for rotina in rotinas_por_categoria.RELATORIO %}
-                                <div class="col-md-4 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                            {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                        <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                            <span class="text-warning fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                        </label>
+                            {% for setor_key, rotinas_setor in rotinas_por_categoria.RELATORIO.items %}
+                                {% for rotina in rotinas_setor %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                                <span class="text-warning fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                                <span class="badge bg-secondary bg-opacity-25 text-muted ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
+                                {% endfor %}
                             {% empty %}
                                 <p class="text-muted mb-0">Nenhum relatório cadastrado.</p>
                             {% endfor %}

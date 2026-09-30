@@ -284,6 +284,22 @@
             background: #ffffff;
         }
 
+        /* Padronização de títulos de página */
+        .page-title {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            margin-bottom: 0.25rem !important;
+        }
+        .page-subtitle {
+            font-size: 0.85rem !important;
+            color: #6c757d;
+        }
+        .card-title-padrao {
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+        }
+
         .sidebar-item-compacto {
             background-color: transparent !important;
             color: inherit !important;
@@ -303,6 +319,26 @@
         [data-bs-theme="dark"] .sidebar-item-compacto.active {
             background-color: rgba(59, 130, 246, 0.18) !important;
             color: #58a6ff !important;
+        }
+
+        /* Subgrupos de setor dentro de Rotinas */
+        .setor-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 6px;
+        }
+        .setor-titulo {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            padding: 4px 10px 2px 10px;
+            display: block;
+        }
+        [data-bs-theme="dark"] .setor-titulo {
+            color: #6e7681;
         }
 
         .rotinas-toggle .fa-chevron-down,
@@ -426,40 +462,60 @@
                 
                         <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas">
                             <div class="rotinas-collapse-body d-flex flex-column gap-1 pt-1" id="listaRotinas">
-                                <!-- Custo de Frete -->
-                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras or request.user.perfil.tem_rotina.001 %}
-                                <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
-                                </a>
+
+                                <!-- SETOR: COMERCIAL -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_comercial %}
+                                <div class="setor-grupo">
+                                    <span class="setor-titulo hide-on-collapse"><i class="fa-solid fa-briefcase me-1"></i> Comercial</span>
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras or request.user.perfil.tem_rotina.001 %}
+                                    <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
+                                        <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                                
-                                <!-- Cadastro de Usuário -->
-                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.002 %}
-                                <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
-                                </a>          
+
+                                <!-- SETOR: FINANCEIRO -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_financeiro %}
+                                <div class="setor-grupo">
+                                    <span class="setor-titulo hide-on-collapse"><i class="fa-solid fa-coins me-1"></i> Financeiro</span>
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo or request.user.perfil.tem_rotina.004 %}
+                                    <a href="{% url 'lista_custo' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}active{% endif %}" data-id="4" data-nome="custos" title="Custos">
+                                        <span class="text-muted small" style="font-size: 0.7rem;">[004]</span> <span class="hide-on-collapse">Cadastro Custo</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                            
-                                <!-- Cadastro Veículo -->
-                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos or request.user.perfil.tem_rotina.003 %}
-                                <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastro Veículo</span>
-                                </a>      
+
+                                <!-- SETOR: FROTAS -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_frotas %}
+                                <div class="setor-grupo">
+                                    <span class="setor-titulo hide-on-collapse"><i class="fa-solid fa-truck me-1"></i> Frotas</span>
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos or request.user.perfil.tem_rotina.003 %}
+                                    <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
+                                        <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastro Veículo</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                            
-                                <!-- Cadastro Custo -->
-                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo or request.user.perfil.tem_rotina.004 %}
-                                <a href="{% url 'lista_custo' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}active{% endif %}" data-id="4" data-nome="custos" title="Custos">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[004]</span> <span class="hide-on-collapse">Cadastro Custo</span>
-                                </a>
+
+                                <!-- SETOR: ADMINISTRADOR -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_administrador %}
+                                <div class="setor-grupo">
+                                    <span class="setor-titulo hide-on-collapse"><i class="fa-solid fa-user-shield me-1"></i> Administrador</span>
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.002 %}
+                                    <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
+                                        <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.005 %}
+                                    <a href="{% url 'lista_permissao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'permissao' in request.resolver_match.url_name %}active{% endif %}" data-id="5" data-nome="gerenciar permissoes" title="Gerenciar Permissões">
+                                        <span class="text-muted small" style="font-size: 0.7rem;">[005]</span> <span class="hide-on-collapse">Permissões</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                            
-                                <!-- Permissões -->
-                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.005 %}
-                                <a href="{% url 'lista_permissao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'permissao' in request.resolver_match.url_name %}active{% endif %}" data-id="5" data-nome="gerenciar permissoes" title="Gerenciar Permissões">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[005]</span> <span class="hide-on-collapse">Permissões</span>
-                                </a>
-                                {% endif %}                             
+
                             </div>
                         </div>
                     </div>
