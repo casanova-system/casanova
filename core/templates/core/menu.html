@@ -5,8 +5,8 @@
 <div class="container-fluid py-3 px-3">
     
     <!-- Card Principal de Boas-Vindas no Topo -->
-    <div class="card border-0 shadow-lg position-relative overflow-hidden w-100" style="background: linear-gradient(135deg, #092c6b 0%, #031330 100%); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
-        
+    <div class="card hero-card border-0 shadow-lg position-relative overflow-hidden w-100" style="background: linear-gradient(135deg, #092c6b 0%, #031330 100%); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
+        <div class="hero-glow"></div>
         <div class="card-body p-4 p-xl-4 position-relative z-1 text-white">
             <div class="row align-items-center justify-content-between">
                 
@@ -52,6 +52,105 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- Acesso Rápido às Rotinas -->
+    <div class="mt-4">
+        <h6 class="text-uppercase fw-bold text-muted mb-3" style="font-size: 0.7rem; letter-spacing: 1px;">
+            <i class="fa-solid fa-bolt me-1 text-primary"></i> Acesso Rápido
+        </h6>
+        <div class="row g-3">
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_obras' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #0b3882;"><i class="fa-solid fa-truck-fast"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Custo de Frete</span>
+                        <span class="quick-desc">Cálculo e gestão de fretes</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_usuarios' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #7c3aed;"><i class="fa-solid fa-users"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Usuários</span>
+                        <span class="quick-desc">Cadastro e gestão de acessos</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_veiculos' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #0891b2;"><i class="fa-solid fa-truck"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Veículos</span>
+                        <span class="quick-desc">Frota e especificações</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_custo' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #059669;"><i class="fa-solid fa-coins"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Custos</span>
+                        <span class="quick-desc">Parâmetros operacionais</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'grafico_custo_frete' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #d97706;"><i class="fa-solid fa-chart-pie"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Gráficos</span>
+                        <span class="quick-desc">Análise visual de custos</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_relatorios %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'relatorio_fretes_mes' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #dc2626;"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Relatórios</span>
+                        <span class="quick-desc">Fretes consolidados do mês</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_permissao' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #475569;"><i class="fa-solid fa-user-shield"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Permissões</span>
+                        <span class="quick-desc">Controle de rotinas por usuário</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <style>
@@ -62,6 +161,101 @@
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(255, 255, 255, 0.25) !important;
         background-color: #f8fafc !important;
+    }
+
+    /* Brilho ambiente que percorre o hero lentamente */
+    .hero-card .hero-glow {
+        position: absolute;
+        top: -60%;
+        right: -10%;
+        width: 420px;
+        height: 420px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, transparent 68%);
+        pointer-events: none;
+        animation: heroGlow 9s ease-in-out infinite alternate;
+    }
+    @keyframes heroGlow {
+        from { transform: translate(0, 0) scale(1); opacity: 0.75; }
+        to   { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
+    }
+
+    /* Cards de acesso rápido */
+    .quick-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        background: var(--cv-surface, #fff);
+        border: 1px solid var(--cv-line, #e6ebf2);
+        border-radius: 14px;
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+        box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15,23,42,.06));
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                    border-color 0.22s ease;
+    }
+    .quick-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--cv-shadow-lg, 0 12px 28px rgba(15,23,42,.10));
+        border-color: var(--cv-blue, #0b3882);
+        color: inherit;
+    }
+    .quick-icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        color: var(--qc, #0b3882);
+        background: color-mix(in srgb, var(--qc, #0b3882) 12%, transparent);
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .quick-card:hover .quick-icon {
+        transform: scale(1.08) rotate(-4deg);
+    }
+    .quick-body {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1;
+    }
+    .quick-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .quick-desc {
+        font-size: 0.75rem;
+        color: var(--cv-text-muted, #64748b);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .quick-arrow {
+        font-size: 0.7rem;
+        color: var(--cv-text-faint, #94a3b8);
+        opacity: 0;
+        transform: translateX(-6px);
+        transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .quick-card:hover .quick-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .hero-card .hero-glow { animation: none; }
+        .quick-card:hover,
+        .quick-card:hover .quick-icon,
+        .quick-card:hover .quick-arrow { transform: none; }
     }
 </style>
 {% endblock %}

@@ -17,7 +17,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="text-body fw-bold mb-1" style="font-size: 1.5rem;">Detalhe do Custo</h2>
+            <h2 class="page-title text-body fw-bold mb-1">Detalhe do Custo</h2>
             <p class="text-muted small mb-0">Visualização completa do registro de custo.</p>
         </div>
         <div class="d-flex gap-2">
@@ -30,43 +30,43 @@
         </div>
     </div>
 
-    <div class="card shadow-lg border-0">
+    <div class="card shadow-lg border-0 form-card">
         <div class="card-header py-3">
             <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;">
                 <i class="fa-solid fa-money-bill-wave me-2 text-primary"></i> {{ custo.tipo }}
             </h5>
         </div>
         <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <span class="text-muted small d-block">Tipo / Categoria</span>
-                    <strong class="fs-6">{{ custo.tipo }}</strong>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Tipo / Categoria</span>
+                    <span class="detail-value">{{ custo.tipo }}</span>
                 </div>
-                <div class="col-md-6">
-                    <span class="text-muted small d-block">Valor (R$)</span>
-                    <strong class="fs-6 text-success">R$ {{ custo.valor|floatformat:2 }}</strong>
+                <div class="detail-item">
+                    <span class="detail-label">Valor (R$)</span>
+                    <span class="detail-value text-success">R$ {{ custo.valor|floatformat:2 }}</span>
                 </div>
-                <div class="col-12">
-                    <span class="text-muted small d-block">Descrição</span>
-                    <strong class="fs-6">{{ custo.descricao|default:"-" }}</strong>
+                <div class="detail-item">
+                    <span class="detail-label">Cadastrado por</span>
+                    <span class="detail-value">{{ custo.usuario_responsavel.username|default:"-" }}</span>
                 </div>
-                <div class="col-md-6">
-                    <span class="text-muted small d-block">Cadastrado por</span>
-                    <strong class="fs-6">{{ custo.usuario_responsavel.username|default:"-" }}</strong>
+                <div class="detail-item">
+                    <span class="detail-label">Data de Criação</span>
+                    <span class="detail-value">{{ custo.data_criacao|date:"d/m/Y H:i"|default:"-" }}</span>
                 </div>
-                <div class="col-md-6">
-                    <span class="text-muted small d-block">Data de Criação</span>
-                    <strong class="fs-6">{{ custo.data_criacao|date:"d/m/Y H:i"|default:"-" }}</strong>
-                </div>
-                <div class="col-md-6">
-                    <span class="text-muted small d-block">Custo Fixo do Sistema</span>
-                    <strong class="fs-6">
+                <div class="detail-item">
+                    <span class="detail-label">Custo Fixo do Sistema</span>
+                    <span class="detail-value">
                         {% if custo.fixo %}
                             <span class="badge bg-warning text-dark">Sim</span>
                         {% else %}
                             <span class="badge bg-secondary">Não</span>
                         {% endif %}
-                    </strong>
+                    </span>
+                </div>
+                <div class="detail-item detail-full">
+                    <span class="detail-label">Descrição</span>
+                    <span class="detail-value">{{ custo.descricao|default:"-" }}</span>
                 </div>
             </div>
         </div>

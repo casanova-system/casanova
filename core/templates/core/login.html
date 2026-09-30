@@ -281,13 +281,68 @@
             padding: 13px;
             border-radius: 10px;
             box-shadow: var(--btn-shadow);
-            transition: transform 0.2s ease, filter 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.25s ease;
+        }
+
+        /* Brilho que atravessa o botão no hover */
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,0.28), transparent);
+            transform: skewX(-18deg);
+            transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-login:hover::after {
+            left: 130%;
         }
 
         .btn-login:hover {
             color: #fff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             filter: brightness(1.08);
+            box-shadow: 0 14px 30px rgba(11, 56, 130, 0.34);
+        }
+        .btn-login:active {
+            transform: translateY(0) scale(0.99);
+        }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Entrada escalonada dos campos do formulário */
+        .login-form-pane .form-kicker,
+        .login-form-pane .form-title,
+        .login-form-pane .form-lead,
+        .login-form-pane form > * {
+            animation: loginFieldIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .login-form-pane .form-kicker { animation-delay: 0.05s; }
+        .login-form-pane .form-title  { animation-delay: 0.10s; }
+        .login-form-pane .form-lead   { animation-delay: 0.15s; }
+        .login-form-pane form > *:nth-child(1) { animation-delay: 0.20s; }
+        .login-form-pane form > *:nth-child(2) { animation-delay: 0.26s; }
+        .login-form-pane form > *:nth-child(3) { animation-delay: 0.32s; }
+
+        @keyframes loginFieldIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Logo com entrada suave */
+        .brand-logo {
+            animation: logoIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes logoIn {
+            from { opacity: 0; transform: scale(0.9) translateY(6px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .alert-login {
@@ -302,6 +357,30 @@
 
         [data-bs-theme="dark"] .alert-login {
             color: #f87171;
+        }
+
+        /* Alerta de erro com leve tremor */
+        .alert {
+            animation: alertShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        @keyframes alertShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .login-form-pane .form-kicker,
+            .login-form-pane .form-title,
+            .login-form-pane .form-lead,
+            .login-form-pane form > *,
+            .brand-logo,
+            .alert {
+                animation: none !important;
+            }
+            .btn-login::after { display: none; }
         }
 
         @media (max-width: 860px) {

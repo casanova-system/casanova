@@ -6,7 +6,7 @@
     <!-- Cabeçalho -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="text-body fw-bold mb-1"><i class="fas fa-user-circle me-2 text-primary"></i> Detalhes do Usuário</h2>
+            <h2 class="page-title text-body fw-bold mb-1"><i class="fas fa-user-circle me-2 text-primary"></i> Detalhes do Usuário</h2>
             <p class="text-muted mb-0">Informações completas do cadastro selecionado.</p>
         </div>
         <div>
@@ -19,17 +19,13 @@
     <!-- Card Principal -->
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="card shadow-sm border">
-                <div class="card-header py-3 d-flex align-items-center">
-                    <div class="me-3">
-                        {% if usuario.perfil.foto %}
-                            <img src="{{ usuario.perfil.foto.url }}" alt="Foto de Perfil" class="rounded-circle shadow-sm" style="width: 65px; height: 65px; object-fit: cover;">
-                        {% else %}
-                            <div class="bg-primary bg-opacity-10 rounded-circle text-primary d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
-                                <i class="fas fa-user fa-2x"></i>
-                            </div>
-                        {% endif %}
-                    </div>
+            <div class="card shadow-sm border form-card">
+                <div class="detail-hero">
+                    {% if usuario.perfil.foto %}
+                        <img src="{{ usuario.perfil.foto.url }}" alt="Foto de Perfil" class="detail-avatar">
+                    {% else %}
+                        <div class="detail-avatar-fallback"><i class="fas fa-user"></i></div>
+                    {% endif %}
                     <div>
                         <h4 class="mb-0 fw-bold">{{ usuario.username }}</h4>
                         <span class="badge bg-secondary mt-1">ID: #{{ usuario.id }}</span>
@@ -37,59 +33,48 @@
                 </div>
                 
                 <div class="card-body p-4">
-                    <div class="row g-4">
-                        <!-- Coluna Esquerda -->
-                        <div class="col-md-6">
-                            <ul class="list-group list-group-flush bg-transparent">
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-id-card me-2 text-primary"></i> Nome Completo:</span>
-                                    <span class="fw-semibold text-end">{{ usuario.get_full_name|default:"Não informado" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-envelope me-2 text-primary"></i> E-mail:</span>
-                                    <span class="fw-semibold">{{ usuario.email|default:"Não informado" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-shield-alt me-2 text-primary"></i> Nível de Acesso:</span>
-                                    <span class="badge bg-primary px-3 py-2">
-                                        {{ usuario.perfil.nivel_acesso|default:"Não informado" }}
-                                    </span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-briefcase me-2 text-primary"></i> Setor:</span>
-                                    <span class="fw-semibold">{{ usuario.perfil.setor|default:"Não informado" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-id-badge me-2 text-primary"></i> CPF:</span>
-                                    <span class="fw-semibold">{{ usuario.perfil.cpf|default:"Não informado" }}</span>
-                                </li>
-                            </ul>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Nome Completo</span>
+                            <span class="detail-value">{{ usuario.get_full_name|default:"Não informado" }}</span>
                         </div>
-
-                        <!-- Coluna Direita -->
-                        <div class="col-md-6">
-                            <ul class="list-group list-group-flush bg-transparent">
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-birthday-cake me-2 text-primary"></i> Nascimento:</span>
-                                    <span class="fw-semibold">{% if usuario.perfil.data_nascimento %}{{ usuario.perfil.data_nascimento|date:"d/m/Y" }}{% else %}Não informado{% endif %}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-map-marked-alt me-2 text-primary"></i> CEP:</span>
-                                    <span class="fw-semibold">{{ usuario.perfil.cep|default:"Não informado" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-map-marker-alt me-2 text-primary"></i> Endereço:</span>
-                                    <span class="fw-semibold text-end">{{ usuario.perfil.endereco|default:"Não informado" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-user-clock me-2 text-primary"></i> Cadastro:</span>
-                                    <span class="fw-semibold">{{ usuario.date_joined|date:"d/m/Y H:i" }}</span>
-                                </li>
-                                <li class="list-group-item bg-transparent py-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-muted"><i class="fas fa-clock me-2 text-primary"></i> Último Login:</span>
-                                    <span class="fw-semibold">{{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca logou" }}</span>
-                                </li>
-                            </ul>
+                        <div class="detail-item">
+                            <span class="detail-label">E-mail</span>
+                            <span class="detail-value">{{ usuario.email|default:"Não informado" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nível de Acesso</span>
+                            <span class="detail-value">
+                                <span class="badge bg-primary">{{ usuario.perfil.nivel_acesso|default:"Não informado" }}</span>
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Setor</span>
+                            <span class="detail-value">{{ usuario.perfil.setor|default:"Não informado" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">CPF</span>
+                            <span class="detail-value">{{ usuario.perfil.cpf|default:"Não informado" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nascimento</span>
+                            <span class="detail-value">{% if usuario.perfil.data_nascimento %}{{ usuario.perfil.data_nascimento|date:"d/m/Y" }}{% else %}Não informado{% endif %}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">CEP</span>
+                            <span class="detail-value">{{ usuario.perfil.cep|default:"Não informado" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Cadastro</span>
+                            <span class="detail-value">{{ usuario.date_joined|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Último Login</span>
+                            <span class="detail-value">{{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca logou" }}</span>
+                        </div>
+                        <div class="detail-item detail-full">
+                            <span class="detail-label">Endereço</span>
+                            <span class="detail-value">{{ usuario.perfil.endereco|default:"Não informado" }}</span>
                         </div>
                     </div>
                 </div>

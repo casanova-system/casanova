@@ -1,24 +1,33 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 mt-4">
-        <h3 class="text-light fw-bold"><i class="fas fa-user-lock me-2"></i> Configurar Permissões: {{ usuario_obj.username }}</h3>
-        <a href="{% url 'lista_permissao' %}" class="btn btn-secondary btn-sm">
+<div class="container-fluid px-4 py-3">
+
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="page-title fw-bold mb-1">
+                <i class="fas fa-user-lock me-2 text-primary"></i> Configurar Permissões
+            </h2>
+            <p class="text-muted small mb-0">
+                Usuário: <strong>{{ usuario_obj.username }}</strong> · defina o nível, o setor e as rotinas liberadas.
+            </p>
+        </div>
+        <a href="{% url 'lista_permissao' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit;">
             <i class="fas fa-arrow-left me-1"></i> Voltar
         </a>
     </div>
 
-    <div class="card shadow bg-dark text-light border-secondary mb-4">
+    <div class="card shadow-lg border-0 form-card mb-4">
         <div class="card-body p-4">
             <form method="POST">
                 {% csrf_token %}
-                
-                <div class="row mb-4">
+
+                <div class="row g-3 mb-4">
                     <!-- Nível de Acesso -->
                     <div class="col-md-6">
-                        <label class="form-label text-light fw-semibold">Nível de Acesso *</label>
-                        <select name="nivel_acesso" class="form-select bg-dark text-light border-secondary">
+                        <label class="form-label">Nível de Acesso <span class="text-danger">*</span></label>
+                        <select name="nivel_acesso" class="form-select">
                             <option value="DIRETORIA" {% if perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
                             <option value="GERENCIA" {% if perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
                             <option value="USUARIO" {% if perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário</option>
@@ -27,8 +36,8 @@
 
                     <!-- Setor -->
                     <div class="col-md-6">
-                        <label class="form-label text-light fw-semibold">Setor *</label>
-                        <select name="setor" class="form-select bg-dark text-light border-secondary">
+                        <label class="form-label">Setor <span class="text-danger">*</span></label>
+                        <select name="setor" class="form-select">
                             <option value="COMERCIAL" {% if perfil.setor == 'COMERCIAL' %}selected{% endif %}>Comercial</option>
                             <option value="FINANCEIRO" {% if perfil.setor == 'FINANCEIRO' %}selected{% endif %}>Financeiro</option>
                             <option value="OPERACAO" {% if perfil.setor == 'OPERACAO' %}selected{% endif %}>Operação</option>
@@ -37,35 +46,35 @@
                     </div>
                 </div>
 
-                <!-- Seleção de Rotinas Permitidas -->
+                <!-- Permissões -->
                 <div class="mb-4">
-                    <label class="form-label text-light fw-bold fs-5 mb-2">
+                    <h6 class="fw-bold mb-1">
                         <i class="fas fa-check-square text-primary me-2"></i> Permissões do Usuário
-                    </label>
+                    </h6>
                     <p class="text-muted small mb-3">
                         Marque as rotinas, gráficos e relatórios que este usuário poderá acessar.
                         Usuários novos começam <strong>sem nenhuma permissão</strong>.
                     </p>
 
                     <!-- Seção: Rotinas (agrupadas por setor) -->
-                    <div class="p-3 border border-secondary rounded bg-black bg-opacity-25 mb-3">
-                        <h6 class="text-info fw-bold mb-3">
+                    <div class="perm-section mb-3">
+                        <h6 class="perm-section-title text-primary">
                             <i class="fas fa-gears me-2"></i> Rotinas
                         </h6>
 
                         <!-- Comercial -->
-                        <div class="mb-3">
-                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary mb-2">
+                        <div class="perm-setor">
+                            <span class="perm-setor-badge" style="--ps: #0b3882;">
                                 <i class="fas fa-briefcase me-1"></i> Comercial
                             </span>
                             <div class="row">
                                 {% for rotina in rotinas_por_categoria.ROTINA.COMERCIAL %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
+                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
                                             </label>
                                         </div>
                                     </div>
@@ -76,18 +85,18 @@
                         </div>
 
                         <!-- Financeiro -->
-                        <div class="mb-3">
-                            <span class="badge bg-success bg-opacity-25 text-success border border-success mb-2">
+                        <div class="perm-setor">
+                            <span class="perm-setor-badge" style="--ps: #059669;">
                                 <i class="fas fa-coins me-1"></i> Financeiro
                             </span>
                             <div class="row">
                                 {% for rotina in rotinas_por_categoria.ROTINA.FINANCEIRO %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
+                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
                                             </label>
                                         </div>
                                     </div>
@@ -98,18 +107,18 @@
                         </div>
 
                         <!-- Frotas -->
-                        <div class="mb-3">
-                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning mb-2">
+                        <div class="perm-setor">
+                            <span class="perm-setor-badge" style="--ps: #d97706;">
                                 <i class="fas fa-truck me-1"></i> Frotas
                             </span>
                             <div class="row">
                                 {% for rotina in rotinas_por_categoria.ROTINA.FROTAS %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
+                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
                                             </label>
                                         </div>
                                     </div>
@@ -120,18 +129,18 @@
                         </div>
 
                         <!-- Administrador -->
-                        <div>
-                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger mb-2">
+                        <div class="perm-setor">
+                            <span class="perm-setor-badge" style="--ps: #dc2626;">
                                 <i class="fas fa-user-shield me-1"></i> Administrador
                             </span>
                             <div class="row">
                                 {% for rotina in rotinas_por_categoria.ROTINA.ADMINISTRADOR %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
-                                                <span class="text-info fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
+                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
                                             </label>
                                         </div>
                                     </div>
@@ -143,8 +152,8 @@
                     </div>
 
                     <!-- Seção: Gráficos -->
-                    <div class="p-3 border border-secondary rounded bg-black bg-opacity-25 mb-3">
-                        <h6 class="text-success fw-bold mb-3">
+                    <div class="perm-section mb-3">
+                        <h6 class="perm-section-title text-success">
                             <i class="fas fa-chart-pie me-2"></i> Gráficos
                         </h6>
                         <div class="row">
@@ -152,11 +161,11 @@
                                 {% for rotina in rotinas_setor %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
                                                 <span class="text-success fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                                <span class="badge bg-secondary bg-opacity-25 text-muted ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
+                                                <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
                                             </label>
                                         </div>
                                     </div>
@@ -168,8 +177,8 @@
                     </div>
 
                     <!-- Seção: Relatórios -->
-                    <div class="p-3 border border-secondary rounded bg-black bg-opacity-25">
-                        <h6 class="text-warning fw-bold mb-3">
+                    <div class="perm-section">
+                        <h6 class="perm-section-title text-warning">
                             <i class="fas fa-file-lines me-2"></i> Relatórios
                         </h6>
                         <div class="row">
@@ -177,11 +186,11 @@
                                 {% for rotina in rotinas_setor %}
                                     <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
                                                 {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label text-light" for="rotina_{{ rotina.id }}">
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
                                                 <span class="text-warning fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                                <span class="badge bg-secondary bg-opacity-25 text-muted ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
+                                                <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
                                             </label>
                                         </div>
                                     </div>
@@ -193,11 +202,11 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <a href="{% url 'lista_permissao' %}" class="btn btn-secondary px-4">
+                <div class="form-actions">
+                    <a href="{% url 'lista_permissao' %}" class="btn btn-outline-secondary px-4">
                         <i class="fas fa-arrow-left me-1"></i> Cancelar
                     </a>
-                    <button type="submit" class="btn btn-success px-4">
+                    <button type="submit" class="btn btn-primary px-4">
                         <i class="fas fa-save me-1"></i> Salvar Permissões
                     </button>
                 </div>

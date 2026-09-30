@@ -6,7 +6,7 @@
     <!-- Cabeçalho da Página -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h3 class="fw-bold mb-0 text-body" style="letter-spacing: -0.5px;"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Dashboard: Custos de Frete</h3>
+            <h3 class="page-title fw-bold mb-0 text-body"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Dashboard: Custos de Frete</h3>
             <p class="text-muted small mb-0" style="font-size: 0.9rem;">Painel analítico corporativo de custos de deslocamento e métricas logísticas por obra.</p>
         </div>
         <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary btn-sm py-1.5 px-3 shadow-sm" style="font-size: 0.85rem;">
@@ -17,27 +17,27 @@
     <!-- Cards de Indicadores (KPIs) Adaptados ao Tema -->
     <div class="row g-3 mb-3">
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-primary border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Custo Total de Fretes</div>
-                <div class="h4 fw-bold text-primary mb-0 mt-1" id="kpiCustoTotal">R$ 0,00</div>
+            <div class="kpi-card" style="--kpi-color: #0b3882;">
+                <div class="kpi-label">Custo Total de Fretes</div>
+                <div class="kpi-value" id="kpiCustoTotal">R$ 0,00</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-success border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Média de Custo por Obra</div>
-                <div class="h4 fw-bold text-success mb-0 mt-1" id="kpiMediaCusto">R$ 0,00</div>
+            <div class="kpi-card" style="--kpi-color: #059669;">
+                <div class="kpi-label">Média de Custo por Obra</div>
+                <div class="kpi-value" id="kpiMediaCusto">R$ 0,00</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-warning border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total de Obras Analisadas</div>
-                <div class="h4 fw-bold text-body mb-0 mt-1" id="kpiTotalObras">0</div>
+            <div class="kpi-card" style="--kpi-color: #d97706;">
+                <div class="kpi-label">Total de Obras Analisadas</div>
+                <div class="kpi-value" id="kpiTotalObras">0</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-info border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Média de Distância (KM)</div>
-                <div class="h4 fw-bold text-info mb-0 mt-1" id="kpiMediaKm">0 km</div>
+            <div class="kpi-card" style="--kpi-color: #0891b2;">
+                <div class="kpi-label">Média de Distância (KM)</div>
+                <div class="kpi-value" id="kpiMediaKm">0 km</div>
             </div>
         </div>
     </div>
@@ -45,10 +45,10 @@
     <!-- Linha 1: Gráfico de Barras e Gráfico de Rosca -->
     <div class="row g-3 mb-3">
         <div class="col-lg-7">
-            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 310px;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-column text-primary me-1"></i> Comparativo de Custo Total por Obra</h6>
-                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Visão Geral</span>
+            <div class="chart-panel" style="height: 310px;">
+                <div class="chart-head mb-1">
+                    <h6 class="chart-title text-body"><i class="fa-solid fa-chart-column text-primary me-1"></i> Comparativo de Custo Total por Obra</h6>
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">Visão Geral</span>
                 </div>
                 <hr class="text-muted opacity-25 my-2">
                 <div style="height: 230px; position: relative;" class="w-100">
@@ -58,10 +58,10 @@
         </div>
 
         <div class="col-lg-5">
-            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 310px;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-pie text-primary me-1"></i> Distribuição Percentual de Custos</h6>
-                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Participação</span>
+            <div class="chart-panel" style="height: 310px;">
+                <div class="chart-head mb-1">
+                    <h6 class="chart-title text-body"><i class="fa-solid fa-chart-pie text-primary me-1"></i> Distribuição Percentual de Custos</h6>
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">Participação</span>
                 </div>
                 <hr class="text-muted opacity-25 my-2">
                 <div style="height: 225px; position: relative;" class="w-100 d-flex justify-content-center align-items-center">
@@ -74,10 +74,10 @@
     <!-- Linha 2: Gráfico de Linha (Tendência) -->
     <div class="row g-3 mb-2">
         <div class="col-12">
-            <div class="card card-custom p-3 border-0 shadow-sm bg-body" style="border-radius: 10px; height: 260px;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="fw-bold text-body mb-0" style="font-size: 0.95rem;"><i class="fa-solid fa-chart-line text-primary me-1"></i> Tendência e Evolução de Custos por Lançamento</h6>
-                    <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.7rem;">Evolução Temporal</span>
+            <div class="chart-panel" style="height: 260px;">
+                <div class="chart-head mb-1">
+                    <h6 class="chart-title text-body"><i class="fa-solid fa-chart-line text-primary me-1"></i> Tendência e Evolução de Custos por Lançamento</h6>
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">Evolução Temporal</span>
                 </div>
                 <hr class="text-muted opacity-25 my-2">
                 <div style="height: 180px; position: relative;" class="w-100">

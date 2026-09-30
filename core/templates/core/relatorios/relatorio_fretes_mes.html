@@ -13,7 +13,7 @@
                     <li class="breadcrumb-item active" aria-current="page">Relatório de Fretes do Mês</li>
                 </ol>
             </nav>
-            <h3 class="fw-bold mb-0 text-body"><i class="fa-solid fa-file-lines text-primary me-2"></i> Relatório Consolidado de Fretes</h3>
+            <h3 class="page-title fw-bold mb-0 text-body"><i class="fa-solid fa-file-lines text-primary me-2"></i> Relatório Consolidado de Fretes</h3>
             <p class="text-muted small mb-0">Demonstrativo detalhado de custos, distâncias e operações logísticas.</p>
         </div>
         <div class="d-flex gap-2">
@@ -29,27 +29,27 @@
     <!-- Cards de Resumo (KPIs do Relatório) -->
     <div class="row g-3 mb-4">
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-primary border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Custo Total Acumulado</div>
-                <div class="h4 fw-bold text-primary mb-0 mt-1">R$ {{ total_custo|floatformat:2 }}</div>
+            <div class="kpi-card" style="--kpi-color: #0b3882;">
+                <div class="kpi-label">Custo Total Acumulado</div>
+                <div class="kpi-value">R$ {{ total_custo|floatformat:2 }}</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-success border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Distância Total Rodada</div>
-                <div class="h4 fw-bold text-success mb-0 mt-1">{{ total_distancia|floatformat:1 }} km</div>
+            <div class="kpi-card" style="--kpi-color: #059669;">
+                <div class="kpi-label">Distância Total Rodada</div>
+                <div class="kpi-value">{{ total_distancia|floatformat:1 }} km</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-info border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Média de Custo por Frete</div>
-                <div class="h4 fw-bold text-info mb-0 mt-1">R$ {{ media_custo|floatformat:2 }}</div>
+            <div class="kpi-card" style="--kpi-color: #0891b2;">
+                <div class="kpi-label">Média de Custo por Frete</div>
+                <div class="kpi-value">R$ {{ media_custo|floatformat:2 }}</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card card-custom border-0 shadow-sm py-3 px-3 border-start border-warning border-4 bg-body">
-                <div class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total de Operações</div>
-                <div class="h4 fw-bold text-body mb-0 mt-1">{{ total_operacoes }}</div>
+            <div class="kpi-card" style="--kpi-color: #d97706;">
+                <div class="kpi-label">Total de Operações</div>
+                <div class="kpi-value">{{ total_operacoes }}</div>
             </div>
         </div>
     </div>
@@ -58,7 +58,7 @@
     <div class="card card-custom border-0 shadow-sm bg-body">
         <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
             <h6 class="fw-bold mb-0 text-body"><i class="fa-solid fa-table text-primary me-2"></i> Lançamentos Realizados no Período</h6>
-            <span class="badge bg-secondary bg-opacity-15 text-body border" style="font-size: 0.75rem;">Total Registros: {{ total_operacoes }}</span>
+            <span class="badge bg-secondary" style="font-size: 0.75rem;">Total Registros: {{ total_operacoes }}</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

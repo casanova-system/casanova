@@ -21,7 +21,7 @@
     <!-- Cabeçalho da Página -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">Editar Veículo</h2>
+            <h2 class="page-title fw-bold mb-1">Editar Veículo</h2>
             <p class="text-muted small mb-0">Atualize as informações do veículo na frota.</p>
         </div>
         <div>
@@ -84,7 +84,7 @@
                             <option value="Elétrico" {% if veiculo.tipo_combustivel == "Elétrico" %}selected{% endif %}>Elétrico</option>
                         </select>
                     </div>
-<!--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////-->>
+<!-- ===== Campos numéricos e dimensões ===== -->
  <!-- Litros do Tanque -->
  <div class="col-md-4">
     <label for="litros_tanque" class="form-label fw-semibold small">Litros do Tanque (L)</label>
@@ -120,7 +120,7 @@
     <label for="capacidade_volumetrica" class="form-label fw-semibold small">Capacidade Volumétrica (m³) <span class="text-danger">*</span></label>
     <input type="number" step="0.01" class="form-control form-control-sm" id="capacidade_volumetrica" name="capacidade_volumetrica" value="{% if veiculo.capacidade_volumetrica %}{{ veiculo.capacidade_volumetrica|stringformat:'s' }}{% endif %}" required placeholder="Ex: 12.50">
 </div>
-<!--////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+<!-- ===== Fim dos campos numéricos ===== -->
                     <!-- Especificação Técnica -->
                     <div class="col-12">
                         <label for="especificacao_tecnica" class="form-label fw-semibold small">Especificação Técnica</label>

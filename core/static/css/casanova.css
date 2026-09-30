@@ -1,0 +1,720 @@
+/* ==========================================================================
+   CASANOVA ESQUADRIAS — Design System
+   Camada de refinamento visual. Mantém a identidade (azul #0b3882) e o
+   layout existentes, adicionando profundidade, movimento e polimento.
+   Carregado APÓS os estilos inline do base.html.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TOKENS
+   -------------------------------------------------------------------------- */
+:root {
+    --cv-blue: #0b3882;
+    --cv-blue-dark: #062254;
+    --cv-blue-soft: rgba(11, 56, 130, 0.08);
+    --cv-blue-ring: rgba(11, 56, 130, 0.18);
+    --cv-accent: #4da6ff;
+
+    --cv-surface: #ffffff;
+    --cv-surface-2: #f8fafc;
+    --cv-canvas: #f4f6f9;
+    --cv-line: #e6ebf2;
+    --cv-line-strong: #d7dee8;
+
+    --cv-text: #1e293b;
+    --cv-text-muted: #64748b;
+    --cv-text-faint: #94a3b8;
+
+    /* Escala de sombras — sutil, em camadas */
+    --cv-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --cv-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --cv-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
+    --cv-shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.10), 0 4px 10px rgba(15, 23, 42, 0.05);
+    --cv-shadow-blue: 0 8px 22px rgba(11, 56, 130, 0.22);
+
+    --cv-radius-sm: 8px;
+    --cv-radius: 12px;
+    --cv-radius-lg: 16px;
+
+    --cv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --cv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --cv-dur: 0.22s;
+}
+
+[data-bs-theme="dark"] {
+    --cv-blue-soft: rgba(59, 130, 246, 0.14);
+    --cv-blue-ring: rgba(59, 130, 246, 0.30);
+
+    --cv-surface: #161b22;
+    --cv-surface-2: #1c2128;
+    --cv-canvas: #0d1117;
+    --cv-line: #262c36;
+    --cv-line-strong: #30363d;
+
+    --cv-text: #e6edf3;
+    --cv-text-muted: #8b949e;
+    --cv-text-faint: #6e7681;
+
+    --cv-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --cv-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --cv-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.40);
+    --cv-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.50);
+    --cv-shadow-blue: 0 8px 22px rgba(59, 130, 246, 0.20);
+}
+
+/* --------------------------------------------------------------------------
+   2. BASE
+   -------------------------------------------------------------------------- */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Foco acessível e consistente */
+:focus-visible {
+    outline: 2px solid var(--cv-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+[data-bs-theme="dark"] :focus-visible {
+    outline-color: var(--cv-accent);
+}
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--cv-blue-ring) !important;
+}
+
+/* Scrollbars discretas */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--cv-line-strong) transparent;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--cv-line-strong);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cv-text-faint);
+    background-clip: content-box;
+}
+
+/* --------------------------------------------------------------------------
+   3. ENTRADA DE PÁGINA
+   -------------------------------------------------------------------------- */
+@keyframes cvFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cvFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.main-content-area > div {
+    animation: cvFadeUp 0.42s var(--cv-ease-out) both;
+}
+
+/* --------------------------------------------------------------------------
+   4. CARDS
+   -------------------------------------------------------------------------- */
+.card {
+    border: 1px solid var(--cv-line) !important;
+    border-radius: var(--cv-radius) !important;
+    box-shadow: var(--cv-shadow-sm) !important;
+    transition: box-shadow var(--cv-dur) var(--cv-ease),
+                transform var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease);
+    overflow: hidden;
+}
+
+/* Cards de conteúdo elevam suavemente ao passar o mouse */
+.card.shadow-lg:hover,
+.card.shadow-sm:hover {
+    box-shadow: var(--cv-shadow-md) !important;
+}
+
+.card-header {
+    background: var(--cv-surface) !important;
+    border-bottom: 1px solid var(--cv-line) !important;
+    font-weight: 600;
+}
+
+/* Cards de KPI (dashboard) — realce no hover */
+.card-custom {
+    border: 1px solid var(--cv-line) !important;
+    border-radius: var(--cv-radius) !important;
+    box-shadow: var(--cv-shadow-sm) !important;
+    transition: transform var(--cv-dur) var(--cv-ease-out),
+                box-shadow var(--cv-dur) var(--cv-ease-out);
+}
+.card-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--cv-shadow-lg) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. TABELAS
+   -------------------------------------------------------------------------- */
+.table {
+    --bs-table-bg: transparent;
+    border-color: var(--cv-line);
+}
+
+.table thead th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted) !important;
+    background: var(--cv-surface-2) !important;
+    border-bottom: 1px solid var(--cv-line-strong) !important;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    white-space: nowrap;
+}
+
+.table tbody td {
+    border-color: var(--cv-line);
+    vertical-align: middle;
+}
+
+/* Linha com barra de acento à esquerda no hover */
+.table-hover > tbody > tr {
+    position: relative;
+    transition: background-color 0.16s var(--cv-ease);
+}
+.table-hover > tbody > tr > td:first-child {
+    position: relative;
+}
+.table-hover > tbody > tr > td:first-child::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--cv-blue);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform 0.2s var(--cv-ease-out);
+    border-radius: 0 3px 3px 0;
+}
+.table-hover > tbody > tr:hover > td:first-child::before {
+    transform: scaleY(1);
+}
+.table-hover > tbody > tr:hover > * {
+    background-color: var(--cv-blue-soft) !important;
+}
+
+/* Cabeçalho fixo com leve desfoque */
+.table thead.sticky-top {
+    backdrop-filter: saturate(180%) blur(6px);
+    z-index: 3;
+}
+
+/* --------------------------------------------------------------------------
+   6. BOTÕES
+   -------------------------------------------------------------------------- */
+.btn {
+    border-radius: var(--cv-radius-sm);
+    font-weight: 600;
+    transition: transform 0.14s var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease),
+                background-color var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease);
+}
+.btn:active {
+    transform: scale(0.97);
+}
+.btn-sm {
+    border-radius: 7px;
+}
+
+.btn-primary {
+    background-color: var(--cv-blue);
+    border-color: var(--cv-blue);
+    box-shadow: var(--cv-shadow-xs);
+}
+.btn-primary:hover {
+    background-color: var(--cv-blue-dark);
+    border-color: var(--cv-blue-dark);
+    box-shadow: var(--cv-shadow-blue);
+    transform: translateY(-1px);
+}
+
+.btn-casanova {
+    background: linear-gradient(135deg, var(--cv-blue) 0%, var(--cv-blue-dark) 100%);
+    box-shadow: var(--cv-shadow-blue);
+}
+.btn-casanova:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(11, 56, 130, 0.30);
+}
+
+/* Botões de ação das tabelas (ícones) */
+.table .btn-sm {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.table .btn-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--cv-shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   7. BADGES
+   -------------------------------------------------------------------------- */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    border-radius: 6px;
+    padding: 0.35em 0.6em;
+}
+
+/* --------------------------------------------------------------------------
+   8. FORMULÁRIOS
+   -------------------------------------------------------------------------- */
+.form-control,
+.form-select {
+    border-radius: var(--cv-radius-sm);
+    border-color: var(--cv-line-strong);
+    transition: border-color var(--cv-dur) var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease),
+                background-color var(--cv-dur) var(--cv-ease);
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--cv-blue);
+    box-shadow: 0 0 0 3px var(--cv-blue-ring);
+}
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    border-color: var(--cv-accent);
+}
+
+.input-group-text {
+    border-radius: var(--cv-radius-sm);
+    border-color: var(--cv-line-strong);
+    transition: border-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease);
+}
+.input-group:focus-within .input-group-text {
+    border-color: var(--cv-blue);
+    color: var(--cv-blue);
+}
+[data-bs-theme="dark"] .input-group:focus-within .input-group-text {
+    border-color: var(--cv-accent);
+    color: var(--cv-accent);
+}
+
+/* --------------------------------------------------------------------------
+   9. SIDEBAR
+   -------------------------------------------------------------------------- */
+.sidebar-casanova {
+    box-shadow: 1px 0 0 var(--cv-line);
+}
+
+/* Cabeçalho da sidebar com leve gradiente de marca */
+.sidebar-header-box {
+    background: linear-gradient(180deg, var(--cv-blue-soft) 0%, transparent 100%);
+}
+
+/* Botão de recolher com hover circular */
+#toggleSidebarBtn {
+    border-radius: 8px;
+    transition: background-color var(--cv-dur) var(--cv-ease),
+                transform var(--cv-dur) var(--cv-ease);
+}
+#toggleSidebarBtn:hover {
+    background-color: var(--cv-blue-soft) !important;
+    transform: rotate(90deg);
+}
+
+.sidebar-item-compacto {
+    position: relative;
+    transition: background-color 0.18s var(--cv-ease),
+                color 0.18s var(--cv-ease),
+                padding-left 0.18s var(--cv-ease);
+}
+.sidebar-item-compacto:hover {
+    padding-left: 14px !important;
+}
+.sidebar-item-compacto.active {
+    box-shadow: inset 3px 0 0 var(--cv-blue);
+}
+[data-bs-theme="dark"] .sidebar-item-compacto.active {
+    box-shadow: inset 3px 0 0 var(--cv-accent);
+}
+
+/* Título de setor com linha guia */
+.setor-titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.setor-titulo::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cv-line);
+}
+
+/* Avatar do usuário com anel de status */
+.user-avatar-container {
+    transition: transform var(--cv-dur) var(--cv-ease-out),
+                box-shadow var(--cv-dur) var(--cv-ease-out);
+}
+.user-profile-box:hover .user-avatar-container {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px var(--cv-blue-ring);
+}
+
+/* --------------------------------------------------------------------------
+   10. DROPDOWNS E MODAIS
+   -------------------------------------------------------------------------- */
+.dropdown-menu {
+    border: 1px solid var(--cv-line) !important;
+    border-radius: var(--cv-radius) !important;
+    box-shadow: var(--cv-shadow-lg) !important;
+    padding: 6px;
+    animation: cvFadeUp 0.18s var(--cv-ease-out) both;
+}
+.dropdown-item {
+    border-radius: 7px;
+    font-size: 0.85rem;
+    transition: background-color 0.14s var(--cv-ease), color 0.14s var(--cv-ease);
+}
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--cv-blue) !important;
+    color: #fff !important;
+}
+
+.modal-content {
+    border: 1px solid var(--cv-line) !important;
+    border-radius: var(--cv-radius-lg) !important;
+    box-shadow: var(--cv-shadow-lg) !important;
+}
+.modal.fade .modal-dialog {
+    transform: translateY(14px) scale(0.98);
+    transition: transform 0.26s var(--cv-ease-out), opacity 0.26s var(--cv-ease-out);
+}
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   11. ALERTAS
+   -------------------------------------------------------------------------- */
+.alert {
+    border-radius: var(--cv-radius-sm);
+    border-width: 1px;
+    animation: cvFadeUp 0.3s var(--cv-ease-out) both;
+}
+
+/* --------------------------------------------------------------------------
+   12. PAGINAÇÃO
+   -------------------------------------------------------------------------- */
+.pagination .page-link {
+    border-radius: 7px;
+    margin: 0 2px;
+    border-color: var(--cv-line);
+    color: var(--cv-text-muted);
+    transition: all 0.16s var(--cv-ease);
+}
+.pagination .page-link:hover {
+    background: var(--cv-blue-soft);
+    border-color: var(--cv-blue);
+    color: var(--cv-blue);
+    transform: translateY(-1px);
+}
+.pagination .page-item.active .page-link {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    box-shadow: var(--cv-shadow-blue);
+}
+.pagination .page-item.disabled .page-link {
+    opacity: 0.45;
+}
+
+/* --------------------------------------------------------------------------
+   13. UTILITÁRIOS
+   -------------------------------------------------------------------------- */
+.page-title {
+    letter-spacing: -0.02em;
+}
+
+/* Barra de rolagem interna das listas */
+.table-responsive {
+    scrollbar-gutter: stable;
+}
+
+/* --------------------------------------------------------------------------
+   13d. DASHBOARD / GRÁFICOS / RELATÓRIOS — cards de KPI
+   -------------------------------------------------------------------------- */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    box-shadow: var(--cv-shadow-sm);
+    transition: transform var(--cv-dur) var(--cv-ease-out),
+                box-shadow var(--cv-dur) var(--cv-ease-out);
+}
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--cv-shadow-lg);
+}
+/* Barra de acento colorida à esquerda */
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--kpi-color, var(--cv-blue));
+}
+.kpi-card .kpi-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted);
+}
+.kpi-card .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 0.35rem;
+    color: var(--kpi-color, var(--cv-blue));
+}
+
+/* Painéis de gráfico */
+.chart-panel {
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    box-shadow: var(--cv-shadow-sm);
+    padding: 1rem 1.15rem;
+    transition: box-shadow var(--cv-dur) var(--cv-ease);
+}
+.chart-panel:hover {
+    box-shadow: var(--cv-shadow-md);
+}
+.chart-panel .chart-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chart-panel .chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.chart-panel .chart-head .badge {
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   13e. FORMULÁRIOS — cartões e seções
+   -------------------------------------------------------------------------- */
+.form-card .card-header {
+    background: linear-gradient(180deg, var(--cv-blue-soft) 0%, transparent 100%) !important;
+    border-bottom: 1px solid var(--cv-line) !important;
+    font-size: 0.9rem;
+    letter-spacing: 0.2px;
+}
+
+/* Rótulos de campo consistentes */
+.form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cv-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+/* Campos desabilitados (telas de detalhe) com aparência de leitura */
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--cv-surface-2) !important;
+    color: var(--cv-text) !important;
+    opacity: 1;
+    cursor: default;
+    border-style: dashed;
+}
+
+/* Rodapé de ações do formulário */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--cv-line);
+}
+
+/* --------------------------------------------------------------------------
+   13c. TELAS DE DETALHE — grade de informações
+   -------------------------------------------------------------------------- */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius-sm);
+    background: var(--cv-surface-2);
+    transition: border-color var(--cv-dur) var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease);
+}
+.detail-item:hover {
+    border-color: var(--cv-blue);
+    box-shadow: var(--cv-shadow-xs);
+}
+.detail-item .detail-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--cv-text-faint);
+    margin-bottom: 0.25rem;
+}
+.detail-item .detail-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--cv-text);
+    word-break: break-word;
+}
+.detail-item.detail-full {
+    grid-column: 1 / -1;
+}
+
+/* Cabeçalho de perfil nas telas de detalhe */
+.detail-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--cv-line);
+    background: linear-gradient(180deg, var(--cv-blue-soft) 0%, transparent 100%);
+}
+.detail-hero .detail-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--cv-blue);
+    box-shadow: var(--cv-shadow-sm);
+}
+.detail-hero .detail-avatar-fallback {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+    border: 2px solid var(--cv-blue);
+}
+
+/* --------------------------------------------------------------------------
+   13f. PERMISSÕES — seções e setores
+   -------------------------------------------------------------------------- */
+.perm-section {
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface-2);
+}
+.perm-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--cv-line);
+}
+.perm-setor {
+    margin-bottom: 0.9rem;
+}
+.perm-setor:last-child {
+    margin-bottom: 0;
+}
+.perm-setor-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    color: var(--ps, var(--cv-blue));
+    background: color-mix(in srgb, var(--ps, var(--cv-blue)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ps, var(--cv-blue)) 35%, transparent);
+}
+.perm-section .form-check-label {
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.perm-section .form-check-input {
+    cursor: pointer;
+}
+.perm-section .form-check-input:checked {
+    background-color: var(--cv-blue);
+    border-color: var(--cv-blue);
+}
+
+/* --------------------------------------------------------------------------
+   14. ACESSIBILIDADE — MOVIMENTO REDUZIDO
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+    .card-custom:hover,
+    .btn:hover,
+    .table .btn-sm:hover,
+    .pagination .page-link:hover {
+        transform: none !important;
+    }
+}
