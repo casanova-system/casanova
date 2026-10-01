@@ -12,6 +12,7 @@ dependencies:
   http: ^1.2.0
   shared_preferences: ^2.2.2
   mobile_scanner: ^5.1.0
+  web: ^1.0.0
   cupertino_icons: ^1.0.6
 
 dev_dependencies:

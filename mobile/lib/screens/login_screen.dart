@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
 import '../theme.dart';
+import '../web_navegacao_stub.dart'
+    if (dart.library.html) '../web_navegacao_web.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -60,10 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     _buildFormulario(),
                     const SizedBox(height: 20),
-                    const Text(
-                      'System V.1.0 · Casanova Esquadrias',
-                      style: TextStyle(color: Cv.textFaint, fontSize: 11),
-                    ),
+                    _buildRodape(),
                   ],
                 ),
               ),
@@ -71,6 +71,30 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRodape() {
+    return Column(
+      children: [
+        if (kIsWeb)
+          TextButton.icon(
+            onPressed: () {
+              // Volta para a versão desktop do sistema (grava o cookie).
+              final base = Uri.base;
+              final url =
+                  '${base.scheme}://${base.host}:${base.port}/?desktop=1';
+              abrirUrl(url);
+            },
+            icon: const Icon(Icons.desktop_windows, size: 16),
+            label: const Text('Usar versão para computador'),
+          ),
+        const SizedBox(height: 4),
+        const Text(
+          'System V.1.0 · Casanova Esquadrias',
+          style: TextStyle(color: Cv.textFaint, fontSize: 11),
+        ),
+      ],
     );
   }
 
