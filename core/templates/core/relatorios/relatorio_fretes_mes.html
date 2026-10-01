@@ -2,115 +2,531 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-3 py-2" style="max-height: 96vh; overflow-y: auto;">
-    <!-- Cabeçalho de Ações e Título -->
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+<style>
+    /* ======================================================================
+       RELATÓRIO DE FRETES — Design System
+       ====================================================================== */
+    .rf-wrap {
+        --rf-blue: #0b3882;
+        --rf-blue-dark: #062254;
+        --rf-ink: #1e293b;
+        --rf-muted: #64748b;
+        --rf-line: #e2e8f0;
+        --rf-line-strong: #cbd5e1;
+        --rf-surface: #ffffff;
+        --rf-surface-2: #f8fafc;
+        --rf-green: #047857;
+        --rf-amber: #b45309;
+        --rf-cyan: #0e7490;
+        max-width: 1180px;
+        margin: 0 auto;
+    }
+
+    /* ---- Tema escuro ---- */
+    [data-bs-theme="dark"] .rf-wrap {
+        --rf-blue: #4d8bf0;
+        --rf-blue-dark: #3b6fd4;
+        --rf-ink: #e6edf3;
+        --rf-muted: #8b949e;
+        --rf-line: #262c36;
+        --rf-line-strong: #30363d;
+        --rf-surface: #161b22;
+        --rf-surface-2: #1c2128;
+        --rf-green: #34d399;
+        --rf-amber: #fbbf24;
+        --rf-cyan: #22d3ee;
+    }
+    [data-bs-theme="dark"] .rf-filters,
+    [data-bs-theme="dark"] .rf-kpi,
+    [data-bs-theme="dark"] .rf-card {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+    [data-bs-theme="dark"] .rf-table tbody tr:hover { background: #1c2128; }
+    [data-bs-theme="dark"] .rf-table .money { color: #6ea8fe; }
+    [data-bs-theme="dark"] .rf-count {
+        background: #1c2128;
+        border-color: #30363d;
+        color: #8b949e;
+    }
+
+    /* ---- Barra de ações (tela) ---- */
+    .rf-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .rf-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--rf-muted);
+        margin-bottom: 0.15rem;
+    }
+    .rf-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--rf-ink);
+        margin: 0;
+        line-height: 1.2;
+    }
+    .rf-subtitle {
+        font-size: 0.85rem;
+        color: var(--rf-muted);
+        margin: 0.2rem 0 0;
+    }
+
+    /* ---- Filtros ---- */
+    .rf-filters {
+        background: var(--rf-surface);
+        border: 1px solid var(--rf-line);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .rf-filters .form-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--rf-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    /* ---- KPIs ---- */
+    .rf-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+    .rf-kpi {
+        background: var(--rf-surface);
+        border: 1px solid var(--rf-line);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .rf-kpi::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: var(--rf-kpi-color, var(--rf-blue));
+    }
+    .rf-kpi-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--rf-muted);
+        margin-bottom: 0.3rem;
+    }
+    .rf-kpi-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--rf-ink);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+    }
+    .rf-kpi-value small { font-size: 0.8rem; font-weight: 600; color: var(--rf-muted); }
+
+    /* ---- Tabela (tela) ---- */
+    .rf-card {
+        background: var(--rf-surface);
+        border: 1px solid var(--rf-line);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .rf-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--rf-line);
+    }
+    .rf-card-head h6 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--rf-ink);
+    }
+    .rf-count {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--rf-muted);
+        background: var(--rf-surface-2);
+        border: 1px solid var(--rf-line);
+        border-radius: 999px;
+        padding: 0.15rem 0.6rem;
+    }
+    .rf-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .rf-table thead th {
+        background: var(--rf-surface-2);
+        color: var(--rf-muted);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        text-align: left;
+        padding: 0.6rem 0.85rem;
+        border-bottom: 1px solid var(--rf-line-strong);
+        white-space: nowrap;
+    }
+    .rf-table tbody td {
+        padding: 0.55rem 0.85rem;
+        border-bottom: 1px solid var(--rf-line);
+        color: var(--rf-ink);
+        vertical-align: middle;
+    }
+    .rf-table tbody tr:hover { background: var(--rf-surface-2); }
+    .rf-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .rf-table .ctr { text-align: center; }
+    .rf-table .money { font-weight: 700; color: var(--rf-blue); }
+    .rf-table tfoot td {
+        padding: 0.7rem 0.85rem;
+        font-weight: 700;
+        color: var(--rf-ink);
+        background: var(--rf-surface-2);
+        border-top: 2px solid var(--rf-blue);
+        font-variant-numeric: tabular-nums;
+    }
+    .rf-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--rf-muted);
+    }
+    .rf-empty i { font-size: 2rem; opacity: 0.4; display: block; margin-bottom: 0.6rem; }
+
+    /* ---- Cabeçalho de impressão (oculto na tela) ---- */
+    .rf-print-head { display: none; }
+    .rf-print-summary { display: none; }
+    .rf-print-foot { display: none; }
+
+    /* ======================================================================
+       IMPRESSÃO — Documento A4 profissional
+       ====================================================================== */
+    @media print {
+        @page { size: A4 portrait; margin: 12mm 10mm 16mm; }
+
+        .sidebar-casanova, .no-print, .rf-toolbar, .rf-filters,
+        .rf-kpis, .rf-card-head, footer, header, .btn { display: none !important; }
+
+        html, body, .main-content-area, .container-fluid, .rf-wrap,
+        html[data-bs-theme="dark"] body,
+        [data-bs-theme="dark"] body,
+        [data-bs-theme="dark"] .main-content-area,
+        [data-bs-theme="dark"] .rf-wrap {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            overflow: visible !important;
+            max-height: none !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: none !important;
+            box-shadow: none !important;
+            --bs-body-bg: #ffffff !important;
+            --bs-body-color: #000000 !important;
+            transition: none !important;
+        }
+        .main-content-area > div { padding: 0 !important; }
+
+        /* Força paleta clara no documento impresso, mesmo no tema escuro */
+        .rf-wrap,
+        [data-bs-theme="dark"] .rf-wrap {
+            --rf-blue: #0b3882;
+            --rf-ink: #1e293b;
+            --rf-muted: #64748b;
+            --rf-line: #e2e8f0;
+            --rf-line-strong: #cbd5e1;
+            --rf-surface: #ffffff;
+            --rf-surface-2: #f8fafc;
+        }
+
+        /* Cabeçalho do documento */
+        .rf-print-head {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0b3882;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+        .rf-print-head .brand { display: flex; align-items: center; gap: 12px; }
+        .rf-print-head .brand img { height: 46px; width: auto; }
+        .rf-print-head .brand-name {
+            font-size: 15px; font-weight: 700; color: #0b3882; line-height: 1.1;
+        }
+        .rf-print-head .brand-sub {
+            font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #64748b;
+        }
+        .rf-print-head .doc-title { text-align: right; }
+        .rf-print-head .doc-title h1 {
+            font-size: 17px; font-weight: 700; color: #0b3882; margin: 0 0 2px;
+        }
+        .rf-print-head .doc-title .period {
+            font-size: 11px; font-weight: 600; color: #1e293b;
+        }
+        .rf-print-head .doc-title .meta {
+            font-size: 8.5px; color: #64748b; margin-top: 3px; line-height: 1.5;
+        }
+
+        /* Faixa de resumo no documento */
+        .rf-print-summary {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .rf-print-summary .cell {
+            padding: 7px 10px;
+            border-right: 1px solid #e2e8f0;
+        }
+        .rf-print-summary .cell:last-child { border-right: none; }
+        .rf-print-summary .lbl {
+            font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.05em;
+            color: #64748b; font-weight: 700;
+        }
+        .rf-print-summary .val {
+            font-size: 12px; font-weight: 700; color: #0b3882;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tabela do documento */
+        .rf-card { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
+        .rf-table { font-size: 9px; }
+        .rf-table thead th {
+            background: #0b3882 !important;
+            color: #ffffff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            padding: 5px 6px;
+            border: 1px solid #0b3882;
+            font-size: 7.5px;
+        }
+        .rf-table tbody td {
+            padding: 4px 6px;
+            border: 1px solid #d7dee8;
+            color: #1e293b;
+        }
+        .rf-table tbody tr:nth-child(even) td {
+            background: #f4f6f9 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .rf-table tbody tr:hover { background: transparent; }
+        .rf-table .money { color: #0b3882; }
+        .rf-table tfoot td {
+            background: #e8eef7 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            border: 1px solid #cbd5e1;
+            border-top: 2px solid #0b3882;
+            font-size: 9.5px;
+            padding: 6px;
+        }
+        .rf-table thead { display: table-header-group; }
+        .rf-table tr { page-break-inside: avoid; }
+
+        /* Rodapé do documento */
+        .rf-print-foot {
+            display: block !important;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 5px;
+            font-size: 7.5px;
+            color: #64748b;
+            display: flex !important;
+            justify-content: space-between;
+        }
+        .rf-print-foot .page-num::after { content: counter(page); }
+    }
+
+    @media (max-width: 992px) {
+        .rf-kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .rf-kpis { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="rf-wrap">
+
+    <!-- ===================== CABEÇALHO DE IMPRESSÃO ===================== -->
+    <div class="rf-print-head">
+        <div class="brand">
+            <img src="{% static 'img/casanovaimg.png' %}" alt="Casanova Esquadrias">
+            <div>
+                <div class="brand-name">CASANOVA</div>
+                <div class="brand-sub">Esquadrias Prime</div>
+            </div>
+        </div>
+        <div class="doc-title">
+            <h1>Relatório de Fretes</h1>
+            <div class="period">Período: {{ periodo_label }}</div>
+            <div class="meta">
+                Emitido em {{ data_geracao|date:"d/m/Y" }} por {{ usuario_gerador }}<br>
+                Documento gerado pelo sistema CASANOVA
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== BARRA DE AÇÕES (TELA) ===================== -->
+    <div class="rf-toolbar no-print">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
-                    <li class="breadcrumb-item"><a href="{% url 'menu_principal' %}" class="text-decoration-none">Início</a></li>
-                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Central de Relatórios</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Relatório de Fretes do Mês</li>
-                </ol>
-            </nav>
-            <h3 class="page-title fw-bold mb-0 text-body"><i class="fa-solid fa-file-lines text-primary me-2"></i> Relatório Consolidado de Fretes</h3>
-            <p class="text-muted small mb-0">Demonstrativo detalhado de custos, distâncias e operações logísticas.</p>
+            <div class="rf-eyebrow">Central de Relatórios</div>
+            <h1 class="rf-title">Relatório Consolidado de Fretes</h1>
+            <p class="rf-subtitle">Demonstrativo de custos, distâncias e operações logísticas — {{ periodo_label }}.</p>
         </div>
         <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-outline-primary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1">
+            <button onclick="window.print()" class="btn btn-primary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1">
                 <i class="fa-solid fa-print"></i> Imprimir / PDF
             </button>
-            <a href="#" class="btn btn-outline-secondary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1">
+            <a href="{% url 'relatorios' %}" class="btn btn-outline-secondary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </a>
         </div>
     </div>
 
-    <!-- Cards de Resumo (KPIs do Relatório) -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="kpi-card" style="--kpi-color: #0b3882;">
-                <div class="kpi-label">Custo Total Acumulado</div>
-                <div class="kpi-value">R$ {{ total_custo|floatformat:2 }}</div>
+    <!-- ===================== FILTROS (TELA) ===================== -->
+    <form method="GET" class="rf-filters no-print">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Mês</label>
+                <select name="mes" class="form-select form-select-sm">
+                    <option value="">Todos os meses</option>
+                    {% for num, nome in meses.items %}
+                        <option value="{{ num }}" {% if mes_selecionado == num|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ano</label>
+                <input type="number" name="ano" class="form-control form-control-sm" placeholder="Ex: {{ data_geracao|date:'Y' }}" value="{{ ano_selecionado }}">
+            </div>
+            <div class="col-md-6 d-flex gap-2 justify-content-end">
+                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i> Aplicar
+                </button>
+                <a href="{% url 'relatorio_fretes_mes' %}" class="btn btn-sm btn-outline-secondary px-3">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Limpar
+                </a>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="kpi-card" style="--kpi-color: #059669;">
-                <div class="kpi-label">Distância Total Rodada</div>
-                <div class="kpi-value">{{ total_distancia|floatformat:1 }} km</div>
-            </div>
+    </form>
+
+    <!-- ===================== KPIs (TELA) ===================== -->
+    <div class="rf-kpis no-print">
+        <div class="rf-kpi" style="--rf-kpi-color: #0b3882;">
+            <div class="rf-kpi-label">Custo Total</div>
+            <div class="rf-kpi-value">R$ {{ total_custo|floatformat:2 }}</div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="kpi-card" style="--kpi-color: #0891b2;">
-                <div class="kpi-label">Média de Custo por Frete</div>
-                <div class="kpi-value">R$ {{ media_custo|floatformat:2 }}</div>
-            </div>
+        <div class="rf-kpi" style="--rf-kpi-color: #047857;">
+            <div class="rf-kpi-label">Distância Total</div>
+            <div class="rf-kpi-value">{{ total_distancia|floatformat:1 }} <small>km</small></div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="kpi-card" style="--kpi-color: #d97706;">
-                <div class="kpi-label">Total de Operações</div>
-                <div class="kpi-value">{{ total_operacoes }}</div>
-            </div>
+        <div class="rf-kpi" style="--rf-kpi-color: #0e7490;">
+            <div class="rf-kpi-label">Custo Médio / Frete</div>
+            <div class="rf-kpi-value">R$ {{ media_custo|floatformat:2 }}</div>
+        </div>
+        <div class="rf-kpi" style="--rf-kpi-color: #b45309;">
+            <div class="rf-kpi-label">Operações</div>
+            <div class="rf-kpi-value">{{ total_operacoes }}</div>
         </div>
     </div>
 
-    <!-- Tabela de Dados Consolidada -->
-    <div class="card card-custom border-0 shadow-sm bg-body">
-        <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0 text-body"><i class="fa-solid fa-table text-primary me-2"></i> Lançamentos Realizados no Período</h6>
-            <span class="badge bg-secondary" style="font-size: 0.75rem;">Total Registros: {{ total_operacoes }}</span>
+    <!-- ===================== RESUMO (IMPRESSÃO) ===================== -->
+    <div class="rf-print-summary">
+        <div class="cell">
+            <div class="lbl">Custo Total</div>
+            <div class="val">R$ {{ total_custo|floatformat:2 }}</div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                    <thead class="table-light text-uppercase fs-7 text-muted" style="font-size: 0.75rem;">
-                        <tr>
-                            <th class="py-3 ps-3">Data</th>
-                            <th>Obra / Destino</th>
-                            <th>Veículo</th>
-                            <th class="text-center">Distância (Km)</th>
-                            <th class="text-end pe-3">Custo Total (R$)</th>
-                        </tr>
-                    </thead> 
-                    <tbody>  
-                        {% for frete in fretes %}
-                        <tr>
-                            <td class="ps-3 fw-medium">{{ frete.data_emissao|date:"d/m/Y"|default:"-" }}</td>
-                            <td>{{ frete.nome|default:"-" }}</td>
-                            <td>{{ frete.veiculo.marca_modelo|default:"-" }}</td>
-                            <td class="text-center">{{ frete.distancia_km|floatformat:1 }} km</td>
-                            <td class="text-end pe-3 fw-bold text-primary">R$ {{ frete.custo_total_deslocamento|floatformat:2 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">Nenhum registro de frete encontrado para este período.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="cell">
+            <div class="lbl">Distância Total</div>
+            <div class="val">{{ total_distancia|floatformat:1 }} km</div>
+        </div>
+        <div class="cell">
+            <div class="lbl">Custo Médio / Frete</div>
+            <div class="val">R$ {{ media_custo|floatformat:2 }}</div>
+        </div>
+        <div class="cell">
+            <div class="lbl">Operações</div>
+            <div class="val">{{ total_operacoes }}</div>
         </div>
     </div>
+
+    <!-- ===================== TABELA ===================== -->
+    <div class="rf-card">
+        <div class="rf-card-head no-print">
+            <h6><i class="fa-solid fa-table text-primary me-2"></i>Lançamentos Realizados no Período</h6>
+            <span class="rf-count">{{ total_operacoes }} registro{{ total_operacoes|pluralize }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rf-table">
+                <thead>
+                    <tr>
+                        <th style="width: 90px;">Data</th>
+                        <th style="width: 90px;">Código</th>
+                        <th>Obra / Destino</th>
+                        <th>Cliente</th>
+                        <th>Veículo</th>
+                        <th class="ctr" style="width: 90px;">Distância</th>
+                        <th class="num" style="width: 120px;">Custo Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for frete in fretes %}
+                    <tr>
+                        <td>{{ frete.data_emissao|date:"d/m/Y"|default:"—" }}</td>
+                        <td>{{ frete.codigo|default:"—" }}</td>
+                        <td>{{ frete.nome|default:"—" }}</td>
+                        <td>{{ frete.cliente|default:"—" }}</td>
+                        <td>{{ frete.veiculo.marca_modelo|default:"—" }}</td>
+                        <td class="ctr">{{ frete.distancia_km|floatformat:1 }} km</td>
+                        <td class="num money">R$ {{ frete.custo_total_deslocamento|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="rf-empty">
+                                <i class="fa-solid fa-truck-fast"></i>
+                                Nenhum registro de frete encontrado para o período selecionado.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if fretes %}
+                <tfoot>
+                    <tr>
+                        <td colspan="5">TOTAL GERAL — {{ total_operacoes }} operaç{{ total_operacoes|pluralize:"ão,ões" }}</td>
+                        <td class="ctr">{{ total_distancia|floatformat:1 }} km</td>
+                        <td class="num">R$ {{ total_custo|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- ===================== RODAPÉ DE IMPRESSÃO ===================== -->
+    <div class="rf-print-foot">
+        <span>CASANOVA Esquadrias Prime — Relatório de Fretes · {{ periodo_label }}</span>
+        <span>Página <span class="page-num"></span></span>
+    </div>
+
 </div>
-
-<!-- Estilização CSS específica para Impressão -->
-<style>
-    @media print {
-        .sidebar-casanova, .no-print, .btn, footer, header {
-            display: none !important;
-        }
-        body, .main-content-area, .container-fluid {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            overflow: visible !important;
-            max-height: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .card-custom {
-            border: 1px solid #dee2e6 !important;
-            box-shadow: none !important;
-        }
-    }
-</style>
 {% endblock %}
