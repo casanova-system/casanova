@@ -104,11 +104,13 @@
                                     <a href="{% url 'editar_veiculo' veiculo.id %}" class="btn-row btn-row-edit" title="Alterar"><i class="fa-solid fa-pen-to-square"></i></a>
                                     <button type="button" class="btn-row btn-row-delete" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ veiculo.id }}"><i class="fa-solid fa-trash-can"></i></button>
                                 </div>
-
-                                {% url 'excluir_veiculo' veiculo.id as url_excluir %}
-                                {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:veiculo.id titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este veículo? Esta ação não poderá ser desfeita." form_action=url_excluir %}
                             </td>
                         </tr>
+
+                        {% url 'excluir_veiculo' veiculo.id as url_excluir %}
+                        {% with pk_str=veiculo.id|stringformat:"s" %}
+                            {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:pk_str titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este veículo? Esta ação não poderá ser desfeita." form_action=url_excluir %}
+                        {% endwith %}
                         {% empty %}
                         <tr>
                             <td colspan="8" class="p-0">

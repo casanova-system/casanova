@@ -3,146 +3,107 @@
 
 {% block content %}
 <style>
+    /* ======================================================================
+       IMPORTAÇÃO DE FRETES — Upload refinado
+       ====================================================================== */
     .upload-card {
         background: var(--cv-surface, #fff);
         border: 1px solid var(--cv-line, #e6ebf2);
         box-shadow: var(--cv-shadow-md, 0 4px 12px rgba(15,23,42,.07));
     }
 
+    /* ---- Dropzone ---- */
     .dropzone-container {
         position: relative;
         cursor: pointer;
-        padding: 34px 24px;
+        padding: 2.5rem 1.5rem;
         text-align: center;
         border-radius: var(--cv-radius-lg, 16px);
         transition: border-color 0.25s var(--cv-ease, ease),
-                    background-color 0.25s var(--cv-ease, ease),
-                    transform 0.25s var(--cv-ease-out, ease);
+                    background-color 0.25s var(--cv-ease, ease);
         background: var(--cv-surface-2, #f8fafc);
-        border: 2px dashed var(--cv-line-strong, #d7dee8);
+        border: 1.5px dashed var(--cv-line-strong, #d7dee8);
     }
-
     .dropzone-container:hover,
     .dropzone-container.is-dragover {
         border-color: var(--cv-blue, #0b3882);
-        background: var(--cv-blue-soft, rgba(11,56,130,.08));
-        transform: translateY(-2px);
+        background: var(--cv-blue-soft, rgba(11,56,130,.06));
+    }
+    .dropzone-container.is-dragover {
+        border-style: solid;
     }
 
-    .orbit-wrapper {
-        position: relative;
-        width: 100%;
-        height: 170px;
+    .dropzone-icon {
+        width: 68px;
+        height: 68px;
+        margin: 0 auto 1.1rem;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 5px;
-    }
-
-    .central-file-icon {
-        width: 64px;
-        height: 64px;
-        background: var(--cv-surface, #fff);
-        border: 1px solid var(--cv-blue, #0b3882);
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 1.6rem;
         color: var(--cv-blue, #0b3882);
-        font-size: 1.5rem;
-        box-shadow: 0 0 0 6px var(--cv-blue-soft, rgba(11,56,130,.08));
-        z-index: 2;
-        animation: floatIcon 3.4s ease-in-out infinite;
-    }
-    [data-bs-theme="dark"] .central-file-icon {
-        color: var(--cv-accent, #4da6ff);
-        border-color: var(--cv-accent, #4da6ff);
-    }
-
-    @keyframes floatIcon {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-6px); }
-    }
-
-    .orbit-ring {
-        position: absolute;
-        border: 1px dashed var(--cv-line-strong, #d7dee8);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    .ring-1 {
-        width: 132px;
-        height: 132px;
-        animation: spinClockwise 22s linear infinite;
-    }
-
-    .ring-2 {
-        width: 208px;
-        height: 208px;
-        animation: spinCounter 32s linear infinite;
-    }
-
-    @keyframes spinClockwise {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    @keyframes spinCounter {
-        from { transform: rotate(360deg); }
-        to { transform: rotate(0deg); }
-    }
-
-    .orbit-item {
-        position: absolute;
-        width: 30px;
-        height: 30px;
         background: var(--cv-surface, #fff);
-        border: 1px solid var(--cv-line-strong, #d7dee8);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        color: var(--cv-text-muted, #64748b);
-        box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15,23,42,.06));
+        border: 1px solid var(--cv-line, #e6ebf2);
+        box-shadow: 0 0 0 8px var(--cv-blue-soft, rgba(11,56,130,.06));
+        transition: transform 0.3s var(--cv-ease-out, ease);
+    }
+    .dropzone-container:hover .dropzone-icon,
+    .dropzone-container.is-dragover .dropzone-icon {
+        transform: translateY(-3px);
+    }
+    [data-bs-theme="dark"] .dropzone-icon {
+        color: var(--cv-accent, #4da6ff);
+        background: var(--cv-surface, #161b22);
+        border-color: var(--cv-line, #262c36);
     }
 
-    .item-1 { top: 10px; left: 30px; }
-    .item-2 { top: 10px; right: 35px; }
-    .item-3 { bottom: 15px; left: 20px; }
-    .item-4 { bottom: 15px; right: 25px; }
+    .dropzone-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: var(--cv-text, #1e293b);
+        margin: 0 0 0.3rem;
+    }
+    .dropzone-sub {
+        font-size: 0.82rem;
+        color: var(--cv-text-muted, #64748b);
+        margin: 0 auto 1.4rem;
+        max-width: 380px;
+    }
 
-    .btn-custom-blue {
-        background: linear-gradient(135deg, var(--cv-blue, #0b3882) 0%, var(--cv-blue-dark, #062254) 100%);
+    .btn-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--cv-blue, #0b3882);
         border: none;
         color: #fff;
         font-weight: 600;
+        font-size: 0.88rem;
         border-radius: 10px;
-        padding: 12px 32px;
-        transition: transform 0.2s var(--cv-ease, ease),
+        padding: 0.65rem 1.5rem;
+        transition: background-color 0.2s var(--cv-ease, ease),
                     box-shadow 0.25s var(--cv-ease, ease),
-                    filter 0.2s var(--cv-ease, ease);
-        box-shadow: var(--cv-shadow-blue, 0 8px 22px rgba(11,56,130,.22));
+                    transform 0.15s var(--cv-ease, ease);
+        box-shadow: 0 4px 14px rgba(11, 56, 130, 0.22);
     }
-
-    .btn-custom-blue:hover {
+    .btn-upload:hover {
+        background: var(--cv-blue-dark, #062254);
         color: #fff;
-        filter: brightness(1.08);
-        box-shadow: 0 12px 28px rgba(11, 56, 130, 0.32);
-        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(11, 56, 130, 0.30);
+        transform: translateY(-1px);
     }
-    .btn-custom-blue:active {
-        transform: translateY(0) scale(0.99);
-    }
+    .btn-upload:active { transform: translateY(0); }
+    [data-bs-theme="dark"] .btn-upload { background: #1f6feb; }
+    [data-bs-theme="dark"] .btn-upload:hover { background: #388bfd; }
 
-    /* Dicas de formato */
+    /* ---- Dicas de formato ---- */
     .upload-hints {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 0.5rem;
-        margin-top: 1.25rem;
+        margin-top: 1.4rem;
     }
     .upload-hint {
         display: inline-flex;
@@ -151,17 +112,13 @@
         font-size: 0.72rem;
         font-weight: 600;
         color: var(--cv-text-muted, #64748b);
-        background: var(--cv-surface-2, #f8fafc);
+        background: var(--cv-surface, #fff);
         border: 1px solid var(--cv-line, #e6ebf2);
         border-radius: 999px;
-        padding: 0.3rem 0.7rem;
+        padding: 0.32rem 0.75rem;
     }
-    .upload-hint i {
-        color: var(--cv-blue, #0b3882);
-    }
-    [data-bs-theme="dark"] .upload-hint i {
-        color: var(--cv-accent, #4da6ff);
-    }
+    .upload-hint i { color: var(--cv-blue, #0b3882); }
+    [data-bs-theme="dark"] .upload-hint i { color: var(--cv-accent, #4da6ff); }
 
     .enterprise-alert {
         background: rgba(239, 68, 68, 0.1);
@@ -176,81 +133,158 @@
         margin-bottom: 20px;
     }
 
+    /* ======================================================================
+       OVERLAY DE PROGRESSO
+       ====================================================================== */
     #loadingOverlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(11, 15, 25, 0.88);
-        backdrop-filter: blur(10px);
+        inset: 0;
+        background: rgba(9, 13, 22, 0.72);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 1rem;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.28s ease;
     }
-
     #loadingOverlay.active {
         opacity: 1;
         pointer-events: auto;
     }
 
-    .progress-floating-box {
-        background: var(--cv-surface, #161e2d);
-        border: 1px solid var(--cv-line, #2d3748);
+    .progress-card {
+        background: var(--cv-surface, #fff);
+        border: 1px solid var(--cv-line, #e6ebf2);
         border-radius: 16px;
-        padding: 22px 28px;
+        padding: 1.5rem 1.6rem;
         width: 100%;
-        max-width: 500px;
-        box-shadow: var(--cv-shadow-lg, 0 14px 32px rgba(0,0,0,.5));
+        max-width: 460px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        transform: translateY(8px) scale(0.98);
+        transition: transform 0.3s var(--cv-ease-out, ease);
+    }
+    #loadingOverlay.active .progress-card {
+        transform: translateY(0) scale(1);
     }
 
-    .progress-bar-track {
-        height: 6px;
-        background: var(--cv-surface-2, #2d3748);
-        border-radius: 3px;
+    .progress-head {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        margin-bottom: 1.1rem;
+    }
+    .progress-file-icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        color: var(--cv-blue, #0b3882);
+        background: var(--cv-blue-soft, rgba(11,56,130,.08));
+    }
+    [data-bs-theme="dark"] .progress-file-icon {
+        color: var(--cv-accent, #4da6ff);
+    }
+    .progress-file-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--cv-text, #1e293b);
+        margin: 0;
+        white-space: nowrap;
         overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 240px;
+    }
+    .progress-file-status {
+        font-size: 0.76rem;
+        color: var(--cv-text-muted, #64748b);
+        margin: 0;
     }
 
-    .progress-bar-fill {
+    .progress-track {
+        height: 8px;
+        background: var(--cv-surface-2, #f1f5f9);
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+    }
+    .progress-fill {
         height: 100%;
         width: 0%;
+        border-radius: 999px;
         background: linear-gradient(90deg, var(--cv-blue, #0b3882), var(--cv-accent, #4da6ff));
-        border-radius: 3px;
-        transition: width 0.4s ease;
+        transition: width 0.35s var(--cv-ease, ease);
+        position: relative;
+        overflow: hidden;
+    }
+    .progress-fill::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+        animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(100%); }
     }
 
+    .progress-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.85rem;
+    }
+    .progress-percent {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--cv-text, #1e293b);
+        font-variant-numeric: tabular-nums;
+    }
+    .progress-cancel {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--cv-text-muted, #64748b);
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    .progress-cancel:hover { color: #dc2626; }
+
     @media (prefers-reduced-motion: reduce) {
-        .central-file-icon,
-        .ring-1,
-        .ring-2 { animation: none; }
-        .dropzone-container:hover { transform: none; }
+        .dropzone-icon { transition: none; }
+        .progress-fill::after { animation: none; }
+        .progress-card { transition: none; }
     }
 </style>
 
-<!-- Overlay de Progresso Dinâmico -->
+<!-- Overlay de Progresso -->
 <div id="loadingOverlay">
-    <div class="progress-floating-box">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-dark p-2.5 rounded-3 border border-secondary text-primary">
-                    <i class="fa-solid fa-file-pdf fs-4"></i>
-                </div>
-                <div>
-                    <h6 class="text-white fw-bold mb-0 text-truncate" id="activeFileName" style="max-width: 220px;">documento.pdf</h6>
-                    <small class="text-muted" style="font-size: 0.75rem;" id="loadingStatusText">Analisando tabelas e dimensões...</small>
-                </div>
+    <div class="progress-card">
+        <div class="progress-head">
+            <div class="progress-file-icon">
+                <i class="fa-solid fa-file-pdf"></i>
             </div>
-            <div class="d-flex align-items-center gap-3">
-                <span class="text-white fw-bold font-monospace" id="progressPercentage">0%</span>
-                <button type="button" class="btn btn-link text-danger text-decoration-none p-0 fw-semibold small" onclick="cancelUpload()">Cancelar</button>
+            <div class="flex-grow-1 min-w-0">
+                <p class="progress-file-name" id="activeFileName">documento.pdf</p>
+                <p class="progress-file-status" id="loadingStatusText">Analisando tabelas e dimensões...</p>
             </div>
         </div>
-        <div class="progress-bar-track">
-            <div class="progress-bar-fill" id="progressBarFill"></div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressBarFill"></div>
+        </div>
+        <div class="progress-foot">
+            <span class="progress-percent" id="progressPercentage">0%</span>
+            <button type="button" class="progress-cancel" onclick="cancelUpload()">Cancelar</button>
         </div>
     </div>
 </div>
@@ -285,30 +319,19 @@
                     
                     <input class="d-none" type="file" id="pdf_file" name="excel_file" accept=".pdf, application/pdf" required>
 
-                    <!-- Área Gráfica com Órbitas que acompanha o tema -->
+                    <!-- Área de upload -->
                     <div class="dropzone-container" id="dropzone">
-                        <div class="orbit-wrapper">
-                            <div class="orbit-ring ring-1"></div>
-                            <div class="orbit-ring ring-2"></div>
-
-                            <div class="orbit-item item-1"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                            <div class="orbit-item item-2"><i class="fa-solid fa-database"></i></div>
-                            <div class="orbit-item item-3"><i class="fa-solid fa-chart-pie"></i></div>
-                            <div class="orbit-item item-4"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-
-                            <div class="central-file-icon">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </div>
+                        <div class="dropzone-icon">
+                            <i class="fa-solid fa-file-arrow-up"></i>
                         </div>
 
-                        <!-- Títulos adaptáveis ao tema claro/escuro via Bootstrap -->
-                        <h5 class="fw-bold mb-1 text-body">Arraste seu PDF aqui ou clique para enviar</h5>
-                        <p class="text-muted small mb-4" style="font-size: 0.8rem;">
+                        <h5 class="dropzone-title">Arraste seu PDF aqui ou clique para enviar</h5>
+                        <p class="dropzone-sub">
                             O sistema lê as tabelas do relatório e calcula automaticamente o frete e a operação.
                         </p>
 
-                        <button type="button" class="btn btn-custom-blue mb-2" onclick="document.getElementById('pdf_file').click()">
-                            <i class="fa-solid fa-folder-open me-2"></i> Selecionar Arquivo PDF
+                        <button type="button" class="btn-upload" onclick="document.getElementById('pdf_file').click()">
+                            <i class="fa-solid fa-folder-open"></i> Selecionar Arquivo PDF
                         </button>
 
                         <div class="upload-hints">
@@ -370,10 +393,17 @@
     function triggerUploadProcess(filename) {
         activeFileName.textContent = filename;
         loadingOverlay.classList.add('active');
-        
+
+        const etapas = [
+            { limite: 25, texto: 'Lendo o arquivo PDF...' },
+            { limite: 55, texto: 'Analisando tabelas e dimensões...' },
+            { limite: 80, texto: 'Calculando métricas e rotas logísticas...' },
+            { limite: 95, texto: 'Finalizando o processamento...' },
+        ];
+
         let progress = 0;
         const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 12) + 6;
+            progress += Math.floor(Math.random() * 10) + 5;
             if (progress > 95) {
                 progress = 95;
                 clearInterval(interval);
@@ -383,11 +413,10 @@
             }
             progressBarFill.style.width = progress + '%';
             progressPercentage.textContent = progress + '%';
-            
-            if (progress > 50) {
-                loadingStatusText.textContent = 'Calculando métricas e rotas logísticas...';
-            }
-        }, 180);
+
+            const etapa = etapas.find(e => progress <= e.limite);
+            if (etapa) loadingStatusText.textContent = etapa.texto;
+        }, 170);
     }
 
     function cancelUpload() {

@@ -5,7 +5,12 @@ Uso (modal único reutilizável):
 {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir" titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este registro?" %}
 
 Uso (modal por linha, com form POST):
-{% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:item.id titulo="Confirmar Exclusão" mensagem="..." form_action=url_excluir %}
+{% with pk_str=item.id|stringformat:"s" %}
+{% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:pk_str titulo="Confirmar Exclusão" mensagem="..." form_action=url_excluir %}
+{% endwith %}
+
+IMPORTANTE: o filtro `add` do Django NÃO soma string + inteiro (retorna vazio).
+Sempre converta o id para string com `|stringformat:"s"` antes de concatenar.
 
 Parâmetros:
 - modal_id (obrigatório)

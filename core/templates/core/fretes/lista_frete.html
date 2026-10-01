@@ -118,7 +118,9 @@
 
                         <!-- Modal de Confirmação para cada item -->
                         {% url 'excluir_obra' obra.pk as url_excluir %}
-                        {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:obra.pk titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este frete? Esta ação não poderá ser desfeita." form_action=url_excluir %}
+                        {% with pk_str=obra.pk|stringformat:"s" %}
+                            {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:pk_str titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este frete? Esta ação não poderá ser desfeita." form_action=url_excluir %}
+                        {% endwith %}
                         <!-- Fim do Modal -->
 
                         {% empty %}
