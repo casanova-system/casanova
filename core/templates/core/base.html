@@ -449,6 +449,201 @@
             width: 220px !important;
             transform: none !important;
         }
+
+        /* ==========================================================
+           MENU MINIMALISTA — busca global + links limpos
+           ========================================================== */
+        .sidebar-nav-scroll {
+            scrollbar-width: thin;
+        }
+
+        /* Campo de busca global */
+        .sidebar-search {
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .sidebar-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.78rem;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        .sidebar-search-input {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 9px 32px 9px 34px;
+            font-size: 0.82rem;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        .sidebar-search-input::placeholder {
+            color: #94a3b8;
+        }
+        .sidebar-search-input:focus {
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .sidebar-search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            padding: 4px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+        }
+        .sidebar-search-clear:hover {
+            color: #475569;
+            background: rgba(0,0,0,0.05);
+        }
+        .sidebar-search.has-value .sidebar-search-clear {
+            display: block;
+        }
+        .sidebar-search-empty {
+            display: none;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            text-align: center;
+            padding: 14px 8px;
+        }
+        [data-bs-theme="dark"] .sidebar-search-input {
+            background: #0d1117;
+            border-color: #30363d;
+            color: #e6edf3;
+        }
+        [data-bs-theme="dark"] .sidebar-search-input:focus {
+            background: #161b22;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.18);
+        }
+        [data-bs-theme="dark"] .sidebar-search-clear:hover {
+            background: rgba(255,255,255,0.06);
+            color: #c9d1d9;
+        }
+
+        /* Links do menu (Início + itens) */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #475569;
+            text-decoration: none;
+            transition: background-color 0.16s ease, color 0.16s ease;
+        }
+        .sidebar-link i {
+            width: 18px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            transition: color 0.16s ease;
+        }
+        .sidebar-link:hover {
+            background: rgba(11, 56, 130, 0.06);
+            color: var(--casanova-blue);
+        }
+        .sidebar-link:hover i {
+            color: var(--casanova-blue);
+        }
+        .sidebar-link.active {
+            background: rgba(11, 56, 130, 0.10);
+            color: var(--casanova-blue);
+            font-weight: 600;
+        }
+        .sidebar-link.active i {
+            color: var(--casanova-blue);
+        }
+        [data-bs-theme="dark"] .sidebar-link {
+            color: #8b949e;
+        }
+        [data-bs-theme="dark"] .sidebar-link:hover {
+            background: rgba(88, 166, 255, 0.10);
+            color: #58a6ff;
+        }
+        [data-bs-theme="dark"] .sidebar-link:hover i {
+            color: #58a6ff;
+        }
+        [data-bs-theme="dark"] .sidebar-link.active {
+            background: rgba(88, 166, 255, 0.14);
+            color: #58a6ff;
+        }
+        [data-bs-theme="dark"] .sidebar-link.active i {
+            color: #58a6ff;
+        }
+
+        /* Sub-itens (dentro de um setor) — recuo sutil */
+        .sidebar-link-sub {
+            padding-left: 14px;
+            font-size: 0.82rem;
+            font-weight: 400;
+        }
+
+        /* Toggle de seção (Rotinas / Gráficos / Relatórios) */
+        .sidebar-section-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: color 0.16s ease;
+        }
+        .sidebar-section-toggle:hover {
+            color: var(--casanova-blue);
+        }
+        .sidebar-section-chevron {
+            font-size: 0.58rem;
+            transition: transform 0.25s ease;
+        }
+        .sidebar-section-toggle[aria-expanded="true"] .sidebar-section-chevron {
+            transform: rotate(180deg);
+        }
+        [data-bs-theme="dark"] .sidebar-section-toggle {
+            color: #6e7681;
+        }
+        [data-bs-theme="dark"] .sidebar-section-toggle:hover {
+            color: #58a6ff;
+        }
+
+        /* Estado recolhido: esconde busca e centraliza ícones */
+        .sidebar-casanova.sidebar-collapsed .sidebar-search,
+        .sidebar-casanova.sidebar-collapsed .sidebar-search-empty {
+            display: none !important;
+        }
+        .sidebar-casanova.sidebar-collapsed .sidebar-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .sidebar-casanova.sidebar-collapsed .sidebar-link i {
+            width: auto;
+        }
+        .sidebar-casanova.sidebar-collapsed .sidebar-section-toggle {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
     </style>
 
     <!-- Design System Casanova (refinamento visual) -->
@@ -492,17 +687,32 @@
             </div>
 
             <!-- Corpo de Navegação -->
-            <div class="flex-grow-1 overflow-y-auto px-3 py-3">
+            <div class="flex-grow-1 overflow-y-auto px-3 py-3 sidebar-nav-scroll">
                 {% block sidebar_content %}
+                <!-- Busca global de rotinas -->
+                <div class="sidebar-search hide-on-collapse">
+                    <i class="fa-solid fa-magnifying-glass sidebar-search-icon"></i>
+                    <input type="text" id="buscaMenuGlobal" class="sidebar-search-input"
+                           placeholder="Buscar rotina..." autocomplete="off"
+                           oninput="buscarMenuGlobal(this.value)">
+                    <button type="button" class="sidebar-search-clear" id="buscaMenuClear"
+                            onclick="limparBuscaMenu()" aria-label="Limpar busca">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="sidebar-search-empty hide-on-collapse" id="buscaMenuVazio">
+                    Nenhuma rotina encontrada
+                </div>
+
                 <div class="list-group list-group-flush gap-1" id="listaNavegacao">
-                    <a href="{% url 'menu_principal' %}" class="list-group-item list-group-item-action rounded-2 border-0 py-2 px-3 d-flex align-items-center gap-2 text-decoration-none {% if request.resolver_match.url_name == 'menu_principal' %}active{% endif %}" title="Início">
-                        <i class="fa-solid fa-house text-primary" style="width: 20px;"></i> <span class="fw-semibold small hide-on-collapse">Início</span>
+                    <a href="{% url 'menu_principal' %}" class="sidebar-link {% if request.resolver_match.url_name == 'menu_principal' %}active{% endif %}" title="Início" data-nome="início inicio home">
+                        <i class="fa-solid fa-house"></i> <span class="hide-on-collapse">Início</span>
                     </a>
                     
                     <div class="mt-3">
-                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}true{% else %}false{% endif %}" aria-controls="menuRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
-                            <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Rotinas</span></span>
-                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
+                        <a class="sidebar-section-toggle" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}true{% else %}false{% endif %}" aria-controls="menuRotinas" title="Rotinas">
+                            <span class="hide-on-collapse">Rotinas</span>
+                            <i class="fa-solid fa-chevron-down sidebar-section-chevron hide-on-collapse"></i>
                         </a>
                 
                         <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas">
@@ -514,13 +724,13 @@
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorComercial" role="button"
                                        aria-expanded="{% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}true{% else %}false{% endif %}"
                                        aria-controls="setorComercial" title="Comercial">
-                                        <span><i class="fa-solid fa-briefcase me-1"></i> Comercial</span>
+                                        <span>Comercial</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
                                     <div class="collapse {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}show{% endif %}" id="setorComercial">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras or request.user.perfil.tem_rotina.001 %}
-                                        <a href="{% url 'lista_obras' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[001]</span> <span class="hide-on-collapse">Custo de Frete</span>
+                                        <a href="{% url 'lista_obras' %}" class="sidebar-link sidebar-link-sub rotina-item {% if request.resolver_match.url_name == 'lista_obras' or request.resolver_match.url_name == 'detalhe_obra' or request.resolver_match.url_name == 'editar_obra' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
+                                            <span class="hide-on-collapse">Custo de Frete</span>
                                         </a>
                                         {% endif %}
                                     </div>
@@ -533,13 +743,13 @@
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorFinanceiro" role="button"
                                        aria-expanded="{% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}true{% else %}false{% endif %}"
                                        aria-controls="setorFinanceiro" title="Financeiro">
-                                        <span><i class="fa-solid fa-coins me-1"></i> Financeiro</span>
+                                        <span>Financeiro</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
                                     <div class="collapse {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="setorFinanceiro">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo or request.user.perfil.tem_rotina.004 %}
-                                        <a href="{% url 'lista_custo' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}active{% endif %}" data-id="4" data-nome="custos" title="Custos">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[004]</span> <span class="hide-on-collapse">Cadastro Custo</span>
+                                        <a href="{% url 'lista_custo' %}" class="sidebar-link sidebar-link-sub rotina-item {% if request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}active{% endif %}" data-id="4" data-nome="custos" title="Custos">
+                                            <span class="hide-on-collapse">Cadastro Custo</span>
                                         </a>
                                         {% endif %}
                                     </div>
@@ -552,13 +762,13 @@
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorFrotas" role="button"
                                        aria-expanded="{% if 'veiculos' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                                        aria-controls="setorFrotas" title="Frotas">
-                                        <span><i class="fa-solid fa-truck me-1"></i> Frotas</span>
+                                        <span>Frotas</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
                                     <div class="collapse {% if 'veiculos' in request.resolver_match.url_name %}show{% endif %}" id="setorFrotas">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos or request.user.perfil.tem_rotina.003 %}
-                                        <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastro Veículo</span>
+                                        <a href="{% url 'lista_veiculos' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
+                                            <span class="hide-on-collapse">Cadastro Veículo</span>
                                         </a>
                                         {% endif %}
                                     </div>
@@ -571,18 +781,18 @@
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorIndustria" role="button"
                                        aria-expanded="{% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                                        aria-controls="setorIndustria" title="Indústria">
-                                        <span><i class="fa-solid fa-industry me-1"></i> Indústria</span>
+                                        <span>Indústria</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
                                     <div class="collapse {% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name %}show{% endif %}" id="setorIndustria">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 %}
-                                        <a href="{% url 'lista_ordem_producao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'ordem_producao' in request.resolver_match.url_name %}active{% endif %}" data-id="8" data-nome="ordem de produção" title="Ordem de Produção">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[008]</span> <span class="hide-on-collapse">Ordem de Produção</span>
+                                        <a href="{% url 'lista_ordem_producao' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'ordem_producao' in request.resolver_match.url_name %}active{% endif %}" data-id="8" data-nome="ordem de produção" title="Ordem de Produção">
+                                            <span class="hide-on-collapse">Ordem de Produção</span>
                                         </a>
                                         {% endif %}
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.rastreio_producao or request.user.perfil.tem_rotina.009 %}
-                                        <a href="{% url 'rastreio_producao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'rastreio' in request.resolver_match.url_name %}active{% endif %}" data-id="9" data-nome="rastreio de produção" title="Rastreio de Produção">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[009]</span> <span class="hide-on-collapse">Rastreio de Produção</span>
+                                        <a href="{% url 'rastreio_producao' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'rastreio' in request.resolver_match.url_name %}active{% endif %}" data-id="9" data-nome="rastreio de produção" title="Rastreio de Produção">
+                                            <span class="hide-on-collapse">Rastreio de Produção</span>
                                         </a>
                                         {% endif %}
                                     </div>
@@ -595,18 +805,18 @@
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorAdministrador" role="button"
                                        aria-expanded="{% if 'usuario' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                                        aria-controls="setorAdministrador" title="Administrador">
-                                        <span><i class="fa-solid fa-user-shield me-1"></i> Administrador</span>
+                                        <span>Administrador</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
                                     <div class="collapse {% if 'usuario' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name %}show{% endif %}" id="setorAdministrador">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.002 %}
-                                        <a href="{% url 'lista_usuarios' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[002]</span> <span class="hide-on-collapse">Cadastro Usuário</span>
+                                        <a href="{% url 'lista_usuarios' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" data-id="2" data-nome="cadastro usuario" title="Cadastro de Usuário">
+                                            <span class="hide-on-collapse">Cadastro Usuário</span>
                                         </a>
                                         {% endif %}
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.005 %}
-                                        <a href="{% url 'lista_permissao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'permissao' in request.resolver_match.url_name %}active{% endif %}" data-id="5" data-nome="gerenciar permissoes" title="Gerenciar Permissões">
-                                            <span class="text-muted small" style="font-size: 0.7rem;">[005]</span> <span class="hide-on-collapse">Permissões</span>
+                                        <a href="{% url 'lista_permissao' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'permissao' in request.resolver_match.url_name %}active{% endif %}" data-id="5" data-nome="gerenciar permissoes" title="Gerenciar Permissões">
+                                            <span class="hide-on-collapse">Permissões</span>
                                         </a>
                                         {% endif %}
                                     </div>
@@ -618,19 +828,16 @@
                     </div>
                 
                     <div class="mt-3">
-                        <a class="graficos-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#menuGraficos" role="button" aria-expanded="{% if 'grafico' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuGraficos" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Gráficos">
-                            <span><i class="fa-solid fa-chart-pie me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Gráficos</span></span>
-                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
+                        <a class="sidebar-section-toggle" data-bs-toggle="collapse" href="#menuGraficos" role="button" aria-expanded="{% if 'grafico' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuGraficos" title="Gráficos">
+                            <span class="hide-on-collapse">Gráficos</span>
+                            <i class="fa-solid fa-chevron-down sidebar-section-chevron hide-on-collapse"></i>
                         </a>
                 
                         <div class="collapse {% if 'graficos' in request.path %}show{% endif %}" id="menuGraficos">
-                            <div class="px-2 mb-2 hide-on-collapse pt-1">
-                                <input type="text" id="buscaGrafico" class="form-control form-control-sm" placeholder="Buscar ID ou nome..." onkeyup="filtrarGraficos()" style="font-size: 0.75rem;">
-                            </div>
-                            <div class="graficos-collapse-body d-flex flex-column gap-1" id="listaGraficos">
+                            <div class="graficos-collapse-body d-flex flex-column gap-1 pt-1" id="listaGraficos">
                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
-                                <a href="{% url 'grafico_custo_frete' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none grafico-item sidebar-item-compacto {% if request.resolver_match.url_name == 'grafico_custo_frete' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[006]</span> <span class="hide-on-collapse">Custo de Frete</span>
+                                <a href="{% url 'grafico_custo_frete' %}" class="sidebar-link sidebar-link-sub grafico-item {% if request.resolver_match.url_name == 'grafico_custo_frete' %}active{% endif %}" data-id="1" data-nome="custo de frete" title="Custo de Frete">
+                                    <span class="hide-on-collapse">Custo de Frete</span>
                                 </a>
                                 {% endif %}
                             </div>
@@ -638,16 +845,16 @@
                     </div>
                 
                     <div class="mt-3">
-                        <a class="relatorios-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#menuRelatorios" role="button" aria-expanded="{% if 'relatorio' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuRelatorios" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Relatórios">
-                            <span><i class="fa-solid fa-file-lines me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Relatórios</span></span>
-                            <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
+                        <a class="sidebar-section-toggle" data-bs-toggle="collapse" href="#menuRelatorios" role="button" aria-expanded="{% if 'relatorio' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuRelatorios" title="Relatórios">
+                            <span class="hide-on-collapse">Relatórios</span>
+                            <i class="fa-solid fa-chevron-down sidebar-section-chevron hide-on-collapse"></i>
                         </a>
                 
                         <div class="collapse {% if 'relatorios' in request.path %}show{% endif %}" id="menuRelatorios">
                             <div class="relatorios-collapse-body d-flex flex-column gap-1 pt-1" id="listaRelatorios">
                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_relatorios %}
-                                <a href="{% url 'relatorio_fretes_mes' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none relatorio-item sidebar-item-compacto {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
-                                    <span class="text-muted small" style="font-size: 0.7rem;">[007]</span> <span class="hide-on-collapse">Relatórios de Frete</span>
+                                <a href="{% url 'relatorio_fretes_mes' %}" class="sidebar-link sidebar-link-sub relatorio-item {% if request.resolver_match.url_name == 'relatorio_fretes_mes' %}active{% endif %}" data-id="1" data-nome="relatorios de frete" title="Relatórios de Frete">
+                                    <span class="hide-on-collapse">Relatórios de Frete</span>
                                 </a>
                                 {% endif %}
                             </div>
@@ -801,7 +1008,72 @@
             }
         }
 
-        // PESQUISA DE ROTINAS
+        // ===== BUSCA GLOBAL DO MENU =====
+        function buscarMenuGlobal(valor) {
+            const termo = (valor || '').toLowerCase().trim();
+            const wrap = document.querySelector('.sidebar-search');
+            const vazio = document.getElementById('buscaMenuVazio');
+            const links = document.querySelectorAll('#listaNavegacao .sidebar-link, #listaNavegacao .rotina-item, #listaNavegacao .grafico-item, #listaNavegacao .relatorio-item');
+            const setores = document.querySelectorAll('#listaNavegacao .setor-grupo');
+            const secoes = document.querySelectorAll('#listaNavegacao .sidebar-section-toggle');
+
+            if (wrap) wrap.classList.toggle('has-value', termo.length > 0);
+
+            if (termo === '') {
+                // Restaura tudo
+                links.forEach(l => { l.style.display = ''; });
+                setores.forEach(s => { s.style.display = ''; });
+                secoes.forEach(s => { s.style.display = ''; });
+                document.querySelectorAll('#listaNavegacao .collapse').forEach(c => {
+                    c.classList.remove('busca-aberta');
+                });
+                if (vazio) vazio.style.display = 'none';
+                return;
+            }
+
+            let encontrados = 0;
+
+            // Filtra os links
+            links.forEach(l => {
+                const nome = (l.getAttribute('data-nome') || '') + ' ' + l.textContent.toLowerCase();
+                const bate = nome.includes(termo);
+                l.style.display = bate ? '' : 'none';
+                if (bate) encontrados++;
+            });
+
+            // Mostra/esconde grupos de setor conforme tenham itens visíveis
+            setores.forEach(grupo => {
+                const visiveis = grupo.querySelectorAll('.sidebar-link:not([style*="display: none"]), .rotina-item:not([style*="display: none"])');
+                grupo.style.display = visiveis.length > 0 ? '' : 'none';
+                // Abre o collapse do setor para mostrar o resultado
+                const col = grupo.querySelector('.collapse');
+                if (col && visiveis.length > 0) col.classList.add('show', 'busca-aberta');
+            });
+
+            // Mostra/esconde seções (Rotinas/Gráficos/Relatórios)
+            secoes.forEach(sec => {
+                const alvo = sec.getAttribute('href');
+                const corpo = alvo ? document.querySelector(alvo) : null;
+                if (!corpo) return;
+                const visiveis = corpo.querySelectorAll('.sidebar-link:not([style*="display: none"]), .rotina-item:not([style*="display: none"]), .grafico-item:not([style*="display: none"]), .relatorio-item:not([style*="display: none"])');
+                const tem = visiveis.length > 0;
+                sec.style.display = tem ? '' : 'none';
+                if (tem) corpo.classList.add('show', 'busca-aberta');
+            });
+
+            if (vazio) vazio.style.display = encontrados === 0 ? 'block' : 'none';
+        }
+
+        function limparBuscaMenu() {
+            const input = document.getElementById('buscaMenuGlobal');
+            if (input) {
+                input.value = '';
+                buscarMenuGlobal('');
+                input.focus();
+            }
+        }
+
+        // PESQUISA DE ROTINAS (legado — mantido por compatibilidade)
         function filtrarRotinas() {
             const input = document.getElementById('buscaRotina');
             if (!input) return;
@@ -825,7 +1097,9 @@
         }
 
         function filtrarGraficos() {
-            let input = document.getElementById('buscaGrafico').value.toLowerCase();
+            const campo = document.getElementById('buscaGrafico');
+            if (!campo) return;
+            let input = campo.value.toLowerCase();
             let itens = document.getElementsByClassName('grafico-item');
 
             for (let i = 0; i < itens.length; i++) {
