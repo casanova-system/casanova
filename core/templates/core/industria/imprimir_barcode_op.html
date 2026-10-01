@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imprimir QR Code — OP {{ dados.NumeroDocumento }}</title>
+    <title>Imprimir Código de Barras — OP {{ dados.NumeroDocumento }}</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -56,16 +56,15 @@
             text-align: center;
         }
 
-        .qr-box {
-            width: 60mm;
-            height: 60mm;
+        .barcode-box {
+            width: 150mm;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .qr-box svg {
+        .barcode-box svg {
             width: 100%;
-            height: 100%;
+            height: auto;
         }
 
         .op-numero {
@@ -113,14 +112,14 @@
         <div class="folha-a4">
             <p style="font-size: 14pt;">{{ erro }}</p>
         </div>
-    {% elif erro_qr %}
+    {% elif erro_barcode %}
         <div class="folha-a4">
-            <p style="font-size: 12pt; color: #b91c1c;">{{ erro_qr }}</p>
+            <p style="font-size: 12pt; color: #b91c1c;">{{ erro_barcode }}</p>
         </div>
     {% else %}
     <div class="folha-a4">
-        <div class="qr-box">
-            {{ qr_svg|safe }}
+        <div class="barcode-box">
+            {{ barcode_svg|safe }}
         </div>
 
         <div class="op-numero">OP {{ dados.NumeroDocumento }}</div>

@@ -54,6 +54,17 @@
                             </select>
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Setor de Produção (Rastreio)</label>
+                            <select name="setor_producao" class="form-select">
+                                <option value="">— Não se aplica —</option>
+                                {% for s in setores_producao %}
+                                    <option value="{{ s.id }}" {% if usuario.perfil.setor_producao_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">Define qual etapa da OP este usuário pode registrar ao escanear o código de barras.</div>
+                        </div>
+
                         <div class="col-12">
                             <label class="form-label">Foto de Perfil</label>
                             <input type="file" name="foto" class="form-control" accept="image/*">

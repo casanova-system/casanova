@@ -249,6 +249,18 @@ class PerfilUsuario(models.Model):
         max_length=50, choices=SETOR_CHOICES, default='COMERCIAL'
     )
 
+    # Setor de produção do usuário (usado no rastreio por código de barras).
+    # Ex.: gerente do Estoque, da Separação, do Corte, etc.
+    setor_producao = models.ForeignKey(
+        'SetorProducao',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='responsaveis',
+        verbose_name='Setor de Produção',
+        help_text='Setor que este usuário gerencia no rastreio de produção.',
+    )
+
     # Novo campo adicionado para gerenciar as rotinas permitidas
     rotinas_permitidas = models.ManyToManyField(
         Rotina, blank=True, verbose_name='Rotinas Permitidas'
@@ -416,18 +428,20 @@ class Custo(models.Model):
 # ==========================================
 SETORES_PRODUCAO_PADRAO = [
     # (codigo, nome, ordem, requer_vidro)
-    ('separacao', 'Separação', 1, False),
-    ('usinagem', 'Usinagem', 2, False),
-    ('mesa', 'Mesa', 3, False),
-    ('encaixilhamento', 'Encaixilhamento', 4, True),
-    ('expedicao', 'Expedição', 5, False),
+    ('estoque', 'Estoque', 1, False),
+    ('separacao', 'Separação', 2, False),
+    ('corte', 'Corte', 3, False),
+    ('usinagem', 'Usinagem', 4, False),
+    ('mesa', 'Mesa', 5, False),
+    ('encaixilhamento', 'Encaixilhamento', 6, True),
+    ('expedicao', 'Expedição', 7, False),
 ]
 
 
 def garantir_setores_padrao():
-    """Garante que os setores do fluxo de produção existam."""
+    """Garante que os setores do fluxo de produção existam e estejam atualizados."""
     for codigo, nome, ordem, requer_vidro in SETORES_PRODUCAO_PADRAO:
-        SetorProducao.objects.get_or_create(
+        setor, created = SetorProducao.objects.get_or_create(
             codigo=codigo,
             defaults={
                 'nome': nome,
@@ -435,6 +449,15 @@ def garantir_setores_padrao():
                 'requer_vidro': requer_vidro,
             },
         )
+        if not created and (
+            setor.nome != nome
+            or setor.ordem != ordem
+            or setor.requer_vidro != requer_vidro
+        ):
+            setor.nome = nome
+            setor.ordem = ordem
+            setor.requer_vidro = requer_vidro
+            setor.save(update_fields=['nome', 'ordem', 'requer_vidro'])
 
 
 class SetorProducao(models.Model):

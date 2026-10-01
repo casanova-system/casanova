@@ -4,10 +4,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from core.models import PerfilUsuario
+from core.models import PerfilUsuario, SetorProducao
 from core.views.permissao import requer_rotina
 
 ITENS_POR_PAGINA = 12
+
+
+def _setores_producao():
+    """Lista os setores de produção para o formulário de usuário."""
+    try:
+        return list(SetorProducao.objects.filter(ativo=True).order_by('ordem'))
+    except Exception:  # noqa: BLE001 — migration pendente
+        return []
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
@@ -71,6 +79,7 @@ def criar_usuario(request):
         endereco = request.POST.get('endereco')
         nivel_acesso = request.POST.get('nivel_acesso')
         setor = request.POST.get('setor')  # Captura o setor enviado pelo form
+        setor_producao_id = request.POST.get('setor_producao') or None
         foto = request.FILES.get('foto')   # <--- CAPTURA A FOTO ENVIADA
         
         # Validação de campos obrigatórios (incluindo o setor)
@@ -96,7 +105,8 @@ def criar_usuario(request):
                 'cep': cep,
                 'endereco': endereco,
                 'nivel_acesso': nivel_acesso,
-                'setor': setor
+                'setor': setor,
+                'setor_producao_id': setor_producao_id,
             }
         )
         
@@ -108,7 +118,7 @@ def criar_usuario(request):
         messages.success(request, "Usuário cadastrado com sucesso!")
         return redirect('lista_usuarios')
         
-    return render(request, "core/usuarios/form_usuario.html", {"acao": "Cadastrar"})
+    return render(request, "core/usuarios/form_usuario.html", {"acao": "Cadastrar", "setores_producao": _setores_producao()})
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
@@ -129,6 +139,7 @@ def editar_usuario(request, pk):
         cpf = request.POST.get('cpf')
         data_nascimento = request.POST.get('data_nascimento')
         setor = request.POST.get('setor')
+        setor_producao_id = request.POST.get('setor_producao') or None
         foto = request.FILES.get('foto')  # <--- CAPTURA A NOVA FOTO SE HOUVER
         
         # Validação de campos obrigatórios na edição
@@ -154,6 +165,7 @@ def editar_usuario(request, pk):
         perfil.endereco = request.POST.get('endereco')
         perfil.nivel_acesso = request.POST.get('nivel_acesso')
         perfil.setor = setor
+        perfil.setor_producao_id = setor_producao_id
         
         # Atualiza a foto apenas se o usuário enviou uma nova
         if foto:
@@ -164,7 +176,7 @@ def editar_usuario(request, pk):
         messages.success(request, "Usuário atualizado com sucesso!")
         return redirect('lista_usuarios')
         
-    return render(request, "core/usuarios/form_usuario.html", {"usuario": usuario, "acao": "Editar"})
+    return render(request, "core/usuarios/form_usuario.html", {"usuario": usuario, "acao": "Editar", "setores_producao": _setores_producao()})
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')

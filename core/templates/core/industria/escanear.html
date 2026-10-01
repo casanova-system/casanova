@@ -1,0 +1,172 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 680px;">
+
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Escanear OP</h1>
+            <p class="page-subtitle mb-0">Aponte o leitor de código de barras para a OP.</p>
+        </div>
+        <a href="{% url 'rastreio_producao' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-list-check"></i> Ver todas
+        </a>
+    </div>
+
+    <!-- Identificação do operador -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-user-shield text-primary"></i>
+                <div>
+                    <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="text-muted small">
+                        {% if setor_usuario %}
+                            Setor: <strong>{{ setor_usuario.nome }}</strong>
+                        {% else %}
+                            <span class="text-danger">Sem setor de produção vinculado</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if pode_gerenciar %}
+                <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-2">
+                    <i class="fa-solid fa-check me-1"></i> Gerência
+                </span>
+            {% else %}
+                <span class="badge bg-danger bg-opacity-10 text-danger fw-semibold px-3 py-2">
+                    <i class="fa-solid fa-ban me-1"></i> Sem permissão
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not pode_gerenciar %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>Apenas usuários de nível <strong>Gerência</strong> podem registrar a movimentação da OP.</div>
+    </div>
+    {% elif not setor_usuario %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>Seu usuário não está vinculado a um setor de produção. Peça ao administrador para definir o setor no seu perfil.</div>
+    </div>
+    {% endif %}
+
+    <!-- Pergunta de vidro (Mesa) -->
+    {% if precisa_vidro %}
+    <div class="card shadow-sm border-0 mb-3 border-start border-4 border-info">
+        <div class="card-body">
+            <h5 class="fw-bold mb-2"><i class="fa-solid fa-circle-question text-info me-1"></i> Esta OP tem vidro?</h5>
+            <p class="text-muted small mb-3">A OP está na <strong>Mesa</strong>. Informe para definir o próximo setor.</p>
+            <div class="d-flex gap-2">
+                <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-info text-white fw-semibold">
+                    <i class="fa-solid fa-check me-1"></i> Sim, tem vidro
+                </a>
+                <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-outline-secondary fw-semibold">
+                    <i class="fa-solid fa-xmark me-1"></i> Não tem vidro
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resultado do registro -->
+    {% if resultado %}
+    <div class="card shadow-sm border-0 mb-3 border-start border-4 border-success">
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-circle-check text-success fs-4"></i>
+                <h5 class="fw-bold mb-0">
+                    {% if resultado.iniciou %}Rastreio iniciado{% else %}Movimentação registrada{% endif %}
+                </h5>
+            </div>
+            <div class="row g-2 small">
+                <div class="col-6"><span class="text-muted">OP:</span> <strong>{{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}</strong></div>
+                <div class="col-6"><span class="text-muted">Setor:</span> <strong>{{ resultado.setor.nome }}</strong></div>
+                <div class="col-12"><span class="text-muted">Obra:</span> {{ resultado.rastreio.obra|default:"—" }}</div>
+                <div class="col-12"><span class="text-muted">Produto:</span> {{ resultado.rastreio.produto|default:"—" }}</div>
+            </div>
+            <a href="{% url 'rastreio_op' resultado.rastreio.op_id %}" class="btn btn-sm btn-outline-primary mt-3">
+                <i class="fa-solid fa-eye me-1"></i> Ver rastreio completo
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Erro -->
+    {% if erro %}
+    <div class="alert alert-danger d-flex align-items-start gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>{{ erro }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Campo de leitura -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+            <div class="empty-state-icon mb-3"><i class="fa-solid fa-barcode"></i></div>
+            <h5 class="fw-bold mb-2">Aguardando leitura...</h5>
+            <p class="text-muted mb-4">Escaneie o código de barras da OP. O campo abaixo recebe o código automaticamente.</p>
+
+            <form method="GET" action="{% url 'escanear' %}" id="formEscanear" class="d-flex flex-column align-items-center gap-2">
+                {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
+                <input type="text" name="codigo" id="campoCodigo" class="form-control form-control-lg text-center fw-bold"
+                       style="max-width: 360px; letter-spacing: 2px;"
+                       placeholder="00000" autocomplete="off" autofocus value="">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fa-solid fa-arrow-right me-1"></i> Registrar
+                </button>
+            </form>
+
+            <p class="text-muted small mt-4 mb-0">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                O leitor digita o código e pressiona Enter automaticamente.
+            </p>
+        </div>
+    </div>
+
+    <!-- Simulação de setor (apenas superusuário) -->
+    {% if request.user.is_superuser %}
+    <div class="card shadow-sm border-0 mt-3">
+        <div class="card-body py-3">
+            <div class="text-muted small fw-semibold text-uppercase mb-2">
+                <i class="fa-solid fa-flask me-1"></i> Simular setor (superusuário)
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for s in setores %}
+                    <a href="?setor={{ s.codigo }}" class="btn btn-sm {% if setor_param == s.codigo %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        {{ s.nome }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Mantém o campo sempre focado para o leitor funcionar sem cliques
+    (function () {
+        const campo = document.getElementById('campoCodigo');
+        if (!campo) return;
+        campo.focus();
+        document.addEventListener('click', function (e) {
+            if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') campo.focus();
+        });
+        // Se o leitor enviar sem Enter, submete ao detectar pausa na digitação
+        let timer = null;
+        campo.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                if (campo.value.trim().length >= 3) {
+                    document.getElementById('formEscanear').submit();
+                }
+            }, 400);
+        });
+    })();
+</script>
+{% endblock %}

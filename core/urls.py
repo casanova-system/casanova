@@ -20,11 +20,12 @@ from core.views.frete import (
 )
 from core.views.grafico_frete import grafico_custo_frete
 from core.views.ordem_producao import (
-    imprimir_qrcode_ordem_producao,
+    barcode_ordem_producao,
+    imprimir_barcode_ordem_producao,
     lista_ordem_producao,
-    qrcode_ordem_producao,
 )
 from core.views.rastreio import (
+    escanear,
     rastreio_op,
     rastreio_producao,
     registrar_movimentacao,
@@ -110,10 +111,11 @@ urlpatterns = [
     path('custo/<int:pk>/editar/', editar_custo, name='editar_custo'),
     # ROTINA DE ORDEM DE PRODUÇÃO (INDÚSTRIA - Faktory)
     path('industria/ordem-producao/', lista_ordem_producao, name='lista_ordem_producao'),
-    path('industria/ordem-producao/<int:op_id>/qrcode/', qrcode_ordem_producao, name='qrcode_ordem_producao'),
-    path('industria/ordem-producao/<int:op_id>/qrcode/imprimir/', imprimir_qrcode_ordem_producao, name='imprimir_qrcode_ordem_producao'),
-    # RASTREIO DE PRODUÇÃO (QR Code)
+    path('industria/ordem-producao/<int:op_id>/barcode/', barcode_ordem_producao, name='barcode_ordem_producao'),
+    path('industria/ordem-producao/<int:op_id>/barcode/imprimir/', imprimir_barcode_ordem_producao, name='imprimir_barcode_ordem_producao'),
+    # RASTREIO DE PRODUÇÃO (código de barras)
     path('industria/rastreio/', rastreio_producao, name='rastreio_producao'),
+    path('industria/rastreio/escanear/', escanear, name='escanear'),
     path('industria/rastreio/<int:op_id>/', rastreio_op, name='rastreio_op'),
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
 ]

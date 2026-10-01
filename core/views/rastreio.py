@@ -1,10 +1,14 @@
-"""Rastreio de Produção — acompanha a OP pelos setores via QR Code.
+"""Rastreio de Produção — acompanha a OP pelos setores via código de barras.
 
 Fluxo padrão:
     Separação → Usinagem → Mesa → (com vidro: Encaixilhamento) → Expedição
 
-O operador escaneia o QR Code da OP em cada setor e o sistema registra
-data, hora e usuário da passagem. A decisão "tem vidro?" acontece na Mesa.
+O operador escaneia o código de barras da OP em cada setor e o sistema
+registra data, hora e usuário da passagem. A decisão "tem vidro?" acontece
+na Mesa.
+
+O leitor de código de barras funciona como teclado: digita o ID da OP e
+pressiona Enter. A tela de escaneamento mantém o campo sempre focado.
 """
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -22,6 +26,23 @@ from core.views.ordem_producao import _buscar_op_por_id
 from core.views.permissao import requer_rotina
 
 ITENS_POR_PAGINA = 12
+
+MSG_MIGRATION = (
+    'A rotina de rastreio ainda não foi instalada neste servidor. '
+    'Execute "python manage.py migrate" para criar as tabelas.'
+)
+
+
+def _garantir_setores():
+    """Garante os setores padrão sem quebrar a página se a migration não rodou.
+
+    Retorna True se a tabela existe; False caso contrário (deploy sem migrate).
+    """
+    try:
+        garantir_setores_padrao()
+        return True
+    except Exception:  # noqa: BLE001 — tabela ausente (migration pendente)
+        return False
 
 
 def _setores_ativos():
@@ -57,11 +78,150 @@ def _setor_anterior(codigo_atual, tem_vidro):
     return None
 
 
+def _setor_do_usuario(user, setor_param=''):
+    """Retorna o SetorProducao do usuário.
+
+    Superusuário pode informar `setor_param` (código) para agir como um setor.
+    """
+    if user.is_superuser and setor_param:
+        return SetorProducao.objects.filter(codigo=setor_param).first()
+    perfil = getattr(user, 'perfil', None)
+    if perfil and perfil.setor_producao_id:
+        return perfil.setor_producao
+    return None
+
+
+def _pode_gerenciar(user):
+    """Só gerência (ou superusuário) pode registrar movimentações."""
+    if user.is_superuser:
+        return True
+    perfil = getattr(user, 'perfil', None)
+    return bool(perfil and perfil.nivel_acesso == 'GERENCIA')
+
+
+def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
+    """Registra automaticamente a passagem da OP pelo setor do usuário.
+
+    Retorna (erro, resultado, precisa_vidro):
+      - erro: mensagem de erro (ou None)
+      - resultado: dict com dados do registro (ou None)
+      - precisa_vidro: True se o setor Mesa precisa decidir sobre vidro
+    """
+    rastreio = RastreioOP.objects.filter(op_id=op_id).first()
+    codigo_setor = setor_usuario.codigo
+
+    # --- OP ainda não iniciada: só o Estoque pode iniciar ---
+    if not rastreio:
+        primeiro = _setores_ativos()[0] if _setores_ativos() else None
+        if not primeiro or codigo_setor != primeiro.codigo:
+            return (
+                f'A OP ainda não foi iniciada. Ela precisa ser lida primeiro '
+                f'pelo setor de {primeiro.nome if primeiro else "Estoque"}.',
+                None,
+                False,
+            )
+
+        dados = None
+        try:
+            dados = _buscar_op_por_id(op_id)
+        except Exception:  # noqa: BLE001
+            dados = None
+        dados = dados or {}
+
+        rastreio = RastreioOP.objects.create(
+            op_id=op_id,
+            op_numero=dados.get('NumeroDocumento') or '',
+            obra=dados.get('ProjetoObra') or '',
+            produto=dados.get('Produto') or '',
+            variante=dados.get('Variante') or '',
+            setor_atual=codigo_setor,
+            status='EM_PRODUCAO',
+        )
+        MovimentacaoOP.objects.create(
+            rastreio=rastreio,
+            setor=codigo_setor,
+            setor_nome=setor_usuario.nome,
+            usuario=request.user,
+            observacao='Início do rastreio',
+        )
+        return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True}, False)
+
+    # --- OP já concluída ---
+    if rastreio.concluida:
+        return ('Esta OP já foi concluída e não pode receber novas leituras.', None, False)
+
+    # --- Decisão de vidro pendente (OP parada na Mesa) ---
+    if rastreio.setor_atual == 'mesa' and rastreio.tem_vidro is None:
+        if vidro in ('sim', 'nao'):
+            rastreio.tem_vidro = (vidro == 'sim')
+            rastreio.save(update_fields=['tem_vidro'])
+            return (
+                None,
+                {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
+                 'decisao_vidro': rastreio.tem_vidro},
+                False,
+            )
+        # Ainda não decidiu: pergunta antes de qualquer avanço
+        return (None, None, True)
+
+    # --- Já está neste setor ---
+    if rastreio.setor_atual == codigo_setor:
+        return (
+            f'A OP já está registrada no setor de {setor_usuario.nome}.',
+            None,
+            False,
+        )
+
+    # --- Valida se é o próximo setor esperado ---
+    proximo = _proximo_setor(rastreio.setor_atual, rastreio.tem_vidro)
+    if not proximo:
+        return ('Não há próximo setor no fluxo.', None, False)
+
+    if proximo.codigo != codigo_setor:
+        return (
+            f'Fora de ordem. A OP está em {rastreio.setor_atual_nome} e o próximo '
+            f'setor é {proximo.nome}. O setor de {setor_usuario.nome} só pode ler '
+            f'após essa etapa.',
+            None,
+            False,
+        )
+
+    # --- Avança ---
+    rastreio.setor_atual = codigo_setor
+    # Se não há próximo setor, a OP é concluída ao chegar no último
+    if _proximo_setor(codigo_setor, rastreio.tem_vidro) is None:
+        rastreio.status = 'CONCLUIDA'
+    else:
+        rastreio.status = 'EM_PRODUCAO'
+    rastreio.save(update_fields=['setor_atual', 'status'])
+    MovimentacaoOP.objects.create(
+        rastreio=rastreio,
+        setor=codigo_setor,
+        setor_nome=setor_usuario.nome,
+        usuario=request.user,
+    )
+
+    # Se acabou de chegar na Mesa, pergunta sobre o vidro imediatamente
+    if codigo_setor == 'mesa' and rastreio.tem_vidro is None:
+        return (None, None, True)
+
+    return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False}, False)
+
+
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
 def rastreio_producao(request):
     """Painel com todas as OPs em rastreio."""
-    garantir_setores_padrao()
+    if not _garantir_setores():
+        messages.error(request, MSG_MIGRATION)
+        return render(request, 'core/industria/rastreio_producao.html', {
+            'page_obj': None,
+            'rastreios': [],
+            'setores': [],
+            'filtros': request.GET,
+            'querystring': '',
+            'migration_pendente': True,
+        })
 
     q = request.GET.get('q', '').strip()
     setor = request.GET.get('setor', '').strip()
@@ -98,8 +258,28 @@ def rastreio_producao(request):
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
 def rastreio_op(request, op_id):
-    """Tela de rastreio de uma OP (aberta ao escanear o QR Code)."""
-    garantir_setores_padrao()
+    """Tela de rastreio de uma OP (aberta ao escanear o código de barras)."""
+    if not _garantir_setores():
+        messages.error(request, MSG_MIGRATION)
+        return render(request, 'core/industria/rastreio_op.html', {
+            'op_id': op_id,
+            'rastreio': None,
+            'dados': {},
+            'info': {
+                'op_numero': str(op_id),
+                'obra': '—',
+                'produto': '—',
+                'variante': '—',
+            },
+            'erro_conexao': None,
+            'setores': [],
+            'setor_atual': None,
+            'proximo': None,
+            'anterior': None,
+            'movimentacoes': [],
+            'precisa_decidir_vidro': False,
+            'migration_pendente': True,
+        })
 
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
 
@@ -158,7 +338,10 @@ def registrar_movimentacao(request, op_id):
     if request.method != 'POST':
         return redirect('rastreio_op', op_id=op_id)
 
-    garantir_setores_padrao()
+    if not _garantir_setores():
+        messages.error(request, MSG_MIGRATION)
+        return redirect('rastreio_op', op_id=op_id)
+
     acao = request.POST.get('acao', '').strip()
     observacao = request.POST.get('observacao', '').strip()
 
@@ -261,3 +444,63 @@ def registrar_movimentacao(request, op_id):
     )
     messages.success(request, f'OP avançou para {proximo.nome}.')
     return redirect('rastreio_op', op_id=op_id)
+
+
+@login_required(login_url='login')
+@requer_rotina('rastreio_producao')
+def escanear(request):
+    """Tela de escaneamento: o leitor digita o ID da OP e pressiona Enter.
+
+    O registro é AUTOMÁTICO: o setor do usuário logado define a etapa.
+    - Só gerência (ou superusuário) pode registrar.
+    - O Estoque inicia o rastreio.
+    - Cada setor só avança se for o próximo do fluxo.
+    - Na Mesa, se ainda não decidiu sobre vidro, pergunta antes de avançar.
+    """
+    if not _garantir_setores():
+        messages.error(request, MSG_MIGRATION)
+
+    codigo = request.GET.get('codigo', '').strip()
+    vidro = request.GET.get('vidro', '').strip()
+    setor_param = request.GET.get('setor', '').strip()
+    erro = None
+    resultado = None
+    precisa_vidro = False
+    op_id_pendente = None
+
+    if codigo:
+        numeros = ''.join(ch for ch in codigo if ch.isdigit())
+        if not numeros:
+            erro = f'Código inválido: "{codigo}".'
+        elif not _pode_gerenciar(request.user):
+            erro = (
+                'Apenas usuários de nível Gerência podem registrar a '
+                'movimentação da OP.'
+            )
+        else:
+            setor_usuario = _setor_do_usuario(request.user, setor_param)
+            if not setor_usuario:
+                erro = (
+                    'Seu usuário não está vinculado a um setor de produção. '
+                    'Peça ao administrador para definir o setor no seu perfil.'
+                )
+            else:
+                op_id = int(numeros)
+                erro, resultado, precisa_vidro = _registrar_por_setor(
+                    request, op_id, setor_usuario, vidro
+                )
+                if precisa_vidro:
+                    op_id_pendente = op_id
+
+    context = {
+        'codigo': codigo,
+        'erro': erro,
+        'resultado': resultado,
+        'precisa_vidro': precisa_vidro,
+        'op_id_pendente': op_id_pendente,
+        'setor_usuario': _setor_do_usuario(request.user, setor_param),
+        'pode_gerenciar': _pode_gerenciar(request.user),
+        'setores': _setores_ativos(),
+        'setor_param': setor_param,
+    }
+    return render(request, 'core/industria/escanear.html', context)

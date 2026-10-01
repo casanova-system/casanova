@@ -6,8 +6,19 @@
 
     {% include 'core/partials/messages.html' %}
 
+    {% if migration_pendente %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>
+            <strong>Rotina não instalada neste servidor.</strong>
+            Execute <code>python manage.py migrate</code> no servidor para criar as tabelas do rastreio.
+        </div>
+    </div>
+    {% endif %}
+
     {% url 'menu_principal' as url_inicio %}
-    {% include 'core/partials/page_header.html' with titulo="Rastreio de Produção" subtitulo="Acompanhe a OP pelos setores da fábrica em tempo real." voltar_url=url_inicio %}
+    {% url 'escanear' as url_escanear %}
+    {% include 'core/partials/page_header.html' with titulo="Rastreio de Produção" subtitulo="Acompanhe a OP pelos setores da fábrica em tempo real." acao_url=url_escanear acao_texto="Escanear OP" acao_icone="fa-barcode" voltar_url=url_inicio %}
 
     <!-- Filtros -->
     <div class="filtros-bar">
@@ -108,7 +119,7 @@
                         <tr>
                             <td colspan="8" class="p-0">
                                 {% url 'rastreio_producao' as url_lista %}
-                                {% include 'core/partials/empty_state.html' with icone="fa-route" busca=filtros.q titulo_vazio="Nenhuma OP em rastreio" texto_vazio="Escaneie o QR Code de uma OP para iniciar o rastreio de produção." limpar_url=url_lista %}
+                                {% include 'core/partials/empty_state.html' with icone="fa-route" busca=filtros.q titulo_vazio="Nenhuma OP em rastreio" texto_vazio="Escaneie o código de barras de uma OP para iniciar o rastreio de produção." limpar_url=url_lista %}
                             </td>
                         </tr>
                         {% endfor %}

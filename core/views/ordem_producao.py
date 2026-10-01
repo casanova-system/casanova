@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db import connections
 from django.shortcuts import render
 
+from core.models import RastreioOP
 from core.views.permissao import requer_rotina
 
 ITENS_POR_PAGINA = 12
@@ -247,7 +248,7 @@ def lista_ordem_producao(request):
 
 
 def _buscar_op_por_id(op_id):
-    """Busca os dados de uma OP específica no Faktory (para o QR Code)."""
+    """Busca os dados de uma OP específica no Faktory (para o código de barras)."""
     sql = f"""
         SELECT TOP 1
             OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
@@ -302,42 +303,36 @@ def _buscar_op_por_id(op_id):
         return registro
 
 
-def _conteudo_qrcode(dados, url_rastreio=None):
-    """Monta o texto que vai dentro do QR Code.
+def _conteudo_barcode(op_id):
+    """Conteúdo do código de barras: o ID da OP (curto e legível pelo leitor).
 
-    Quando `url_rastreio` é informada, o QR contém a URL da tela de rastreio
-    (assim, ao escanear, o celular abre direto a página da OP). Caso contrário,
-    mantém o texto descritivo (compatibilidade).
+    O leitor de código de barras funciona como teclado: digita o valor e
+    pressiona Enter. Por isso usamos apenas o ID numérico da OP.
     """
-    if url_rastreio:
-        return url_rastreio
-    linhas = [
-        f"OP: {dados.get('NumeroDocumento') or '—'}",
-        f"Obra: {dados.get('ProjetoObra')}",
-        f"Produto: {dados.get('Produto') or '—'}",
-        f"Variante: {dados.get('Variante') or '—'}",
-        f"Necessidade: {dados.get('DataNecessidade')}",
-        f"Qtd: {dados.get('QtdProduzir')}",
-    ]
-    return '\n'.join(linhas)
+    return str(op_id)
 
 
-def _gerar_qrcode_svg(conteudo):
-    """Gera o QR Code como SVG (string) com fundo branco. Não depende do Pillow."""
+def _gerar_barcode_svg(conteudo):
+    """Gera o código de barras (Code128) como SVG (string) com fundo branco."""
     import io
 
-    import qrcode
-    import qrcode.image.svg
+    import barcode
+    from barcode.writer import SVGWriter
 
-    factory = qrcode.image.svg.SvgPathImage
-    img = qrcode.make(conteudo, image_factory=factory)
-
+    code = barcode.get('code128', conteudo, writer=SVGWriter())
     buffer = io.BytesIO()
-    img.save(buffer)
+    # options: módulo mais largo e texto legível embaixo
+    code.write(buffer, options={
+        'module_width': 0.5,
+        'module_height': 15.0,
+        'font_size': 12,
+        'text_distance': 4.0,
+        'quiet_zone': 6.0,
+        'write_text': True,
+    })
     svg = buffer.getvalue().decode('utf-8')
 
-    # O SVG gerado tem fundo transparente; injeta um retângulo branco logo
-    # após a tag <svg ...> para garantir o fundo branco (essencial na impressão).
+    # Garante fundo branco (essencial na impressão)
     marcador = svg.find('>', svg.find('<svg'))
     if marcador != -1:
         fundo = '<rect width="100%" height="100%" fill="#ffffff"/>'
@@ -348,29 +343,20 @@ def _gerar_qrcode_svg(conteudo):
 
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
-def qrcode_ordem_producao(request, op_id):
-    """Gera o QR Code de uma OP em SVG (aponta para a tela de rastreio)."""
+def barcode_ordem_producao(request, op_id):
+    """Gera o código de barras de uma OP em SVG.
+
+    NÃO depende do ERP Faktory: o código contém apenas o ID da OP, então
+    funciona mesmo se o ERP estiver indisponível.
+    """
     from django.http import HttpResponse
-    from django.urls import reverse
 
     try:
-        dados = _buscar_op_por_id(op_id)
-    except Exception:  # noqa: BLE001
-        dados = None
-
-    if not dados:
-        return HttpResponse('OP não encontrada.', status=404)
-
-    url_rastreio = request.build_absolute_uri(
-        reverse('rastreio_op', args=[op_id])
-    )
-
-    try:
-        svg = _gerar_qrcode_svg(_conteudo_qrcode(dados, url_rastreio))
+        svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
     except ImportError:
         return HttpResponse(
-            'A biblioteca "qrcode" não está instalada neste servidor. '
-            'Execute: pip install qrcode',
+            'A biblioteca "python-barcode" não está instalada neste servidor. '
+            'Execute: pip install python-barcode',
             status=500,
             content_type='text/plain; charset=utf-8',
         )
@@ -380,39 +366,56 @@ def qrcode_ordem_producao(request, op_id):
 
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
-def imprimir_qrcode_ordem_producao(request, op_id):
-    """Página de impressão do QR Code em folha A4 (QR pequeno e centralizado)."""
-    from django.urls import reverse
+def imprimir_barcode_ordem_producao(request, op_id):
+    """Página de impressão do código de barras em folha A4.
 
+    Os dados da OP vêm do ERP quando disponível; caso contrário, usa o
+    rastreio local ou apenas o ID (o código de barras sempre é gerado).
+    """
+    dados = None
     try:
         dados = _buscar_op_por_id(op_id)
     except Exception:  # noqa: BLE001
         dados = None
 
+    # Fallback: dados do rastreio local (se a OP já foi escaneada)
     if not dados:
-        return render(request, 'core/industria/imprimir_qrcode_op.html', {
-            'erro': 'OP não encontrada.',
-        })
+        rastreio = RastreioOP.objects.filter(op_id=op_id).first()
+        if rastreio:
+            dados = {
+                'NumeroDocumento': rastreio.op_numero or str(op_id),
+                'ProjetoObra': rastreio.obra or '—',
+                'Produto': rastreio.produto or '—',
+                'Variante': rastreio.variante or '—',
+                'DataNecessidade': '—',
+                'QtdProduzir': '—',
+            }
 
-    url_rastreio = request.build_absolute_uri(
-        reverse('rastreio_op', args=[op_id])
-    )
-    conteudo = _conteudo_qrcode(dados, url_rastreio)
+    # Último recurso: apenas o ID (o código de barras continua válido)
+    if not dados:
+        dados = {
+            'NumeroDocumento': str(op_id),
+            'ProjetoObra': '—',
+            'Produto': '—',
+            'Variante': '—',
+            'DataNecessidade': '—',
+            'QtdProduzir': '—',
+        }
 
     try:
-        qr_svg = _gerar_qrcode_svg(conteudo)
-        erro_qr = None
+        barcode_svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
+        erro_barcode = None
     except ImportError:
-        qr_svg = None
-        erro_qr = (
-            'A biblioteca "qrcode" não está instalada neste servidor. '
-            'Execute: pip install qrcode'
+        barcode_svg = None
+        erro_barcode = (
+            'A biblioteca "python-barcode" não está instalada neste servidor. '
+            'Execute: pip install python-barcode'
         )
 
     context = {
         'dados': dados,
-        'qr_svg': qr_svg,
-        'erro_qr': erro_qr,
-        'conteudo_qr': conteudo,
+        'barcode_svg': barcode_svg,
+        'erro_barcode': erro_barcode,
+        'codigo': _conteudo_barcode(op_id),
     }
-    return render(request, 'core/industria/imprimir_qrcode_op.html', context)
+    return render(request, 'core/industria/imprimir_barcode_op.html', context)

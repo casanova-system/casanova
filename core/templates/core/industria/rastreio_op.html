@@ -6,6 +6,16 @@
 
     {% include 'core/partials/messages.html' %}
 
+    {% if migration_pendente %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>
+            <strong>Rotina não instalada neste servidor.</strong>
+            Execute <code>python manage.py migrate</code> no servidor para criar as tabelas do rastreio.
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Cabeçalho -->
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
@@ -48,7 +58,7 @@
     <!-- Ainda não iniciado -->
     <div class="card shadow-sm border-0 text-center">
         <div class="card-body py-5">
-            <div class="empty-state-icon mb-3"><i class="fa-solid fa-qrcode"></i></div>
+            <div class="empty-state-icon mb-3"><i class="fa-solid fa-barcode"></i></div>
             <h5 class="fw-bold mb-2">Rastreio ainda não iniciado</h5>
             <p class="text-muted mb-4">Inicie o rastreio para registrar a entrada desta OP no setor de <strong>Separação</strong>.</p>
             <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">

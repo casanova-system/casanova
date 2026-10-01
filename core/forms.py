@@ -10,7 +10,10 @@ class UploadPDFForm(forms.Form):
 class PerfilUsuarioForm(forms.ModelForm):
     class Meta:
         model = PerfilUsuario
-        fields = ['nivel_acesso', 'setor', 'cpf', 'data_nascimento', 'cep', 'endereco']
+        fields = [
+            'nivel_acesso', 'setor', 'setor_producao',
+            'cpf', 'data_nascimento', 'cep', 'endereco',
+        ]
 
 class VeiculoForm(forms.ModelForm):
     class Meta:
