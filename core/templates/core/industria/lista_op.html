@@ -146,6 +146,8 @@
                         <col style="width: 110px;">
                         <col style="width: 110px;">
                         <col style="width: 130px;">
+                        <col style="width: 280px;">
+                        <col style="width: 90px;">
                     </colgroup>
                     <thead class="table-light sticky-top">
                         <tr>
@@ -159,7 +161,9 @@
                             <th class="py-2 text-nowrap text-end">Qtd. Produzir<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap text-end">Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">Elaboração<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap pe-3">Atendimento</th>
+                            <th class="py-2 text-nowrap">Atendimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="py-2 text-nowrap">Projeto / Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="py-2 text-nowrap pe-3 text-center">QR Code</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,11 +183,59 @@
                             <td class="text-end">{{ op.QtdProduzir|floatformat:2 }}</td>
                             <td class="text-end">{{ op.QtdProduzida|floatformat:2 }}</td>
                             <td class="text-nowrap">{{ op.StatusElaboracaoLabel }}</td>
-                            <td class="pe-3 text-nowrap">{{ op.StatusAtendimentoLabel }}</td>
+                            <td class="text-nowrap">{{ op.StatusAtendimentoLabel }}</td>
+                            <td class="text-nowrap">{{ op.ProjetoObra }}</td>
+                            <td class="pe-3 text-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal" data-bs-target="#modalQr{{ op.IdOrdemProducao }}"
+                                        title="Gerar QR Code">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                            </td>
                         </tr>
+
+                        <!-- Modal do QR Code da OP -->
+                        <div class="modal fade" id="modalQr{{ op.IdOrdemProducao }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header py-3 px-4">
+                                        <h5 class="modal-title fw-bold mb-0" style="font-size: 1rem;">
+                                            QR Code — OP {{ op.NumeroDocumento }}
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body text-center py-4">
+                                        <img src="{% url 'qrcode_ordem_producao' op.IdOrdemProducao %}"
+                                             alt="QR Code da OP {{ op.NumeroDocumento }}"
+                                             class="img-fluid mb-3" style="max-width: 260px;">
+                                        <div class="text-start small">
+                                            <div><strong>OP:</strong> {{ op.NumeroDocumento }}</div>
+                                            <div><strong>Obra:</strong> {{ op.ProjetoObra }}</div>
+                                            <div><strong>Produto:</strong> {{ op.Produto|default:"—" }}</div>
+                                            <div><strong>Variante:</strong> {{ op.Variante|default:"—" }}</div>
+                                            <div><strong>Necessidade:</strong> {{ op.DataNecessidade }}</div>
+                                            <div><strong>Qtd. Produzir:</strong> {{ op.QtdProduzir|floatformat:2 }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer py-2 px-4">
+                                        <a href="{% url 'imprimir_qrcode_ordem_producao' op.IdOrdemProducao %}"
+                                           target="_blank" rel="noopener"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-print me-1"></i> Imprimir (A4)
+                                        </a>
+                                        <a href="{% url 'qrcode_ordem_producao' op.IdOrdemProducao %}"
+                                           download="qrcode_op_{{ op.NumeroDocumento }}.png"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-download me-1"></i> Baixar
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {% empty %}
                         <tr>
-                            <td colspan="11" class="p-0">
+                            <td colspan="13" class="p-0">
                                 <div class="empty-state">
                                     <div class="empty-state-icon"><i class="fa-solid fa-industry"></i></div>
                                     {% if erro_conexao %}

@@ -96,8 +96,11 @@ def _montar_filtros(request):
 
     projeto = request.GET.get('projeto', '').strip()
     if projeto:
-        where.append('(PRJ.DS_PROJETO LIKE %s OR PRJ.NM_CODIGO LIKE %s)')
-        params.extend([f'%{projeto}%', f'%{projeto}%'])
+        where.append(
+            '(PRJ.DS_PROJETO LIKE %s OR PRJ.NM_CODIGO LIKE %s '
+            'OR CAST(PRJ.NM_DOCUMENTO AS VARCHAR) LIKE %s)'
+        )
+        params.extend([f'%{projeto}%', f'%{projeto}%', f'%{projeto}%'])
 
     item_projeto = request.GET.get('item_projeto', '').strip()
     if item_projeto:
@@ -175,6 +178,7 @@ def lista_ordem_producao(request):
         sql_count = f'SELECT COUNT(*) {FROM_JOINS} {clausula}'
         sql_dados = f"""
             SELECT
+                OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
                 EST.DS_FANTASIA            AS Estabelecimento,
                 DOC.CD_DOCUMENTO           AS Documento,
                 OP.NM_DOCUMENTO            AS NumeroDocumento,
@@ -188,8 +192,13 @@ def lista_ordem_producao(request):
                 OP.QT_PRODUZIR             AS QtdProduzir,
                 OP.QT_PRODUZIDA            AS QtdProduzida,
                 OP.TP_STATUSELABORACAO     AS StatusElaboracao,
-                OP.TP_STATUSATENDIMENTO    AS StatusAtendimento
+                OP.TP_STATUSATENDIMENTO    AS StatusAtendimento,
+                PRJ.NM_DOCUMENTO           AS ObraNumero,
+                PRJ.NM_CODIGO              AS ObraCodigo,
+                PRJ.DS_PROJETO             AS ObraDescricao,
+                DOCP.CD_DOCUMENTO          AS ObraTipoDocumento
             {FROM_JOINS}
+            LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
             {clausula}
             ORDER BY {order_by}
             OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
@@ -215,9 +224,26 @@ def lista_ordem_producao(request):
                     registro['DataNecessidade'] = (
                         data_nec.strftime('%d/%m/%Y') if data_nec else '—'
                     )
+                    # Monta o texto do Projeto/Obra (ex.: "OBR - 1334 - 25-3629-00 - KARTËDROMO")
+                    partes_obra = [
+                        registro.get('ObraTipoDocumento'),
+                        registro.get('ObraNumero'),
+                        registro.get('ObraCodigo'),
+                        registro.get('ObraDescricao'),
+                    ]
+                    registro['ProjetoObra'] = ' - '.join(
+                        str(p) for p in partes_obra if p not in (None, '')
+                    ) or '—'
                     ordens.append(registro)
         except Exception as exc:  # noqa: BLE001
             erro_conexao = str(exc)
+            # Mensagem amigável para o caso mais comum: backend/driver ausente
+            if 'available database backend' in erro_conexao or 'mssql' in erro_conexao.lower():
+                erro_conexao = (
+                    'O driver de conexão com o ERP Faktory não está instalado neste '
+                    'servidor. Instale os pacotes "mssql-django" e "pyodbc" e o '
+                    '"ODBC Driver 18 for SQL Server". Consulte DEPLOY_FAKTORY.md.'
+                )
 
     # Paginador "leve": já paginado no banco, mas mantém a interface do partial
     paginator = Paginator(range(total), ITENS_POR_PAGINA)
@@ -239,3 +265,133 @@ def lista_ordem_producao(request):
         'tem_filtro': tem_filtro,
     }
     return render(request, 'core/industria/lista_op.html', context)
+
+
+def _buscar_op_por_id(op_id):
+    """Busca os dados de uma OP específica no Faktory (para o QR Code)."""
+    sql = f"""
+        SELECT TOP 1
+            OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
+            EST.DS_FANTASIA            AS Estabelecimento,
+            DOC.CD_DOCUMENTO           AS Documento,
+            OP.NM_DOCUMENTO            AS NumeroDocumento,
+            OP.TP_ORDEMPRODUCAO        AS Tipo,
+            PROD.DS_PRODUTO            AS Produto,
+            PV.CD_PRODUTOVARIANTE      AS Variante,
+            OP.DT_NECESSIDADE          AS DataNecessidade,
+            PI.DS_PROJETOITEM          AS ItemProjeto,
+            PE.DS_PROJETOESTAGIO       AS EtapaProjeto,
+            OP.QT_PRODUZIR             AS QtdProduzir,
+            OP.QT_PRODUZIDA            AS QtdProduzida,
+            OP.TP_STATUSELABORACAO     AS StatusElaboracao,
+            OP.TP_STATUSATENDIMENTO    AS StatusAtendimento,
+            PRJ.NM_DOCUMENTO           AS ObraNumero,
+            PRJ.NM_CODIGO              AS ObraCodigo,
+            PRJ.DS_PROJETO             AS ObraDescricao,
+            DOCP.CD_DOCUMENTO          AS ObraTipoDocumento
+        {FROM_JOINS}
+        LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
+        WHERE OP.ID_ORDEMPRODUCAO = %s
+    """
+    with connections['faktory'].cursor() as cur:
+        cur.execute(sql, [op_id])
+        colunas = [d[0] for d in cur.description]
+        linha = cur.fetchone()
+        if not linha:
+            return None
+        registro = dict(zip(colunas, linha))
+        registro['TipoLabel'] = TIPOS_OP.get(registro.get('Tipo'), '—')
+        registro['StatusElaboracaoLabel'] = STATUS_ELABORACAO.get(
+            registro.get('StatusElaboracao'), '—'
+        )
+        registro['StatusAtendimentoLabel'] = STATUS_ATENDIMENTO.get(
+            registro.get('StatusAtendimento'), '—'
+        )
+        data_nec = registro.get('DataNecessidade')
+        registro['DataNecessidade'] = (
+            data_nec.strftime('%d/%m/%Y') if data_nec else '—'
+        )
+        partes_obra = [
+            registro.get('ObraTipoDocumento'),
+            registro.get('ObraNumero'),
+            registro.get('ObraCodigo'),
+            registro.get('ObraDescricao'),
+        ]
+        registro['ProjetoObra'] = ' - '.join(
+            str(p) for p in partes_obra if p not in (None, '')
+        ) or '—'
+        return registro
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def qrcode_ordem_producao(request, op_id):
+    """Gera o QR Code de uma OP. O conteúdo prioriza o número da obra."""
+    import qrcode
+    from django.http import HttpResponse
+
+    try:
+        dados = _buscar_op_por_id(op_id)
+    except Exception:  # noqa: BLE001
+        dados = None
+
+    if not dados:
+        return HttpResponse('OP não encontrada.', status=404)
+
+    # Conteúdo do QR Code: a OP é o número do documento; prioriza a obra
+    linhas = [
+        f"OP: {dados.get('NumeroDocumento') or '—'}",
+        f"Obra: {dados.get('ProjetoObra')}",
+        f"Produto: {dados.get('Produto') or '—'}",
+        f"Variante: {dados.get('Variante') or '—'}",
+        f"Necessidade: {dados.get('DataNecessidade')}",
+        f"Qtd: {dados.get('QtdProduzir')}",
+    ]
+    conteudo = '\n'.join(linhas)
+
+    img = qrcode.make(conteudo)
+    resposta = HttpResponse(content_type='image/png')
+    img.save(resposta, 'PNG')
+    return resposta
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def imprimir_qrcode_ordem_producao(request, op_id):
+    """Página de impressão do QR Code em folha A4 (QR pequeno e centralizado)."""
+    import base64
+    import io
+
+    import qrcode
+
+    try:
+        dados = _buscar_op_por_id(op_id)
+    except Exception:  # noqa: BLE001
+        dados = None
+
+    if not dados:
+        return render(request, 'core/industria/imprimir_qrcode_op.html', {
+            'erro': 'OP não encontrada.',
+        })
+
+    linhas = [
+        f"OP: {dados.get('NumeroDocumento') or '—'}",
+        f"Obra: {dados.get('ProjetoObra')}",
+        f"Produto: {dados.get('Produto') or '—'}",
+        f"Variante: {dados.get('Variante') or '—'}",
+        f"Necessidade: {dados.get('DataNecessidade')}",
+        f"Qtd: {dados.get('QtdProduzir')}",
+    ]
+    conteudo = '\n'.join(linhas)
+
+    img = qrcode.make(conteudo)
+    buffer = io.BytesIO()
+    img.save(buffer, 'PNG')
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode('ascii')
+
+    context = {
+        'dados': dados,
+        'qr_base64': qr_base64,
+        'conteudo_qr': conteudo,
+    }
+    return render(request, 'core/industria/imprimir_qrcode_op.html', context)
