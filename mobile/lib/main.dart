@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'api_service.dart';
-import 'config.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'theme.dart';
 
 void main() {
   runApp(const CasanovaApp());
@@ -17,18 +17,7 @@ class CasanovaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Casanova Esquadrias',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(AppConfig.corAzul),
-          primary: const Color(AppConfig.corAzul),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(AppConfig.corAzul),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-      ),
+      theme: Cv.theme(),
       home: const SplashScreen(),
     );
   }

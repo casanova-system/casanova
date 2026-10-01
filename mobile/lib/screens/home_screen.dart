@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
-import '../config.dart';
 import '../models.dart';
+import '../theme.dart';
 import 'detail_screen.dart';
 import 'login_screen.dart';
 import 'scan_screen.dart';
@@ -60,15 +60,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (resultado == true) _carregar();
   }
 
-  Color _corStatus(Rastreio r) =>
-      r.concluida ? Colors.green : Colors.orange;
-
   @override
   Widget build(BuildContext context) {
-    final u = widget.usuario;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rastreio de Produção'),
+        title: const CvBrand(
+          fontSize: 17,
+          casanovaColor: Colors.white,
+          esquadriasColor: Cv.accent,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -79,91 +79,122 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _abrirScanner,
-        backgroundColor: const Color(AppConfig.corAzul),
+        backgroundColor: Cv.blue,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.qr_code_scanner),
         label: const Text('Escanear'),
       ),
       body: Column(
         children: [
-          // Cartão do usuário
-          Container(
-            width: double.infinity,
-            color: const Color(AppConfig.corAzul),
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.person, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        u.nome,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        u.setorProducao != null
-                            ? 'Setor: ${u.setorProducao!.nome}'
-                            : 'Sem setor de produção vinculado',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                if (u.podeGerenciar)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade400,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Gerência',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // Filtros
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: '', label: Text('Todas')),
-                      ButtonSegment(value: 'EM_PRODUCAO', label: Text('Produção')),
-                      ButtonSegment(value: 'CONCLUIDA', label: Text('Concluídas')),
-                    ],
-                    selected: {_filtroStatus},
-                    onSelectionChanged: (s) {
-                      setState(() => _filtroStatus = s.first);
-                      _carregar();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Lista
+          _buildCartaoUsuario(),
+          _buildFiltros(),
           Expanded(child: _buildLista()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartaoUsuario() {
+    final u = widget.usuario;
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: Cv.brandGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(Cv.radiusLg),
+          bottomRight: Radius.circular(Cv.radiusLg),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+            ),
+            child: const Icon(Icons.person, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  u.nome,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  u.setorProducao != null
+                      ? 'Setor: ${u.setorProducao!.nome}'
+                      : 'Sem setor de produção vinculado',
+                  style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          if (u.podeGerenciar)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Cv.success.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.verified_user, size: 13, color: Colors.white),
+                  SizedBox(width: 5),
+                  Text(
+                    'Gerência',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFiltros() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SegmentedButton<String>(
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+              segments: const [
+                ButtonSegment(value: '', label: Text('Todas')),
+                ButtonSegment(value: 'EM_PRODUCAO', label: Text('Produção')),
+                ButtonSegment(value: 'CONCLUIDA', label: Text('Concluídas')),
+              ],
+              selected: {_filtroStatus},
+              onSelectionChanged: (s) {
+                setState(() => _filtroStatus = s.first);
+                _carregar();
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -171,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildLista() {
     if (_carregando) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Cv.blue));
     }
     if (_erro != null) {
       return Center(
@@ -180,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: Cv.danger),
               const SizedBox(height: 12),
               Text(_erro!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
@@ -195,20 +226,20 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     if (_rastreios.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
+            Icon(Icons.inbox_outlined, size: 64, color: Cv.textFaint),
+            SizedBox(height: 12),
             Text(
               'Nenhuma OP em rastreio',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+              style: TextStyle(color: Cv.textMuted, fontSize: 16),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'Escaneie o código de barras para iniciar.',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+              style: TextStyle(color: Cv.textFaint, fontSize: 13),
             ),
           ],
         ),
@@ -217,65 +248,105 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       onRefresh: _carregar,
+      color: Cv.blue,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 90),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 90),
         itemCount: _rastreios.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, i) {
-          final r = _rastreios[i];
-          return Card(
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey.shade200),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              leading: CircleAvatar(
-                backgroundColor: _corStatus(r).withValues(alpha: 0.15),
-                child: Icon(
-                  r.concluida ? Icons.check_circle : Icons.precision_manufacturing,
-                  color: _corStatus(r),
-                ),
-              ),
-              title: Text(
-                'OP ${r.titulo}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (r.obra.isNotEmpty)
-                    Text(r.obra, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on,
-                          size: 14, color: Colors.grey.shade600),
-                      const SizedBox(width: 4),
-                      Text(
-                        r.setorAtualNome,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DetailScreen(api: widget.api, opId: r.opId),
-                  ),
-                );
-                _carregar();
-              },
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) => _buildItem(_rastreios[i]),
+      ),
+    );
+  }
+
+  Widget _buildItem(Rastreio r) {
+    final cor = r.concluida ? Cv.success : Cv.warning;
+    return CvCard(
+      padding: EdgeInsets.zero,
+      shadow: Cv.shadowSm,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Cv.radius),
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DetailScreen(api: widget.api, opId: r.opId),
             ),
           );
+          _carregar();
         },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: cor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(Cv.radiusSm),
+                ),
+                child: Icon(
+                  r.concluida
+                      ? Icons.check_circle
+                      : Icons.precision_manufacturing,
+                  color: cor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'OP ${r.titulo}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: Cv.text,
+                            ),
+                          ),
+                        ),
+                        CvBadge(
+                          texto: r.concluida ? 'Concluída' : 'Em produção',
+                          cor: cor,
+                        ),
+                      ],
+                    ),
+                    if (r.obra.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        r.obra,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Cv.textMuted, fontSize: 13),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on,
+                            size: 14, color: Cv.textMuted),
+                        const SizedBox(width: 4),
+                        Text(
+                          r.setorAtualNome,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Cv.textMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Cv.textFaint),
+            ],
+          ),
+        ),
       ),
     );
   }

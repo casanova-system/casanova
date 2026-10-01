@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
-import '../config.dart';
 import '../models.dart';
+import '../theme.dart';
 
 class DetailScreen extends StatefulWidget {
   final ApiService api;
@@ -45,10 +45,7 @@ class _DetailScreenState extends State<DetailScreen> {
       appBar: AppBar(
         title: Text('OP ${_rastreio?.titulo ?? widget.opId}'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _carregar,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _carregar),
         ],
       ),
       body: _buildCorpo(),
@@ -57,7 +54,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Widget _buildCorpo() {
     if (_carregando) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Cv.blue));
     }
     if (_erro != null) {
       return Center(
@@ -70,51 +67,12 @@ class _DetailScreenState extends State<DetailScreen> {
     final r = _rastreio!;
     return RefreshIndicator(
       onRefresh: _carregar,
+      color: Cv.blue,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Status
-          Card(
-            color: r.concluida ? Colors.green.shade50 : Colors.orange.shade50,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: r.concluida ? Colors.green.shade200 : Colors.orange.shade200,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    r.concluida ? Icons.check_circle : Icons.precision_manufacturing,
-                    color: r.concluida ? Colors.green : Colors.orange,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          r.concluida ? 'OP Concluída' : 'Em Produção',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        Text(
-                          'Setor atual: ${r.setorAtualNome}',
-                          style: TextStyle(color: Colors.grey.shade700),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildStatus(r),
           const SizedBox(height: 16),
-
-          // Dados da OP
           _secao('Dados da OP', [
             _linha('OP', r.titulo),
             if (r.obra.isNotEmpty) _linha('Obra', r.obra),
@@ -126,15 +84,13 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           ]),
           const SizedBox(height: 16),
-
-          // Histórico
           _secao('Histórico de Movimentações', [
             if (r.movimentacoes.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'Nenhuma movimentação registrada.',
-                  style: TextStyle(color: Colors.grey.shade600),
+                  style: TextStyle(color: Cv.textMuted),
                 ),
               )
             else
@@ -145,30 +101,70 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _secao(String titulo, List<Widget> filhos) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              titulo,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Color(AppConfig.corAzul),
-              ),
+  Widget _buildStatus(Rastreio r) {
+    final cor = r.concluida ? Cv.success : Cv.warning;
+    final fundo = r.concluida ? Cv.successSoft : Cv.warningSoft;
+    return CvCard(
+      color: fundo,
+      borderColor: cor.withValues(alpha: 0.3),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: cor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(Cv.radiusSm),
             ),
-            const Divider(height: 20),
-            ...filhos,
-          ],
-        ),
+            child: Icon(
+              r.concluida ? Icons.check_circle : Icons.precision_manufacturing,
+              color: cor,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.concluida ? 'OP Concluída' : 'Em Produção',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Cv.text),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Setor atual: ${r.setorAtualNome}',
+                  style: const TextStyle(color: Cv.textMuted, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _secao(String titulo, List<Widget> filhos) {
+    return CvCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: Cv.blue,
+            ),
+          ),
+          const Divider(height: 20),
+          ...filhos,
+        ],
       ),
     );
   }
@@ -183,12 +179,16 @@ class _DetailScreenState extends State<DetailScreen> {
             width: 100,
             child: Text(
               label,
-              style: TextStyle(
-                  color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: Cv.textMuted, fontWeight: FontWeight.w600),
             ),
           ),
           Expanded(
-            child: Text(valor, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              valor,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w500, color: Cv.text),
+            ),
           ),
         ],
       ),
@@ -200,16 +200,22 @@ class _DetailScreenState extends State<DetailScreen> {
         '${m.dataHora.day.toString().padLeft(2, '0')}/${m.dataHora.month.toString().padLeft(2, '0')} '
         '${m.dataHora.hour.toString().padLeft(2, '0')}:${m.dataHora.minute.toString().padLeft(2, '0')}';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(AppConfig.corAzul),
-              shape: BoxShape.circle,
-            ),
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  color: Cv.blue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(width: 2, height: 34, color: Cv.line),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -218,12 +224,22 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Text(
                   m.setorNome,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, color: Cv.text),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  '${m.usuario ?? "—"} • $data',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  '$data${m.usuario != null ? ' · ${m.usuario}' : ''}',
+                  style: const TextStyle(color: Cv.textMuted, fontSize: 12),
                 ),
+                if (m.observacao.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      m.observacao,
+                      style: const TextStyle(color: Cv.textFaint, fontSize: 12),
+                    ),
+                  ),
               ],
             ),
           ),

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 /// Configuração do app — endereço da API Django.
 ///
 /// Quando o app roda no **navegador** (web), a API é acessada na **mesma
@@ -5,8 +7,6 @@
 /// endereço (localhost, 10.12.50.99, etc.) sem precisar recompilar.
 ///
 /// Quando roda como app nativo (Android/iOS), usa o `baseUrl` fixo abaixo.
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 class AppConfig {
   /// URL fixa usada apenas no app nativo (Android/iOS).
   ///   - Servidor da empresa (celular físico):  http://10.12.50.99:8000
