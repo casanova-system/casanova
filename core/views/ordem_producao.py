@@ -37,9 +37,8 @@ STATUS_ATENDIMENTO = {
 
 # Campos de filtro considerados para decidir se a grid deve carregar
 CAMPOS_FILTRO = (
-    'estabelecimento', 'tipo', 'documento', 'numero', 'produto', 'variante',
-    'projeto', 'item_projeto', 'etapa_projeto', 'status', 'data_necessidade',
-    'localizacao', 'q',
+    'estabelecimento', 'tipo', 'documento', 'produto', 'variante',
+    'projeto', 'item_projeto', 'status', 'data_necessidade', 'q',
 )
 
 FROM_JOINS = """
@@ -75,15 +74,6 @@ def _montar_filtros(request):
         where.append('(DOC.CD_DOCUMENTO LIKE %s OR CAST(OP.NM_DOCUMENTO AS VARCHAR) LIKE %s)')
         params.extend([f'%{documento}%', f'%{documento}%'])
 
-    numero = request.GET.get('numero', '').strip()
-    if numero:
-        # Busca tanto pelo número do documento quanto pelo número da OP
-        where.append(
-            '(CAST(OP.NM_DOCUMENTO AS VARCHAR) LIKE %s '
-            'OR CAST(OP.ID_ORDEMPRODUCAO AS VARCHAR) LIKE %s)'
-        )
-        params.extend([f'%{numero}%', f'%{numero}%'])
-
     produto = request.GET.get('produto', '').strip()
     if produto:
         where.append('PROD.DS_PRODUTO LIKE %s')
@@ -107,11 +97,6 @@ def _montar_filtros(request):
         where.append('PI.DS_PROJETOITEM LIKE %s')
         params.append(f'%{item_projeto}%')
 
-    etapa_projeto = request.GET.get('etapa_projeto', '').strip()
-    if etapa_projeto:
-        where.append('PE.DS_PROJETOESTAGIO LIKE %s')
-        params.append(f'%{etapa_projeto}%')
-
     status = request.GET.get('status', '').strip()
     if status.isdigit():
         where.append('OP.TP_STATUSATENDIMENTO = %s')
@@ -122,21 +107,15 @@ def _montar_filtros(request):
         where.append('CAST(OP.DT_NECESSIDADE AS DATE) = %s')
         params.append(data_necessidade)
 
-    localizacao = request.GET.get('localizacao', '').strip()
-    if localizacao:
-        where.append('OP.DS_LOCALIZACAOOBRA LIKE %s')
-        params.append(f'%{localizacao}%')
-
-    # Busca livre (código da OP, produto, projeto, localização)
+    # Busca livre (código da OP, produto, obra)
     q = request.GET.get('q', '').strip()
     if q:
         where.append(
             '(CAST(OP.ID_ORDEMPRODUCAO AS VARCHAR) LIKE %s '
             'OR PROD.DS_PRODUTO LIKE %s '
-            'OR PRJ.DS_PROJETO LIKE %s '
-            'OR OP.DS_LOCALIZACAOOBRA LIKE %s)'
+            'OR PRJ.DS_PROJETO LIKE %s)'
         )
-        params.extend([f'%{q}%'] * 4)
+        params.extend([f'%{q}%'] * 3)
 
     if request.GET.get('exibir_cancelados') != 'on':
         where.append('OP.DT_CANCELAMENTO IS NULL')
@@ -337,17 +316,27 @@ def _conteudo_qrcode(dados):
 
 
 def _gerar_qrcode_svg(conteudo):
-    """Gera o QR Code como SVG (string). Não depende do Pillow."""
+    """Gera o QR Code como SVG (string) com fundo branco. Não depende do Pillow."""
+    import io
+
     import qrcode
     import qrcode.image.svg
 
     factory = qrcode.image.svg.SvgPathImage
     img = qrcode.make(conteudo, image_factory=factory)
-    import io
 
     buffer = io.BytesIO()
     img.save(buffer)
-    return buffer.getvalue().decode('utf-8')
+    svg = buffer.getvalue().decode('utf-8')
+
+    # O SVG gerado tem fundo transparente; injeta um retângulo branco logo
+    # após a tag <svg ...> para garantir o fundo branco (essencial na impressão).
+    marcador = svg.find('>', svg.find('<svg'))
+    if marcador != -1:
+        fundo = '<rect width="100%" height="100%" fill="#ffffff"/>'
+        svg = svg[:marcador + 1] + fundo + svg[marcador + 1:]
+
+    return svg
 
 
 @login_required(login_url='login')

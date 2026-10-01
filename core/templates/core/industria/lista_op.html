@@ -45,10 +45,6 @@
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">OP</label>
                     <input type="text" name="documento" class="form-control form-control-sm" value="{{ filtros.documento|default:'' }}" placeholder="Ex: OP">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Nº Documento</label>
-                    <input type="text" name="numero" class="form-control form-control-sm" value="{{ filtros.numero|default:'' }}" placeholder="Ex: 31451">
-                </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Produto</label>
                     <input type="text" name="produto" class="form-control form-control-sm" value="{{ filtros.produto|default:'' }}" placeholder="Ex: TRAVESSA">
@@ -59,20 +55,12 @@
                     <input type="text" name="variante" class="form-control form-control-sm" value="{{ filtros.variante|default:'' }}" placeholder="Ex: RAL9005">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Projeto</label>
-                    <input type="text" name="projeto" class="form-control form-control-sm" value="{{ filtros.projeto|default:'' }}" placeholder="Nome ou código do projeto">
+                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Obra</label>
+                    <input type="text" name="projeto" class="form-control form-control-sm" value="{{ filtros.projeto|default:'' }}" placeholder="Número, código ou nome da obra">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Item do Projeto</label>
                     <input type="text" name="item_projeto" class="form-control form-control-sm" value="{{ filtros.item_projeto|default:'' }}" placeholder="Item">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Etapa do Projeto</label>
-                    <input type="text" name="etapa_projeto" class="form-control form-control-sm" value="{{ filtros.etapa_projeto|default:'' }}" placeholder="Etapa">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Localização da Obra</label>
-                    <input type="text" name="localizacao" class="form-control form-control-sm" value="{{ filtros.localizacao|default:'' }}" placeholder="Ex: BANHEIRO">
                 </div>
 
                 <div class="col-md-2">
@@ -94,7 +82,7 @@
                         <label class="form-check-label small" for="exibir_cancelados">Exibir Cancelados</label>
                     </div>
                 </div>
-                <div class="col-md-6 d-flex gap-2 justify-content-end">
+                <div class="col-12 d-flex gap-2 justify-content-end mt-2">
                     <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
                         <i class="fa-solid fa-magnifying-glass me-1"></i> Localizar
                     </button>
@@ -132,11 +120,14 @@
         </div>
 
         <div class="card-body p-0 flex-grow-1 overflow-hidden d-flex flex-column">
+            {% if ordens %}
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaOP">
                     <colgroup>
+                        <col style="width: 90px;">
                         <col style="width: 150px;">
                         <col style="width: 110px;">
+                        <col style="width: 280px;">
                         <col style="width: 120px;">
                         <col style="width: 260px;">
                         <col style="width: 150px;">
@@ -146,13 +137,13 @@
                         <col style="width: 110px;">
                         <col style="width: 110px;">
                         <col style="width: 130px;">
-                        <col style="width: 280px;">
-                        <col style="width: 90px;">
                     </colgroup>
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th class="ps-3 py-2 text-nowrap">Estabelecimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="ps-3 py-2 text-nowrap text-center">QR Code<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="py-2 text-nowrap">Estabelecimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="py-2 text-nowrap">Projeto / Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">Tipo<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">Produto<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">Variante<span class="col-resizer" title="Arraste para redimensionar"></span></th>
@@ -161,18 +152,24 @@
                             <th class="py-2 text-nowrap text-end">Qtd. Produzir<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap text-end">Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="py-2 text-nowrap">Elaboração<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Atendimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Projeto / Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap pe-3 text-center">QR Code</th>
+                            <th class="py-2 text-nowrap pe-3">Atendimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for op in ordens %}
                         <tr>
-                            <td class="ps-3 text-nowrap">{{ op.Estabelecimento|default:"—" }}</td>
+                            <td class="ps-3 text-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal" data-bs-target="#modalQr{{ op.IdOrdemProducao }}"
+                                        title="Gerar QR Code">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                            </td>
+                            <td class="text-nowrap">{{ op.Estabelecimento|default:"—" }}</td>
                             <td class="text-nowrap">
                                 {{ op.Documento|default:"—" }}{% if op.NumeroDocumento %} {{ op.NumeroDocumento }}{% endif %}
                             </td>
+                            <td class="text-nowrap">{{ op.ProjetoObra }}</td>
                             <td class="text-nowrap">{{ op.TipoLabel }}</td>
                             <td>{{ op.Produto|default:"—" }}</td>
                             <td class="text-nowrap">{{ op.Variante|default:"—" }}</td>
@@ -183,15 +180,7 @@
                             <td class="text-end">{{ op.QtdProduzir|floatformat:2 }}</td>
                             <td class="text-end">{{ op.QtdProduzida|floatformat:2 }}</td>
                             <td class="text-nowrap">{{ op.StatusElaboracaoLabel }}</td>
-                            <td class="text-nowrap">{{ op.StatusAtendimentoLabel }}</td>
-                            <td class="text-nowrap">{{ op.ProjetoObra }}</td>
-                            <td class="pe-3 text-center">
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        data-bs-toggle="modal" data-bs-target="#modalQr{{ op.IdOrdemProducao }}"
-                                        title="Gerar QR Code">
-                                    <i class="fa-solid fa-qrcode"></i>
-                                </button>
-                            </td>
+                            <td class="pe-3 text-nowrap">{{ op.StatusAtendimentoLabel }}</td>
                         </tr>
 
                         <!-- Modal do QR Code da OP -->
@@ -207,7 +196,7 @@
                                     <div class="modal-body text-center py-4">
                                         <img src="{% url 'qrcode_ordem_producao' op.IdOrdemProducao %}"
                                              alt="QR Code da OP {{ op.NumeroDocumento }}"
-                                             class="img-fluid mb-3" style="max-width: 260px;">
+                                             class="img-fluid mb-3" style="max-width: 260px; background: #ffffff; padding: 8px; border-radius: 6px;">
                                         <div class="text-start small">
                                             <div><strong>OP:</strong> {{ op.NumeroDocumento }}</div>
                                             <div><strong>Obra:</strong> {{ op.ProjetoObra }}</div>
@@ -233,32 +222,29 @@
                                 </div>
                             </div>
                         </div>
-                        {% empty %}
-                        <tr>
-                            <td colspan="13" class="p-0">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon"><i class="fa-solid fa-industry"></i></div>
-                                    {% if erro_conexao %}
-                                        <h6 class="empty-state-title">Não foi possível carregar as ordens</h6>
-                                        <p class="empty-state-text">Verifique a conexão com o ERP Faktory.</p>
-                                    {% elif not tem_filtro %}
-                                        <h6 class="empty-state-title">Pesquise para ver as ordens de produção</h6>
-                                        <p class="empty-state-text">Informe ao menos um filtro (OP, produto, projeto, estabelecimento...) e clique em <strong>Localizar</strong>.</p>
-                                    {% else %}
-                                        <h6 class="empty-state-title">Nenhuma ordem de produção encontrada</h6>
-                                        <p class="empty-state-text">Ajuste os filtros ou limpe a busca para tentar novamente.</p>
-                                        <a href="{% url 'lista_ordem_producao' %}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="fa-solid fa-rotate-left me-1"></i> Limpar filtros
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
+            {% else %}
+            <div class="empty-state flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center px-4">
+                <div class="empty-state-icon"><i class="fa-solid fa-industry"></i></div>
+                {% if erro_conexao %}
+                    <h6 class="empty-state-title">Não foi possível carregar as ordens</h6>
+                    <p class="empty-state-text">Verifique a conexão com o ERP Faktory.</p>
+                {% elif not tem_filtro %}
+                    <h6 class="empty-state-title">Pesquise para ver as ordens de produção</h6>
+                    <p class="empty-state-text">Informe ao menos um filtro (OP, produto, obra, estabelecimento...) e clique em <strong>Localizar</strong>.</p>
+                {% else %}
+                    <h6 class="empty-state-title">Nenhuma ordem de produção encontrada</h6>
+                    <p class="empty-state-text">Ajuste os filtros ou limpe a busca para tentar novamente.</p>
+                    <a href="{% url 'lista_ordem_producao' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Limpar filtros
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
