@@ -120,6 +120,7 @@ def form_permissao(request, user_id):
             'COMERCIAL': queryset.filter(setor='COMERCIAL'),
             'FINANCEIRO': queryset.filter(setor='FINANCEIRO'),
             'FROTAS': queryset.filter(setor='FROTAS'),
+            'INDUSTRIA': queryset.filter(setor='INDUSTRIA'),
             'ADMINISTRADOR': queryset.filter(setor='ADMINISTRADOR'),
         }
 

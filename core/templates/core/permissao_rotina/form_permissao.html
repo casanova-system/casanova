@@ -126,6 +126,28 @@
                             </div>
                         </div>
 
+                        <!-- Indústria -->
+                        <div class="perm-setor">
+                            <span class="perm-setor-badge" style="--ps: #7c3aed;">
+                                <i class="fas fa-industry me-1"></i> Indústria
+                            </span>
+                            <div class="row">
+                                {% for rotina in rotinas_por_categoria.ROTINA.INDUSTRIA %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
+                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
                         <!-- Administrador -->
                         <div class="perm-setor">
                             <span class="perm-setor-badge" style="--ps: #dc2626;">

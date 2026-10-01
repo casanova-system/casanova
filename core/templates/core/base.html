@@ -484,12 +484,12 @@
                     </a>
                     
                     <div class="mt-3">
-                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}true{% else %}false{% endif %}" aria-controls="menuRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
+                        <a class="rotinas-toggle text-muted small fw-bold text-uppercase d-flex align-items-center justify-content-between px-2 py-1 text-decoration-none" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}true{% else %}false{% endif %}" aria-controls="menuRotinas" style="font-size: 0.68rem; letter-spacing: 0.6px; cursor: pointer;" title="Rotinas">
                             <span><i class="fa-solid fa-gears me-1" style="width: 16px;"></i> <span class="hide-on-collapse">Rotinas</span></span>
                             <i class="fa-solid fa-chevron-down text-muted hide-on-collapse" style="font-size: 0.6rem;"></i>
                         </a>
                 
-                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas">
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_custo' or request.resolver_match.url_name == 'detalhe_custo' or request.resolver_match.url_name == 'editar_custo' or request.resolver_match.url_name == 'cadastrar_custo' %}show{% endif %}" id="menuRotinas">
                             <div class="rotinas-collapse-body d-flex flex-column gap-1 pt-1" id="listaRotinas">
 
                                 <!-- SETOR: COMERCIAL -->
@@ -543,6 +543,25 @@
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos or request.user.perfil.tem_rotina.003 %}
                                         <a href="{% url 'lista_veiculos' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'veiculos' in request.resolver_match.url_name %}active{% endif %}" data-id="3" data-nome="cadastrar veículo" title="Cadastrar Veículo">
                                             <span class="text-muted small" style="font-size: 0.7rem;">[003]</span> <span class="hide-on-collapse">Cadastro Veículo</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- SETOR: INDÚSTRIA -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_industria %}
+                                <div class="setor-grupo">
+                                    <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorIndustria" role="button"
+                                       aria-expanded="{% if 'ordem_producao' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                                       aria-controls="setorIndustria" title="Indústria">
+                                        <span><i class="fa-solid fa-industry me-1"></i> Indústria</span>
+                                        <i class="fa-solid fa-chevron-down setor-chevron"></i>
+                                    </a>
+                                    <div class="collapse {% if 'ordem_producao' in request.resolver_match.url_name %}show{% endif %}" id="setorIndustria">
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 %}
+                                        <a href="{% url 'lista_ordem_producao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'ordem_producao' in request.resolver_match.url_name %}active{% endif %}" data-id="8" data-nome="ordem de produção" title="Ordem de Produção">
+                                            <span class="text-muted small" style="font-size: 0.7rem;">[008]</span> <span class="hide-on-collapse">Ordem de Produção</span>
                                         </a>
                                         {% endif %}
                                     </div>

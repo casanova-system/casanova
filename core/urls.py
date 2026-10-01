@@ -19,6 +19,7 @@ from core.views.frete import (
     upload_pdf,
 )
 from core.views.grafico_frete import grafico_custo_frete
+from core.views.ordem_producao import lista_ordem_producao
 from core.views.relatorio import relatorio_fretes_mes  # <-- Importado do arquivo relatorio.py recém criado
 from core.views.veiculo import (
     cadastrar_veiculo,
@@ -98,4 +99,6 @@ urlpatterns = [
     path('custo/cadastrar/', cadastrar_custo, name='cadastrar_custo'),
     path('custo/<int:pk>/', detalhe_custo, name='detalhe_custo'),
     path('custo/<int:pk>/editar/', editar_custo, name='editar_custo'),
+    # ROTINA DE ORDEM DE PRODUÇÃO (INDÚSTRIA - Faktory)
+    path('industria/ordem-producao/', lista_ordem_producao, name='lista_ordem_producao'),
 ]

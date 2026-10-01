@@ -65,13 +65,15 @@ DATABASES = {
     },
     'faktory': {
         'ENGINE': 'mssql',
-        'NAME': 'faktory_CASANOVA',
+        'NAME': config('FAKTORY_DB_NAME', default='faktory_CASANOVA'),
         'USER': config('FAKTORY_DB_USER', default='pb'),
         'PASSWORD': config('FAKTORY_DB_PASSWORD', default='prefbrasil'),
         'HOST': config('FAKTORY_DB_HOST', default='10.12.50.90'),
         'PORT': config('FAKTORY_DB_PORT', default='1433'),
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': config('FAKTORY_DB_DRIVER', default='ODBC Driver 18 for SQL Server'),
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=no;',
+            'timeout': 15,
         },
     }
 }

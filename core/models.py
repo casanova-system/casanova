@@ -79,6 +79,7 @@ SETORES_ROTINA = [
     ('COMERCIAL', 'Comercial'),
     ('FINANCEIRO', 'Financeiro'),
     ('FROTAS', 'Frotas'),
+    ('INDUSTRIA', 'Indústria'),
     ('ADMINISTRADOR', 'Administrador'),
 ]
 
@@ -90,6 +91,7 @@ ROTINAS_PADRAO = [
     ('005', 'Gerenciar Permissões', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
     ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO', 'COMERCIAL'),
     ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO', 'COMERCIAL'),
+    ('008', 'Ordem de Produção (OP)', 'lista_ordem_producao', 'ROTINA', 'INDUSTRIA'),
 ]
 
 
@@ -205,6 +207,10 @@ class AcessoRotinas:
     @property
     def tem_frotas(self):
         return self._tem_setor('FROTAS')
+
+    @property
+    def tem_industria(self):
+        return self._tem_setor('INDUSTRIA')
 
     @property
     def tem_administrador(self):

@@ -111,6 +111,19 @@
             </div>
             {% endif %}
 
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'lista_ordem_producao' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #7c3aed;"><i class="fa-solid fa-industry"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Ordem de Produção</span>
+                        <span class="quick-desc">Ordens de produção do ERP</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
             {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
             <div class="col-xl-3 col-md-6">
                 <a href="{% url 'grafico_custo_frete' %}" class="quick-card">
