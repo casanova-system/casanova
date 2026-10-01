@@ -323,11 +323,37 @@ def _buscar_op_por_id(op_id):
         return registro
 
 
+def _conteudo_qrcode(dados):
+    """Monta o texto que vai dentro do QR Code (a OP é o número do documento)."""
+    linhas = [
+        f"OP: {dados.get('NumeroDocumento') or '—'}",
+        f"Obra: {dados.get('ProjetoObra')}",
+        f"Produto: {dados.get('Produto') or '—'}",
+        f"Variante: {dados.get('Variante') or '—'}",
+        f"Necessidade: {dados.get('DataNecessidade')}",
+        f"Qtd: {dados.get('QtdProduzir')}",
+    ]
+    return '\n'.join(linhas)
+
+
+def _gerar_qrcode_svg(conteudo):
+    """Gera o QR Code como SVG (string). Não depende do Pillow."""
+    import qrcode
+    import qrcode.image.svg
+
+    factory = qrcode.image.svg.SvgPathImage
+    img = qrcode.make(conteudo, image_factory=factory)
+    import io
+
+    buffer = io.BytesIO()
+    img.save(buffer)
+    return buffer.getvalue().decode('utf-8')
+
+
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def qrcode_ordem_producao(request, op_id):
-    """Gera o QR Code de uma OP. O conteúdo prioriza o número da obra."""
-    import qrcode
+    """Gera o QR Code de uma OP em SVG."""
     from django.http import HttpResponse
 
     try:
@@ -338,32 +364,23 @@ def qrcode_ordem_producao(request, op_id):
     if not dados:
         return HttpResponse('OP não encontrada.', status=404)
 
-    # Conteúdo do QR Code: a OP é o número do documento; prioriza a obra
-    linhas = [
-        f"OP: {dados.get('NumeroDocumento') or '—'}",
-        f"Obra: {dados.get('ProjetoObra')}",
-        f"Produto: {dados.get('Produto') or '—'}",
-        f"Variante: {dados.get('Variante') or '—'}",
-        f"Necessidade: {dados.get('DataNecessidade')}",
-        f"Qtd: {dados.get('QtdProduzir')}",
-    ]
-    conteudo = '\n'.join(linhas)
+    try:
+        svg = _gerar_qrcode_svg(_conteudo_qrcode(dados))
+    except ImportError:
+        return HttpResponse(
+            'A biblioteca "qrcode" não está instalada neste servidor. '
+            'Execute: pip install qrcode',
+            status=500,
+            content_type='text/plain; charset=utf-8',
+        )
 
-    img = qrcode.make(conteudo)
-    resposta = HttpResponse(content_type='image/png')
-    img.save(resposta, 'PNG')
-    return resposta
+    return HttpResponse(svg, content_type='image/svg+xml')
 
 
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def imprimir_qrcode_ordem_producao(request, op_id):
     """Página de impressão do QR Code em folha A4 (QR pequeno e centralizado)."""
-    import base64
-    import io
-
-    import qrcode
-
     try:
         dados = _buscar_op_por_id(op_id)
     except Exception:  # noqa: BLE001
@@ -374,24 +391,22 @@ def imprimir_qrcode_ordem_producao(request, op_id):
             'erro': 'OP não encontrada.',
         })
 
-    linhas = [
-        f"OP: {dados.get('NumeroDocumento') or '—'}",
-        f"Obra: {dados.get('ProjetoObra')}",
-        f"Produto: {dados.get('Produto') or '—'}",
-        f"Variante: {dados.get('Variante') or '—'}",
-        f"Necessidade: {dados.get('DataNecessidade')}",
-        f"Qtd: {dados.get('QtdProduzir')}",
-    ]
-    conteudo = '\n'.join(linhas)
+    conteudo = _conteudo_qrcode(dados)
 
-    img = qrcode.make(conteudo)
-    buffer = io.BytesIO()
-    img.save(buffer, 'PNG')
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode('ascii')
+    try:
+        qr_svg = _gerar_qrcode_svg(conteudo)
+        erro_qr = None
+    except ImportError:
+        qr_svg = None
+        erro_qr = (
+            'A biblioteca "qrcode" não está instalada neste servidor. '
+            'Execute: pip install qrcode'
+        )
 
     context = {
         'dados': dados,
-        'qr_base64': qr_base64,
+        'qr_svg': qr_svg,
+        'erro_qr': erro_qr,
         'conteudo_qr': conteudo,
     }
     return render(request, 'core/industria/imprimir_qrcode_op.html', context)

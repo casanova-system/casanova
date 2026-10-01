@@ -63,10 +63,9 @@
             align-items: center;
             justify-content: center;
         }
-        .qr-box img {
+        .qr-box svg {
             width: 100%;
             height: 100%;
-            image-rendering: pixelated;
         }
 
         .op-numero {
@@ -114,10 +113,14 @@
         <div class="folha-a4">
             <p style="font-size: 14pt;">{{ erro }}</p>
         </div>
+    {% elif erro_qr %}
+        <div class="folha-a4">
+            <p style="font-size: 12pt; color: #b91c1c;">{{ erro_qr }}</p>
+        </div>
     {% else %}
     <div class="folha-a4">
         <div class="qr-box">
-            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code da OP {{ dados.NumeroDocumento }}">
+            {{ qr_svg|safe }}
         </div>
 
         <div class="op-numero">OP {{ dados.NumeroDocumento }}</div>
