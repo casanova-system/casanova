@@ -1183,3 +1183,285 @@ body.redimensionando-coluna {
         transform: none !important;
     }
 }
+
+/* --------------------------------------------------------------------------
+   15. MOBILE / RESPONSIVO (iOS + Android)
+   -------------------------------------------------------------------------- */
+
+/* Barra superior mobile — oculta no desktop */
+.mobile-topbar {
+    display: none;
+}
+
+/* Backdrop do menu mobile */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.25s var(--cv-ease);
+}
+.sidebar-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+/* Evita scroll do body quando o menu mobile está aberto */
+body.mobile-menu-open {
+    overflow: hidden;
+}
+
+@media (max-width: 991.98px) {
+    /* --- Barra superior --- */
+    .mobile-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        padding: 0 0.75rem;
+        background: var(--cv-surface);
+        border-bottom: 1px solid var(--cv-line);
+        z-index: 1045;
+        box-shadow: var(--cv-shadow-sm);
+    }
+    .mobile-topbar .mobile-brand {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mobile-topbar .mobile-brand .brand-casanova {
+        color: var(--cv-blue);
+        font-weight: 900;
+    }
+    [data-bs-theme="dark"] .mobile-topbar .mobile-brand .brand-casanova {
+        color: #ffffff;
+    }
+    .mobile-topbar .mobile-brand .brand-esquadrias {
+        color: var(--cv-accent);
+        font-weight: 300;
+    }
+    .mobile-topbar .mobile-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--cv-text);
+        font-size: 1.15rem;
+        cursor: pointer;
+        transition: background var(--cv-dur) var(--cv-ease);
+    }
+    .mobile-topbar .mobile-btn:active {
+        background: var(--cv-blue-soft);
+    }
+
+    /* --- Sidebar vira gaveta (off-canvas) --- */
+    .sidebar-casanova {
+        position: fixed !important;
+        top: 56px;
+        left: 0;
+        bottom: 0;
+        width: 280px !important;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        transition: transform 0.28s var(--cv-ease);
+        z-index: 1050;
+        box-shadow: var(--cv-shadow-lg);
+        overflow-y: auto;
+    }
+    .sidebar-casanova.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Ignora o estado "recolhido" no mobile: sempre mostra tudo */
+    .sidebar-casanova.sidebar-collapsed {
+        width: 280px !important;
+    }
+    .sidebar-casanova.sidebar-collapsed .hide-on-collapse,
+    .sidebar-casanova.sidebar-collapsed .rotinas-toggle .fa-chevron-down,
+    .sidebar-casanova.sidebar-collapsed .graficos-toggle .fa-chevron-down,
+    .sidebar-casanova.sidebar-collapsed .relatorios-toggle .fa-chevron-down,
+    .sidebar-casanova.sidebar-collapsed .user-profile-box .flex-grow-1,
+    .sidebar-casanova.sidebar-collapsed .user-profile-box .fa-chevron-up,
+    .sidebar-casanova.sidebar-collapsed .collapse,
+    .sidebar-casanova.sidebar-collapsed .sidebar-brand-container {
+        display: revert !important;
+    }
+    .sidebar-casanova.sidebar-collapsed .list-group-item,
+    .sidebar-casanova.sidebar-collapsed .rotinas-toggle,
+    .sidebar-casanova.sidebar-collapsed .graficos-toggle,
+    .sidebar-casanova.sidebar-collapsed .relatorios-toggle {
+        pointer-events: auto !important;
+        justify-content: flex-start !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    .sidebar-casanova.sidebar-collapsed .list-group-item i {
+        margin-right: 0.5rem !important;
+    }
+    .sidebar-casanova.sidebar-collapsed .user-profile-box {
+        justify-content: flex-start;
+        padding: 8px 12px;
+    }
+    .sidebar-casanova.sidebar-collapsed .sidebar-header-box {
+        justify-content: space-between !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    .sidebar-casanova.sidebar-collapsed #toggleSidebarBtn {
+        margin: 0;
+    }
+
+    /* --- Área de conteúdo --- */
+    .app-container {
+        height: 100vh;
+        height: 100dvh;
+    }
+    .main-content-area {
+        padding-top: 56px;
+    }
+    .main-content-area > div {
+        padding: 1rem !important;
+    }
+
+    /* --- Cabeçalho de página empilha --- */
+    .page-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+    .page-header-actions {
+        flex-wrap: wrap;
+    }
+    .page-header-actions .btn-action {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+    .page-title {
+        font-size: 1.15rem;
+    }
+
+    /* --- Filtros empilham --- */
+    .filtros-bar-form {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem;
+    }
+    .filtros-bar-form .filtros-search,
+    .filtros-bar-form .form-select,
+    .filtros-bar-form .form-control {
+        max-width: 100% !important;
+        width: 100%;
+    }
+    .filtros-bar-form .btn {
+        width: 100%;
+    }
+
+    /* --- Tabelas: rolagem horizontal suave --- */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+    .tabela-redimensionavel {
+        min-width: 720px;
+    }
+    .col-resizer {
+        display: none !important;
+    }
+
+    /* --- Cards e listas --- */
+    .list-card-body {
+        padding: 0 !important;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* --- Modais ocupam melhor a tela --- */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    .modal-dialog-centered {
+        min-height: calc(100% - 1rem);
+    }
+    .modal-footer {
+        flex-wrap: wrap;
+    }
+    .modal-footer .btn {
+        flex: 1 1 auto;
+    }
+
+    /* --- Formulários --- */
+    .form-page,
+    .form-card {
+        padding: 1rem !important;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    /* --- KPIs e grids --- */
+    .kpi-card {
+        margin-bottom: 0.75rem;
+    }
+
+    /* --- Botões de ação em linha (tabelas) --- */
+    .btn-row {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Telas muito pequenas (iPhone SE etc.) */
+@media (max-width: 575.98px) {
+    .main-content-area > div {
+        padding: 0.75rem !important;
+    }
+    .page-title {
+        font-size: 1.05rem;
+    }
+    .card-body {
+        padding: 0.85rem;
+    }
+    .mobile-topbar .mobile-brand {
+        font-size: 0.82rem;
+    }
+    .btn-action {
+        font-size: 0.82rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* Ajustes de toque (iOS/Android) */
+@media (hover: none) and (pointer: coarse) {
+    .btn-row {
+        width: 36px;
+        height: 36px;
+    }
+    .list-group-item,
+    .dropdown-item {
+        min-height: 44px;
+    }
+    /* Evita zoom automático do iOS em inputs */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}

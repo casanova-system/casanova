@@ -457,6 +457,22 @@
 <body>
 
     <div class="app-container">
+        <!-- Barra superior mobile (oculta no desktop) -->
+        <header class="mobile-topbar">
+            <button class="mobile-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <span class="mobile-brand">
+                <span class="brand-casanova">CASANOVA</span> <span class="brand-esquadrias">ESQUADRIAS</span>
+            </span>
+            <button class="mobile-btn" id="mobileThemeBtn" type="button" aria-label="Alternar tema">
+                <i class="fa-solid fa-moon" id="mobileThemeIcon"></i>
+            </button>
+        </header>
+
+        <!-- Backdrop do menu mobile -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
         <!-- Sidebar Esquerda -->
         <aside class="sidebar-casanova" id="sidebarCasanova">
             <!-- Header do Menu com Estilo Corporativo -->
@@ -823,6 +839,71 @@
                 }
             }
         }
+
+        // ===== MENU MOBILE (iOS / Android) =====
+        (function () {
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const sidebar = document.getElementById('sidebarCasanova');
+            const themeBtn = document.getElementById('mobileThemeBtn');
+            const themeIcon = document.getElementById('mobileThemeIcon');
+
+            function abrirMenu() {
+                if (!sidebar) return;
+                sidebar.classList.add('mobile-open');
+                if (backdrop) backdrop.classList.add('show');
+                document.body.classList.add('mobile-menu-open');
+            }
+            function fecharMenu() {
+                if (!sidebar) return;
+                sidebar.classList.remove('mobile-open');
+                if (backdrop) backdrop.classList.remove('show');
+                document.body.classList.remove('mobile-menu-open');
+            }
+
+            if (menuBtn) {
+                menuBtn.addEventListener('click', function () {
+                    if (sidebar.classList.contains('mobile-open')) fecharMenu();
+                    else abrirMenu();
+                });
+            }
+            if (backdrop) backdrop.addEventListener('click', fecharMenu);
+
+            // Fecha o menu ao clicar em um link de navegação
+            if (sidebar) {
+                sidebar.querySelectorAll('a[href]').forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        if (window.innerWidth < 992) fecharMenu();
+                    });
+                });
+            }
+
+            // Fecha ao girar/redimensionar para desktop
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 992) fecharMenu();
+            });
+
+            // Botão de tema na barra mobile
+            function sincronizarIconeMobile() {
+                if (!themeIcon) return;
+                const tema = document.documentElement.getAttribute('data-bs-theme');
+                themeIcon.className = tema === 'dark'
+                    ? 'fa-solid fa-sun text-warning'
+                    : 'fa-solid fa-moon';
+            }
+            sincronizarIconeMobile();
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function () {
+                    const atual = document.documentElement.getAttribute('data-bs-theme');
+                    const novo = atual === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-bs-theme', novo);
+                    localStorage.setItem('casanova_theme', novo);
+                    sincronizarIconeMobile();
+                    // Mantém o ícone do desktop em sincronia
+                    if (typeof atualizarIcone === 'function') atualizarIcone(novo, true);
+                });
+            }
+        })();
     </script>
 </body>
 </html>

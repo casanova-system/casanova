@@ -3,6 +3,16 @@ from core.views import permissao
 from django.urls import path
 from django.views.generic.base import RedirectView
 
+from core.api import (
+    api_escanear,
+    api_login,
+    api_logout,
+    api_perfil,
+    api_rastreio_detalhe,
+    api_rastreios,
+    api_setores,
+)
+
 from core.views.custo import (
     cadastrar_custo,
     detalhe_custo,
@@ -118,4 +128,14 @@ urlpatterns = [
     path('industria/rastreio/escanear/', escanear, name='escanear'),
     path('industria/rastreio/<int:op_id>/', rastreio_op, name='rastreio_op'),
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
+    # ==========================================
+    # API REST — App Mobile (Flutter)
+    # ==========================================
+    path('api/login/', api_login, name='api_login'),
+    path('api/logout/', api_logout, name='api_logout'),
+    path('api/perfil/', api_perfil, name='api_perfil'),
+    path('api/setores/', api_setores, name='api_setores'),
+    path('api/rastreios/', api_rastreios, name='api_rastreios'),
+    path('api/rastreios/<int:op_id>/', api_rastreio_detalhe, name='api_rastreio_detalhe'),
+    path('api/escanear/', api_escanear, name='api_escanear'),
 ]
