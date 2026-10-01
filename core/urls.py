@@ -1,5 +1,6 @@
 from core.views import usuario as views_usuario
 from core.views import permissao
+from core.views.app_mobile import app_mobile
 from django.urls import path
 from django.views.generic.base import RedirectView
 
@@ -138,4 +139,8 @@ urlpatterns = [
     path('api/rastreios/', api_rastreios, name='api_rastreios'),
     path('api/rastreios/<int:op_id>/', api_rastreio_detalhe, name='api_rastreio_detalhe'),
     path('api/escanear/', api_escanear, name='api_escanear'),
+    # ==========================================
+    # APP MOBILE (Flutter Web) — acessível pelo navegador do celular
+    # ==========================================
+    path('app/', app_mobile, name='app_mobile'),
 ]
