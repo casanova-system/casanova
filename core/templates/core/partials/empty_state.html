@@ -1,0 +1,30 @@
+{% comment %}
+Estado vazio padronizado para listas.
+
+Uso:
+{% include 'core/partials/empty_state.html' with icone="fa-coins" busca=query titulo_vazio="Nenhum custo cadastrado" texto_vazio="Cadastre os parâmetros de custo." acao_url=url_novo acao_texto="Novo Custo" limpar_url=url_lista %}
+
+Parâmetros:
+- icone (obrigatório) — classe FontAwesome sem o prefixo "fa-solid"
+- busca (opcional) — termo pesquisado; se presente, mostra o ramo "sem resultados"
+- titulo_vazio / texto_vazio / acao_url / acao_texto (ramo sem cadastro)
+- limpar_url (obrigatório se busca)
+{% endcomment %}
+<div class="empty-state">
+    <div class="empty-state-icon"><i class="fa-solid {{ icone }}"></i></div>
+    {% if busca %}
+        <h6 class="empty-state-title">Nenhum resultado encontrado</h6>
+        <p class="empty-state-text">Não há resultados para "<strong>{{ busca }}</strong>".</p>
+        <a href="{{ limpar_url }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-rotate-left me-1"></i> Limpar busca
+        </a>
+    {% else %}
+        <h6 class="empty-state-title">{{ titulo_vazio }}</h6>
+        <p class="empty-state-text">{{ texto_vazio }}</p>
+        {% if acao_url %}
+            <a href="{{ acao_url }}" class="btn btn-sm btn-primary">
+                <i class="fa-solid {{ acao_icone|default:'fa-plus' }} me-1"></i> {{ acao_texto }}
+            </a>
+        {% endif %}
+    {% endif %}
+</div>

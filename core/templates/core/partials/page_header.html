@@ -1,0 +1,30 @@
+{% comment %}
+Cabeçalho padronizado de página (listas e formulários).
+
+Uso:
+{% include 'core/partials/page_header.html' with titulo="Gerenciamento de Custos" subtitulo="Cadastre e gerencie os custos do sistema." acao_url=url_novo acao_texto="Novo Custo" acao_icone="fa-plus" voltar_url=url_voltar %}
+
+Parâmetros:
+- titulo (obrigatório)
+- subtitulo (opcional)
+- acao_url / acao_texto / acao_icone (opcional — botão primário)
+- voltar_url / voltar_texto (opcional — botão secundário; padrão "Voltar ao Início")
+{% endcomment %}
+<div class="page-header">
+    <div class="page-header-text">
+        <h1 class="page-title">{{ titulo }}</h1>
+        {% if subtitulo %}<p class="page-subtitle">{{ subtitulo }}</p>{% endif %}
+    </div>
+    <div class="page-header-actions">
+        {% if acao_url %}
+            <a href="{{ acao_url }}" class="btn-action btn-action-primary">
+                <i class="fa-solid {{ acao_icone|default:'fa-plus' }}"></i> {{ acao_texto }}
+            </a>
+        {% endif %}
+        {% if voltar_url %}
+            <a href="{{ voltar_url }}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-left"></i> {{ voltar_texto|default:"Voltar ao Início" }}
+            </a>
+        {% endif %}
+    </div>
+</div>

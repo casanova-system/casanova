@@ -4,14 +4,16 @@
 {% block content %}
 <div class="container-fluid px-3 py-2" style="max-height: 96vh; overflow-y: auto;">
     <!-- Cabeçalho da Página -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h3 class="page-title fw-bold mb-0 text-body"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Dashboard: Custos de Frete</h3>
-            <p class="text-muted small mb-0" style="font-size: 0.9rem;">Painel analítico corporativo de custos de deslocamento e métricas logísticas por obra.</p>
+    <div class="page-header">
+        <div class="page-header-text">
+            <h1 class="page-title"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Dashboard: Custos de Frete</h1>
+            <p class="page-subtitle">Painel analítico corporativo de custos de deslocamento e métricas logísticas por obra.</p>
         </div>
-        <a href="{% url 'lista_obras' %}" class="btn btn-outline-secondary btn-sm py-1.5 px-3 shadow-sm" style="font-size: 0.85rem;">
-            <i class="fa-solid fa-arrow-left me-1"></i> Ver Tabela
-        </a>
+        <div class="page-header-actions">
+            <a href="{% url 'lista_obras' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Ver Tabela
+            </a>
+        </div>
     </div>
 
     <!-- Cards de Indicadores (KPIs) Adaptados ao Tema -->

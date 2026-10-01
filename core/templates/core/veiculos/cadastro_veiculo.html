@@ -3,41 +3,17 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
+    <div class="form-page">
+        {% include 'core/partials/messages.html' %}
 
-    <!-- Exibe apenas a mensagem mais recente para evitar acúmulo na tela -->
-    {% if messages %}
-        <div class="mb-3">
-            {% for message in messages %}
-                {% if forloop.last %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
+        {% url 'lista_veiculos' as url_lista %}
+        {% include 'core/partials/page_header.html' with titulo="Cadastrar Veículo" subtitulo="Preencha as informações para registrar um novo veículo na frota." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
 
-    <!-- Cabeçalho da Página -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title fw-bold mb-1">Cadastrar Veículo</h2>
-            <p class="text-muted small mb-0">Preencha as informações para registrar um novo veículo na frota.</p>
-        </div>
-        <div>
-            <a href="{% url 'lista_veiculos' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar à Lista
-            </a>
-        </div>
-    </div>
-
-    <!-- Formulário Card -->
-    <div class="card shadow-sm rounded-3">
-        <div class="card-header py-3 d-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
-        </div>
-        
-        <div class="card-body p-4">
+        <div class="card form-card">
+            <div class="card-header">
+                <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
+            </div>
+            <div class="card-body">
             <form method="POST" id="formVeiculo" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
@@ -129,29 +105,32 @@
                 </div>
 
                 <!-- Botões de Ação -->
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <a href="{% url 'lista_veiculos' %}" class="btn btn-sm btn-outline-secondary px-4">Cancelar</a>
-                    <button type="button" id="btnSalvar" class="btn btn-sm btn-primary px-4">Salvar Veículo</button>
+                <div class="form-actions">
+                    <a href="{% url 'lista_veiculos' %}" class="btn btn-outline-secondary fw-semibold px-3">Cancelar</a>
+                    <button type="button" id="btnSalvar" class="btn btn-primary fw-semibold px-3">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Salvar Veículo
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+    </div>
 </div>
 
 <!-- Modal de Confirmação de Salvamento -->
-<div class="modal fade" id="modalConfirmarSalvar" tabindex="-1" aria-hidden="true">
+<div class="modal fade modal-confirm" id="modalConfirmarSalvar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-light border border-secondary shadow-lg">
-            <div class="modal-header border-bottom border-secondary">
-                <h5 class="modal-title fs-6 fw-bold text-primary d-flex align-items-center gap-2">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color: var(--cv-blue);">
                     <i class="fa-solid fa-circle-question"></i> Confirmação
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body py-4 text-start">
+            <div class="modal-body">
                 <p class="mb-0">Tem certeza de que deseja salvar este veículo?</p>
             </div>
-            <div class="modal-footer border-top border-secondary">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" form="formVeiculo" class="btn btn-sm btn-primary px-3">Sim, Salvar</button>
             </div>

@@ -3,26 +3,20 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
-    <!-- Cabeçalho da Página de Suporte -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title text-body fw-bold mb-1">Central de Suporte</h2>
-            <p class="text-muted small mb-0">Tire suas dúvidas com nosso assistente virtual especializado.</p>
-        </div>
-        <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-            <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
-        </a>
-    </div>
+    <div class="form-page">
+        {% url 'menu_principal' as url_inicio %}
+        {% include 'core/partials/page_header.html' with titulo="Central de Suporte" subtitulo="Tire suas dúvidas com nosso assistente virtual especializado." voltar_url=url_inicio %}
 
-    <!-- Área de introdução / Dica -->
-    <div class="card shadow-lg border-0 bg-dark text-light p-4 mb-4">
-        <div class="d-flex align-items-center gap-3">
-            <div class="fs-1 text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
-                <i class="fa-solid fa-hard-hat"></i>
-            </div>
-            <div>
-                <h5 class="fw-bold mb-1">Precisa de ajuda rápida?</h5>
-                <p class="text-muted mb-0 small">Clique no ícone de chat flutuante no canto inferior direito da tela para abrir o assistente virtual com capacete de trabalhador e escolha uma das perguntas prontas!</p>
+        <!-- Área de introdução / Dica -->
+        <div class="card form-card p-4 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="fs-1 text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
+                    <i class="fa-solid fa-hard-hat"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Precisa de ajuda rápida?</h5>
+                    <p class="text-muted mb-0 small">Clique no ícone de chat flutuante no canto inferior direito da tela para abrir o assistente virtual com capacete de trabalhador e escolha uma das perguntas prontas!</p>
+                </div>
             </div>
         </div>
     </div>
@@ -165,4 +159,4 @@
         }, 600);
     }
 </script>
-{% endcontent %}
+{% endblock %}

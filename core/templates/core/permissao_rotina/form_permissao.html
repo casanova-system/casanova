@@ -2,24 +2,14 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
+    <div class="form-page">
+        {% include 'core/partials/messages.html' %}
 
-    <!-- Cabeçalho -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title fw-bold mb-1">
-                <i class="fas fa-user-lock me-2 text-primary"></i> Configurar Permissões
-            </h2>
-            <p class="text-muted small mb-0">
-                Usuário: <strong>{{ usuario_obj.username }}</strong> · defina o nível e as rotinas liberadas.
-            </p>
-        </div>
-        <a href="{% url 'lista_permissao' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit;">
-            <i class="fas fa-arrow-left me-1"></i> Voltar
-        </a>
-    </div>
+        {% url 'lista_permissao' as url_lista %}
+        {% include 'core/partials/page_header.html' with titulo="Configurar Permissões" subtitulo="Defina o nível de acesso e as rotinas liberadas para o usuário." voltar_url=url_lista voltar_texto="Voltar" %}
 
-    <div class="card shadow-lg border-0 form-card mb-4">
-        <div class="card-body p-4">
+        <div class="card form-card mb-4">
+            <div class="card-body">
             <form method="POST">
                 {% csrf_token %}
 
@@ -232,6 +222,7 @@
                 </div>
             </form>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}

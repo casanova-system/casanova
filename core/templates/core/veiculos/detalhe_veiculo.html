@@ -3,27 +3,17 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
+    <div class="form-page">
+        {% include 'core/partials/messages.html' %}
 
-    <!-- Cabeçalho da Página -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title fw-bold mb-1">Detalhes do Veículo</h2>
-            <p class="text-muted small mb-0">Visualização das informações e especificações da frota.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'lista_veiculos' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar à Lista
-            </a>
-        </div>
-    </div>
+        {% url 'lista_veiculos' as url_lista %}
+        {% include 'core/partials/page_header.html' with titulo="Detalhes do Veículo" subtitulo="Visualização das informações e especificações da frota." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
 
-    <!-- Caixa do Formulário / Card Principal -->
-    <div class="card shadow-sm rounded-3 form-card">
-        <div class="card-header py-3 d-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
-        </div>
-        
-        <div class="card-body p-4">
+        <div class="card form-card">
+            <div class="card-header">
+                <i class="fa-solid fa-truck text-primary"></i> Informações do Veículo
+            </div>
+            <div class="card-body">
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Placa</span>
@@ -90,6 +80,7 @@
                 <span>Cadastrado em: {{ veiculo.data_cadastro|default:"-" }} {% if veiculo.usuario_responsavel %}por <strong>{{ veiculo.usuario_responsavel.username }}</strong>{% endif %}</span>
             </div>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}

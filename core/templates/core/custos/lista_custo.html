@@ -4,36 +4,11 @@
 {% block content %}
 <div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
 
-    <!-- Exibe mensagens do sistema (Alertas) -->
-    {% if messages %}
-        <div class="mb-3 flex-shrink-0">
-            {% for message in messages %}
-                {% if forloop.last %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
+    {% include 'core/partials/messages.html' %}
 
-    <!-- Cabeçalho com o Título e os Botões de Ação -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
-        <div>
-            <h2 class="page-title text-body fw-bold mb-1">Gerenciamento de Custos</h2>
-            <p class="text-muted small mb-0">Cadastre e gerencie os custos do sistema.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'cadastrar_custo' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: #3b82f6 !important; color: #3b82f6; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#1d4ed8'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#3b82f6';">
-                <i class="fa-solid fa-plus me-1"></i> Novo Custo
-            </a>
-
-            <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
-            </a>
-        </div>
-    </div>
+    {% url 'cadastrar_custo' as url_novo %}
+    {% url 'menu_principal' as url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Gerenciamento de Custos" subtitulo="Cadastre e gerencie os custos do sistema." acao_url=url_novo acao_texto="Novo Custo" acao_icone="fa-plus" voltar_url=url_inicio %}
 
     <!-- ALERTA DE CUSTOS OBRIGATÓRIOS -->
     <div class="alert alert-warning border shadow-sm d-flex align-items-center mb-3 py-2 px-3 flex-shrink-0" role="alert" style="background-color: rgba(255, 193, 7, 0.08); border-color: #ffc107 !important;">
@@ -43,61 +18,69 @@
         </div>
     </div>
 
+    <!-- Filtros -->
+    <div class="filtros-bar">
+        <form method="GET" action="" class="filtros-bar-form">
+            {% if ordenacao_atual %}
+                <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
+            {% endif %}
+            <div class="filtros-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar por tipo ou descrição do custo...">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i> Localizar
+            </button>
+            <a href="{% url 'lista_custo' %}" class="btn btn-limpar">
+                <i class="fa-solid fa-rotate-left"></i> Limpar
+            </a>
+        </form>
+    </div>
+
     <!-- Tabela de Custos -->
-    <div class="card shadow-lg flex-grow-1 d-flex flex-column overflow-hidden mb-3">
-        <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3 flex-shrink-0">
-            <h5 class="mb-0 fw-bold text-nowrap" style="font-size: 0.9rem;"><i class="fas fa-coins me-2 text-primary"></i> Custos Cadastrados</h5>
-            
-            <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto justify-content-end">
-                <form method="GET" action="" class="d-flex align-items-center gap-2" style="max-width: 350px;">
-                    {% if ordenacao_atual %}
-                        <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
-                    {% endif %}
+    <div class="card shadow-lg list-card">
+        <div class="card-header list-card-header">
+            <h5 class="list-card-title"><i class="fas fa-coins me-2 text-primary"></i> Custos Cadastrados</h5>
 
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="Buscar por custos...">
-                        <button class="btn btn-primary px-3" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                    {% if query %}
-                        <a href="{% url 'lista_custo' %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtro">
-                            <i class="fas fa-undo"></i>
-                        </a>
-                    {% endif %}
-                </form>
-
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
-                        <i class="fas fa-sort me-1"></i> Ordenar
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 230px;">
-                        <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'recentes' %}active{% endif %}" href="?ordenar=recentes&q={{ query }}"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'antigos' %}active{% endif %}" href="?ordenar=antigos&q={{ query }}"><i class="fas fa-clock me-2"></i> Mais Antigos</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'nome_asc' %}active{% endif %}" href="?ordenar=nome_asc&q={{ query }}"><i class="fas fa-sort-alpha-down me-2"></i> Nome de Custo (A-Z)</a></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'nome_desc' %}active{% endif %}" href="?ordenar=nome_desc&q={{ query }}"><i class="fas fa-sort-alpha-up me-2"></i> Nome de Custo (Z-A)</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'id_asc' %}active{% endif %}" href="?ordenar=id_asc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Crescente)</a></li>
-                        <li><a class="dropdown-item {% if ordenacao_atual == 'id_desc' %}active{% endif %}" href="?ordenar=id_desc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Decrescente)</a></li>
-                    </ul>
-                </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
+                    <i class="fas fa-sort me-1"></i> Ordenar
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 230px;">
+                    <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'recentes' %}active{% endif %}" href="?ordenar=recentes&q={{ query }}"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'antigos' %}active{% endif %}" href="?ordenar=antigos&q={{ query }}"><i class="fas fa-clock me-2"></i> Mais Antigos</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'nome_asc' %}active{% endif %}" href="?ordenar=nome_asc&q={{ query }}"><i class="fas fa-sort-alpha-down me-2"></i> Nome de Custo (A-Z)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'nome_desc' %}active{% endif %}" href="?ordenar=nome_desc&q={{ query }}"><i class="fas fa-sort-alpha-up me-2"></i> Nome de Custo (Z-A)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'id_asc' %}active{% endif %}" href="?ordenar=id_asc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Crescente)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'id_desc' %}active{% endif %}" href="?ordenar=id_desc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Decrescente)</a></li>
+                </ul>
             </div>
         </div>
 
-        <div class="card-body p-0 flex-grow-1 overflow-hidden d-flex flex-column">
+        <div class="card-body list-card-body">
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaCusto">
+                    <colgroup>
+                        <col style="width: 70px;">
+                        <col style="width: 260px;">
+                        <col style="width: 130px;">
+                        <col style="width: 320px;">
+                        <col style="width: 140px;">
+                        <col style="width: 160px;">
+                        <col style="width: 120px;">
+                    </colgroup>
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th class="ps-3">ID</th>
-                            <th>Nome de Custo</th>
-                            <th>Valor / Detalhe</th>
-                            <th>Descrição</th>
-                            <th>Usuário</th>
-                            <th>Data de Cadastro</th>
-                            <th class="text-end pe-3" style="width: 120px;">Ações</th>
+                            <th class="ps-3">ID<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Nome de Custo<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Valor / Detalhe<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Descrição<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Usuário<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Data de Cadastro<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -122,34 +105,17 @@
                             
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <a href="{% url 'detalhe_custo' c.id %}" class="btn btn-sm shadow-sm" style="background-color: transparent; border: 1px solid #0ea5e9; color: #0ea5e9; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#0ea5e9'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#0ea5e9';" title="Visualizar">
-                                        <i class="fa-solid fa-eye" style="font-size: 0.75rem;"></i>
-                                    </a>
-                                    <a href="{% url 'editar_custo' c.id %}" class="btn btn-sm shadow-sm" style="background-color: transparent; border: 1px solid #eab308; color: #eab308; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='#eab308'; this.style.color='#000000';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#eab308';" title="Alterar">
-                                        <i class="fa-solid fa-pen-to-square" style="font-size: 0.75rem;"></i>
-                                    </a>
+                                    <a href="{% url 'detalhe_custo' c.id %}" class="btn-row btn-row-view" title="Visualizar"><i class="fa-solid fa-eye"></i></a>
+                                    <a href="{% url 'editar_custo' c.id %}" class="btn-row btn-row-edit" title="Alterar"><i class="fa-solid fa-pen-to-square"></i></a>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="7" class="p-0">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon"><i class="fa-solid fa-coins"></i></div>
-                                    {% if query %}
-                                        <h6 class="empty-state-title">Nenhum custo encontrado</h6>
-                                        <p class="empty-state-text">Não há resultados para "<strong>{{ query }}</strong>".</p>
-                                        <a href="{% url 'lista_custo' %}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="fa-solid fa-rotate-left me-1"></i> Limpar busca
-                                        </a>
-                                    {% else %}
-                                        <h6 class="empty-state-title">Nenhum custo cadastrado</h6>
-                                        <p class="empty-state-text">Cadastre os parâmetros de custo usados no cálculo do frete.</p>
-                                        <a href="{% url 'cadastrar_custo' %}" class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-plus me-1"></i> Novo Custo
-                                        </a>
-                                    {% endif %}
-                                </div>
+                                {% url 'cadastrar_custo' as url_novo %}
+                                {% url 'lista_custo' as url_lista %}
+                                {% include 'core/partials/empty_state.html' with icone="fa-coins" busca=query titulo_vazio="Nenhum custo cadastrado" texto_vazio="Cadastre os parâmetros de custo usados no cálculo do frete." acao_url=url_novo acao_texto="Novo Custo" limpar_url=url_lista %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -161,13 +127,5 @@
     </div>
 </div>
 
-<script>
-    setTimeout(function() {
-        let alertas = document.querySelectorAll('.alert:not(.alert-warning)');
-        alertas.forEach(function(alerta) {
-            let bsAlert = new bootstrap.Alert(alerta);
-            bsAlert.close();
-        });
-    }, 2000);
-</script>
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaCusto" storage_key="casanova_custo_larguras" %}
 {% endblock %}

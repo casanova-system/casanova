@@ -3,40 +3,18 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
+    <div class="form-page">
+        {% include 'core/partials/messages.html' %}
 
-    {% if messages %}
-        <div class="mb-3">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+        {% url 'lista_custo' as url_lista %}
+        {% url 'editar_custo' custo.id as url_editar %}
+        {% include 'core/partials/page_header.html' with titulo="Detalhe do Custo" subtitulo="Visualização completa do registro de custo." acao_url=url_editar acao_texto="Editar" acao_icone="fa-pen" voltar_url=url_lista voltar_texto="Voltar" %}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title text-body fw-bold mb-1">Detalhe do Custo</h2>
-            <p class="text-muted small mb-0">Visualização completa do registro de custo.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'editar_custo' custo.id %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: #eab308 !important; color: #eab308;">
-                <i class="fa-solid fa-pen me-1"></i> Editar
-            </a>
-            <a href="{% url 'lista_custo' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit;">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar
-            </a>
-        </div>
-    </div>
-
-    <div class="card shadow-lg border-0 form-card">
-        <div class="card-header py-3">
-            <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;">
-                <i class="fa-solid fa-money-bill-wave me-2 text-primary"></i> {{ custo.tipo }}
-            </h5>
-        </div>
-        <div class="card-body">
+        <div class="card form-card">
+            <div class="card-header">
+                <i class="fa-solid fa-money-bill-wave text-primary"></i> {{ custo.tipo }}
+            </div>
+            <div class="card-body">
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">Tipo / Categoria</span>
@@ -70,6 +48,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}

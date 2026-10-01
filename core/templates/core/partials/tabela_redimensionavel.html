@@ -1,0 +1,78 @@
+{% comment %}
+Script reutilizável de redimensionamento de colunas por arraste.
+Uso: {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaX" storage_key="casanova_x_larguras" %}
+{% endcomment %}
+<script>
+(function () {
+    const tabela = document.getElementById('{{ tabela_id }}');
+    if (!tabela) return;
+
+    const ths = Array.from(tabela.querySelectorAll('thead th'));
+    const cols = Array.from(tabela.querySelectorAll('colgroup col'));
+    const CHAVE_STORAGE = '{{ storage_key }}';
+
+    function aplicarLargurasSalvas() {
+        try {
+            const salvas = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
+            salvas.forEach(function (largura, i) {
+                if (cols[i] && largura) cols[i].style.width = largura + 'px';
+            });
+        } catch (e) { /* ignora */ }
+    }
+
+    function salvarLarguras() {
+        try {
+            const larguras = cols.map(function (col) {
+                return Math.round(col.getBoundingClientRect().width);
+            });
+            localStorage.setItem(CHAVE_STORAGE, JSON.stringify(larguras));
+        } catch (e) { /* ignora */ }
+    }
+
+    aplicarLargurasSalvas();
+
+    tabela.querySelectorAll('.col-resizer').forEach(function (alca) {
+        alca.addEventListener('mousedown', function (evento) {
+            evento.preventDefault();
+            evento.stopPropagation();
+
+            const th = alca.parentElement;
+            const indice = ths.indexOf(th);
+            const col = cols[indice];
+            if (!col) return;
+
+            const larguraInicial = th.getBoundingClientRect().width;
+            const xInicial = evento.pageX;
+
+            alca.classList.add('arrastando');
+            document.body.classList.add('redimensionando-coluna');
+
+            function aoMover(e) {
+                const delta = e.pageX - xInicial;
+                const novaLargura = Math.max(60, larguraInicial + delta);
+                col.style.width = novaLargura + 'px';
+            }
+
+            function aoSoltar() {
+                document.removeEventListener('mousemove', aoMover);
+                document.removeEventListener('mouseup', aoSoltar);
+                alca.classList.remove('arrastando');
+                document.body.classList.remove('redimensionando-coluna');
+                salvarLarguras();
+            }
+
+            document.addEventListener('mousemove', aoMover);
+            document.addEventListener('mouseup', aoSoltar);
+        });
+    });
+
+    tabela.querySelectorAll('.col-resizer').forEach(function (alca) {
+        alca.addEventListener('dblclick', function (evento) {
+            evento.preventDefault();
+            evento.stopPropagation();
+            cols.forEach(function (col) { col.style.width = ''; });
+            try { localStorage.removeItem(CHAVE_STORAGE); } catch (e) { /* ignora */ }
+        });
+    });
+})();
+</script>

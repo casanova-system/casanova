@@ -798,6 +798,373 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   15. PADRONIZACAO DE LISTAS E FORMULARIOS
+   Componentes reutilizaveis para todas as rotinas do sistema.
+   -------------------------------------------------------------------------- */
+
+/* ---- 15a. Cabecalho de pagina (lista e formulario) ---- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+.page-header .page-header-text { min-width: 0; }
+.page-header .page-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--cv-text);
+    margin: 0 0 0.15rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+.page-header .page-subtitle {
+    font-size: 0.82rem;
+    color: var(--cv-text-muted);
+    margin: 0;
+}
+.page-header .page-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ---- 15b. Botoes de acao do cabecalho ---- */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.42rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    transition: background-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.btn-action-primary {
+    color: #ffffff;
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    box-shadow: 0 1px 2px rgba(11, 56, 130, 0.25);
+}
+.btn-action-primary:hover {
+    background: var(--cv-blue-dark);
+    border-color: var(--cv-blue-dark);
+    color: #ffffff;
+}
+.btn-action-secondary {
+    color: var(--cv-text-muted);
+    border-color: var(--cv-line-strong);
+}
+.btn-action-secondary:hover {
+    background: var(--cv-surface-2);
+    color: var(--cv-text);
+    border-color: var(--cv-text-faint);
+}
+[data-bs-theme="dark"] .btn-action-primary { background: #1f6feb; border-color: #1f6feb; }
+[data-bs-theme="dark"] .btn-action-primary:hover { background: #388bfd; border-color: #388bfd; }
+[data-bs-theme="dark"] .btn-action-secondary { color: #adb5bd; border-color: #30363d; }
+[data-bs-theme="dark"] .btn-action-secondary:hover { background: #21262d; color: #e6edf3; }
+
+/* ---- 15c. Botoes de acao das linhas da tabela ---- */
+.btn-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 0.72rem;
+    color: var(--cv-text-faint);
+    transition: background-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease);
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-row:hover { background: var(--cv-surface-2); }
+.btn-row-view:hover { color: #0ea5e9; border-color: rgba(14, 165, 233, 0.35); }
+.btn-row-edit:hover { color: #d97706; border-color: rgba(217, 119, 6, 0.35); }
+.btn-row-delete:hover { color: #dc2626; border-color: rgba(220, 38, 38, 0.35); }
+.btn-row-extra:hover { color: #7c3aed; border-color: rgba(124, 58, 237, 0.35); }
+[data-bs-theme="dark"] .btn-row { color: #6e7681; }
+[data-bs-theme="dark"] .btn-row:hover { background: #21262d; }
+[data-bs-theme="dark"] .btn-row-view:hover { color: #38bdf8; border-color: rgba(56, 189, 248, 0.35); }
+[data-bs-theme="dark"] .btn-row-edit:hover { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); }
+[data-bs-theme="dark"] .btn-row-delete:hover { color: #f87171; border-color: rgba(248, 113, 113, 0.35); }
+[data-bs-theme="dark"] .btn-row-extra:hover { color: #a78bfa; border-color: rgba(167, 139, 250, 0.35); }
+
+/* ---- 15d. Card de lista ---- */
+.list-card {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    box-shadow: var(--cv-shadow-sm);
+}
+.list-card .list-card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--cv-line);
+    background: var(--cv-surface);
+}
+.list-card .list-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    color: var(--cv-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.list-card .list-card-title i { color: var(--cv-blue); }
+.list-card .list-card-body {
+    padding: 0;
+    flex-grow: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- 15e. Filtros (busca + ordenacao) ---- */
+.list-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+.list-filters .filter-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 350px;
+    width: 100%;
+}
+.list-filters .filter-search .input-group { flex-grow: 1; }
+
+/* ---- 15f. Modal de confirmacao padronizado ---- */
+.modal-confirm .modal-content {
+    border: 1px solid var(--cv-line-strong);
+    border-radius: var(--cv-radius);
+    box-shadow: var(--cv-shadow-lg);
+}
+.modal-confirm .modal-header {
+    border-bottom: 1px solid var(--cv-line);
+    padding: 0.9rem 1.15rem;
+}
+.modal-confirm .modal-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc3545;
+}
+.modal-confirm .modal-body { padding: 1.15rem; font-size: 0.9rem; }
+.modal-confirm .modal-footer {
+    border-top: 1px solid var(--cv-line);
+    padding: 0.75rem 1.15rem;
+    gap: 0.5rem;
+}
+
+/* ---- 15g. Formulario padronizado ---- */
+.form-page {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.form-page .form-card {
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    box-shadow: var(--cv-shadow-sm);
+    overflow: hidden;
+}
+.form-page .form-card .card-header {
+    padding: 0.85rem 1.15rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--cv-line);
+}
+.form-page .form-card .card-body { padding: 1.25rem; }
+.form-page .form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cv-text-muted);
+    margin-bottom: 0.3rem;
+}
+.form-page .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--cv-line);
+}
+
+/* ---- 15h. Tabela com colunas redimensionáveis (padrão OP) ---- */
+.tabela-redimensionavel {
+    table-layout: fixed;
+    width: 100%;
+}
+.tabela-redimensionavel th {
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tabela-redimensionavel td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.col-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 3;
+}
+.col-resizer::after {
+    content: "";
+    position: absolute;
+    top: 20%;
+    right: 3px;
+    width: 2px;
+    height: 60%;
+    background: var(--cv-line-strong);
+    border-radius: 2px;
+    transition: background-color 0.15s ease;
+}
+.col-resizer:hover::after,
+.col-resizer.arrastando::after {
+    background: var(--cv-blue);
+}
+body.redimensionando-coluna {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+/* ---- 15i. Card de filtros (padrão OP) ---- */
+.filtros-card {
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    box-shadow: none;
+    margin-bottom: 0.85rem;
+    flex-shrink: 0;
+    background: var(--cv-surface);
+}
+.filtros-card .card-body { padding: 0.6rem 0.85rem; }
+.filtros-card .form-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--cv-text-faint);
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.01em;
+}
+.filtros-card .form-control-sm,
+.filtros-card .form-select-sm {
+    font-size: 0.82rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 7px;
+}
+.filtros-card .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.32rem 0.8rem;
+    border-radius: 7px;
+}
+
+/* ---- 15j. Barra de filtros minimalista (busca simples) ---- */
+.filtros-bar {
+    margin-bottom: 0.85rem;
+    flex-shrink: 0;
+}
+.filtros-bar-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.filtros-search {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 440px;
+}
+.filtros-search > i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--cv-text-faint);
+    pointer-events: none;
+}
+.filtros-search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 0.75rem 0 2.1rem;
+    font-size: 0.83rem;
+    border: 1px solid var(--cv-line);
+    border-radius: 8px;
+    background: var(--cv-surface);
+    color: var(--cv-text);
+    transition: border-color var(--cv-dur) var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease);
+}
+.filtros-search input::placeholder { color: var(--cv-text-faint); }
+.filtros-search input:focus {
+    outline: none;
+    border-color: var(--cv-blue);
+    box-shadow: 0 0 0 3px var(--cv-blue-ring);
+}
+.filtros-bar .btn {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0 0.9rem;
+    border-radius: 8px;
+}
+.filtros-bar .btn-limpar {
+    color: var(--cv-text-muted);
+    border: 1px solid var(--cv-line);
+    background: transparent;
+}
+.filtros-bar .btn-limpar:hover {
+    background: var(--cv-surface-2);
+    color: var(--cv-text);
+}
+
+/* --------------------------------------------------------------------------
    14. ACESSIBILIDADE — MOVIMENTO REDUZIDO
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {

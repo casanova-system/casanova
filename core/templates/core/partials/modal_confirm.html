@@ -1,0 +1,42 @@
+{% comment %}
+Modal de confirmação de exclusão padronizado (tema claro/escuro).
+
+Uso (modal único reutilizável):
+{% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir" titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este registro?" %}
+
+Uso (modal por linha, com form POST):
+{% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:item.id titulo="Confirmar Exclusão" mensagem="..." form_action=url_excluir %}
+
+Parâmetros:
+- modal_id (obrigatório)
+- titulo (opcional; padrão "Confirmar Exclusão")
+- mensagem (opcional)
+- form_action (opcional) — se informado, renderiza um <form method="POST"> com CSRF
+- confirmar_texto (opcional; padrão "Sim, Excluir")
+{% endcomment %}
+<div class="modal fade modal-confirm" id="{{ modal_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ titulo|default:"Confirmar Exclusão" }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">{{ mensagem|default:"Esta ação não poderá ser desfeita." }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">Cancelar</button>
+                {% if form_action %}
+                    <form action="{{ form_action }}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger px-3">{{ confirmar_texto|default:"Sim, Excluir" }}</button>
+                    </form>
+                {% else %}
+                    <a id="{{ modal_id }}Confirmar" href="#" class="btn btn-sm btn-danger px-3">{{ confirmar_texto|default:"Sim, Excluir" }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
