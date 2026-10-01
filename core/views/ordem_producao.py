@@ -312,33 +312,86 @@ def _conteudo_barcode(op_id):
     return str(op_id)
 
 
+# Tabela de padrões Code128 (larguras barra/espaço em módulos).
+# Índices 0-102 = dados, 103 = Start A, 104 = Start B, 105 = Start C, 106 = Stop.
+_CODE128_PATTERNS = [
+    '212222', '222122', '222221', '121223', '121322', '131222', '122213',
+    '122312', '132212', '221213', '221312', '231212', '112232', '122132',
+    '122231', '113222', '123122', '123221', '223211', '221132', '221231',
+    '213212', '223112', '312131', '311222', '321122', '321221', '312212',
+    '322112', '322211', '212123', '212321', '232121', '111323', '131123',
+    '131321', '112313', '132113', '132311', '211313', '231113', '231311',
+    '112133', '112331', '132131', '113123', '113321', '133121', '313121',
+    '211331', '231131', '213113', '213311', '213131', '311123', '311321',
+    '331121', '312113', '312311', '332111', '314111', '221411', '431111',
+    '111224', '111422', '121124', '121421', '141122', '141221', '112214',
+    '112412', '122114', '122411', '142112', '142211', '241211', '221114',
+    '413111', '241112', '134111', '111242', '121142', '121241', '114212',
+    '124112', '124211', '411212', '421112', '421211', '212141', '214121',
+    '412121', '111143', '111341', '131141', '114113', '114311', '411113',
+    '411311', '113141', '114131', '311141', '411131', '211412', '211214',
+    '211232', '2331112',
+]
+
+
 def _gerar_barcode_svg(conteudo):
-    """Gera o código de barras (Code128) como SVG (string) com fundo branco."""
-    import io
+    """Gera o código de barras Code128 como SVG — SEM dependências externas.
 
-    import barcode
-    from barcode.writer import SVGWriter
+    Implementação em Python puro (não precisa de python-barcode/Pillow),
+    garantindo que funcione em qualquer servidor.
+    """
+    data = str(conteudo)
 
-    code = barcode.get('code128', conteudo, writer=SVGWriter())
-    buffer = io.BytesIO()
-    # options: módulo mais largo e texto legível embaixo
-    code.write(buffer, options={
-        'module_width': 0.5,
-        'module_height': 15.0,
-        'font_size': 12,
-        'text_distance': 4.0,
-        'quiet_zone': 6.0,
-        'write_text': True,
-    })
-    svg = buffer.getvalue().decode('utf-8')
+    # Conjunto C (pares de dígitos) é mais compacto; senão usa o conjunto B
+    if data.isdigit() and len(data) >= 2 and len(data) % 2 == 0:
+        codes = [105]  # Start C
+        for i in range(0, len(data), 2):
+            codes.append(int(data[i:i + 2]))
+    else:
+        codes = [104]  # Start B
+        for ch in data:
+            codes.append(ord(ch) - 32)
 
-    # Garante fundo branco (essencial na impressão)
-    marcador = svg.find('>', svg.find('<svg'))
-    if marcador != -1:
-        fundo = '<rect width="100%" height="100%" fill="#ffffff"/>'
-        svg = svg[:marcador + 1] + fundo + svg[marcador + 1:]
+    # Dígito verificador (checksum)
+    checksum = codes[0]
+    for pos, code in enumerate(codes[1:], start=1):
+        checksum += pos * code
+    codes.append(checksum % 103)
+    codes.append(106)  # Stop
 
-    return svg
+    # Dimensões em milímetros
+    modulo = 0.5
+    altura = 15.0
+    quiet = 2.5
+    altura_texto = 5.0
+
+    x = quiet
+    barras = []
+    for code in codes:
+        padrao = _CODE128_PATTERNS[code]
+        barra = True
+        for largura in padrao:
+            w = int(largura) * modulo
+            if barra:
+                barras.append(
+                    f'<rect x="{x:.3f}" y="0" width="{w:.3f}" height="{altura}"/>'
+                )
+            x += w
+            barra = not barra
+
+    largura_total = x + quiet
+    altura_total = altura + altura_texto
+
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{largura_total:.2f}mm" height="{altura_total:.2f}mm" '
+        f'viewBox="0 0 {largura_total:.2f} {altura_total:.2f}">'
+        f'<rect width="100%" height="100%" fill="#ffffff"/>'
+        f'<g fill="#000000">{"".join(barras)}</g>'
+        f'<text x="{largura_total / 2:.2f}" y="{altura_total - 1:.2f}" '
+        f'text-anchor="middle" font-family="monospace" font-size="4">{data}</text>'
+        f'</svg>'
+    )
 
 
 @login_required(login_url='login')
@@ -351,16 +404,7 @@ def barcode_ordem_producao(request, op_id):
     """
     from django.http import HttpResponse
 
-    try:
-        svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
-    except ImportError:
-        return HttpResponse(
-            'A biblioteca "python-barcode" não está instalada neste servidor. '
-            'Execute: pip install python-barcode',
-            status=500,
-            content_type='text/plain; charset=utf-8',
-        )
-
+    svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
     return HttpResponse(svg, content_type='image/svg+xml')
 
 
@@ -402,15 +446,8 @@ def imprimir_barcode_ordem_producao(request, op_id):
             'QtdProduzir': '—',
         }
 
-    try:
-        barcode_svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
-        erro_barcode = None
-    except ImportError:
-        barcode_svg = None
-        erro_barcode = (
-            'A biblioteca "python-barcode" não está instalada neste servidor. '
-            'Execute: pip install python-barcode'
-        )
+    barcode_svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
+    erro_barcode = None
 
     context = {
         'dados': dados,
