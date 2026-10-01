@@ -124,6 +124,19 @@
             </div>
             {% endif %}
 
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.rastreio_producao %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'rastreio_producao' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #0891b2;"><i class="fa-solid fa-route"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Rastreio de Produção</span>
+                        <span class="quick-desc">Acompanhe a OP pelos setores</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
+
             {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
             <div class="col-xl-3 col-md-6">
                 <a href="{% url 'grafico_custo_frete' %}" class="quick-card">

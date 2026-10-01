@@ -302,8 +302,15 @@ def _buscar_op_por_id(op_id):
         return registro
 
 
-def _conteudo_qrcode(dados):
-    """Monta o texto que vai dentro do QR Code (a OP é o número do documento)."""
+def _conteudo_qrcode(dados, url_rastreio=None):
+    """Monta o texto que vai dentro do QR Code.
+
+    Quando `url_rastreio` é informada, o QR contém a URL da tela de rastreio
+    (assim, ao escanear, o celular abre direto a página da OP). Caso contrário,
+    mantém o texto descritivo (compatibilidade).
+    """
+    if url_rastreio:
+        return url_rastreio
     linhas = [
         f"OP: {dados.get('NumeroDocumento') or '—'}",
         f"Obra: {dados.get('ProjetoObra')}",
@@ -342,8 +349,9 @@ def _gerar_qrcode_svg(conteudo):
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def qrcode_ordem_producao(request, op_id):
-    """Gera o QR Code de uma OP em SVG."""
+    """Gera o QR Code de uma OP em SVG (aponta para a tela de rastreio)."""
     from django.http import HttpResponse
+    from django.urls import reverse
 
     try:
         dados = _buscar_op_por_id(op_id)
@@ -353,8 +361,12 @@ def qrcode_ordem_producao(request, op_id):
     if not dados:
         return HttpResponse('OP não encontrada.', status=404)
 
+    url_rastreio = request.build_absolute_uri(
+        reverse('rastreio_op', args=[op_id])
+    )
+
     try:
-        svg = _gerar_qrcode_svg(_conteudo_qrcode(dados))
+        svg = _gerar_qrcode_svg(_conteudo_qrcode(dados, url_rastreio))
     except ImportError:
         return HttpResponse(
             'A biblioteca "qrcode" não está instalada neste servidor. '
@@ -370,6 +382,8 @@ def qrcode_ordem_producao(request, op_id):
 @requer_rotina('lista_ordem_producao')
 def imprimir_qrcode_ordem_producao(request, op_id):
     """Página de impressão do QR Code em folha A4 (QR pequeno e centralizado)."""
+    from django.urls import reverse
+
     try:
         dados = _buscar_op_por_id(op_id)
     except Exception:  # noqa: BLE001
@@ -380,7 +394,10 @@ def imprimir_qrcode_ordem_producao(request, op_id):
             'erro': 'OP não encontrada.',
         })
 
-    conteudo = _conteudo_qrcode(dados)
+    url_rastreio = request.build_absolute_uri(
+        reverse('rastreio_op', args=[op_id])
+    )
+    conteudo = _conteudo_qrcode(dados, url_rastreio)
 
     try:
         qr_svg = _gerar_qrcode_svg(conteudo)

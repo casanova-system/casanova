@@ -24,6 +24,11 @@ from core.views.ordem_producao import (
     lista_ordem_producao,
     qrcode_ordem_producao,
 )
+from core.views.rastreio import (
+    rastreio_op,
+    rastreio_producao,
+    registrar_movimentacao,
+)
 from core.views.relatorio import relatorio_fretes_mes  # <-- Importado do arquivo relatorio.py recém criado
 from core.views.veiculo import (
     cadastrar_veiculo,
@@ -107,4 +112,8 @@ urlpatterns = [
     path('industria/ordem-producao/', lista_ordem_producao, name='lista_ordem_producao'),
     path('industria/ordem-producao/<int:op_id>/qrcode/', qrcode_ordem_producao, name='qrcode_ordem_producao'),
     path('industria/ordem-producao/<int:op_id>/qrcode/imprimir/', imprimir_qrcode_ordem_producao, name='imprimir_qrcode_ordem_producao'),
+    # RASTREIO DE PRODUÇÃO (QR Code)
+    path('industria/rastreio/', rastreio_producao, name='rastreio_producao'),
+    path('industria/rastreio/<int:op_id>/', rastreio_op, name='rastreio_op'),
+    path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
 ]

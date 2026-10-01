@@ -1,0 +1,124 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
+
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'menu_principal' as url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Rastreio de Produção" subtitulo="Acompanhe a OP pelos setores da fábrica em tempo real." voltar_url=url_inicio %}
+
+    <!-- Filtros -->
+    <div class="filtros-bar">
+        <form method="GET" action="" class="filtros-bar-form">
+            <div class="filtros-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" value="{{ filtros.q|default:'' }}" placeholder="Buscar por OP, obra ou produto...">
+            </div>
+            <select name="setor" class="form-select form-select-sm" style="max-width: 190px;">
+                <option value="">Todos os setores</option>
+                {% for s in setores %}
+                    <option value="{{ s.codigo }}" {% if filtros.setor == s.codigo %}selected{% endif %}>{{ s.nome }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="form-select form-select-sm" style="max-width: 170px;">
+                <option value="">Todos os status</option>
+                <option value="EM_PRODUCAO" {% if filtros.status == 'EM_PRODUCAO' %}selected{% endif %}>Em Produção</option>
+                <option value="CONCLUIDA" {% if filtros.status == 'CONCLUIDA' %}selected{% endif %}>Concluída</option>
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i> Localizar
+            </button>
+            <a href="{% url 'rastreio_producao' %}" class="btn btn-limpar">
+                <i class="fa-solid fa-rotate-left"></i> Limpar
+            </a>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-lg list-card">
+        <div class="card-header list-card-header">
+            <h5 class="list-card-title"><i class="fa-solid fa-route me-2 text-primary"></i> OPs em Rastreio</h5>
+            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-2">
+                {{ page_obj.paginator.count }} registro{{ page_obj.paginator.count|pluralize }}
+            </span>
+        </div>
+
+        <div class="card-body list-card-body">
+            <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaRastreio">
+                    <colgroup>
+                        <col style="width: 120px;">
+                        <col style="width: 260px;">
+                        <col style="width: 220px;">
+                        <col style="width: 130px;">
+                        <col style="width: 170px;">
+                        <col style="width: 160px;">
+                        <col style="width: 150px;">
+                        <col style="width: 110px;">
+                    </colgroup>
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th class="ps-3">OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Produto<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Vidro<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Setor Atual<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Última Atualização<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Status<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-end pe-3">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rastreios %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-nowrap">{{ r.op_numero|default:r.op_id }}</td>
+                            <td><span class="text-truncate d-inline-block" style="max-width: 240px;" title="{{ r.obra }}">{{ r.obra|default:"—" }}</span></td>
+                            <td><span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ r.produto }}">{{ r.produto|default:"—" }}</span></td>
+                            <td>
+                                {% if r.tem_vidro is None %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">A definir</span>
+                                {% elif r.tem_vidro %}
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1"><i class="fa-solid fa-check me-1"></i> Sim</span>
+                                {% else %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">Não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                    <i class="fa-solid fa-location-dot me-1"></i> {{ r.setor_atual_nome }}
+                                </span>
+                            </td>
+                            <td class="text-nowrap text-muted">{{ r.atualizado_em|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if r.concluida %}
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{% url 'rastreio_op' r.op_id %}" class="btn-row btn-row-view" title="Abrir rastreio"><i class="fa-solid fa-eye"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="p-0">
+                                {% url 'rastreio_producao' as url_lista %}
+                                {% include 'core/partials/empty_state.html' with icone="fa-route" busca=filtros.q titulo_vazio="Nenhuma OP em rastreio" texto_vazio="Escaneie o QR Code de uma OP para iniciar o rastreio de produção." limpar_url=url_lista %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
+        </div>
+    </div>
+</div>
+
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaRastreio" storage_key="casanova_rastreio_larguras" %}
+{% endblock %}

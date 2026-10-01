@@ -92,6 +92,7 @@ ROTINAS_PADRAO = [
     ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO', 'COMERCIAL'),
     ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO', 'COMERCIAL'),
     ('008', 'Ordem de Produção (OP)', 'lista_ordem_producao', 'ROTINA', 'INDUSTRIA'),
+    ('009', 'Rastreio de Produção', 'rastreio_producao', 'ROTINA', 'INDUSTRIA'),
 ]
 
 
@@ -408,3 +409,121 @@ class Custo(models.Model):
 
     def __str__(self):
         return f'{self.tipo} - {self.valor}'
+
+
+# ==========================================
+# MODELOS: Rastreio de Produção (OP)
+# ==========================================
+SETORES_PRODUCAO_PADRAO = [
+    # (codigo, nome, ordem, requer_vidro)
+    ('separacao', 'Separação', 1, False),
+    ('usinagem', 'Usinagem', 2, False),
+    ('mesa', 'Mesa', 3, False),
+    ('encaixilhamento', 'Encaixilhamento', 4, True),
+    ('expedicao', 'Expedição', 5, False),
+]
+
+
+def garantir_setores_padrao():
+    """Garante que os setores do fluxo de produção existam."""
+    for codigo, nome, ordem, requer_vidro in SETORES_PRODUCAO_PADRAO:
+        SetorProducao.objects.get_or_create(
+            codigo=codigo,
+            defaults={
+                'nome': nome,
+                'ordem': ordem,
+                'requer_vidro': requer_vidro,
+            },
+        )
+
+
+class SetorProducao(models.Model):
+    """Setor do fluxo produtivo pelo qual a OP passa (Separação, Usinagem...)."""
+
+    codigo = models.CharField(max_length=30, unique=True, verbose_name='Código')
+    nome = models.CharField(max_length=100, verbose_name='Nome do Setor')
+    ordem = models.PositiveIntegerField(default=0, verbose_name='Ordem no Fluxo')
+    requer_vidro = models.BooleanField(
+        default=False,
+        verbose_name='Somente se tiver vidro',
+        help_text='Se marcado, este setor só entra no fluxo quando a OP tiver vidro.',
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+
+    class Meta:
+        ordering = ['ordem']
+        verbose_name = 'Setor de Produção'
+        verbose_name_plural = 'Setores de Produção'
+
+    def __str__(self):
+        return self.nome
+
+
+class RastreioOP(models.Model):
+    """Estado atual do rastreio de uma OP (identificada pelo ID do Faktory)."""
+
+    STATUS_CHOICES = [
+        ('EM_PRODUCAO', 'Em Produção'),
+        ('CONCLUIDA', 'Concluída'),
+    ]
+
+    op_id = models.IntegerField(
+        unique=True, db_index=True, verbose_name='ID da OP (Faktory)'
+    )
+    op_numero = models.CharField(max_length=50, blank=True, default='', verbose_name='Número da OP')
+    obra = models.CharField(max_length=255, blank=True, default='', verbose_name='Obra')
+    produto = models.CharField(max_length=255, blank=True, default='', verbose_name='Produto')
+    variante = models.CharField(max_length=100, blank=True, default='', verbose_name='Variante')
+
+    # None = ainda não decidido (a decisão acontece na Mesa)
+    tem_vidro = models.BooleanField(null=True, blank=True, verbose_name='Tem vidro?')
+
+    setor_atual = models.CharField(max_length=30, blank=True, default='', verbose_name='Setor Atual')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='EM_PRODUCAO', verbose_name='Status'
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+
+    class Meta:
+        ordering = ['-atualizado_em']
+        verbose_name = 'Rastreio de OP'
+        verbose_name_plural = 'Rastreios de OP'
+
+    def __str__(self):
+        return f'OP {self.op_numero or self.op_id} — {self.setor_atual_nome}'
+
+    @property
+    def setor_atual_nome(self):
+        if not self.setor_atual:
+            return 'Aguardando início'
+        setor = SetorProducao.objects.filter(codigo=self.setor_atual).first()
+        return setor.nome if setor else self.setor_atual
+
+    @property
+    def concluida(self):
+        return self.status == 'CONCLUIDA'
+
+
+class MovimentacaoOP(models.Model):
+    """Registro histórico de cada passagem da OP por um setor."""
+
+    rastreio = models.ForeignKey(
+        RastreioOP, on_delete=models.CASCADE, related_name='movimentacoes'
+    )
+    setor = models.CharField(max_length=30, verbose_name='Setor')
+    setor_nome = models.CharField(max_length=100, blank=True, default='', verbose_name='Nome do Setor')
+    usuario = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuário'
+    )
+    observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
+    data_hora = models.DateTimeField(auto_now_add=True, verbose_name='Data/Hora')
+
+    class Meta:
+        ordering = ['data_hora']
+        verbose_name = 'Movimentação de OP'
+        verbose_name_plural = 'Movimentações de OP'
+
+    def __str__(self):
+        return f'{self.setor_nome} — {self.data_hora:%d/%m/%Y %H:%M}'

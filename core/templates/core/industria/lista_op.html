@@ -11,6 +11,9 @@
             <p class="text-muted small mb-0">Consulte as ordens de produção do ERP Faktory.</p>
         </div>
         <div class="d-flex gap-2">
+            <a href="{% url 'rastreio_producao' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
+                <i class="fa-solid fa-route me-1"></i> Rastreio de Produção
+            </a>
             <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
                 <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
             </a>
@@ -207,6 +210,10 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer py-2 px-4">
+                                        <a href="{% url 'rastreio_op' op.IdOrdemProducao %}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="fa-solid fa-route me-1"></i> Rastreio
+                                        </a>
                                         <a href="{% url 'imprimir_qrcode_ordem_producao' op.IdOrdemProducao %}"
                                            target="_blank" rel="noopener"
                                            class="btn btn-sm btn-primary">

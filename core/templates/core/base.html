@@ -553,15 +553,20 @@
                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_industria %}
                                 <div class="setor-grupo">
                                     <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#setorIndustria" role="button"
-                                       aria-expanded="{% if 'ordem_producao' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                                       aria-expanded="{% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                                        aria-controls="setorIndustria" title="Indústria">
                                         <span><i class="fa-solid fa-industry me-1"></i> Indústria</span>
                                         <i class="fa-solid fa-chevron-down setor-chevron"></i>
                                     </a>
-                                    <div class="collapse {% if 'ordem_producao' in request.resolver_match.url_name %}show{% endif %}" id="setorIndustria">
+                                    <div class="collapse {% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name %}show{% endif %}" id="setorIndustria">
                                         {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 %}
                                         <a href="{% url 'lista_ordem_producao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'ordem_producao' in request.resolver_match.url_name %}active{% endif %}" data-id="8" data-nome="ordem de produção" title="Ordem de Produção">
                                             <span class="text-muted small" style="font-size: 0.7rem;">[008]</span> <span class="hide-on-collapse">Ordem de Produção</span>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.rastreio_producao or request.user.perfil.tem_rotina.009 %}
+                                        <a href="{% url 'rastreio_producao' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 text-decoration-none rotina-item sidebar-item-compacto {% if 'rastreio' in request.resolver_match.url_name %}active{% endif %}" data-id="9" data-nome="rastreio de produção" title="Rastreio de Produção">
+                                            <span class="text-muted small" style="font-size: 0.7rem;">[009]</span> <span class="hide-on-collapse">Rastreio de Produção</span>
                                         </a>
                                         {% endif %}
                                     </div>
