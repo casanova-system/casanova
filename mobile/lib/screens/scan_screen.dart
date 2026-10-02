@@ -12,7 +12,7 @@ import '../theme.dart';
 /// Bluetooth que funcionam como teclado).
 ///
 /// IMPORTANTE (web/iOS): navegadores só liberam a câmera em **HTTPS** ou
-/// **localhost**. Se o sistema estiver em HTTP (ex.: http://10.12.50.99:8000),
+/// **localhost**. Se o sistema estiver em HTTP (ex.: http://10.12.50.53:8000),
 /// a câmera fica bloqueada — nesse caso o app abre direto no modo manual.
 class ScanScreen extends StatefulWidget {
   final ApiService api;

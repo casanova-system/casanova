@@ -4,19 +4,19 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 ///
 /// Quando o app roda no **navegador** (web), a API é acessada na **mesma
 /// origem** da página — ou seja, funciona automaticamente em qualquer
-/// endereço (localhost, 10.12.50.99, etc.) sem precisar recompilar.
+/// endereço (localhost, 10.12.50.53, etc.) sem precisar recompilar.
 ///
 /// Quando roda como app nativo (Android/iOS), usa o `baseUrl` fixo abaixo.
 class AppConfig {
   /// URL fixa usada apenas no app nativo (Android/iOS).
-  ///   - Servidor da empresa (celular físico):  http://10.12.50.99:8000
+  ///   - Servidor da empresa (celular físico):  http://10.12.50.53:8000
   ///   - Emulador Android:                      http://10.0.2.2:8000
   ///   - Simulador iOS:                         http://127.0.0.1:8000
-  static const String _baseUrlNativo = 'http://10.12.50.99:8000';
+  static const String _baseUrlNativo = 'http://10.12.50.53:8000';
 
   /// Endereço efetivo da API.
   ///
-  /// No web devolve a origem atual (ex.: `http://10.12.50.99:8000`).
+  /// No web devolve a origem atual (ex.: `http://10.12.50.53:8000`).
   /// No nativo devolve `_baseUrlNativo`.
   static String get baseUrl {
     if (kIsWeb) {

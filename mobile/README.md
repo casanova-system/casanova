@@ -57,7 +57,7 @@ flutter build apk --release
 
 Edite `lib/config.dart` e ajuste `baseUrl`:
 
-- **Servidor da empresa (celular físico)**: `http://10.12.50.99:8000`
+- **Servidor da empresa (celular físico)**: `http://10.12.50.53:8000`
 - **Emulador Android**: `http://10.0.2.2:8000`
 - **Simulador iOS**: `http://127.0.0.1:8000`
 - **Dev local (web/desktop)**: `http://127.0.0.1:8000`
