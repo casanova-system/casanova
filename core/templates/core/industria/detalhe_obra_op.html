@@ -1,0 +1,295 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
+
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'lista_ordem_producao' as url_lista %}
+    {% url 'imprimir_barcode_ordem_producao' obra_op.pk as url_barcode %}
+    {% include 'core/partials/page_header.html' with titulo=obra_op.identificacao subtitulo=obra_op.descricao acao_url=url_barcode acao_texto="Imprimir Código de Barras" acao_icone="fa-barcode" voltar_url=url_lista voltar_texto="Voltar à Lista" %}
+
+    <!-- Identificação da OP -->
+    <div class="card form-card mb-3 flex-shrink-0">
+        <div class="card-header">
+            <i class="fa-solid fa-industry text-primary"></i> Identificação da OP
+        </div>
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">OP / Documento</span>
+                    <span class="detail-value">{{ obra_op.identificacao }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cód. Esquadria</span>
+                    <span class="detail-value font-monospace">{{ obra_op.codigo_esquadria|default:"—" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Quantidade</span>
+                    <span class="detail-value">{{ obra_op.quantidade }} un</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Dimensões</span>
+                    <span class="detail-value font-monospace">{{ obra_op.largura }} x {{ obra_op.altura }} mm</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tratamento</span>
+                    <span class="detail-value">{{ obra_op.tratamento|default:"—" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Importado em</span>
+                    <span class="detail-value">{{ obra_op.data_importacao|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="detail-item detail-full">
+                    <span class="detail-label">Descrição</span>
+                    <span class="detail-value">{{ obra_op.descricao|default:"—" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Obra e Vidro -->
+    <div class="card form-card mb-3 flex-shrink-0">
+        <div class="card-header">
+            <i class="fa-solid fa-building text-primary"></i> Obra e Vidro
+        </div>
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Cód. Obra</span>
+                    <span class="detail-value">{{ obra_op.obra.codigo }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Obra</span>
+                    <span class="detail-value">{{ obra_op.obra.nome|default:"—" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cliente</span>
+                    <span class="detail-value">{{ obra_op.obra.cliente|default:"—" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vidro</span>
+                    <span class="detail-value">{{ obra_op.vidro_descricao|default:"—" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Localização do Vidro</span>
+                    <span class="detail-value">{{ obra_op.vidro_localizacao|default:"—" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row g-2 mb-3 flex-shrink-0">
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card" style="--kpi-color: #0b3882;">
+                <div class="kpi-label">Perfis</div>
+                <div class="kpi-value">{{ total_perfis }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card" style="--kpi-color: #0ea5e9;">
+                <div class="kpi-label">Peças</div>
+                <div class="kpi-value">{{ total_pecas }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card" style="--kpi-color: #16a34a;">
+                <div class="kpi-label">Peso Líquido</div>
+                <div class="kpi-value">{{ total_peso|floatformat:2 }} <small style="font-size: 0.6em;">kg</small></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card" style="--kpi-color: #d97706;">
+                <div class="kpi-label">Componentes / Vidros</div>
+                <div class="kpi-value">{{ total_componentes }} / {{ total_vidros }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo rolável -->
+    <div class="flex-grow-1 overflow-y-auto pe-1">
+
+        <!-- Perfis para Produção -->
+        <div class="card list-card mb-3">
+            <div class="card-header list-card-header">
+                <h5 class="list-card-title">
+                    <i class="fas fa-layer-group me-2 text-primary"></i> Perfis para Produção
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total_perfis }}</span>
+                </h5>
+            </div>
+            <div class="card-body list-card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaPerfis">
+                        <colgroup>
+                            <col style="width: 60px;">
+                            <col style="width: 130px;">
+                            <col style="width: 170px;">
+                            <col style="width: 70px;">
+                            <col style="width: 100px;">
+                            <col style="width: 110px;">
+                            <col style="width: 80px;">
+                            <col style="width: 100px;">
+                            <col style="width: 220px;">
+                        </colgroup>
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="ps-3 text-nowrap">Pos.<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Tipo<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Código<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-center">L/H<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-center">Corte<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">Tam. (mm)<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">Qtde<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">Peso (kg)<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Observação<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            <tr>
+                                <td class="ps-3 text-muted">{{ item.posicao }}</td>
+                                <td>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold">{{ item.get_tipo_perfil_display }}</span>
+                                </td>
+                                <td class="font-monospace small text-truncate" title="{{ item.codigo }}">{{ item.codigo|default:"—" }}</td>
+                                <td class="text-center">{{ item.orientacao|default:"—" }}</td>
+                                <td class="text-center font-monospace small">{{ item.corte|default:"—" }}</td>
+                                <td class="text-end font-monospace">{{ item.tamanho }}</td>
+                                <td class="text-end fw-semibold">{{ item.quantidade }}</td>
+                                <td class="text-end">{{ item.peso|floatformat:3 }}</td>
+                                <td class="text-truncate text-muted small" title="{{ item.observacao }}">{{ item.observacao|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="p-0">
+                                    {% include 'core/partials/empty_state.html' with icone="fa-layer-group" titulo_vazio="Nenhum perfil nesta OP" texto_vazio="A planilha importada não trouxe perfis para esta tipologia." %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Componentes -->
+        <div class="card list-card mb-3">
+            <div class="card-header list-card-header">
+                <h5 class="list-card-title">
+                    <i class="fas fa-puzzle-piece me-2 text-primary"></i> Componentes
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total_componentes }}</span>
+                </h5>
+            </div>
+            <div class="card-body list-card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaComponentes">
+                        <colgroup>
+                            <col style="width: 150px;">
+                            <col style="width: 520px;">
+                            <col style="width: 110px;">
+                            <col style="width: 80px;">
+                            <col style="width: 70px;">
+                            <col style="width: 200px;">
+                        </colgroup>
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="ps-3 text-nowrap">Código<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Descrição<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Aplicação<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">Qtde<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-center">Un.<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Observação<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comp in componentes %}
+                            <tr>
+                                <td class="ps-3 font-monospace small text-truncate" title="{{ comp.codigo }}">{{ comp.codigo|default:"—" }}</td>
+                                <td class="text-truncate" title="{{ comp.descricao }}">{{ comp.descricao|default:"—" }}</td>
+                                <td>
+                                    {% if comp.aplicacao %}
+                                        <span class="badge bg-info bg-opacity-10 text-info fw-semibold">{{ comp.aplicacao }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-semibold">{{ comp.quantidade }}</td>
+                                <td class="text-center text-muted">{{ comp.unidade|default:"—" }}</td>
+                                <td class="text-truncate text-muted small" title="{{ comp.observacao }}">{{ comp.observacao|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="p-0">
+                                    {% include 'core/partials/empty_state.html' with icone="fa-puzzle-piece" titulo_vazio="Nenhum componente nesta OP" texto_vazio="A planilha importada não trouxe componentes para esta tipologia." %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vidros -->
+        <div class="card list-card mb-3">
+            <div class="card-header list-card-header">
+                <h5 class="list-card-title">
+                    <i class="fas fa-square me-2 text-primary"></i> Vidros
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total_vidros }}</span>
+                </h5>
+            </div>
+            <div class="card-body list-card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaVidros">
+                        <colgroup>
+                            <col style="width: 160px;">
+                            <col style="width: 300px;">
+                            <col style="width: 130px;">
+                            <col style="width: 80px;">
+                            <col style="width: 110px;">
+                            <col style="width: 110px;">
+                            <col style="width: 200px;">
+                        </colgroup>
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="ps-3 text-nowrap">Código<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Descrição<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Cor<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">Qtde<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">L (mm)<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap text-end">H (mm)<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                <th class="text-nowrap">Observação<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vidro in vidros %}
+                            <tr>
+                                <td class="ps-3 font-monospace small text-truncate" title="{{ vidro.codigo }}">{{ vidro.codigo|default:"—" }}</td>
+                                <td class="text-truncate" title="{{ vidro.descricao }}">{{ vidro.descricao|default:"—" }}</td>
+                                <td>{{ vidro.cor|default:"—" }}</td>
+                                <td class="text-end fw-semibold">{{ vidro.quantidade }}</td>
+                                <td class="text-end font-monospace">{{ vidro.largura }}</td>
+                                <td class="text-end font-monospace">{{ vidro.altura }}</td>
+                                <td class="text-truncate text-muted small" title="{{ vidro.observacao }}">{{ vidro.observacao|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    {% include 'core/partials/empty_state.html' with icone="fa-square" titulo_vazio="Nenhum vidro nesta OP" texto_vazio="A planilha importada não trouxe vidros para esta tipologia." %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaPerfis" storage_key="casanova_op_perfis_larguras" %}
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaComponentes" storage_key="casanova_op_componentes_larguras" %}
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaVidros" storage_key="casanova_op_vidros_larguras" %}
+{% endblock %}

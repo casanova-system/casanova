@@ -32,6 +32,9 @@ from core.views.frete import (
 from core.views.grafico_frete import grafico_custo_frete
 from core.views.ordem_producao import (
     barcode_ordem_producao,
+    detalhe_obra_op,
+    excluir_op,
+    importar_op_excel,
     imprimir_barcode_ordem_producao,
     lista_ordem_producao,
 )
@@ -122,6 +125,9 @@ urlpatterns = [
     path('custo/<int:pk>/editar/', editar_custo, name='editar_custo'),
     # ROTINA DE ORDEM DE PRODUÇÃO (INDÚSTRIA - Faktory)
     path('industria/ordem-producao/', lista_ordem_producao, name='lista_ordem_producao'),
+    path('industria/ordem-producao/importar/', importar_op_excel, name='importar_op_excel'),
+    path('industria/ordem-producao/obra-op/<int:obra_op_id>/', detalhe_obra_op, name='detalhe_obra_op'),
+    path('industria/ordem-producao/<int:obra_op_id>/excluir/', excluir_op, name='excluir_op'),
     path('industria/ordem-producao/<int:op_id>/barcode/', barcode_ordem_producao, name='barcode_ordem_producao'),
     path('industria/ordem-producao/<int:op_id>/barcode/imprimir/', imprimir_barcode_ordem_producao, name='imprimir_barcode_ordem_producao'),
     # RASTREIO DE PRODUÇÃO (código de barras)

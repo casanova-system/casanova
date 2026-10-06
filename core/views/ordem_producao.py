@@ -1,20 +1,37 @@
-"""Rotina de Ordem de Produção (OP) — integração com o banco Faktory (MSSQL).
+"""Rotina de Ordem de Produção (OP).
 
-Espelha a tela "Ordens de Produção" do ERP Faktory, no padrão visual do
-sistema Casanova. A grid inicia VAZIA e só carrega quando o usuário aplica
-algum filtro (evita varrer ~31 mil registros sem necessidade).
+A grid lista as OPs/Tipologias **importadas** do Excel do Alumisoft e,
+quando há filtro e o ERP Faktory está configurado, também as OPs vindas do
+ERP. Clicar duas vezes em uma OP abre o detalhe com perfis, componentes e
+vidros.
+
+Regras de paginação
+-------------------
+As duas origens (ERP e local) são combinadas em memória antes de paginar,
+porque o ERP responde em SQL Server e o local em Django — paginar cada uma
+isoladamente produziria páginas com quantidade errada de itens.
 """
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db import connections
-from django.shortcuts import render
+from django.db import connections, models
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from core.models import RastreioOP
+from core.importacao_op import ErroImportacaoOP, importar_ops
+from core.models import ObraOP, RastreioOP
 from core.views.permissao import requer_rotina
 
 ITENS_POR_PAGINA = 12
 
-# Mapeamento dos códigos de tipo de OP do Faktory
+# Teto de linhas trazidas do ERP numa consulta. Uma busca livre (ex.: "RAFAEL")
+# casa com centenas de OPs no Faktory; sem teto, tudo iria para a memória.
+LIMITE_ERP = 200
+
+# ---------------------------------------------------------------------------
+# Mapeamentos do ERP Faktory
+# ---------------------------------------------------------------------------
 TIPOS_OP = {
     0: 'Fabricado',
     1: 'Revenda',
@@ -22,25 +39,17 @@ TIPOS_OP = {
     3: 'Industrialização',
 }
 
-# Mapeamento dos status de elaboração
 STATUS_ELABORACAO = {
     0: 'Em Edição',
     1: 'Finalizada',
     2: 'Cancelada',
 }
 
-# Mapeamento dos status de atendimento
 STATUS_ATENDIMENTO = {
     0: 'Aberto',
     1: 'Atendido Parcialmente',
     2: 'Totalmente Atendido',
 }
-
-# Campos de filtro considerados para decidir se a grid deve carregar
-CAMPOS_FILTRO = (
-    'estabelecimento', 'tipo', 'documento', 'produto', 'variante',
-    'projeto', 'item_projeto', 'status', 'data_necessidade', 'q',
-)
 
 FROM_JOINS = """
     FROM dbo.ORDEMPRODUCAO OP
@@ -53,9 +62,50 @@ FROM_JOINS = """
     LEFT JOIN dbo.PROJETOESTAGIO PE  ON OP.ID_PROJETOESTAGIO = PE.ID_PROJETOESTAGIO
 """
 
+COLUNAS_ERP = """
+    OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
+    EST.DS_FANTASIA            AS Estabelecimento,
+    DOC.CD_DOCUMENTO           AS Documento,
+    OP.NM_DOCUMENTO            AS NumeroDocumento,
+    OP.TP_ORDEMPRODUCAO        AS Tipo,
+    PROD.DS_PRODUTO            AS Produto,
+    PV.CD_PRODUTOVARIANTE      AS Variante,
+    OP.DT_NECESSIDADE          AS DataNecessidade,
+    OP.DS_ESPECIFICACAO        AS Especificacao,
+    PI.DS_PROJETOITEM          AS ItemProjeto,
+    PE.DS_PROJETOESTAGIO       AS EtapaProjeto,
+    OP.QT_PRODUZIR             AS QtdProduzir,
+    OP.QT_PRODUZIDA            AS QtdProduzida,
+    OP.TP_STATUSELABORACAO     AS StatusElaboracao,
+    OP.TP_STATUSATENDIMENTO    AS StatusAtendimento,
+    PRJ.NM_DOCUMENTO           AS ObraNumero,
+    PRJ.NM_CODIGO              AS ObraCodigo,
+    PRJ.DS_PROJETO             AS ObraDescricao,
+    DOCP.CD_DOCUMENTO          AS ObraTipoDocumento
+"""
 
+# Critério de ordenação -> ORDER BY aceito pelo SQL Server
+ORDENACAO_ERP = {
+    'op_asc': 'OP.ID_ORDEMPRODUCAO ASC',
+    'op_desc': 'OP.ID_ORDEMPRODUCAO DESC',
+    'necessidade_asc': 'OP.DT_NECESSIDADE ASC',
+    'necessidade_desc': 'OP.DT_NECESSIDADE DESC',
+    'produto_asc': 'PROD.DS_PRODUTO ASC',
+    'produto_desc': 'PROD.DS_PRODUTO DESC',
+}
+
+MSG_DRIVER_FAKTORY = (
+    'O driver de conexão com o ERP Faktory não está instalado neste servidor. '
+    'Instale os pacotes "mssql-django" e "pyodbc" e o "ODBC Driver 18 for '
+    'SQL Server". Consulte DEPLOY_FAKTORY.md.'
+)
+
+
+# ---------------------------------------------------------------------------
+# Filtros do ERP
+# ---------------------------------------------------------------------------
 def _montar_filtros(request):
-    """Monta a cláusula WHERE, os parâmetros e se há algum filtro aplicado."""
+    """Monta a cláusula WHERE e os parâmetros do ERP a partir da querystring."""
     where = []
     params = []
 
@@ -69,7 +119,6 @@ def _montar_filtros(request):
         where.append('OP.TP_ORDEMPRODUCAO = %s')
         params.append(int(tipo))
 
-    # Documento: aceita tanto o código (ex.: "OP") quanto o número (ex.: 69272)
     documento = request.GET.get('documento', '').strip()
     if documento:
         where.append('(DOC.CD_DOCUMENTO LIKE %s OR CAST(OP.NM_DOCUMENTO AS VARCHAR) LIKE %s)')
@@ -91,7 +140,7 @@ def _montar_filtros(request):
             '(PRJ.DS_PROJETO LIKE %s OR PRJ.NM_CODIGO LIKE %s '
             'OR CAST(PRJ.NM_DOCUMENTO AS VARCHAR) LIKE %s)'
         )
-        params.extend([f'%{projeto}%', f'%{projeto}%', f'%{projeto}%'])
+        params.extend([f'%{projeto}%'] * 3)
 
     item_projeto = request.GET.get('item_projeto', '').strip()
     if item_projeto:
@@ -108,7 +157,6 @@ def _montar_filtros(request):
         where.append('CAST(OP.DT_NECESSIDADE AS DATE) = %s')
         params.append(data_necessidade)
 
-    # Busca livre (código da OP, produto, obra)
     q = request.GET.get('q', '').strip()
     if q:
         where.append(
@@ -122,192 +170,314 @@ def _montar_filtros(request):
         where.append('OP.DT_CANCELAMENTO IS NULL')
 
     clausula = ('WHERE ' + ' AND '.join(where)) if where else ''
-    tem_filtro = any(request.GET.get(campo, '').strip() for campo in CAMPOS_FILTRO)
-    return clausula, params, tem_filtro
+    return clausula, params
 
 
+def _tem_filtro(request):
+    """O ERP só é consultado quando há filtro (evita varrer 33k OPs)."""
+    campos = (
+        'estabelecimento', 'tipo', 'documento', 'produto', 'variante',
+        'projeto', 'item_projeto', 'status', 'data_necessidade', 'q',
+    )
+    return any(request.GET.get(campo, '').strip() for campo in campos)
+
+
+def _normalizar_registro_erp(registro):
+    """Completa o registro do ERP com rótulos e campos já formatados."""
+    registro['TipoLabel'] = TIPOS_OP.get(registro.get('Tipo'), '—')
+    registro['StatusElaboracaoLabel'] = STATUS_ELABORACAO.get(
+        registro.get('StatusElaboracao'), '—'
+    )
+    registro['StatusAtendimentoLabel'] = STATUS_ATENDIMENTO.get(
+        registro.get('StatusAtendimento'), '—'
+    )
+
+    data_nec = registro.get('DataNecessidade')
+    registro['DataNecessidade'] = data_nec.strftime('%d/%m/%Y') if data_nec else '—'
+
+    partes = [
+        registro.get('ObraTipoDocumento'),
+        registro.get('ObraNumero'),
+        registro.get('ObraCodigo'),
+        registro.get('ObraDescricao'),
+    ]
+    registro['ProjetoObra'] = ' - '.join(
+        str(parte) for parte in partes if parte not in (None, '')
+    ) or '—'
+
+    registro['fonte'] = 'faktory'
+    registro['obra_op_id'] = None
+    return registro
+
+
+def _consultar_erp(clausula, params, order_by):
+    """Consulta o ERP Faktory. Devolve ``(registros, erro)``.
+
+    A consulta é limitada a ``LIMITE_ERP`` linhas: uma busca livre pode casar
+    com centenas de OPs e trazer tudo para a memória derrubaria a página.
+    """
+    sql_dados = f"""
+        SELECT TOP {LIMITE_ERP} {COLUNAS_ERP}
+        {FROM_JOINS}
+        LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
+        {clausula}
+        ORDER BY {order_by}
+    """
+    try:
+        with connections['faktory'].cursor() as cur:
+            cur.execute(sql_dados, params)
+            colunas = [descricao[0] for descricao in cur.description]
+            return [
+                _normalizar_registro_erp(dict(zip(colunas, linha)))
+                for linha in cur.fetchall()
+            ], None
+    except Exception as exc:  # noqa: BLE001 — o ERP é opcional
+        erro = str(exc)
+        if 'available database backend' in erro or 'mssql' in erro.lower():
+            erro = MSG_DRIVER_FAKTORY
+        return [], erro
+
+
+# ---------------------------------------------------------------------------
+# Filtros das OPs locais (importadas do Excel)
+# ---------------------------------------------------------------------------
+def _filtrar_ops_locais(request):
+    """Queryset das OPs importadas, com busca e ordenação já aplicadas."""
+    consulta = ObraOP.objects.select_related('obra')
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        consulta = consulta.filter(
+            models.Q(codigo_documento__icontains=q)
+            | models.Q(codigo_esquadria__icontains=q)
+            | models.Q(descricao__icontains=q)
+            | models.Q(obra__codigo__icontains=q)
+            | models.Q(obra__nome__icontains=q)
+            | models.Q(obra__cliente__icontains=q)
+        )
+
+    projeto = request.GET.get('projeto', '').strip()
+    if projeto:
+        consulta = consulta.filter(
+            models.Q(obra__codigo__icontains=projeto)
+            | models.Q(obra__nome__icontains=projeto)
+        )
+
+    produto = request.GET.get('produto', '').strip()
+    if produto:
+        consulta = consulta.filter(
+            models.Q(descricao__icontains=produto)
+            | models.Q(codigo_esquadria__icontains=produto)
+        )
+
+    documento = request.GET.get('documento', '').strip()
+    if documento:
+        consulta = consulta.filter(codigo_documento__icontains=documento)
+
+    ordenar = request.GET.get('ordenar', '')
+    ordenacoes = {
+        'op_asc': ('codigo_documento', 'codigo_esquadria'),
+        'op_desc': ('-codigo_documento', '-codigo_esquadria'),
+        'produto_asc': ('descricao',),
+        'produto_desc': ('-descricao',),
+        'obra_asc': ('obra__codigo', 'codigo_documento'),
+        'obra_desc': ('-obra__codigo', '-codigo_documento'),
+    }
+    return consulta.order_by(*ordenacoes.get(ordenar, ('-data_importacao', '-id')))
+
+
+def _converter_op_local(obra_op):
+    """Converte uma ObraOP no mesmo dicionário usado pela grid do ERP."""
+    return {
+        'IdOrdemProducao': obra_op.pk,
+        'obra_op_id': obra_op.pk,
+        'Documento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+        'CodEsquadria': obra_op.codigo_esquadria,
+        'Descricao': obra_op.descricao or obra_op.codigo_esquadria,
+        'ObraCodigo': obra_op.obra.codigo,
+        'ObraNome': obra_op.obra.nome,
+        'Cliente': obra_op.obra.cliente or '—',
+        'Quantidade': obra_op.quantidade,
+        'Largura': obra_op.largura,
+        'Altura': obra_op.altura,
+        'Tratamento': obra_op.tratamento or '—',
+        'DataImportacao': (
+            obra_op.data_importacao.strftime('%d/%m/%Y')
+            if obra_op.data_importacao else '—'
+        ),
+        'fonte': 'importado',
+    }
+
+
+def _ordenar_combinado(registros, ordenar):
+    """Reordena a lista combinada (ERP + local) conforme o critério escolhido."""
+    if ordenar in ('produto_asc', 'produto_desc'):
+        return sorted(
+            registros,
+            key=lambda r: (r.get('Descricao') or '').lower(),
+            reverse=ordenar.endswith('desc'),
+        )
+
+    if ordenar == 'op_asc':
+        return sorted(registros, key=lambda r: (r.get('Documento') or ''))
+    if ordenar == 'op_desc':
+        return sorted(
+            registros, key=lambda r: (r.get('Documento') or ''), reverse=True
+        )
+
+    # Padrão: importadas primeiro (o queryset local já vem mais recente primeiro)
+    return sorted(
+        registros, key=lambda r: 0 if r.get('fonte') == 'importado' else 1
+    )
+
+
+# ---------------------------------------------------------------------------
+# Views
+# ---------------------------------------------------------------------------
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def lista_ordem_producao(request):
-    """Lista as Ordens de Produção vindas do ERP Faktory (somente após filtrar)."""
-    clausula, params, tem_filtro = _montar_filtros(request)
-
+    """Lista as Ordens de Produção importadas (e as do ERP quando há filtro)."""
     ordenar = request.GET.get('ordenar', '')
-    mapa_ordenacao = {
-        'op_asc': 'OP.ID_ORDEMPRODUCAO ASC',
-        'op_desc': 'OP.ID_ORDEMPRODUCAO DESC',
-        'necessidade_asc': 'OP.DT_NECESSIDADE ASC',
-        'necessidade_desc': 'OP.DT_NECESSIDADE DESC',
-        'produto_asc': 'PROD.DS_PRODUTO ASC',
-        'produto_desc': 'PROD.DS_PRODUTO DESC',
-    }
-    order_by = mapa_ordenacao.get(ordenar, 'OP.ID_ORDEMPRODUCAO DESC')
-
     erro_conexao = None
-    ordens = []
-    total = 0
-    pagina = request.GET.get('page') or 1
-    try:
-        pagina = max(int(pagina), 1)
-    except (TypeError, ValueError):
-        pagina = 1
-    offset = (pagina - 1) * ITENS_POR_PAGINA
 
-    # Só consulta o ERP quando houver algum filtro aplicado
-    if tem_filtro:
-        sql_count = f'SELECT COUNT(*) {FROM_JOINS} {clausula}'
-        sql_dados = f"""
-            SELECT
-                OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
-                EST.DS_FANTASIA            AS Estabelecimento,
-                DOC.CD_DOCUMENTO           AS Documento,
-                OP.NM_DOCUMENTO            AS NumeroDocumento,
-                OP.TP_ORDEMPRODUCAO        AS Tipo,
-                PROD.DS_PRODUTO            AS Produto,
-                PV.CD_PRODUTOVARIANTE      AS Variante,
-                OP.DT_NECESSIDADE          AS DataNecessidade,
-                OP.DS_ESPECIFICACAO        AS Especificacao,
-                PI.DS_PROJETOITEM          AS ItemProjeto,
-                PE.DS_PROJETOESTAGIO       AS EtapaProjeto,
-                OP.QT_PRODUZIR             AS QtdProduzir,
-                OP.QT_PRODUZIDA            AS QtdProduzida,
-                OP.TP_STATUSELABORACAO     AS StatusElaboracao,
-                OP.TP_STATUSATENDIMENTO    AS StatusAtendimento,
-                PRJ.NM_DOCUMENTO           AS ObraNumero,
-                PRJ.NM_CODIGO              AS ObraCodigo,
-                PRJ.DS_PROJETO             AS ObraDescricao,
-                DOCP.CD_DOCUMENTO          AS ObraTipoDocumento
-            {FROM_JOINS}
-            LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
-            {clausula}
-            ORDER BY {order_by}
-            OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
-        """
-        try:
-            with connections['faktory'].cursor() as cur:
-                cur.execute(sql_count, params)
-                total = cur.fetchone()[0] or 0
+    # 1. OPs importadas do Excel (fonte principal)
+    ordens = [_converter_op_local(op) for op in _filtrar_ops_locais(request)]
 
-                cur.execute(sql_dados, params + [offset, ITENS_POR_PAGINA])
-                colunas = [d[0] for d in cur.description]
-                for linha in cur.fetchall():
-                    registro = dict(zip(colunas, linha))
-                    registro['TipoLabel'] = TIPOS_OP.get(registro.get('Tipo'), '—')
-                    registro['StatusElaboracaoLabel'] = STATUS_ELABORACAO.get(
-                        registro.get('StatusElaboracao'), '—'
-                    )
-                    registro['StatusAtendimentoLabel'] = STATUS_ATENDIMENTO.get(
-                        registro.get('StatusAtendimento'), '—'
-                    )
-                    # Data de necessidade sem hora (apenas dd/mm/aaaa)
-                    data_nec = registro.get('DataNecessidade')
-                    registro['DataNecessidade'] = (
-                        data_nec.strftime('%d/%m/%Y') if data_nec else '—'
-                    )
-                    # Monta o texto do Projeto/Obra (ex.: "OBR - 1334 - 25-3629-00 - KARTËDROMO")
-                    partes_obra = [
-                        registro.get('ObraTipoDocumento'),
-                        registro.get('ObraNumero'),
-                        registro.get('ObraCodigo'),
-                        registro.get('ObraDescricao'),
-                    ]
-                    registro['ProjetoObra'] = ' - '.join(
-                        str(p) for p in partes_obra if p not in (None, '')
-                    ) or '—'
-                    ordens.append(registro)
-        except Exception as exc:  # noqa: BLE001
-            erro_conexao = str(exc)
-            # Mensagem amigável para o caso mais comum: backend/driver ausente
-            if 'available database backend' in erro_conexao or 'mssql' in erro_conexao.lower():
-                erro_conexao = (
-                    'O driver de conexão com o ERP Faktory não está instalado neste '
-                    'servidor. Instale os pacotes "mssql-django" e "pyodbc" e o '
-                    '"ODBC Driver 18 for SQL Server". Consulte DEPLOY_FAKTORY.md.'
-                )
+    # 2. OPs do ERP Faktory — somente quando há filtro
+    erp_truncado = False
+    if _tem_filtro(request):
+        clausula, params = _montar_filtros(request)
+        order_by = ORDENACAO_ERP.get(ordenar, 'OP.ID_ORDEMPRODUCAO DESC')
+        registros_erp, erro_conexao = _consultar_erp(clausula, params, order_by)
+        erp_truncado = len(registros_erp) >= LIMITE_ERP
+        ordens.extend(registros_erp)
 
-    # Paginador "leve": já paginado no banco, mas mantém a interface do partial
-    paginator = Paginator(range(total), ITENS_POR_PAGINA)
-    page_obj = paginator.get_page(pagina)
+    ordens = _ordenar_combinado(ordens, ordenar)
+
+    paginator = Paginator(ordens, ITENS_POR_PAGINA)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     params_qs = request.GET.copy()
     params_qs.pop('page', None)
-    querystring = params_qs.urlencode()
 
     context = {
+        'ordens': page_obj.object_list,
         'page_obj': page_obj,
-        'ordens': ordens,
-        'querystring': querystring,
+        'querystring': params_qs.urlencode(),
         'ordenacao_atual': ordenar,
         'erro_conexao': erro_conexao,
+        'erp_truncado': erp_truncado,
+        'limite_erp': LIMITE_ERP,
         'filtros': request.GET,
+        'total': paginator.count,
+        'query': request.GET.get('q', '').strip(),
         'tipos_op': TIPOS_OP,
         'status_atendimento': STATUS_ATENDIMENTO,
-        'tem_filtro': tem_filtro,
     }
     return render(request, 'core/industria/lista_op.html', context)
 
 
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def importar_op_excel(request):
+    """Importa Ordens de Produção a partir do Excel gerado pelo Alumisoft."""
+    if request.method == 'POST':
+        arquivo = request.FILES.get('excel_file')
+        if not arquivo:
+            messages.error(request, 'Selecione um arquivo .xlsx ou .xls para importar.')
+            return redirect('importar_op_excel')
+
+        if not arquivo.name.lower().endswith(('.xlsx', '.xls')):
+            messages.error(request, 'O arquivo deve ter a extensão .xlsx ou .xls.')
+            return redirect('importar_op_excel')
+
+        try:
+            resumo = importar_ops(arquivo)
+        except ErroImportacaoOP as exc:
+            messages.error(request, str(exc))
+            return redirect('importar_op_excel')
+        except Exception as exc:  # noqa: BLE001 — arquivo corrompido/formato inesperado
+            messages.error(request, f'Não foi possível processar o arquivo: {exc}')
+            return redirect('importar_op_excel')
+
+        messages.success(request, resumo.mensagem())
+        return redirect('lista_ordem_producao')
+
+    return render(request, 'core/industria/importar_op_excel.html')
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def detalhe_obra_op(request, obra_op_id):
+    """Detalhe de uma OP/Tipologia: perfis, componentes, vidros e resumo."""
+    obra_op = get_object_or_404(
+        ObraOP.objects.select_related('obra'),
+        pk=obra_op_id,
+    )
+
+    itens = list(obra_op.itens.all())
+    componentes = list(obra_op.componentes.all())
+    vidros = list(obra_op.vidros.all())
+
+    # Agrupa os perfis por tipo, preservando a ordem de posição
+    itens_por_tipo = {}
+    for item in itens:
+        itens_por_tipo.setdefault(item.get_tipo_perfil_display(), []).append(item)
+
+    context = {
+        'obra_op': obra_op,
+        'itens': itens,
+        'itens_por_tipo': itens_por_tipo,
+        'componentes': componentes,
+        'vidros': vidros,
+        'total_perfis': len(itens),
+        'total_pecas': sum(item.quantidade or 0 for item in itens),
+        'total_peso': sum((item.peso or 0) for item in itens),
+        'total_componentes': len(componentes),
+        'total_vidros': len(vidros),
+        'qtd_vidros': sum((vidro.quantidade or 0) for vidro in vidros),
+    }
+    return render(request, 'core/industria/detalhe_obra_op.html', context)
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+@require_POST
+def excluir_op(request, obra_op_id):
+    """Exclui uma OP/Tipologia importada (exclusão sempre via POST)."""
+    obra_op = get_object_or_404(ObraOP, pk=obra_op_id)
+    identificacao = obra_op.identificacao
+    obra_op.delete()
+    messages.success(request, f'OP {identificacao} excluída com sucesso.')
+    return redirect('lista_ordem_producao')
+
+
+# ---------------------------------------------------------------------------
+# Código de barras
+# ---------------------------------------------------------------------------
 def _buscar_op_por_id(op_id):
-    """Busca os dados de uma OP específica no Faktory (para o código de barras)."""
+    """Busca os dados de uma OP no Faktory (usado pelo rastreio/código de barras)."""
     sql = f"""
-        SELECT TOP 1
-            OP.ID_ORDEMPRODUCAO        AS IdOrdemProducao,
-            EST.DS_FANTASIA            AS Estabelecimento,
-            DOC.CD_DOCUMENTO           AS Documento,
-            OP.NM_DOCUMENTO            AS NumeroDocumento,
-            OP.TP_ORDEMPRODUCAO        AS Tipo,
-            PROD.DS_PRODUTO            AS Produto,
-            PV.CD_PRODUTOVARIANTE      AS Variante,
-            OP.DT_NECESSIDADE          AS DataNecessidade,
-            PI.DS_PROJETOITEM          AS ItemProjeto,
-            PE.DS_PROJETOESTAGIO       AS EtapaProjeto,
-            OP.QT_PRODUZIR             AS QtdProduzir,
-            OP.QT_PRODUZIDA            AS QtdProduzida,
-            OP.TP_STATUSELABORACAO     AS StatusElaboracao,
-            OP.TP_STATUSATENDIMENTO    AS StatusAtendimento,
-            PRJ.NM_DOCUMENTO           AS ObraNumero,
-            PRJ.NM_CODIGO              AS ObraCodigo,
-            PRJ.DS_PROJETO             AS ObraDescricao,
-            DOCP.CD_DOCUMENTO          AS ObraTipoDocumento
+        SELECT TOP 1 {COLUNAS_ERP}
         {FROM_JOINS}
         LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
         WHERE OP.ID_ORDEMPRODUCAO = %s
     """
     with connections['faktory'].cursor() as cur:
         cur.execute(sql, [op_id])
-        colunas = [d[0] for d in cur.description]
+        colunas = [descricao[0] for descricao in cur.description]
         linha = cur.fetchone()
         if not linha:
             return None
-        registro = dict(zip(colunas, linha))
-        registro['TipoLabel'] = TIPOS_OP.get(registro.get('Tipo'), '—')
-        registro['StatusElaboracaoLabel'] = STATUS_ELABORACAO.get(
-            registro.get('StatusElaboracao'), '—'
-        )
-        registro['StatusAtendimentoLabel'] = STATUS_ATENDIMENTO.get(
-            registro.get('StatusAtendimento'), '—'
-        )
-        data_nec = registro.get('DataNecessidade')
-        registro['DataNecessidade'] = (
-            data_nec.strftime('%d/%m/%Y') if data_nec else '—'
-        )
-        partes_obra = [
-            registro.get('ObraTipoDocumento'),
-            registro.get('ObraNumero'),
-            registro.get('ObraCodigo'),
-            registro.get('ObraDescricao'),
-        ]
-        registro['ProjetoObra'] = ' - '.join(
-            str(p) for p in partes_obra if p not in (None, '')
-        ) or '—'
-        return registro
+        return _normalizar_registro_erp(dict(zip(colunas, linha)))
 
 
 def _conteudo_barcode(op_id):
-    """Conteúdo do código de barras: o ID da OP (curto e legível pelo leitor).
+    """Conteúdo do código de barras: apenas o ID da OP.
 
-    O leitor de código de barras funciona como teclado: digita o valor e
-    pressiona Enter. Por isso usamos apenas o ID numérico da OP.
+    O leitor funciona como teclado (digita o valor e pressiona Enter), então o
+    código precisa ser curto e numérico.
     """
     return str(op_id)
 
@@ -335,31 +505,24 @@ _CODE128_PATTERNS = [
 
 
 def _gerar_barcode_svg(conteudo):
-    """Gera o código de barras Code128 como SVG — SEM dependências externas.
-
-    Implementação em Python puro (não precisa de python-barcode/Pillow),
-    garantindo que funcione em qualquer servidor.
-    """
+    """Gera o código de barras Code128 como SVG — sem dependências externas."""
     data = str(conteudo)
 
-    # Conjunto C (pares de dígitos) é mais compacto; senão usa o conjunto B
     if data.isdigit() and len(data) >= 2 and len(data) % 2 == 0:
-        codes = [105]  # Start C
+        codes = [105]  # Start C (pares de dígitos)
         for i in range(0, len(data), 2):
             codes.append(int(data[i:i + 2]))
     else:
         codes = [104]  # Start B
-        for ch in data:
-            codes.append(ord(ch) - 32)
+        for caractere in data:
+            codes.append(ord(caractere) - 32)
 
-    # Dígito verificador (checksum)
     checksum = codes[0]
-    for pos, code in enumerate(codes[1:], start=1):
-        checksum += pos * code
+    for posicao, code in enumerate(codes[1:], start=1):
+        checksum += posicao * code
     codes.append(checksum % 103)
     codes.append(106)  # Stop
 
-    # Dimensões em milímetros
     modulo = 0.5
     altura = 15.0
     quiet = 2.5
@@ -368,15 +531,15 @@ def _gerar_barcode_svg(conteudo):
     x = quiet
     barras = []
     for code in codes:
-        padrao = _CODE128_PATTERNS[code]
         barra = True
-        for largura in padrao:
-            w = int(largura) * modulo
+        for largura in _CODE128_PATTERNS[code]:
+            largura_modulo = int(largura) * modulo
             if barra:
                 barras.append(
-                    f'<rect x="{x:.3f}" y="0" width="{w:.3f}" height="{altura}"/>'
+                    f'<rect x="{x:.3f}" y="0" width="{largura_modulo:.3f}" '
+                    f'height="{altura}"/>'
                 )
-            x += w
+            x += largura_modulo
             barra = not barra
 
     largura_total = x + quiet
@@ -397,13 +560,7 @@ def _gerar_barcode_svg(conteudo):
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def barcode_ordem_producao(request, op_id):
-    """Gera o código de barras de uma OP em SVG.
-
-    NÃO depende do ERP Faktory: o código contém apenas o ID da OP, então
-    funciona mesmo se o ERP estiver indisponível.
-    """
-    from django.http import HttpResponse
-
+    """Gera o código de barras de uma OP em SVG (não depende do ERP)."""
     svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
     return HttpResponse(svg, content_type='image/svg+xml')
 
@@ -413,16 +570,15 @@ def barcode_ordem_producao(request, op_id):
 def imprimir_barcode_ordem_producao(request, op_id):
     """Página de impressão do código de barras em folha A4.
 
-    Os dados da OP vêm do ERP quando disponível; caso contrário, usa o
-    rastreio local ou apenas o ID (o código de barras sempre é gerado).
+    Os dados vêm do ERP quando disponível; senão do rastreio local; e, em
+    último caso, apenas o ID (o código de barras continua válido).
     """
     dados = None
     try:
         dados = _buscar_op_por_id(op_id)
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 — a impressão não pode depender do ERP
         dados = None
 
-    # Fallback: dados do rastreio local (se a OP já foi escaneada)
     if not dados:
         rastreio = RastreioOP.objects.filter(op_id=op_id).first()
         if rastreio:
@@ -435,7 +591,6 @@ def imprimir_barcode_ordem_producao(request, op_id):
                 'QtdProduzir': '—',
             }
 
-    # Último recurso: apenas o ID (o código de barras continua válido)
     if not dados:
         dados = {
             'NumeroDocumento': str(op_id),
@@ -446,13 +601,9 @@ def imprimir_barcode_ordem_producao(request, op_id):
             'QtdProduzir': '—',
         }
 
-    barcode_svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
-    erro_barcode = None
-
     context = {
         'dados': dados,
-        'barcode_svg': barcode_svg,
-        'erro_barcode': erro_barcode,
+        'barcode_svg': _gerar_barcode_svg(_conteudo_barcode(op_id)),
         'codigo': _conteudo_barcode(op_id),
     }
     return render(request, 'core/industria/imprimir_barcode_op.html', context)

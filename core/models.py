@@ -482,6 +482,153 @@ class SetorProducao(models.Model):
         return self.nome
 
 
+class ObraOP(models.Model):
+    """OP/Tipologia importada do Excel - vinculada a uma Obra."""
+    obra = models.ForeignKey(
+        'Obra',
+        on_delete=models.CASCADE,
+        related_name='ops',
+        verbose_name='Obra'
+    )
+    codigo_documento = models.CharField(max_length=20, blank=True, default='', verbose_name='Cód. Documento (ex: J01, J02)')
+    codigo_esquadria = models.CharField(max_length=50, verbose_name='Cód. Esquadria/Tipologia')
+    descricao = models.TextField(verbose_name='Descrição da Tipologia')
+    quantidade = models.IntegerField(default=1, verbose_name='Quantidade')
+    largura = models.IntegerField(verbose_name='Largura (mm)')
+    altura = models.IntegerField(verbose_name='Altura (mm)')
+    tratamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Tratamento/Cor')
+    vidro_descricao = models.CharField(max_length=255, blank=True, default='', verbose_name='Descrição do Vidro')
+    vidro_localizacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Localização do Vidro')
+    data_importacao = models.DateTimeField(auto_now_add=True, verbose_name='Importado em')
+    
+    class Meta:
+        ordering = ['-data_importacao']
+        verbose_name = 'OP/Tipologia da Obra'
+        verbose_name_plural = 'OPs/Tipologias da Obra'
+        # A identidade da OP é o documento (ex.: J01) dentro da obra.
+        # O código da esquadria NÃO é único: a mesma esquadria (ex.: GOLS-JCR200)
+        # pode aparecer em documentos diferentes (J04, J05).
+        unique_together = ['obra', 'codigo_documento']
+
+    def __str__(self):
+        return f'{self.obra.codigo} - {self.codigo_documento or self.codigo_esquadria} ({self.descricao[:50]})'
+
+    @property
+    def peso_total(self):
+        """Peso líquido total da tipologia.
+
+        No relatório do Alumisoft a coluna "Peso" de cada perfil já é o peso
+        líquido **daquela linha** (a soma das linhas é exatamente o
+        "Peso Total:" impresso pelo próprio ERP), por isso somamos direto.
+        """
+        return sum((item.peso or 0) for item in self.itens.all())
+
+    @property
+    def total_pecas(self):
+        """Soma das quantidades dos perfis da tipologia."""
+        return sum(item.quantidade or 0 for item in self.itens.all())
+
+    @property
+    def identificacao(self):
+        """Rótulo curto da OP (documento quando houver, senão a esquadria)."""
+        return self.codigo_documento or self.codigo_esquadria
+
+
+class ObraOPItem(models.Model):
+    """Itens/Perfis de uma OP/Tipologia."""
+    TIPO_PERFIL_CHOICES = [
+        ('CM', 'Contra Marco'),
+        ('MARCO', 'Marco'),
+        ('ARREMATE', 'Arremate'),
+        ('FOLHA', 'Folha'),
+        ('CONEXAO', 'Conexão'),
+        ('CUNHA', 'Cunha'),
+        ('OUTRO', 'Outro'),
+    ]
+    
+    op = models.ForeignKey(
+        'ObraOP',
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='OP/Tipologia'
+    )
+    posicao = models.IntegerField(default=0, verbose_name='Posição')
+    codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='Código do Perfil')
+    tipo_perfil = models.CharField(max_length=20, choices=TIPO_PERFIL_CHOICES, default='OUTRO', verbose_name='Tipo de Perfil')
+    orientacao = models.CharField(max_length=10, blank=True, default='', verbose_name='L/H')
+    corte = models.CharField(max_length=20, blank=True, default='', verbose_name='Corte (ex: 45/45)')
+    tamanho = models.IntegerField(default=0, verbose_name='Tamanho (mm)')
+    quantidade = models.IntegerField(default=1, verbose_name='Quantidade')
+    peso = models.DecimalField(max_digits=10, decimal_places=3, default=0, verbose_name='Peso (kg)')
+    observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
+    
+    class Meta:
+        ordering = ['posicao']
+        verbose_name = 'Item da OP'
+        verbose_name_plural = 'Itens da OP'
+
+    def __str__(self):
+        return f'{self.op.codigo_esquadria} - {self.tipo_perfil} {self.codigo} ({self.tamanho}mm x{self.quantidade})'
+
+    @property
+    def peso_unitario(self):
+        """Peso líquido de uma peça (peso da linha dividido pela quantidade)."""
+        if not self.quantidade:
+            return self.peso or 0
+        return (self.peso or 0) / self.quantidade
+
+
+class ObraOPComponente(models.Model):
+    """Componentes de uma OP/Tipologia importada do Excel."""
+    op = models.ForeignKey(
+        'ObraOP',
+        on_delete=models.CASCADE,
+        related_name='componentes',
+        verbose_name='OP/Tipologia'
+    )
+    posicao = models.IntegerField(default=0, verbose_name='Posição')
+    codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='Código')
+    descricao = models.TextField(blank=True, default='', verbose_name='Descrição')
+    aplicacao = models.CharField(max_length=50, blank=True, default='', verbose_name='Aplicação')
+    quantidade = models.IntegerField(default=1, verbose_name='Quantidade')
+    unidade = models.CharField(max_length=10, blank=True, default='', verbose_name='Unidade')
+    observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
+
+    class Meta:
+        ordering = ['posicao']
+        verbose_name = 'Componente da OP'
+        verbose_name_plural = 'Componentes da OP'
+
+    def __str__(self):
+        return f'{self.op.codigo_esquadria} - {self.codigo} ({self.quantidade} {self.unidade})'
+
+
+class ObraOPVidro(models.Model):
+    """Vidros de uma OP/Tipologia importada do Excel."""
+    op = models.ForeignKey(
+        'ObraOP',
+        on_delete=models.CASCADE,
+        related_name='vidros',
+        verbose_name='OP/Tipologia'
+    )
+    posicao = models.IntegerField(default=0, verbose_name='Posição')
+    codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='Código')
+    descricao = models.CharField(max_length=255, blank=True, default='', verbose_name='Descrição')
+    cor = models.CharField(max_length=100, blank=True, default='', verbose_name='Cor')
+    quantidade = models.IntegerField(default=1, verbose_name='Quantidade')
+    largura = models.IntegerField(default=0, verbose_name='Largura (mm)')
+    altura = models.IntegerField(default=0, verbose_name='Altura (mm)')
+    observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
+
+    class Meta:
+        ordering = ['posicao']
+        verbose_name = 'Vidro da OP'
+        verbose_name_plural = 'Vidros da OP'
+
+    def __str__(self):
+        return f'{self.op.codigo_esquadria} - {self.codigo} ({self.largura}x{self.altura}mm)'
+
+
 class RastreioOP(models.Model):
     """Estado atual do rastreio de uma OP (identificada pelo ID do Faktory)."""
 

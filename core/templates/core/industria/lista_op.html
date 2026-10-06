@@ -4,107 +4,55 @@
 {% block content %}
 <div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
 
-    <!-- Cabeçalho -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
-        <div>
-            <h2 class="page-title text-body fw-bold mb-1">Ordem de Produção (OP)</h2>
-            <p class="text-muted small mb-0">Consulte as ordens de produção do ERP Faktory.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'escanear' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-barcode me-1"></i> Escanear
-            </a>
-            <a href="{% url 'rastreio_producao' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-route me-1"></i> Rastreio de Produção
-            </a>
-            <a href="{% url 'menu_principal' %}" class="btn fw-semibold px-3 shadow-sm border" style="font-size: 0.85rem; background-color: transparent; border-color: var(--bs-secondary-border-subtle, #6c757d); color: inherit; transition: all 0.2s ease-in-out;" onmouseover="this.style.backgroundColor='var(--bs-secondary-bg-subtle, #495057)'; this.style.color='#ffffff';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='inherit';">
-                <i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Início
-            </a>
-        </div>
-    </div>
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'importar_op_excel' as url_novo %}
+    {% url 'menu_principal' as url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Ordens de Produção" subtitulo="OPs importadas do Excel do Alumisoft. Clique duas vezes na linha para abrir os detalhes." acao_url=url_novo acao_texto="Importar Excel" acao_icone="fa-file-excel" voltar_url=url_inicio %}
 
     {% if erro_conexao %}
-    <div class="alert alert-danger d-flex align-items-center gap-2 flex-shrink-0 py-2 small" role="alert">
+    <div class="alert alert-warning d-flex align-items-center gap-2 flex-shrink-0 py-2 small" role="alert">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <div><strong>Falha ao consultar o ERP Faktory:</strong> {{ erro_conexao }}</div>
+        <div><strong>ERP Faktory indisponível:</strong> {{ erro_conexao }}</div>
+    </div>
+    {% endif %}
+
+    {% if erp_truncado %}
+    <div class="alert alert-info d-flex align-items-center gap-2 flex-shrink-0 py-2 small" role="alert">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+            A busca no <strong>ERP Faktory</strong> foi limitada aos primeiros
+            <strong>{{ limite_erp }}</strong> resultados. Refine o filtro (código da OP, obra ou
+            documento) para ver resultados mais específicos.
+        </div>
     </div>
     {% endif %}
 
     <!-- Filtros -->
-    <div class="card shadow-sm border-0 mb-3 flex-shrink-0">
-        <div class="card-body py-3">
-            <form method="GET" action="" class="row g-2 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Estabelecimento</label>
-                    <input type="text" name="estabelecimento" class="form-control form-control-sm" value="{{ filtros.estabelecimento|default:'' }}" placeholder="Ex: STEEL - MATRIZ">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Tipo</label>
-                    <select name="tipo" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        {% for valor, rotulo in tipos_op.items %}
-                            <option value="{{ valor }}" {% if filtros.tipo == valor|stringformat:'s' %}selected{% endif %}>{{ rotulo }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">OP</label>
-                    <input type="text" name="documento" class="form-control form-control-sm" value="{{ filtros.documento|default:'' }}" placeholder="Ex: OP">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Produto</label>
-                    <input type="text" name="produto" class="form-control form-control-sm" value="{{ filtros.produto|default:'' }}" placeholder="Ex: TRAVESSA">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Variante</label>
-                    <input type="text" name="variante" class="form-control form-control-sm" value="{{ filtros.variante|default:'' }}" placeholder="Ex: RAL9005">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Obra</label>
-                    <input type="text" name="projeto" class="form-control form-control-sm" value="{{ filtros.projeto|default:'' }}" placeholder="Número, código ou nome da obra">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Item do Projeto</label>
-                    <input type="text" name="item_projeto" class="form-control form-control-sm" value="{{ filtros.item_projeto|default:'' }}" placeholder="Item">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Data Necessidade</label>
-                    <input type="date" name="data_necessidade" class="form-control form-control-sm" value="{{ filtros.data_necessidade|default:'' }}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small mb-1" style="font-size: 0.78rem;">Status</label>
-                    <select name="status" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        {% for valor, rotulo in status_atendimento.items %}
-                            <option value="{{ valor }}" {% if filtros.status == valor|stringformat:'s' %}selected{% endif %}>{{ rotulo }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-check mt-4">
-                        <input class="form-check-input" type="checkbox" name="exibir_cancelados" id="exibir_cancelados" {% if filtros.exibir_cancelados == 'on' %}checked{% endif %}>
-                        <label class="form-check-label small" for="exibir_cancelados">Exibir Cancelados</label>
-                    </div>
-                </div>
-                <div class="col-12 d-flex gap-2 justify-content-end mt-2">
-                    <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
-                        <i class="fa-solid fa-magnifying-glass me-1"></i> Localizar
-                    </button>
-                    <a href="{% url 'lista_ordem_producao' %}" class="btn btn-sm btn-outline-secondary px-3">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Limpar
-                    </a>
-                </div>
-            </form>
-        </div>
+    <div class="filtros-bar">
+        <form method="GET" action="" class="filtros-bar-form">
+            {% if ordenacao_atual %}
+                <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
+            {% endif %}
+            <div class="filtros-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar por OP, esquadria, descrição, obra ou cliente...">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i> Localizar
+            </button>
+            <a href="{% url 'lista_ordem_producao' %}" class="btn btn-limpar">
+                <i class="fa-solid fa-rotate-left"></i> Limpar
+            </a>
+        </form>
     </div>
 
-    <!-- Tabela -->
-    <div class="card shadow-lg flex-grow-1 d-flex flex-column overflow-hidden mb-3">
-        <div class="card-header py-3 d-flex flex-row justify-content-between align-items-center gap-3 flex-shrink-0">
-            <h5 class="mb-0 fw-bold text-nowrap" style="font-size: 0.9rem;">
-                Ordens de Produção
+    <!-- Tabela de Ordens de Produção -->
+    <div class="card shadow-lg list-card">
+        <div class="card-header list-card-header">
+            <h5 class="list-card-title">
+                <i class="fas fa-industry me-2 text-primary"></i> OPs Cadastradas
+                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total }}</span>
             </h5>
 
             <div class="dropdown">
@@ -113,273 +61,99 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 240px;">
                     <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'op_desc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=op_desc"><i class="fas fa-hashtag me-2"></i> OP (Decrescente)</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'op_asc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=op_asc"><i class="fas fa-hashtag me-2"></i> OP (Crescente)</a></li>
+                    <li><a class="dropdown-item {% if not ordenacao_atual %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=recentes"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'necessidade_asc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=necessidade_asc"><i class="fas fa-calendar-day me-2"></i> Necessidade (Próximas)</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'necessidade_desc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=necessidade_desc"><i class="fas fa-calendar-day me-2"></i> Necessidade (Distantes)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'op_asc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=op_asc"><i class="fas fa-hashtag me-2"></i> OP (Crescente)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'op_desc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=op_desc"><i class="fas fa-hashtag me-2"></i> OP (Decrescente)</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'produto_asc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=produto_asc"><i class="fas fa-sort-alpha-down me-2"></i> Produto (A-Z)</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'produto_desc' %}active{% endif %}" href="?{{ querystring }}{% if querystring %}&{% endif %}ordenar=produto_desc"><i class="fas fa-sort-alpha-up me-2"></i> Produto (Z-A)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'produto_asc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=produto_asc"><i class="fas fa-sort-alpha-down me-2"></i> Descrição (A-Z)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'produto_desc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=produto_desc"><i class="fas fa-sort-alpha-up me-2"></i> Descrição (Z-A)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'obra_asc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=obra_asc"><i class="fas fa-building me-2"></i> Obra (A-Z)</a></li>
+                    <li><a class="dropdown-item {% if ordenacao_atual == 'obra_desc' %}active{% endif %}" href="?{% if querystring %}{{ querystring }}&{% endif %}ordenar=obra_desc"><i class="fas fa-building me-2"></i> Obra (Z-A)</a></li>
                 </ul>
             </div>
         </div>
 
-        <div class="card-body p-0 flex-grow-1 overflow-hidden d-flex flex-column">
-            {% if ordens %}
+        <div class="card-body list-card-body">
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaOP">
                     <colgroup>
                         <col style="width: 90px;">
                         <col style="width: 150px;">
-                        <col style="width: 110px;">
-                        <col style="width: 280px;">
-                        <col style="width: 120px;">
                         <col style="width: 260px;">
-                        <col style="width: 150px;">
-                        <col style="width: 120px;">
-                        <col style="width: 260px;">
-                        <col style="width: 110px;">
-                        <col style="width: 110px;">
-                        <col style="width: 110px;">
+                        <col style="width: 190px;">
+                        <col style="width: 170px;">
+                        <col style="width: 70px;">
                         <col style="width: 130px;">
+                        <col style="width: 170px;">
+                        <col style="width: 110px;">
                     </colgroup>
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th class="ps-3 py-2 text-nowrap text-center">Código<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Estabelecimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Projeto / Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Tipo<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Produto<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Variante<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Necessidade<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Item / Etapa<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap text-end">Qtd. Produzir<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap text-end">Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap">Elaboração<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="py-2 text-nowrap pe-3">Atendimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="ps-3 text-nowrap">OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">Cód. Esquadria<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">Descrição<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">Cliente<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap text-end">Qtd<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap text-end">Dimensões<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">Tratamento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-end pe-3 text-nowrap">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for op in ordens %}
-                        <tr>
-                            <td class="ps-3 text-center">
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        data-bs-toggle="modal" data-bs-target="#modalBarcode{{ op.IdOrdemProducao }}"
-                                        title="Gerar código de barras">
-                                    <i class="fa-solid fa-barcode"></i>
-                                </button>
+                        <tr {% if op.obra_op_id %}ondblclick="window.location.href='{% url 'detalhe_obra_op' op.obra_op_id %}'" style="cursor: pointer;" title="Clique duas vezes para abrir os detalhes"{% endif %}>
+                            <td class="ps-3">
+                                <span class="badge bg-primary" style="font-size: 0.78rem; letter-spacing: 0.5px;">{{ op.Documento }}</span>
                             </td>
-                            <td class="text-nowrap">{{ op.Estabelecimento|default:"—" }}</td>
-                            <td class="text-nowrap">
-                                {{ op.Documento|default:"—" }}{% if op.NumeroDocumento %} {{ op.NumeroDocumento }}{% endif %}
+                            <td class="fw-semibold text-truncate" title="{{ op.CodEsquadria }}">{{ op.CodEsquadria|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Descricao }}">{{ op.Descricao|default:"—" }}</td>
+                            <td>
+                                <span class="fw-semibold">{{ op.ObraCodigo|default:"—" }}</span>
+                                {% if op.ObraNome %}<br><small class="text-muted text-truncate d-inline-block" style="max-width: 180px;" title="{{ op.ObraNome }}">{{ op.ObraNome }}</small>{% endif %}
                             </td>
-                            <td class="text-nowrap">{{ op.ProjetoObra }}</td>
-                            <td class="text-nowrap">{{ op.TipoLabel }}</td>
-                            <td>{{ op.Produto|default:"—" }}</td>
-                            <td class="text-nowrap">{{ op.Variante|default:"—" }}</td>
-                            <td class="text-nowrap">{{ op.DataNecessidade }}</td>
-                            <td class="text-nowrap">
-                                {{ op.ItemProjeto|default:"—" }}{% if op.EtapaProjeto %} / {{ op.EtapaProjeto }}{% endif %}
+                            <td class="text-truncate" title="{{ op.Cliente }}">{{ op.Cliente|default:"—" }}</td>
+                            <td class="text-end fw-bold">{{ op.Quantidade }}</td>
+                            <td class="text-end font-monospace small">{{ op.Largura }} x {{ op.Altura }}</td>
+                            <td class="text-truncate" title="{{ op.Tratamento }}">{{ op.Tratamento|default:"—" }}</td>
+                            <td class="text-end pe-3">
+                                <div class="d-flex justify-content-end gap-1">
+                                    {% if op.obra_op_id %}
+                                        <a href="{% url 'detalhe_obra_op' op.obra_op_id %}" class="btn-row btn-row-view" title="Visualizar" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></a>
+                                        <a href="{% url 'imprimir_barcode_ordem_producao' op.obra_op_id %}" target="_blank" class="btn-row btn-row-extra" title="Imprimir código de barras" onclick="event.stopPropagation();"><i class="fa-solid fa-barcode"></i></a>
+                                        <button type="button" class="btn-row btn-row-delete" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ op.obra_op_id }}" onclick="event.stopPropagation();"><i class="fas fa-trash-can"></i></button>
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" title="OP do ERP Faktory">ERP</span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td class="text-end">{{ op.QtdProduzir|floatformat:2 }}</td>
-                            <td class="text-end">{{ op.QtdProduzida|floatformat:2 }}</td>
-                            <td class="text-nowrap">{{ op.StatusElaboracaoLabel }}</td>
-                            <td class="pe-3 text-nowrap">{{ op.StatusAtendimentoLabel }}</td>
                         </tr>
 
-                        <!-- Modal do Código de Barras da OP -->
-                        <div class="modal fade" id="modalBarcode{{ op.IdOrdemProducao }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header py-3 px-4">
-                                        <h5 class="modal-title fw-bold mb-0" style="font-size: 1rem;">
-                                            Código de Barras — OP {{ op.NumeroDocumento }}
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                                    </div>
-                                    <div class="modal-body text-center py-4">
-                                        <img src="{% url 'barcode_ordem_producao' op.IdOrdemProducao %}"
-                                             alt="Código de barras da OP {{ op.NumeroDocumento }}"
-                                             class="img-fluid mb-3" style="max-width: 100%; background: #ffffff; padding: 8px; border-radius: 6px;">
-                                        <div class="text-start small">
-                                            <div><strong>OP:</strong> {{ op.NumeroDocumento }}</div>
-                                            <div><strong>Obra:</strong> {{ op.ProjetoObra }}</div>
-                                            <div><strong>Produto:</strong> {{ op.Produto|default:"—" }}</div>
-                                            <div><strong>Variante:</strong> {{ op.Variante|default:"—" }}</div>
-                                            <div><strong>Necessidade:</strong> {{ op.DataNecessidade }}</div>
-                                            <div><strong>Qtd. Produzir:</strong> {{ op.QtdProduzir|floatformat:2 }}</div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer py-2 px-4">
-                                        <a href="{% url 'imprimir_barcode_ordem_producao' op.IdOrdemProducao %}"
-                                           target="_blank" rel="noopener"
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-print me-1"></i> Imprimir (A4)
-                                        </a>
-                                        <a href="{% url 'barcode_ordem_producao' op.IdOrdemProducao %}"
-                                           download="barcode_op_{{ op.NumeroDocumento }}.svg"
-                                           class="btn btn-sm btn-outline-secondary">
-                                            <i class="fa-solid fa-download me-1"></i> Baixar
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% if op.obra_op_id %}
+                        {% url 'excluir_op' op.obra_op_id as url_excluir %}
+                        {% with pk_str=op.obra_op_id|stringformat:"s" %}
+                            {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir"|add:pk_str titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir esta Ordem de Produção? Os perfis, componentes e vidros vinculados também serão removidos. Esta ação não poderá ser desfeita." form_action=url_excluir %}
+                        {% endwith %}
+                        {% endif %}
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="p-0">
+                                {% url 'importar_op_excel' as url_novo %}
+                                {% url 'lista_ordem_producao' as url_lista %}
+                                {% include 'core/partials/empty_state.html' with icone="fa-industry" busca=query titulo_vazio="Nenhuma OP cadastrada" texto_vazio="Importe um arquivo Excel do Alumisoft para cadastrar as Ordens de Produção." acao_url=url_novo acao_texto="Importar Excel" acao_icone="fa-file-excel" limpar_url=url_lista %}
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
-            {% else %}
-            <div class="empty-state flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center px-4">
-                <div class="empty-state-icon"><i class="fa-solid fa-industry"></i></div>
-                {% if erro_conexao %}
-                    <h6 class="empty-state-title">Não foi possível carregar as ordens</h6>
-                    <p class="empty-state-text">Verifique a conexão com o ERP Faktory.</p>
-                {% elif not tem_filtro %}
-                    <h6 class="empty-state-title">Pesquise para ver as ordens de produção</h6>
-                    <p class="empty-state-text">Informe ao menos um filtro (OP, produto, obra, estabelecimento...) e clique em <strong>Localizar</strong>.</p>
-                {% else %}
-                    <h6 class="empty-state-title">Nenhuma ordem de produção encontrada</h6>
-                    <p class="empty-state-text">Ajuste os filtros ou limpe a busca para tentar novamente.</p>
-                    <a href="{% url 'lista_ordem_producao' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Limpar filtros
-                    </a>
-                {% endif %}
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>
 
-<style>
-/* Tabela com colunas redimensionáveis por arraste */
-.tabela-redimensionavel {
-    table-layout: fixed;
-    width: 100%;
-    min-width: 1200px;
-}
-.tabela-redimensionavel th {
-    position: relative;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.tabela-redimensionavel td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-/* Alça de redimensionamento na borda direita do cabeçalho */
-.col-resizer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 8px;
-    height: 100%;
-    cursor: col-resize;
-    user-select: none;
-    z-index: 3;
-}
-.col-resizer::after {
-    content: "";
-    position: absolute;
-    top: 20%;
-    right: 3px;
-    width: 2px;
-    height: 60%;
-    background: var(--bs-border-color, #dee2e6);
-    border-radius: 2px;
-    transition: background-color 0.15s ease;
-}
-.col-resizer:hover::after,
-.col-resizer.arrastando::after {
-    background: var(--bs-primary, #0d6efd);
-}
-/* Enquanto arrasta, evita seleção de texto e mantém o cursor */
-body.redimensionando-coluna {
-    cursor: col-resize !important;
-    user-select: none !important;
-}
-</style>
-
-<script>
-(function () {
-    const tabela = document.getElementById('tabelaOP');
-    if (!tabela) return;
-
-    const ths = Array.from(tabela.querySelectorAll('thead th'));
-    const cols = Array.from(tabela.querySelectorAll('colgroup col'));
-    const CHAVE_STORAGE = 'casanova_op_larguras_colunas';
-
-    // Aplica larguras salvas (se houver)
-    function aplicarLargurasSalvas() {
-        try {
-            const salvas = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
-            salvas.forEach(function (largura, i) {
-                if (cols[i] && largura) cols[i].style.width = largura + 'px';
-            });
-        } catch (e) { /* ignora */ }
-    }
-
-    function salvarLarguras() {
-        try {
-            const larguras = cols.map(function (col) {
-                return Math.round(col.getBoundingClientRect().width);
-            });
-            localStorage.setItem(CHAVE_STORAGE, JSON.stringify(larguras));
-        } catch (e) { /* ignora */ }
-    }
-
-    aplicarLargurasSalvas();
-
-    // Ativa o arraste em cada alça
-    tabela.querySelectorAll('.col-resizer').forEach(function (alca) {
-        alca.addEventListener('mousedown', function (evento) {
-            evento.preventDefault();
-            evento.stopPropagation();
-
-            const th = alca.parentElement;
-            const indice = ths.indexOf(th);
-            const col = cols[indice];
-            if (!col) return;
-
-            const larguraInicial = th.getBoundingClientRect().width;
-            const xInicial = evento.pageX;
-
-            alca.classList.add('arrastando');
-            document.body.classList.add('redimensionando-coluna');
-
-            function aoMover(e) {
-                const delta = e.pageX - xInicial;
-                const novaLargura = Math.max(60, larguraInicial + delta);
-                col.style.width = novaLargura + 'px';
-            }
-
-            function aoSoltar() {
-                document.removeEventListener('mousemove', aoMover);
-                document.removeEventListener('mouseup', aoSoltar);
-                alca.classList.remove('arrastando');
-                document.body.classList.remove('redimensionando-coluna');
-                salvarLarguras();
-            }
-
-            document.addEventListener('mousemove', aoMover);
-            document.addEventListener('mouseup', aoSoltar);
-        });
-    });
-
-    // Duplo clique na alça restaura as larguras padrão
-    tabela.querySelectorAll('.col-resizer').forEach(function (alca) {
-        alca.addEventListener('dblclick', function (evento) {
-            evento.preventDefault();
-            evento.stopPropagation();
-            cols.forEach(function (col) { col.style.width = ''; });
-            try { localStorage.removeItem(CHAVE_STORAGE); } catch (e) { /* ignora */ }
-        });
-    });
-})();
-</script>
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaOP" storage_key="casanova_op_larguras" %}
 {% endblock %}
