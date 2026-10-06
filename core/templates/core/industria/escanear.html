@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <h1 class="page-title mb-1">Escanear OP</h1>
-            <p class="page-subtitle mb-0">Aponte o leitor de código de barras para a OP.</p>
+            <p class="page-subtitle mb-0">Aponte o leitor de QR Code para a OP.</p>
         </div>
         <a href="{% url 'rastreio_producao' %}" class="btn-action btn-action-secondary">
             <i class="fa-solid fa-list-check"></i> Ver todas
@@ -108,9 +108,9 @@
     <!-- Campo de leitura -->
     <div class="card shadow-sm border-0">
         <div class="card-body text-center py-5">
-            <div class="empty-state-icon mb-3"><i class="fa-solid fa-barcode"></i></div>
+            <div class="empty-state-icon mb-3"><i class="fa-solid fa-qrcode"></i></div>
             <h5 class="fw-bold mb-2">Aguardando leitura...</h5>
-            <p class="text-muted mb-4">Escaneie o código de barras da OP. O campo abaixo recebe o código automaticamente.</p>
+            <p class="text-muted mb-4">Escaneie o QR Code da OP. O campo abaixo recebe o código automaticamente.</p>
 
             <form method="GET" action="{% url 'escanear' %}" id="formEscanear" class="d-flex flex-column align-items-center gap-2">
                 {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
@@ -124,7 +124,7 @@
 
             <p class="text-muted small mt-4 mb-0">
                 <i class="fa-solid fa-circle-info me-1"></i>
-                O leitor digita o código e pressiona Enter automaticamente.
+                O leitor digita o código do QR Code e pressiona Enter automaticamente.
             </p>
         </div>
     </div>

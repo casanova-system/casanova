@@ -1,18 +1,21 @@
-"""Rastreio de Produção — acompanha a OP pelos setores via código de barras.
+"""Rastreio de Produção — acompanha a OP pelos setores via QR Code.
 
 Fluxo padrão:
-    Separação → Usinagem → Mesa → (com vidro: Encaixilhamento) → Expedição
+    Estoque → Separação → Corte → Usinagem → Mesa → (com vidro: Encaixilhamento) → Expedição
 
-O operador escaneia o código de barras da OP em cada setor e o sistema
+O operador escaneia o QR Code da OP em cada setor e o sistema
 registra data, hora e usuário da passagem. A decisão "tem vidro?" acontece
 na Mesa.
 
-O leitor de código de barras funciona como teclado: digita o ID da OP e
+O leitor de QR Code funciona como teclado: digita o ID da OP e
 pressiona Enter. A tela de escaneamento mantém o campo sempre focado.
 """
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import redirect, render
 
@@ -24,6 +27,8 @@ from core.models import (
 )
 from core.views.ordem_producao import _buscar_op_por_id
 from core.views.permissao import requer_rotina
+
+logger = logging.getLogger(__name__)
 
 ITENS_POR_PAGINA = 12
 
@@ -121,28 +126,44 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
                 False,
             )
 
-        dados = None
-        try:
-            dados = _buscar_op_por_id(op_id)
-        except Exception:  # noqa: BLE001
+        # Busca dados da ObraOP
+        obra_op = _buscar_obra_op_por_id(op_id)
+        if obra_op:
+            dados = {
+                'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '',
+                'Produto': obra_op.descricao or '',
+                'Variante': obra_op.codigo_esquadria or '',
+            }
+        else:
             dados = None
+            try:
+                dados = _buscar_op_por_id(op_id)
+            except Exception:  # noqa: BLE001
+                dados = None
         dados = dados or {}
 
-        rastreio = RastreioOP.objects.create(
-            op_id=op_id,
-            op_numero=dados.get('NumeroDocumento') or '',
-            obra=dados.get('ProjetoObra') or '',
-            produto=dados.get('Produto') or '',
-            variante=dados.get('Variante') or '',
-            setor_atual=codigo_setor,
-            status='EM_PRODUCAO',
-        )
-        MovimentacaoOP.objects.create(
-            rastreio=rastreio,
-            setor=codigo_setor,
-            setor_nome=setor_usuario.nome,
-            usuario=request.user,
-            observacao='Início do rastreio',
+        with transaction.atomic():
+            rastreio = RastreioOP.objects.create(
+                op_id=op_id,
+                op_numero=dados.get('NumeroDocumento') or '',
+                obra=dados.get('ProjetoObra') or '',
+                produto=dados.get('Produto') or '',
+                variante=dados.get('Variante') or '',
+                setor_atual=codigo_setor,
+                status='EM_PRODUCAO',
+            )
+            MovimentacaoOP.objects.create(
+                rastreio=rastreio,
+                setor=codigo_setor,
+                setor_nome=setor_usuario.nome,
+                usuario=request.user,
+                observacao='Início do rastreio',
+            )
+
+        logger.info(
+            'Rastreio iniciado — OP %s pelo usuário %s no setor %s',
+            op_id, request.user.username, setor_usuario.nome,
         )
         return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True}, False)
 
@@ -155,6 +176,10 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
         if vidro in ('sim', 'nao'):
             rastreio.tem_vidro = (vidro == 'sim')
             rastreio.save(update_fields=['tem_vidro'])
+            logger.info(
+                'Decisão de vidro — OP %s: %s (usuário %s)',
+                op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
+            )
             return (
                 None,
                 {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
@@ -187,18 +212,24 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
         )
 
     # --- Avança ---
-    rastreio.setor_atual = codigo_setor
-    # Se não há próximo setor, a OP é concluída ao chegar no último
-    if _proximo_setor(codigo_setor, rastreio.tem_vidro) is None:
-        rastreio.status = 'CONCLUIDA'
-    else:
-        rastreio.status = 'EM_PRODUCAO'
-    rastreio.save(update_fields=['setor_atual', 'status'])
-    MovimentacaoOP.objects.create(
-        rastreio=rastreio,
-        setor=codigo_setor,
-        setor_nome=setor_usuario.nome,
-        usuario=request.user,
+    with transaction.atomic():
+        rastreio.setor_atual = codigo_setor
+        # Se não há próximo setor, a OP é concluída ao chegar no último
+        if _proximo_setor(codigo_setor, rastreio.tem_vidro) is None:
+            rastreio.status = 'CONCLUIDA'
+        else:
+            rastreio.status = 'EM_PRODUCAO'
+        rastreio.save(update_fields=['setor_atual', 'status'])
+        MovimentacaoOP.objects.create(
+            rastreio=rastreio,
+            setor=codigo_setor,
+            setor_nome=setor_usuario.nome,
+            usuario=request.user,
+        )
+
+    logger.info(
+        'OP %s avançou para %s (usuário %s)',
+        op_id, setor_usuario.nome, request.user.username,
     )
 
     # Se acabou de chegar na Mesa, pergunta sobre o vidro imediatamente
@@ -359,28 +390,44 @@ def registrar_movimentacao(request, op_id):
             return redirect('rastreio_op', op_id=op_id)
         primeiro = setores[0]
 
-        dados = None
-        try:
-            dados = _buscar_op_por_id(op_id)
-        except Exception:  # noqa: BLE001
+        # Busca dados da ObraOP
+        obra_op = _buscar_obra_op_por_id(op_id)
+        if obra_op:
+            dados = {
+                'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '',
+                'Produto': obra_op.descricao or '',
+                'Variante': obra_op.codigo_esquadria or '',
+            }
+        else:
             dados = None
+            try:
+                dados = _buscar_op_por_id(op_id)
+            except Exception:  # noqa: BLE001
+                dados = None
         dados = dados or {}
 
-        rastreio = RastreioOP.objects.create(
-            op_id=op_id,
-            op_numero=dados.get('NumeroDocumento') or '',
-            obra=dados.get('ProjetoObra') or '',
-            produto=dados.get('Produto') or '',
-            variante=dados.get('Variante') or '',
-            setor_atual=primeiro.codigo,
-            status='EM_PRODUCAO',
-        )
-        MovimentacaoOP.objects.create(
-            rastreio=rastreio,
-            setor=primeiro.codigo,
-            setor_nome=primeiro.nome,
-            usuario=request.user,
-            observacao=observacao,
+        with transaction.atomic():
+            rastreio = RastreioOP.objects.create(
+                op_id=op_id,
+                op_numero=dados.get('NumeroDocumento') or '',
+                obra=dados.get('ProjetoObra') or '',
+                produto=dados.get('Produto') or '',
+                variante=dados.get('Variante') or '',
+                setor_atual=primeiro.codigo,
+                status='EM_PRODUCAO',
+            )
+            MovimentacaoOP.objects.create(
+                rastreio=rastreio,
+                setor=primeiro.codigo,
+                setor_nome=primeiro.nome,
+                usuario=request.user,
+                observacao=observacao,
+            )
+
+        logger.info(
+            'Rastreio iniciado (manual) — OP %s pelo usuário %s no setor %s',
+            op_id, request.user.username, primeiro.nome,
         )
         messages.success(request, f'Rastreio iniciado em {primeiro.nome}.')
         return redirect('rastreio_op', op_id=op_id)
@@ -393,6 +440,10 @@ def registrar_movimentacao(request, op_id):
     if acao in ('vidro_sim', 'vidro_nao'):
         rastreio.tem_vidro = (acao == 'vidro_sim')
         rastreio.save(update_fields=['tem_vidro'])
+        logger.info(
+            'Decisão de vidro (manual) — OP %s: %s (usuário %s)',
+            op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
+        )
 
     # --- Retroceder (correção) ---
     if acao == 'retroceder':
@@ -400,15 +451,22 @@ def registrar_movimentacao(request, op_id):
         if not anterior:
             messages.warning(request, 'Não há setor anterior no fluxo.')
             return redirect('rastreio_op', op_id=op_id)
-        rastreio.setor_atual = anterior.codigo
-        rastreio.status = 'EM_PRODUCAO'
-        rastreio.save(update_fields=['setor_atual', 'status'])
-        MovimentacaoOP.objects.create(
-            rastreio=rastreio,
-            setor=anterior.codigo,
-            setor_nome=anterior.nome,
-            usuario=request.user,
-            observacao=observacao or 'Retorno (correção)',
+
+        with transaction.atomic():
+            rastreio.setor_atual = anterior.codigo
+            rastreio.status = 'EM_PRODUCAO'
+            rastreio.save(update_fields=['setor_atual', 'status'])
+            MovimentacaoOP.objects.create(
+                rastreio=rastreio,
+                setor=anterior.codigo,
+                setor_nome=anterior.nome,
+                usuario=request.user,
+                observacao=observacao or 'Retorno (correção)',
+            )
+
+        logger.info(
+            'OP %s retornou para %s (usuário %s)',
+            op_id, anterior.nome, request.user.username,
         )
         messages.success(request, f'OP retornada para {anterior.nome}.')
         return redirect('rastreio_op', op_id=op_id)
@@ -427,23 +485,145 @@ def registrar_movimentacao(request, op_id):
 
     proximo = _proximo_setor(rastreio.setor_atual, rastreio.tem_vidro)
     if not proximo:
-        rastreio.status = 'CONCLUIDA'
-        rastreio.save(update_fields=['status'])
+        with transaction.atomic():
+            rastreio.status = 'CONCLUIDA'
+            rastreio.save(update_fields=['status'])
         messages.success(request, 'OP concluída — chegou ao fim do fluxo.')
         return redirect('rastreio_op', op_id=op_id)
 
-    rastreio.setor_atual = proximo.codigo
-    rastreio.status = 'EM_PRODUCAO'
-    rastreio.save(update_fields=['setor_atual', 'status'])
-    MovimentacaoOP.objects.create(
-        rastreio=rastreio,
-        setor=proximo.codigo,
-        setor_nome=proximo.nome,
-        usuario=request.user,
-        observacao=observacao,
+    with transaction.atomic():
+        rastreio.setor_atual = proximo.codigo
+        rastreio.status = 'EM_PRODUCAO'
+        rastreio.save(update_fields=['setor_atual', 'status'])
+        MovimentacaoOP.objects.create(
+            rastreio=rastreio,
+            setor=proximo.codigo,
+            setor_nome=proximo.nome,
+            usuario=request.user,
+            observacao=observacao,
+        )
+
+    logger.info(
+        'OP %s avançou para %s (usuário %s)',
+        op_id, proximo.nome, request.user.username,
     )
     messages.success(request, f'OP avançou para {proximo.nome}.')
     return redirect('rastreio_op', op_id=op_id)
+
+
+def _extrair_op_id_do_qr(codigo):
+    """Extrai o ID da OP do conteúdo do QR Code.
+
+    O QR Code contém um JSON com as informações da OP (ObraOP).
+    Esta função faz o parse do JSON e retorna o ID da OP.
+    Se não conseguir fazer o parse, tenta extrair números do código.
+    """
+    import json
+
+    codigo = codigo.strip()
+
+    # Tenta fazer parse do JSON
+    try:
+        dados = json.loads(codigo)
+        if isinstance(dados, dict) and 'id' in dados:
+            return int(dados['id'])
+        if isinstance(dados, dict) and 'op' in dados:
+            # Se tiver o campo 'op', tenta extrair números
+            numeros = ''.join(ch for ch in str(dados['op']) if ch.isdigit())
+            if numeros:
+                return int(numeros)
+    except (json.JSONDecodeError, ValueError, TypeError):
+        pass
+
+    # Fallback: extrai números do código (compatibilidade com código de barras antigo)
+    numeros = ''.join(ch for ch in codigo if ch.isdigit())
+    if numeros:
+        return int(numeros)
+
+    return None
+
+
+def _buscar_obra_op_por_id(obra_op_id):
+    """Busca uma ObraOP pelo ID."""
+    from core.models import ObraOP
+    return ObraOP.objects.filter(pk=obra_op_id).first()
+
+
+@login_required(login_url='login')
+@requer_rotina('producao')
+def producao(request):
+    """Tela de acompanhamento da OP na indústria.
+
+    Permite escanear o QR Code ou digitar o ID da OP para visualizar
+    o andamento da produção em tempo real.
+    """
+    codigo = request.GET.get('codigo', '').strip()
+    erro = None
+    rastreio = None
+    dados = None
+    info = None
+    movimentacoes = []
+    setor_atual = None
+    proximo = None
+    anterior = None
+    precisa_decidir_vidro = False
+
+    if codigo:
+        op_id = _extrair_op_id_do_qr(codigo)
+        if not op_id:
+            erro = f'Código inválido: "{codigo}".'
+        else:
+            # Busca dados da ObraOP
+            obra_op = _buscar_obra_op_por_id(op_id)
+            if not obra_op:
+                erro = f'OP {op_id} não encontrada.'
+            else:
+                dados = {
+                    'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                    'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '',
+                    'Produto': obra_op.descricao or '',
+                    'Variante': obra_op.codigo_esquadria or '',
+                }
+
+                info = {
+                    'op_numero': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                    'obra': obra_op.obra.codigo if obra_op.obra else '—',
+                    'produto': obra_op.descricao or '—',
+                    'variante': obra_op.codigo_esquadria or '—',
+                }
+
+                # Verifica se já existe rastreio
+                rastreio = RastreioOP.objects.filter(op_id=op_id).first()
+                if rastreio:
+                    setor_atual = SetorProducao.objects.filter(codigo=rastreio.setor_atual).first()
+                    proximo = _proximo_setor(rastreio.setor_atual, rastreio.tem_vidro)
+                    anterior = _setor_anterior(rastreio.setor_atual, rastreio.tem_vidro)
+                    movimentacoes = rastreio.movimentacoes.select_related('usuario').all()
+                    precisa_decidir_vidro = bool(
+                        rastreio.setor_atual == 'mesa' and rastreio.tem_vidro is None
+                    )
+                else:
+                    # OP ainda não iniciada no rastreio
+                    setor_atual = None
+                    proximo = None
+                    anterior = None
+                    movimentacoes = []
+                    precisa_decidir_vidro = False
+
+    context = {
+        'codigo': codigo,
+        'erro': erro,
+        'rastreio': rastreio,
+        'dados': dados,
+        'info': info,
+        'setores': _setores_ativos(),
+        'setor_atual': setor_atual,
+        'proximo': proximo,
+        'anterior': anterior,
+        'movimentacoes': movimentacoes,
+        'precisa_decidir_vidro': precisa_decidir_vidro,
+    }
+    return render(request, 'core/industria/producao.html', context)
 
 
 @login_required(login_url='login')
@@ -469,8 +649,9 @@ def escanear(request):
     op_id_pendente = None
 
     if codigo:
-        numeros = ''.join(ch for ch in codigo if ch.isdigit())
-        if not numeros:
+        # Tenta extrair o ID do JSON do QR Code
+        op_id = _extrair_op_id_do_qr(codigo)
+        if not op_id:
             erro = f'Código inválido: "{codigo}".'
         elif not _pode_gerenciar(request.user):
             erro = (
@@ -485,12 +666,16 @@ def escanear(request):
                     'Peça ao administrador para definir o setor no seu perfil.'
                 )
             else:
-                op_id = int(numeros)
-                erro, resultado, precisa_vidro = _registrar_por_setor(
-                    request, op_id, setor_usuario, vidro
-                )
-                if precisa_vidro:
-                    op_id_pendente = op_id
+                # Busca a ObraOP pelo ID do QR Code
+                obra_op = _buscar_obra_op_por_id(op_id)
+                if not obra_op:
+                    erro = f'OP não encontrada para o ID {op_id}.'
+                else:
+                    erro, resultado, precisa_vidro = _registrar_por_setor(
+                        request, op_id, setor_usuario, vidro
+                    )
+                    if precisa_vidro:
+                        op_id_pendente = op_id
 
     context = {
         'codigo': codigo,

@@ -8,7 +8,7 @@
 
     {% url 'lista_ordem_producao' as url_lista %}
     {% url 'imprimir_barcode_ordem_producao' obra_op.pk as url_barcode %}
-    {% include 'core/partials/page_header.html' with titulo=obra_op.identificacao subtitulo=obra_op.descricao acao_url=url_barcode acao_texto="Imprimir Código de Barras" acao_icone="fa-barcode" voltar_url=url_lista voltar_texto="Voltar à Lista" %}
+    {% include 'core/partials/page_header.html' with titulo=obra_op.identificacao subtitulo=obra_op.descricao acao_url=url_barcode acao_texto="Imprimir QR Code" acao_icone="fa-qrcode" voltar_url=url_lista voltar_texto="Voltar à Lista" %}
 
     <!-- Identificação da OP -->
     <div class="card form-card mb-3 flex-shrink-0">

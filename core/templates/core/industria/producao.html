@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
+
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'menu_principal' as url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Produção" subtitulo="Consulta rápida do andamento da OP na indústria." acao_icone="fa-industry" voltar_url=url_inicio %}
+
+    <!-- Campo de busca -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <form method="GET" action="{% url 'producao' %}" class="d-flex flex-column align-items-center gap-2">
+                <div class="input-group" style="max-width: 500px;">
+                    <span class="input-group-text"><i class="fa-solid fa-qrcode"></i></span>
+                    <input type="text" name="codigo" id="campoCodigo" class="form-control form-control-lg text-center fw-bold"
+                           style="letter-spacing: 2px;" placeholder="Escaneie ou digite o ID da OP"
+                           autocomplete="off" autofocus value="{{ codigo|default:'' }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Consultar
+                    </button>
+                </div>
+                <small class="text-muted">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Aponte o leitor de QR Code ou digite o ID da OP e pressione Enter.
+                </small>
+            </form>
+        </div>
+    </div>
+
+    <!-- Erro -->
+    {% if erro %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>{{ erro }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Resultado -->
+    {% if rastreio %}
+    <div class="d-flex flex-column gap-3" style="overflow-y: auto;">
+        <!-- Dados da OP -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-muted small fw-semibold text-uppercase">OP</div>
+                        <div class="fw-bold fs-5">{{ info.op_numero }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small fw-semibold text-uppercase">Obra</div>
+                        <div class="fw-semibold">{{ info.obra }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small fw-semibold text-uppercase">Produto</div>
+                        <div class="fw-semibold">{{ info.produto }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fluxo de Produção -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase mb-3">Fluxo de Produção</div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    {% for s in setores %}
+                        {% if s.requer_vidro and rastreio.tem_vidro is False %}
+                            {% comment %} setor pulado (sem vidro) {% endcomment %}
+                        {% else %}
+                            <span class="badge px-3 py-2 fw-semibold
+                                {% if s.codigo == rastreio.setor_atual %}bg-primary text-white
+                                {% elif forloop.counter0 < setores.index %}bg-success bg-opacity-10 text-success
+                                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+                                {% if s.codigo == rastreio.setor_atual %}<i class="fa-solid fa-location-dot me-1"></i>{% endif %}
+                                {% if forloop.counter0 < setores.index %}<i class="fa-solid fa-check me-1"></i>{% endif %}
+                                {{ s.nome }}
+                            </span>
+                            {% if not forloop.last %}<i class="fa-solid fa-arrow-right text-muted small"></i>{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado Atual -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-4">
+                {% if not rastreio %}
+                    <div class="empty-state-icon mb-2" style="color: #6c757d;"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <h5 class="fw-bold mb-1">Rastreio Não Iniciado</h5>
+                    <p class="text-muted mb-0">Esta OP ainda não passou pelo Estoque. O rastreio será iniciado automaticamente quando o Estoque escanear o QR Code.</p>
+                {% elif rastreio.concluida %}
+                    <div class="empty-state-icon mb-2" style="color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
+                    <h5 class="fw-bold mb-1">OP Concluída</h5>
+                    <p class="text-muted mb-0">Esta OP chegou ao fim do fluxo de produção.</p>
+                {% else %}
+                    <div class="text-muted small fw-semibold text-uppercase mb-1">Setor Atual</div>
+                    <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
+
+                    {% if precisa_decidir_vidro %}
+                    <div class="alert alert-info d-inline-block text-start mb-3">
+                        <div class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-1"></i> Esta OP tem vidro?</div>
+                        <small class="text-muted">Aguardando decisão na Mesa.</small>
+                    </div>
+                    {% endif %}
+
+                    {% if proximo %}
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                        <span class="text-muted small">Próximo:</span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1">
+                            <i class="fa-solid fa-arrow-right me-1"></i> {{ proximo.nome }}
+                        </span>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header list-card-header">
+                <h5 class="list-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Histórico de Movimentações</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Setor</th>
+                                <th>Usuário</th>
+                                <th>Data / Hora</th>
+                                <th class="pe-3">Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in movimentacoes %}
+                            <tr>
+                                <td class="ps-3 fw-semibold">{{ m.setor_nome }}</td>
+                                <td>
+                                    {% if m.usuario %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                            <i class="fa-solid fa-user me-1"></i> {{ m.usuario.username }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted small">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-nowrap text-muted">{{ m.data_hora|date:"d/m/Y H:i:s" }}</td>
+                                <td class="pe-3 text-muted">{{ m.observacao|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif not erro %}
+    <!-- Estado vazio -->
+    <div class="card shadow-sm border-0 text-center">
+        <div class="card-body py-5">
+            <div class="empty-state-icon mb-3"><i class="fa-solid fa-qrcode"></i></div>
+            <h5 class="fw-bold mb-2">Consultar OP</h5>
+            <p class="text-muted mb-0">Escaneie o QR Code ou digite o ID da OP para visualizar o andamento da produção.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Mantém o campo sempre focado para o leitor funcionar sem cliques
+    (function () {
+        const campo = document.getElementById('campoCodigo');
+        if (!campo) return;
+        campo.focus();
+        document.addEventListener('click', function (e) {
+            if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') campo.focus();
+        });
+        // Se o leitor enviar sem Enter, submete ao detectar pausa na digitação
+        let timer = null;
+        campo.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                if (campo.value.trim().length >= 3) {
+                    campo.closest('form').submit();
+                }
+            }, 400);
+        });
+    })();
+</script>
+{% endblock %}

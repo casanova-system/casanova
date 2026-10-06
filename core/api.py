@@ -20,6 +20,7 @@ from core.models import (
     garantir_setores_padrao,
 )
 from core.views.rastreio import (
+    _extrair_op_id_do_qr,
     _pode_gerenciar,
     _registrar_por_setor,
     _setor_do_usuario,
@@ -184,7 +185,7 @@ def api_rastreio_detalhe(request, op_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_escanear(request):
-    """Registra a leitura do código de barras (mesma lógica do web).
+    """Registra a leitura do QR Code (mesma lógica do web).
 
     Body: { "codigo": "31449", "vidro": "sim"|"nao" (opcional) }
     """
@@ -199,8 +200,8 @@ def api_escanear(request):
     codigo = str(request.data.get('codigo', '')).strip()
     vidro = str(request.data.get('vidro', '')).strip()
 
-    numeros = ''.join(ch for ch in codigo if ch.isdigit())
-    if not numeros:
+    op_id = _extrair_op_id_do_qr(codigo)
+    if not op_id:
         return Response(
             {'erro': f'Código inválido: "{codigo}".'},
             status=status.HTTP_400_BAD_REQUEST,
@@ -218,8 +219,6 @@ def api_escanear(request):
             {'erro': 'Seu usuário não está vinculado a um setor de produção.'},
             status=status.HTTP_403_FORBIDDEN,
         )
-
-    op_id = int(numeros)
     erro, resultado, precisa_vidro = _registrar_por_setor(
         request, op_id, setor_usuario, vidro
     )

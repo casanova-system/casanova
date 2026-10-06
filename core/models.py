@@ -93,6 +93,7 @@ ROTINAS_PADRAO = [
     ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO', 'COMERCIAL'),
     ('008', 'Ordem de Produção (OP)', 'lista_ordem_producao', 'ROTINA', 'INDUSTRIA'),
     ('009', 'Rastreio de Produção', 'rastreio_producao', 'ROTINA', 'INDUSTRIA'),
+    ('010', 'Produção', 'producao', 'ROTINA', 'INDUSTRIA'),
 ]
 
 

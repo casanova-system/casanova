@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imprimir Código de Barras — OP {{ dados.NumeroDocumento }}</title>
+    <title>Imprimir QR Code — OP {{ dados.NumeroDocumento }}</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -57,34 +57,43 @@
         }
 
         .barcode-box {
-            width: 150mm;
+            width: 120mm;
+            height: 120mm;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10mm;
+            background: #fff;
         }
         .barcode-box svg {
             width: 100%;
-            height: auto;
+            height: 100%;
         }
 
         .op-numero {
-            margin-top: 8mm;
-            font-size: 20pt;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            margin-top: 10mm;
+            font-size: 24pt;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #0b3882;
         }
         .obra {
-            margin-top: 3mm;
-            font-size: 12pt;
+            margin-top: 4mm;
+            font-size: 13pt;
             font-weight: 600;
             max-width: 150mm;
+            color: #333;
         }
         .detalhes {
-            margin-top: 4mm;
+            margin-top: 6mm;
             font-size: 10pt;
-            line-height: 1.6;
-            color: #333;
+            line-height: 1.8;
+            color: #555;
             max-width: 150mm;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 4mm;
         }
 
         @media print {

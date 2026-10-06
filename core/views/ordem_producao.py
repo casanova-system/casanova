@@ -473,94 +473,77 @@ def _buscar_op_por_id(op_id):
         return _normalizar_registro_erp(dict(zip(colunas, linha)))
 
 
-def _conteudo_barcode(op_id):
-    """Conteúdo do código de barras: apenas o ID da OP.
+def _conteudo_barcode(obra_op_id):
+    """Conteúdo do QR Code: JSON com as informações completa da OP.
 
-    O leitor funciona como teclado (digita o valor e pressiona Enter), então o
-    código precisa ser curto e numérico.
+    O QR Code contém todos os dados da OP (ObraOP) para rastreio e identificação.
+    O leitor escaneia e o sistema extrai o ID da OP do JSON.
     """
-    return str(op_id)
+    import json
 
+    from core.models import ObraOP
 
-# Tabela de padrões Code128 (larguras barra/espaço em módulos).
-# Índices 0-102 = dados, 103 = Start A, 104 = Start B, 105 = Start C, 106 = Stop.
-_CODE128_PATTERNS = [
-    '212222', '222122', '222221', '121223', '121322', '131222', '122213',
-    '122312', '132212', '221213', '221312', '231212', '112232', '122132',
-    '122231', '113222', '123122', '123221', '223211', '221132', '221231',
-    '213212', '223112', '312131', '311222', '321122', '321221', '312212',
-    '322112', '322211', '212123', '212321', '232121', '111323', '131123',
-    '131321', '112313', '132113', '132311', '211313', '231113', '231311',
-    '112133', '112331', '132131', '113123', '113321', '133121', '313121',
-    '211331', '231131', '213113', '213311', '213131', '311123', '311321',
-    '331121', '312113', '312311', '332111', '314111', '221411', '431111',
-    '111224', '111422', '121124', '121421', '141122', '141221', '112214',
-    '112412', '122114', '122411', '142112', '142211', '241211', '221114',
-    '413111', '241112', '134111', '111242', '121142', '121241', '114212',
-    '124112', '124211', '411212', '421112', '421211', '212141', '214121',
-    '412121', '111143', '111341', '131141', '114113', '114311', '411113',
-    '411311', '113141', '114131', '311141', '411131', '211412', '211214',
-    '211232', '2331112',
-]
+    # Busca dados da OP na rotina de ordem de produção
+    obra_op = ObraOP.objects.filter(pk=obra_op_id).first()
+    if obra_op:
+        dados = {
+            'id': obra_op.pk,
+            'op': obra_op.codigo_documento or obra_op.codigo_esquadria,
+            'esquadria': obra_op.codigo_esquadria,
+            'obra': obra_op.obra.codigo if obra_op.obra else '',
+            'descricao': obra_op.descricao or '',
+            'quantidade': obra_op.quantidade,
+            'largura': obra_op.largura,
+            'altura': obra_op.altura,
+        }
+        return json.dumps(dados, ensure_ascii=False)
+
+    # Fallback: apenas o ID
+    return json.dumps({'id': obra_op_id, 'op': str(obra_op_id)}, ensure_ascii=False)
 
 
 def _gerar_barcode_svg(conteudo):
-    """Gera o código de barras Code128 como SVG — sem dependências externas."""
+    """Gera um QR Code como SVG usando a biblioteca qrcode.
+
+    O QR Code contém o ID da OP (ex: "65427"). O leitor de QR code escaneia
+    e retorna o ID, que é usado no rastreio da produção.
+    """
+    import qrcode
+    import qrcode.image.svg
+
     data = str(conteudo)
 
-    if data.isdigit() and len(data) >= 2 and len(data) % 2 == 0:
-        codes = [105]  # Start C (pares de dígitos)
-        for i in range(0, len(data), 2):
-            codes.append(int(data[i:i + 2]))
-    else:
-        codes = [104]  # Start B
-        for caractere in data:
-            codes.append(ord(caractere) - 32)
-
-    checksum = codes[0]
-    for posicao, code in enumerate(codes[1:], start=1):
-        checksum += posicao * code
-    codes.append(checksum % 103)
-    codes.append(106)  # Stop
-
-    modulo = 0.5
-    altura = 15.0
-    quiet = 2.5
-    altura_texto = 5.0
-
-    x = quiet
-    barras = []
-    for code in codes:
-        barra = True
-        for largura in _CODE128_PATTERNS[code]:
-            largura_modulo = int(largura) * modulo
-            if barra:
-                barras.append(
-                    f'<rect x="{x:.3f}" y="0" width="{largura_modulo:.3f}" '
-                    f'height="{altura}"/>'
-                )
-            x += largura_modulo
-            barra = not barra
-
-    largura_total = x + quiet
-    altura_total = altura + altura_texto
-
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" '
-        f'width="{largura_total:.2f}mm" height="{altura_total:.2f}mm" '
-        f'viewBox="0 0 {largura_total:.2f} {altura_total:.2f}">'
-        f'<rect width="100%" height="100%" fill="#ffffff"/>'
-        f'<g fill="#000000">{"".join(barras)}</g>'
-        f'<text x="{largura_total / 2:.2f}" y="{altura_total - 1:.2f}" '
-        f'text-anchor="middle" font-family="monospace" font-size="4">{data}</text>'
-        f'</svg>'
+    # Gera o QR Code como SVG (vetorial, sem dependências externas)
+    factory = qrcode.image.svg.SvgPathImage
+    qr = qrcode.QRCode(
+        version=None,  # Auto-dimensionar
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=2,
     )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(image_factory=factory)
+    svg_string = img.to_string().decode('utf-8')
+
+    # Remove os atributos width/height originais e define o tamanho para impressão
+    import re
+    svg_string = re.sub(r'width="[^"]*"\s*', '', svg_string, count=1)
+    svg_string = re.sub(r'height="[^"]*"\s*', '', svg_string, count=1)
+    svg_string = svg_string.replace(
+        '<svg ',
+        '<svg width="150mm" height="150mm" ',
+        1
+    )
+
+    return svg_string
 
 
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def barcode_ordem_producao(request, op_id):
-    """Gera o código de barras de uma OP em SVG (não depende do ERP)."""
+    """Gera o QR Code de uma OP em SVG com todas as informações."""
     svg = _gerar_barcode_svg(_conteudo_barcode(op_id))
     return HttpResponse(svg, content_type='image/svg+xml')
 
@@ -568,30 +551,23 @@ def barcode_ordem_producao(request, op_id):
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def imprimir_barcode_ordem_producao(request, op_id):
-    """Página de impressão do código de barras em folha A4.
+    """Página de impressão do QR Code em folha A4.
 
-    Os dados vêm do ERP quando disponível; senão do rastreio local; e, em
-    último caso, apenas o ID (o código de barras continua válido).
+    Os dados vêm da OP (ObraOP) da rotina de ordem de produção.
     """
-    dados = None
-    try:
-        dados = _buscar_op_por_id(op_id)
-    except Exception:  # noqa: BLE001 — a impressão não pode depender do ERP
-        dados = None
+    from core.models import ObraOP
 
-    if not dados:
-        rastreio = RastreioOP.objects.filter(op_id=op_id).first()
-        if rastreio:
-            dados = {
-                'NumeroDocumento': rastreio.op_numero or str(op_id),
-                'ProjetoObra': rastreio.obra or '—',
-                'Produto': rastreio.produto or '—',
-                'Variante': rastreio.variante or '—',
-                'DataNecessidade': '—',
-                'QtdProduzir': '—',
-            }
-
-    if not dados:
+    obra_op = ObraOP.objects.filter(pk=op_id).first()
+    if obra_op:
+        dados = {
+            'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+            'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '—',
+            'Produto': obra_op.descricao or '—',
+            'Variante': obra_op.codigo_esquadria or '—',
+            'DataNecessidade': '—',
+            'QtdProduzir': str(obra_op.quantidade),
+        }
+    else:
         dados = {
             'NumeroDocumento': str(op_id),
             'ProjetoObra': '—',

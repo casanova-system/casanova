@@ -795,6 +795,11 @@
                                             <span class="hide-on-collapse">Rastreio de Produção</span>
                                         </a>
                                         {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.producao or request.user.perfil.tem_rotina.010 %}
+                                        <a href="{% url 'producao' %}" class="sidebar-link sidebar-link-sub rotina-item {% if request.resolver_match.url_name == 'producao' %}active{% endif %}" data-id="10" data-nome="produção" title="Produção">
+                                            <span class="hide-on-collapse">Produção</span>
+                                        </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endif %}

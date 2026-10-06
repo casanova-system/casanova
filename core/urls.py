@@ -40,6 +40,7 @@ from core.views.ordem_producao import (
 )
 from core.views.rastreio import (
     escanear,
+    producao,
     rastreio_op,
     rastreio_producao,
     registrar_movimentacao,
@@ -135,6 +136,8 @@ urlpatterns = [
     path('industria/rastreio/escanear/', escanear, name='escanear'),
     path('industria/rastreio/<int:op_id>/', rastreio_op, name='rastreio_op'),
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
+    # PRODUÇÃO (consulta rápida da OP na indústria)
+    path('industria/producao/', producao, name='producao'),
     # ==========================================
     # API REST — App Mobile (Flutter)
     # ==========================================
