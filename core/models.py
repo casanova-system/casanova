@@ -735,6 +735,50 @@ class RastreioOP(models.Model):
             return 'Demorando um pouco'
         return 'Sem problema'
 
+    def tempo_no_setor(self, codigo_setor):
+        """Retorna o tempo (em minutos) que a OP ficou em um setor específico."""
+        from django.utils import timezone
+        movimentacoes = self.movimentacoes.filter(setor=codigo_setor).order_by('data_hora')
+        total_minutos = 0
+        for mov in movimentacoes:
+            if mov.data_entrada and mov.data_saida:
+                total_minutos += (mov.data_saida - mov.data_entrada).total_seconds() / 60
+            elif mov.data_entrada and not mov.data_saida:
+                # Setor atual - calcula até agora
+                total_minutos += (timezone.now() - mov.data_entrada).total_seconds() / 60
+        return total_minutos
+
+    def tempo_no_setor_formatado(self, codigo_setor):
+        """Retorna o tempo formatado em um setor específico."""
+        minutos = self.tempo_no_setor(codigo_setor)
+        if minutos == 0:
+            return '—'
+        if minutos < 60:
+            return f'{int(minutos)}min'
+        horas = int(minutos // 60)
+        mins = int(minutos % 60)
+        return f'{horas}h {mins}min' if mins else f'{horas}h'
+
+    def status_tempo_setor(self, codigo_setor):
+        """Retorna o status de tempo de um setor: 'OK', 'ATENCAO' ou 'CRITICO'."""
+        minutos = self.tempo_no_setor(codigo_setor)
+        if minutos == 0:
+            return 'OK'
+        if minutos >= 240:  # 4 horas
+            return 'CRITICO'
+        if minutos >= 120:  # 2 horas
+            return 'ATENCAO'
+        return 'OK'
+
+    def status_tempo_setor_classe(self, codigo_setor):
+        """Retorna a classe CSS correspondente ao status de tempo do setor."""
+        status = self.status_tempo_setor(codigo_setor)
+        if status == 'CRITICO':
+            return 'status-critico'
+        if status == 'ATENCAO':
+            return 'status-atencao'
+        return 'status-ok'
+
 
 class MovimentacaoOP(models.Model):
     """Registro histórico de cada passagem da OP por um setor."""

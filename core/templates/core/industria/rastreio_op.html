@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load rastreio_extras %}
 
 {% block content %}
 <div class="container-fluid px-4 py-3">
@@ -157,7 +158,7 @@
                             {% if rastreio.concluida %}concluido
                             {% elif s.codigo == rastreio.setor_atual %}atual pulso
                             {% elif forloop.counter0 < setores.index %}concluido
-                            {% endif %}">
+                            {% endif %}{% if not rastreio.concluida and s.codigo != rastreio.setor_atual %} {{ rastreio|status_tempo_setor_classe:s.codigo }}{% endif %}">
                             <div class="fluxo-icone">
                                 {% if rastreio.concluida %}
                                     <i class="fa-solid fa-check"></i>
@@ -173,6 +174,8 @@
                             <div class="fluxo-tempo">
                                 {% if s.codigo == rastreio.setor_atual and not rastreio.concluida %}
                                     {{ rastreio.tempo_no_setor_atual_formatado }}
+                                {% elif rastreio|tempo_no_setor:s.codigo != '—' %}
+                                    {{ rastreio|tempo_no_setor:s.codigo }}
                                 {% endif %}
                             </div>
                         </div>

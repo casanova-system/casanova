@@ -1561,6 +1561,44 @@ body.mobile-menu-open {
 .fluxo-setor.pulso .fluxo-icone {
     animation: fluxo-pulse 2s infinite;
 }
+
+/* Cores baseadas no tempo real de cada setor */
+.fluxo-setor.status-ok .fluxo-icone {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: #16a34a;
+    color: #16a34a;
+}
+.fluxo-setor.status-ok .fluxo-nome {
+    color: #16a34a;
+}
+.fluxo-setor.status-ok:not(:last-child)::after {
+    background: #16a34a;
+}
+
+.fluxo-setor.status-atencao .fluxo-icone {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: #d97706;
+    color: #d97706;
+}
+.fluxo-setor.status-atencao .fluxo-nome {
+    color: #d97706;
+}
+.fluxo-setor.status-atencao:not(:last-child)::after {
+    background: #d97706;
+}
+
+.fluxo-setor.status-critico .fluxo-icone {
+    background: rgba(220, 38, 38, 0.12);
+    border-color: #dc2626;
+    color: #dc2626;
+    animation: fluxo-pulse 1s infinite;
+}
+.fluxo-setor.status-critico .fluxo-nome {
+    color: #dc2626;
+}
+.fluxo-setor.status-critico:not(:last-child)::after {
+    background: #dc2626;
+}
 @keyframes fluxo-pulse {
     0%, 100% { box-shadow: 0 0 0 4px var(--cv-blue-ring); }
     50% { box-shadow: 0 0 0 8px transparent; }
