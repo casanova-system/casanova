@@ -16,51 +16,111 @@
     </div>
     {% endif %}
 
-    <!-- Cabeçalho -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <!-- Cabeçalho com breadcrumb -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0" style="font-size: 0.75rem;">
+                    <li class="breadcrumb-item"><a href="{% url 'menu_principal' %}" class="text-decoration-none">Início</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'rastreio_producao' %}" class="text-decoration-none">Rastreio</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">OP {{ info.op_numero }}</li>
+                </ol>
+            </nav>
             <h1 class="page-title mb-1">Rastreio de Produção</h1>
-            <p class="page-subtitle mb-0">OP {{ info.op_numero }}</p>
+            <p class="page-subtitle mb-0">Acompanhamento detalhado da OP {{ info.op_numero }}</p>
         </div>
-        <a href="{% url 'rastreio_producao' %}" class="btn-action btn-action-secondary">
-            <i class="fa-solid fa-list-check"></i> Ver todas
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'rastreio_producao' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </a>
+        </div>
     </div>
 
     {% if erro_conexao %}
-    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 small" role="alert">
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 small mb-3" role="alert">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <div>Não foi possível consultar o ERP Faktory. O rastreio continua funcionando com os dados locais.</div>
     </div>
     {% endif %}
 
-    <!-- Cartão da OP -->
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="text-muted small fw-semibold text-uppercase">Obra</div>
-                    <div class="fw-semibold">{{ info.obra }}</div>
+    <!-- Grid de informações da OP -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: var(--cv-blue-soft); color: var(--cv-blue);">
+                            <i class="fa-solid fa-building"></i>
+                        </div>
+                        <span class="text-muted small fw-semibold text-uppercase">Obra</span>
+                    </div>
+                    <div class="fw-bold fs-5">{{ info.obra }}</div>
                 </div>
-                <div class="col-md-5">
-                    <div class="text-muted small fw-semibold text-uppercase">Produto</div>
-                    <div class="fw-semibold" style="font-size: 0.85rem; line-height: 1.4;">{{ info.produto }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(22, 163, 74, 0.1); color: #16a34a;">
+                            <i class="fa-solid fa-box"></i>
+                        </div>
+                        <span class="text-muted small fw-semibold text-uppercase">Variante</span>
+                    </div>
+                    <div class="fw-bold fs-5">{{ info.variante }}</div>
                 </div>
-                <div class="col-md-2">
-                    <div class="text-muted small fw-semibold text-uppercase">Variante</div>
-                    <div class="fw-semibold">{{ info.variante }}</div>
-                </div>
-                <div class="col-md-2">
-                    <div class="text-muted small fw-semibold text-uppercase">Status</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(217, 119, 6, 0.1); color: #d97706;">
+                            <i class="fa-solid fa-gears"></i>
+                        </div>
+                        <span class="text-muted small fw-semibold text-uppercase">Status</span>
+                    </div>
                     {% if rastreio and rastreio.concluida %}
-                        <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
+                        <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
                     {% elif rastreio %}
-                        <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-2"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
                     {% else %}
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">Não iniciada</span>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-3 py-2">Não iniciada</span>
                     {% endif %}
                 </div>
             </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <span class="text-muted small fw-semibold text-uppercase">Tempo no Setor</span>
+                    </div>
+                    <div class="fw-bold fs-5">
+                        {% if rastreio and not rastreio.concluida %}
+                            {{ rastreio.tempo_no_setor_atual_formatado }}
+                        {% elif rastreio and rastreio.concluida %}
+                            Finalizada
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produto -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-tag text-primary"></i>
+                <span class="text-muted small fw-semibold text-uppercase">Produto</span>
+            </div>
+            <div class="fw-semibold" style="font-size: 0.9rem; line-height: 1.5;">{{ info.produto }}</div>
         </div>
     </div>
 
@@ -82,10 +142,12 @@
     </div>
 
     {% else %}
-    <!-- Fluxo de setores -->
-    <div class="card shadow-sm border-0 mb-3">
+    <!-- Fluxo de Produção -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header list-card-header">
+            <h5 class="list-card-title"><i class="fa-solid fa-route me-2 text-primary"></i> Fluxo de Produção</h5>
+        </div>
         <div class="card-body">
-            <div class="text-muted small fw-semibold text-uppercase mb-3">Fluxo de Produção</div>
             <div class="fluxo-producao">
                 {% for s in setores %}
                     {% if s.requer_vidro and rastreio.tem_vidro is False %}
@@ -120,79 +182,123 @@
         </div>
     </div>
 
-    <!-- Estado atual -->
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body text-center py-4">
-            {% if rastreio.concluida %}
-                <div class="empty-state-icon mb-2" style="color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
-                <h5 class="fw-bold mb-1">OP Concluída</h5>
-                <p class="text-muted mb-0">Esta OP chegou ao fim do fluxo de produção.</p>
-            {% else %}
-                <div class="text-muted small fw-semibold text-uppercase mb-1">Setor Atual</div>
-                <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
-
-                {% if not rastreio.concluida %}
-                <div class="mb-3">
-                    <span class="status-badge {{ rastreio.status_tempo_classe }}">
-                        <i class="fa-solid
-                            {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
-                            {% elif rastreio.status_tempo == 'ATENCAO' %}fa-triangle-exclamation
-                            {% else %}fa-circle-check{% endif %}"></i>
-                        {{ rastreio.status_tempo_texto }}
-                        {% if rastreio.tempo_no_setor_atual %}
-                            · {{ rastreio.tempo_no_setor_atual_formatado }}
+    <!-- Estado atual e ações -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="text-muted small fw-semibold text-uppercase mb-2">Setor Atual</div>
+                    {% if rastreio.concluida %}
+                        <div class="d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(22, 163, 74, 0.1); color: #16a34a; margin: 0 auto;">
+                            <i class="fa-solid fa-circle-check fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">OP Concluída</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;">Esta OP chegou ao fim do fluxo de produção.</p>
+                    {% else %}
+                        <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
+                        <div class="mb-3">
+                            <span class="status-badge {{ rastreio.status_tempo_classe }}">
+                                <i class="fa-solid
+                                    {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
+                                    {% elif rastreio.status_tempo == 'ATENCAO' %}fa-triangle-exclamation
+                                    {% else %}fa-circle-check{% endif %}"></i>
+                                {{ rastreio.status_tempo_texto }}
+                                {% if rastreio.tempo_no_setor_atual %}
+                                    · {{ rastreio.tempo_no_setor_atual_formatado }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if precisa_decidir_vidro %}
+                        <div class="alert alert-info d-inline-block text-start mb-0" style="font-size: 0.85rem;">
+                            <div class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-1"></i> Esta OP tem vidro?</div>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="vidro_sim">
+                                    <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">
+                                        <i class="fa-solid fa-check me-1"></i> Sim
+                                    </button>
+                                </form>
+                                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="vidro_nao">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold">
+                                        <i class="fa-solid fa-xmark me-1"></i> Não
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                         {% endif %}
-                    </span>
+                    {% endif %}
                 </div>
-                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="text-muted small fw-semibold text-uppercase mb-2">Próximo Setor</div>
+                    {% if proximo %}
+                        <h4 class="fw-bold mb-3">{{ proximo.nome }}</h4>
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                            <i class="fa-solid fa-arrow-right text-muted"></i>
+                            <span class="text-muted small">Avançar para o próximo setor</span>
+                        </div>
+                    {% else %}
+                        <h4 class="fw-bold mb-3 text-success">Finalizar</h4>
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                            <i class="fa-solid fa-flag-checkered text-success"></i>
+                            <span class="text-muted small">Concluir OP</span>
+                        </div>
+                    {% endif %}
 
-                {% if precisa_decidir_vidro %}
-                <div class="alert alert-info d-inline-block text-start mb-3">
-                    <div class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-1"></i> Esta OP tem vidro?</div>
-                    <div class="d-flex gap-2">
+                    {% if anterior %}
+                    <div class="mt-3 pt-3" style="border-top: 1px solid var(--cv-line);">
+                        <div class="text-muted small fw-semibold text-uppercase mb-2">Setor Anterior</div>
+                        <span class="text-muted">{{ anterior.nome }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="text-muted small fw-semibold text-uppercase mb-2">Ações</div>
+                    <div class="d-flex flex-column gap-2">
+                        {% if not rastreio.concluida %}
                         <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
                             {% csrf_token %}
-                            <input type="hidden" name="acao" value="vidro_sim">
-                            <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">
-                                <i class="fa-solid fa-check me-1"></i> Sim, tem vidro
-                            </button>
+                            <input type="hidden" name="acao" value="avancar">
+                            <input type="text" name="observacao" class="form-control form-control-sm mb-2" placeholder="Observação (opcional)">
+                            {% if proximo %}
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fa-solid fa-arrow-right me-2"></i> Avançar para {{ proximo.nome }}
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fa-solid fa-flag-checkered me-2"></i> Concluir OP
+                                </button>
+                            {% endif %}
                         </form>
+                        {% if anterior %}
                         <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
                             {% csrf_token %}
-                            <input type="hidden" name="acao" value="vidro_nao">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold">
-                                <i class="fa-solid fa-xmark me-1"></i> Não tem vidro
+                            <input type="hidden" name="acao" value="retroceder">
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fa-solid fa-rotate-left me-2"></i> Voltar para {{ anterior.nome }}
                             </button>
                         </form>
+                        {% endif %}
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center gap-2 text-success mb-3">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span class="fw-semibold">OP Finalizada</span>
+                        </div>
+                        <p class="text-muted small mb-0">Esta OP foi concluída e não pode receber novas movimentações.</p>
+                        {% endif %}
                     </div>
                 </div>
-                {% endif %}
-
-                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="d-flex flex-column align-items-center gap-2">
-                    {% csrf_token %}
-                    <input type="hidden" name="acao" value="avancar">
-                    <input type="text" name="observacao" class="form-control form-control-sm" style="max-width: 360px;" placeholder="Observação (opcional)">
-                    {% if proximo %}
-                        <button type="submit" class="btn btn-primary btn-lg px-4">
-                            <i class="fa-solid fa-arrow-right me-2"></i> Avançar para {{ proximo.nome }}
-                        </button>
-                    {% else %}
-                        <button type="submit" class="btn btn-success btn-lg px-4">
-                            <i class="fa-solid fa-flag-checkered me-2"></i> Concluir OP
-                        </button>
-                    {% endif %}
-                </form>
-
-                {% if anterior %}
-                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="mt-3">
-                    {% csrf_token %}
-                    <input type="hidden" name="acao" value="retroceder">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">
-                        <i class="fa-solid fa-rotate-left me-1"></i> Voltar para {{ anterior.nome }}
-                    </button>
-                </form>
-                {% endif %}
-            {% endif %}
+            </div>
         </div>
     </div>
 
