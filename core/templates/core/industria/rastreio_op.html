@@ -76,18 +76,31 @@
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
             <div class="text-muted small fw-semibold text-uppercase mb-3">Fluxo de Produção</div>
-            <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="fluxo-producao">
                 {% for s in setores %}
                     {% if s.requer_vidro and rastreio.tem_vidro is False %}
                         {% comment %} setor pulado (sem vidro) {% endcomment %}
                     {% else %}
-                        <span class="badge px-3 py-2 fw-semibold
-                            {% if s.codigo == rastreio.setor_atual %}bg-primary text-white
-                            {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
-                            {% if s.codigo == rastreio.setor_atual %}<i class="fa-solid fa-location-dot me-1"></i>{% endif %}
-                            {{ s.nome }}
-                        </span>
-                        {% if not forloop.last %}<i class="fa-solid fa-arrow-right text-muted small"></i>{% endif %}
+                        <div class="fluxo-setor
+                            {% if s.codigo == rastreio.setor_atual %}atual pulso
+                            {% elif forloop.counter0 < setores.index %}concluido
+                            {% endif %}">
+                            <div class="fluxo-icone">
+                                {% if s.codigo == rastreio.setor_atual %}
+                                    <i class="fa-solid fa-location-dot"></i>
+                                {% elif forloop.counter0 < setores.index %}
+                                    <i class="fa-solid fa-check"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="fluxo-nome">{{ s.nome }}</div>
+                            <div class="fluxo-tempo">
+                                {% if s.codigo == rastreio.setor_atual and not rastreio.concluida %}
+                                    {{ rastreio.tempo_no_setor_atual_formatado }}
+                                {% endif %}
+                            </div>
+                        </div>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -104,6 +117,21 @@
             {% else %}
                 <div class="text-muted small fw-semibold text-uppercase mb-1">Setor Atual</div>
                 <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
+
+                {% if not rastreio.concluida %}
+                <div class="mb-3">
+                    <span class="status-badge {{ rastreio.status_tempo_classe }}">
+                        <i class="fa-solid
+                            {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
+                            {% elif rastreio.status_tempo == 'ATENCAO' %}fa-triangle-exclamation
+                            {% else %}fa-circle-check{% endif %}"></i>
+                        {{ rastreio.status_tempo_texto }}
+                        {% if rastreio.tempo_no_setor_atual %}
+                            · {{ rastreio.tempo_no_setor_atual_formatado }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
 
                 {% if precisa_decidir_vidro %}
                 <div class="alert alert-info d-inline-block text-start mb-3">
@@ -168,6 +196,7 @@
                             <th class="ps-3">Setor</th>
                             <th>Usuário</th>
                             <th>Data / Hora</th>
+                            <th>Tempo no Setor</th>
                             <th class="pe-3">Observação</th>
                         </tr>
                     </thead>
@@ -185,10 +214,19 @@
                                 {% endif %}
                             </td>
                             <td class="text-nowrap text-muted">{{ m.data_hora|date:"d/m/Y H:i:s" }}</td>
+                            <td>
+                                {% if m.tempo_no_setor_formatado != '—' %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">
+                                        <i class="fa-solid fa-clock me-1"></i> {{ m.tempo_no_setor_formatado }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
                             <td class="pe-3 text-muted">{{ m.observacao|default:"—" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

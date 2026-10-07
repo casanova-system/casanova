@@ -25,6 +25,9 @@ from core.models import (
     SetorProducao,
     garantir_setores_padrao,
 )
+from django.utils import timezone
+from django.db.models import Avg, Count, Q, F, ExpressionWrapper, DurationField
+from datetime import timedelta
 from core.views.ordem_producao import _buscar_op_por_id
 from core.views.permissao import requer_rotina
 
@@ -159,6 +162,7 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
                 setor_nome=setor_usuario.nome,
                 usuario=request.user,
                 observacao='Início do rastreio',
+                data_entrada=timezone.now(),
             )
 
         logger.info(
@@ -213,6 +217,13 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
 
     # --- Avança ---
     with transaction.atomic():
+        # Registrar a saída do setor anterior
+        MovimentacaoOP.objects.filter(
+            rastreio=rastreio,
+            setor=rastreio.setor_atual,
+            data_saida__isnull=True,
+        ).update(data_saida=timezone.now())
+
         rastreio.setor_atual = codigo_setor
         # Se não há próximo setor, a OP é concluída ao chegar no último
         if _proximo_setor(codigo_setor, rastreio.tem_vidro) is None:
@@ -225,6 +236,7 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
             setor=codigo_setor,
             setor_nome=setor_usuario.nome,
             usuario=request.user,
+            data_entrada=timezone.now(),
         )
 
     logger.info(
@@ -276,12 +288,88 @@ def rastreio_producao(request):
     params = request.GET.copy()
     params.pop('page', None)
 
+    # KPIs e dados para gráficos
+    rastreios_ativos = RastreioOP.objects.filter(status='EM_PRODUCAO')
+    rastreios_concluidos = RastreioOP.objects.filter(status='CONCLUIDA')
+
+    # Contagem por status de tempo
+    ops_sem_problema = 0
+    ops_atencao = 0
+    ops_critico = 0
+    for r in rastreios_ativos:
+        if r.status_tempo == 'CRITICO':
+            ops_critico += 1
+        elif r.status_tempo == 'ATENCAO':
+            ops_atencao += 1
+        else:
+            ops_sem_problema += 1
+
+    # Dados para gráfico de barras: tempo médio por setor
+    setores = _setores_ativos()
+    tempo_medio_setores = []
+    for setor in setores:
+        movimentacoes = MovimentacaoOP.objects.filter(
+            setor=setor.codigo,
+            data_entrada__isnull=False,
+            data_saida__isnull=False,
+        ).annotate(
+            duracao=ExpressionWrapper(
+                F('data_saida') - F('data_entrada'),
+                output_field=DurationField(),
+            )
+        )
+        if movimentacoes.exists():
+            tempo_medio = movimentacoes.aggregate(
+                avg_duracao=Avg('duracao')
+            )['avg_duracao']
+            tempo_medio_minutos = tempo_medio.total_seconds() / 60 if tempo_medio else 0
+        else:
+            tempo_medio_minutos = 0
+        tempo_medio_setores.append({
+            'nome': setor.nome,
+            'tempo_medio': round(tempo_medio_minutos, 1),
+        })
+
+    # Dados para gráfico de pizza: distribuição por setor
+    distribuicao_setores = []
+    for setor in setores:
+        count = rastreios_ativos.filter(setor_atual=setor.codigo).count()
+        if count > 0:
+            distribuicao_setores.append({
+                'nome': setor.nome,
+                'quantidade': count,
+            })
+
+    # Dados para gráfico de linha: OPs concluídas por dia (últimos 7 dias)
+    from datetime import date, timedelta
+    hoje = date.today()
+    concluidas_por_dia = []
+    for i in range(6, -1, -1):
+        dia = hoje - timedelta(days=i)
+        count = rastreios_concluidos.filter(
+            atualizado_em__date=dia
+        ).count()
+        concluidas_por_dia.append({
+            'dia': dia.strftime('%d/%m'),
+            'quantidade': count,
+        })
+
     context = {
         'page_obj': page_obj,
         'rastreios': page_obj.object_list,
-        'setores': _setores_ativos(),
+        'setores': setores,
         'filtros': request.GET,
         'querystring': params.urlencode(),
+        'kpis': {
+            'total_ativas': rastreios_ativos.count(),
+            'total_concluidas': rastreios_concluidos.count(),
+            'sem_problema': ops_sem_problema,
+            'atencao': ops_atencao,
+            'critico': ops_critico,
+        },
+        'tempo_medio_setores': tempo_medio_setores,
+        'distribuicao_setores': distribuicao_setores,
+        'concluidas_por_dia': concluidas_por_dia,
     }
     return render(request, 'core/industria/rastreio_producao.html', context)
 

@@ -19,6 +19,68 @@
     {% url 'menu_principal' as url_inicio %}
     {% include 'core/partials/page_header.html' with titulo="Rastreio de Produção" subtitulo="Acompanhe a OP pelos setores da fábrica em tempo real." acao_icone="fa-industry" voltar_url=url_inicio %}
 
+    <!-- KPIs -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #0b3882;">
+                <div class="kpi-label"><i class="fa-solid fa-gears me-1"></i> Em Produção</div>
+                <div class="kpi-value">{{ kpis.total_ativas }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #16a34a;">
+                <div class="kpi-label"><i class="fa-solid fa-circle-check me-1"></i> Concluídas</div>
+                <div class="kpi-value">{{ kpis.total_concluidas }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #16a34a;">
+                <div class="kpi-label"><i class="fa-solid fa-thumbs-up me-1"></i> Sem Problema</div>
+                <div class="kpi-value">{{ kpis.sem_problema }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #d97706;">
+                <div class="kpi-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> Atenção</div>
+                <div class="kpi-value">{{ kpis.atencao }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-md-4">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Tempo Médio por Setor</h6>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoTempoSetor" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-pie me-1 text-primary"></i> Distribuição por Setor</h6>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoDistribuicao" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Concluídas por Dia</h6>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoConcluidas" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filtros -->
     <div class="filtros-bar">
         <form method="GET" action="" class="filtros-bar-form">
@@ -129,6 +191,152 @@
         </div>
     </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Dados para gráficos
+    const tempoMedioSetores = {{ tempo_medio_setores|safe }};
+    const distribuicaoSetores = {{ distribuicao_setores|safe }};
+    const concluidasPorDia = {{ concluidas_por_dia|safe }};
+
+    // Cores do sistema Casanova
+    const cores = {
+        azul: '#0b3882',
+        azulClaro: '#4da6ff',
+        verde: '#16a34a',
+        amarelo: '#d97706',
+        vermelho: '#dc2626',
+        cinza: '#94a3b8',
+        azulMedio: '#3b82f6',
+        roxo: '#7c3aed',
+        rosa: '#ec4899',
+        ciano: '#06b6d4',
+    };
+
+    // Gráfico de barras: Tempo Médio por Setor
+    const ctxTempo = document.getElementById('graficoTempoSetor').getContext('2d');
+    new Chart(ctxTempo, {
+        type: 'bar',
+        data: {
+            labels: tempoMedioSetores.map(s => s.nome),
+            datasets: [{
+                label: 'Tempo Médio (min)',
+                data: tempoMedioSetores.map(s => s.tempo_medio),
+                backgroundColor: [
+                    cores.azul,
+                    cores.azulClaro,
+                    cores.verde,
+                    cores.amarelo,
+                    cores.vermelho,
+                    cores.azulMedio,
+                    cores.roxo,
+                ],
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' min';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { font: { size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+
+    // Gráfico de pizza: Distribuição por Setor
+    const ctxDist = document.getElementById('graficoDistribuicao').getContext('2d');
+    new Chart(ctxDist, {
+        type: 'doughnut',
+        data: {
+            labels: distribuicaoSetores.map(s => s.nome),
+            datasets: [{
+                data: distribuicaoSetores.map(s => s.quantidade),
+                backgroundColor: [
+                    cores.azul,
+                    cores.azulClaro,
+                    cores.verde,
+                    cores.amarelo,
+                    cores.vermelho,
+                    cores.azulMedio,
+                    cores.roxo,
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { font: { size: 11 }, padding: 8 }
+                }
+            },
+            cutout: '60%',
+        }
+    });
+
+    // Gráfico de linha: Concluídas por Dia
+    const ctxConc = document.getElementById('graficoConcluidas').getContext('2d');
+    new Chart(ctxConc, {
+        type: 'line',
+        data: {
+            labels: concluidasPorDia.map(d => d.dia),
+            datasets: [{
+                label: 'OPs Concluídas',
+                data: concluidasPorDia.map(d => d.quantidade),
+                borderColor: cores.azul,
+                backgroundColor: 'rgba(11, 56, 130, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: cores.azul,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { font: { size: 11 }, stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+</script>
 
 {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaRastreio" storage_key="casanova_rastreio_larguras" %}
 {% endblock %}

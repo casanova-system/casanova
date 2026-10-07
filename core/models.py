@@ -676,6 +676,65 @@ class RastreioOP(models.Model):
     def concluida(self):
         return self.status == 'CONCLUIDA'
 
+    @property
+    def tempo_no_setor_atual(self):
+        """Retorna o tempo (em minutos) que a OP está no setor atual."""
+        if not self.setor_atual or self.concluida:
+            return None
+        from django.utils import timezone
+        agora = timezone.now()
+        # Busca a última movimentação de entrada no setor atual
+        ultima_entrada = self.movimentacoes.filter(
+            setor=self.setor_atual
+        ).order_by('-data_hora').first()
+        if ultima_entrada:
+            return (agora - ultima_entrada.data_hora).total_seconds() / 60
+        return None
+
+    @property
+    def tempo_no_setor_atual_formatado(self):
+        """Retorna o tempo formatado no setor atual."""
+        minutos = self.tempo_no_setor_atual
+        if minutos is None:
+            return '—'
+        if minutos < 60:
+            return f'{int(minutos)}min'
+        horas = int(minutos // 60)
+        mins = int(minutos % 60)
+        return f'{horas}h {mins}min' if mins else f'{horas}h'
+
+    @property
+    def status_tempo(self):
+        """Retorna o status de tempo: 'OK', 'ATENCAO' ou 'CRITICO'."""
+        minutos = self.tempo_no_setor_atual
+        if minutos is None:
+            return 'OK'
+        if minutos >= 240:  # 4 horas
+            return 'CRITICO'
+        if minutos >= 120:  # 2 horas
+            return 'ATENCAO'
+        return 'OK'
+
+    @property
+    def status_tempo_classe(self):
+        """Retorna a classe CSS correspondente ao status de tempo."""
+        status = self.status_tempo
+        if status == 'CRITICO':
+            return 'status-critico'
+        if status == 'ATENCAO':
+            return 'status-atencao'
+        return 'status-ok'
+
+    @property
+    def status_tempo_texto(self):
+        """Retorna o texto descritivo do status de tempo."""
+        status = self.status_tempo
+        if status == 'CRITICO':
+            return 'Parado há muito tempo'
+        if status == 'ATENCAO':
+            return 'Demorando um pouco'
+        return 'Sem problema'
+
 
 class MovimentacaoOP(models.Model):
     """Registro histórico de cada passagem da OP por um setor."""
@@ -690,6 +749,8 @@ class MovimentacaoOP(models.Model):
     )
     observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
     data_hora = models.DateTimeField(auto_now_add=True, verbose_name='Data/Hora')
+    data_entrada = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Entrada')
+    data_saida = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Saída')
 
     class Meta:
         ordering = ['data_hora']
@@ -698,3 +759,22 @@ class MovimentacaoOP(models.Model):
 
     def __str__(self):
         return f'{self.setor_nome} — {self.data_hora:%d/%m/%Y %H:%M}'
+
+    @property
+    def tempo_no_setor(self):
+        """Retorna o tempo gasto no setor em minutos."""
+        if self.data_entrada and self.data_saida:
+            return (self.data_saida - self.data_entrada).total_seconds() / 60
+        return None
+
+    @property
+    def tempo_no_setor_formatado(self):
+        """Retorna o tempo formatado (ex: '2h 30min', '45min')."""
+        minutos = self.tempo_no_setor
+        if minutos is None:
+            return '—'
+        if minutos < 60:
+            return f'{int(minutos)}min'
+        horas = int(minutos // 60)
+        mins = int(minutos % 60)
+        return f'{horas}h {mins}min' if mins else f'{horas}h'

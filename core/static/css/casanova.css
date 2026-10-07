@@ -1465,3 +1465,123 @@ body.mobile-menu-open {
         font-size: 16px !important;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* 16. RASTREIO DE PRODUÇÃO — status de tempo (verde/amarelo/vermelho)         */
+/* -------------------------------------------------------------------------- */
+.status-ok {
+    --status-color: #16a34a;
+    --status-bg: rgba(22, 163, 74, 0.10);
+}
+.status-atencao {
+    --status-color: #d97706;
+    --status-bg: rgba(217, 119, 6, 0.10);
+}
+.status-critico {
+    --status-color: #dc2626;
+    --status-bg: rgba(220, 38, 38, 0.10);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    color: var(--status-color, var(--cv-text));
+    background: var(--status-bg, var(--cv-surface-2));
+    border: 1px solid color-mix(in srgb, var(--status-color, var(--cv-blue)) 30%, transparent);
+    white-space: nowrap;
+}
+.status-badge i {
+    font-size: 0.65rem;
+}
+
+/* Barra de progresso do fluxo de produção */
+.fluxo-producao {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+}
+.fluxo-setor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 90px;
+    position: relative;
+}
+.fluxo-setor:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--cv-line-strong);
+    z-index: 0;
+}
+.fluxo-setor.concluido:not(:last-child)::after {
+    background: #16a34a;
+}
+.fluxo-setor.atual:not(:last-child)::after {
+    background: var(--cv-blue);
+}
+.fluxo-icone {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    background: var(--cv-surface-2);
+    border: 2px solid var(--cv-line-strong);
+    color: var(--cv-text-faint);
+    position: relative;
+    z-index: 1;
+    transition: all 0.25s var(--cv-ease);
+}
+.fluxo-setor.concluido .fluxo-icone {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: #16a34a;
+    color: #16a34a;
+}
+.fluxo-setor.atual .fluxo-icone {
+    background: var(--cv-blue-soft);
+    border-color: var(--cv-blue);
+    color: var(--cv-blue);
+    box-shadow: 0 0 0 4px var(--cv-blue-ring);
+}
+.fluxo-setor.pulso .fluxo-icone {
+    animation: fluxo-pulse 2s infinite;
+}
+@keyframes fluxo-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px var(--cv-blue-ring); }
+    50% { box-shadow: 0 0 0 8px transparent; }
+}
+.fluxo-nome {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--cv-text-muted);
+    max-width: 90px;
+    line-height: 1.2;
+}
+.fluxo-setor.concluido .fluxo-nome {
+    color: #16a34a;
+}
+.fluxo-setor.atual .fluxo-nome {
+    color: var(--cv-blue);
+    font-weight: 700;
+}
+.fluxo-tempo {
+    font-size: 0.62rem;
+    color: var(--cv-text-faint);
+    font-weight: 500;
+}
