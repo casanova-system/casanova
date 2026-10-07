@@ -154,33 +154,33 @@
                     {% if s.requer_vidro and rastreio.tem_vidro is False %}
                         {% comment %} setor pulado (sem vidro) {% endcomment %}
                     {% else %}
-                        {% if rastreio.concluida or s.ordem < setor_atual.ordem %}
-                            {% with status_classe='concluido' %}
+                        {% if rastreio.concluida %}
+                            <div class="fluxo-setor concluido">
+                                <div class="fluxo-icone"><i class="fa-solid fa-check"></i></div>
+                                <div class="fluxo-nome">{{ s.nome }}</div>
+                                <div class="fluxo-tempo">
+                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
+                                        {{ rastreio|tempo_no_setor:s.codigo }}
+                                    {% endif %}
+                                </div>
+                            </div>
                         {% elif s.codigo == rastreio.setor_atual %}
-                            {% with status_classe='atual pulso' %}
+                            <div class="fluxo-setor atual pulso">
+                                <div class="fluxo-icone"><i class="fa-solid fa-location-dot"></i></div>
+                                <div class="fluxo-nome">{{ s.nome }}</div>
+                                <div class="fluxo-tempo">{{ rastreio.tempo_no_setor_atual_formatado }}</div>
+                            </div>
                         {% else %}
-                            {% with status_classe=rastreio|status_tempo_setor_classe:s.codigo %}
+                            <div class="fluxo-setor {{ rastreio|status_tempo_setor_classe:s.codigo }}">
+                                <div class="fluxo-icone"><i class="fa-solid fa-circle"></i></div>
+                                <div class="fluxo-nome">{{ s.nome }}</div>
+                                <div class="fluxo-tempo">
+                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
+                                        {{ rastreio|tempo_no_setor:s.codigo }}
+                                    {% endif %}
+                                </div>
+                            </div>
                         {% endif %}
-                        <div class="fluxo-setor {{ status_classe }}">
-                            <div class="fluxo-icone">
-                                {% if rastreio.concluida or s.ordem < setor_atual.ordem %}
-                                    <i class="fa-solid fa-check"></i>
-                                {% elif s.codigo == rastreio.setor_atual %}
-                                    <i class="fa-solid fa-location-dot"></i>
-                                {% else %}
-                                    <i class="fa-solid fa-circle"></i>
-                                {% endif %}
-                            </div>
-                            <div class="fluxo-nome">{{ s.nome }}</div>
-                            <div class="fluxo-tempo">
-                                {% if s.codigo == rastreio.setor_atual and not rastreio.concluida %}
-                                    {{ rastreio.tempo_no_setor_atual_formatado }}
-                                {% elif rastreio|tempo_no_setor:s.codigo != '—' %}
-                                    {{ rastreio|tempo_no_setor:s.codigo }}
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endwith %}
                     {% endif %}
                 {% endfor %}
             </div>
