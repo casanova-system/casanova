@@ -137,7 +137,11 @@ def api_setores(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_rastreios(request):
-    """Lista as OPs em rastreio (com filtros opcionais)."""
+    """Lista as OPs em rastreio (com filtros opcionais).
+    
+    Gerentes veem apenas OPs do seu próprio setor.
+    Superusuários veem todas as OPs.
+    """
     try:
         garantir_setores_padrao()
     except Exception:  # noqa: BLE001
@@ -147,6 +151,11 @@ def api_rastreios(request):
     q = request.GET.get('q', '').strip()
     setor = request.GET.get('setor', '').strip()
     status_filtro = request.GET.get('status', '').strip()
+
+    # Filtra por setor do usuário (apenas gerentes)
+    setor_usuario = _setor_do_usuario(request.user)
+    if setor_usuario and not request.user.is_superuser:
+        qs = qs.filter(setor_atual=setor_usuario.codigo)
 
     if q:
         from django.db.models import Q

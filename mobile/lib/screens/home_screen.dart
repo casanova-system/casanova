@@ -34,7 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _erro = null;
     });
     try {
-      final lista = await widget.api.rastreios(status: _filtroStatus);
+      // Filtra por setor do usuário (apenas gerentes veem OPs do seu setor)
+      final setor = widget.usuario.setorProducao?.codigo;
+      final lista = await widget.api.rastreios(
+        status: _filtroStatus,
+        setor: setor,
+      );
       setState(() => _rastreios = lista);
     } catch (e) {
       setState(() => _erro = e.toString().replaceFirst('Exception: ', ''));
