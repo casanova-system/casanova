@@ -1562,16 +1562,19 @@ body.mobile-menu-open {
     animation: fluxo-pulse 2s infinite;
 }
 
-/* Cores baseadas no tempo real de cada setor */
-.fluxo-setor.status-ok .fluxo-icone {
+/* Cores baseadas no tempo real de cada setor - TODOS os setores */
+.fluxo-setor.status-ok .fluxo-icone,
+.fluxo-setor.concluido .fluxo-icone {
     background: rgba(22, 163, 74, 0.12);
     border-color: #16a34a;
     color: #16a34a;
 }
-.fluxo-setor.status-ok .fluxo-nome {
+.fluxo-setor.status-ok .fluxo-nome,
+.fluxo-setor.concluido .fluxo-nome {
     color: #16a34a;
 }
-.fluxo-setor.status-ok:not(:last-child)::after {
+.fluxo-setor.status-ok:not(:last-child)::after,
+.fluxo-setor.concluido:not(:last-child)::after {
     background: #16a34a;
 }
 

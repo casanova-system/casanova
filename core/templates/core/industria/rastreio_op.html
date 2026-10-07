@@ -158,7 +158,7 @@
                             {% if rastreio.concluida %}concluido
                             {% elif s.codigo == rastreio.setor_atual %}atual pulso
                             {% elif forloop.counter0 < setores.index %}concluido
-                            {% endif %}{% if not rastreio.concluida and s.codigo != rastreio.setor_atual %} {{ rastreio|status_tempo_setor_classe:s.codigo }}{% endif %}">
+                            {% endif %}{% if not rastreio.concluida %} {{ rastreio|status_tempo_setor_classe:s.codigo }}{% endif %}">
                             <div class="fluxo-icone">
                                 {% if rastreio.concluida %}
                                     <i class="fa-solid fa-check"></i>
