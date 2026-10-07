@@ -154,18 +154,19 @@
                     {% if s.requer_vidro and rastreio.tem_vidro is False %}
                         {% comment %} setor pulado (sem vidro) {% endcomment %}
                     {% else %}
-                        <div class="fluxo-setor
-                            {% if rastreio.concluida %}concluido
-                            {% elif s.codigo == rastreio.setor_atual %}atual pulso
-                            {% elif forloop.counter0 < setores.index %}concluido
-                            {% endif %}{% if not rastreio.concluida %} {{ rastreio|status_tempo_setor_classe:s.codigo }}{% endif %}">
+                        {% if rastreio.concluida or s.ordem < setor_atual.ordem %}
+                            {% with status_classe='concluido' %}
+                        {% elif s.codigo == rastreio.setor_atual %}
+                            {% with status_classe='atual pulso' %}
+                        {% else %}
+                            {% with status_classe=rastreio|status_tempo_setor_classe:s.codigo %}
+                        {% endif %}
+                        <div class="fluxo-setor {{ status_classe }}">
                             <div class="fluxo-icone">
-                                {% if rastreio.concluida %}
+                                {% if rastreio.concluida or s.ordem < setor_atual.ordem %}
                                     <i class="fa-solid fa-check"></i>
                                 {% elif s.codigo == rastreio.setor_atual %}
                                     <i class="fa-solid fa-location-dot"></i>
-                                {% elif forloop.counter0 < setores.index %}
-                                    <i class="fa-solid fa-check"></i>
                                 {% else %}
                                     <i class="fa-solid fa-circle"></i>
                                 {% endif %}
@@ -179,6 +180,7 @@
                                 {% endif %}
                             </div>
                         </div>
+                        {% endwith %}
                     {% endif %}
                 {% endfor %}
             </div>
