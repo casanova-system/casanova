@@ -6,7 +6,7 @@ import '../api_service.dart';
 import '../models.dart';
 import '../theme.dart';
 
-/// Tela de escaneamento do código de barras da OP.
+/// Tela de escaneamento do QR Code da OP.
 ///
 /// Usa a câmera do celular. Também aceita digitação manual (para leitores
 /// Bluetooth que funcionam como teclado).
@@ -44,9 +44,6 @@ class _ScanScreenState extends State<ScanScreen> {
       _scanner = MobileScannerController(
         detectionSpeed: DetectionSpeed.noDuplicates,
         formats: const [
-          BarcodeFormat.code128,
-          BarcodeFormat.code39,
-          BarcodeFormat.ean13,
           BarcodeFormat.qrCode,
         ],
       );
@@ -128,7 +125,7 @@ class _ScanScreenState extends State<ScanScreen> {
         actions: [
           IconButton(
             icon: Icon(_modoManual ? Icons.qr_code_scanner : Icons.keyboard),
-            tooltip: _modoManual ? 'Usar câmera' : 'Digitar código',
+            tooltip: _modoManual ? 'Usar câmera' : 'Digitar ID',
             onPressed: _alternarModo,
           ),
         ],
@@ -223,7 +220,7 @@ class _ScanScreenState extends State<ScanScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
-              'Aponte para o código de barras da OP',
+              'Aponte para o QR Code da OP',
               style: TextStyle(color: Colors.white, fontSize: 13),
             ),
           ),
@@ -251,7 +248,7 @@ class _ScanScreenState extends State<ScanScreen> {
               const SizedBox(height: 8),
               const Text(
                 'O navegador só libera a câmera em conexões seguras (HTTPS). '
-                'Como o sistema está em HTTP, use o leitor de código de barras '
+                'Como o sistema está em HTTP, use o leitor de QR Code '
                 'ou digite o número da OP.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Cv.textMuted, fontSize: 13, height: 1.5),
@@ -270,7 +267,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     });
                   },
                   icon: const Icon(Icons.keyboard),
-                  label: const Text('Digitar código'),
+                  label: const Text('Digitar ID'),
                 ),
               ),
             ],
@@ -296,12 +293,12 @@ class _ScanScreenState extends State<ScanScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Digite o código da OP',
+            'Digite o ID da OP',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           const Text(
-            'Use o leitor Bluetooth ou digite o número.',
+            'Use o leitor Bluetooth ou digite o ID da OP.',
             style: TextStyle(color: Cv.textMuted, fontSize: 13),
           ),
           const SizedBox(height: 24),
@@ -313,7 +310,7 @@ class _ScanScreenState extends State<ScanScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
             decoration: const InputDecoration(
-              hintText: '00000',
+              hintText: 'ID da OP',
               prefixIcon: Icon(Icons.tag, color: Cv.textMuted),
             ),
             onSubmitted: (v) {
@@ -332,7 +329,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       }
                     },
               icon: const Icon(Icons.check),
-              label: const Text('Registrar'),
+              label: const Text('Consultar'),
             ),
           ),
         ],
@@ -457,8 +454,8 @@ class _ScanScreenState extends State<ScanScreen> {
                       });
                     }
                   },
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('Escanear outra OP'),
+                  icon: const Icon(Icons.qr_code),
+                  label: const Text('Consultar outra OP'),
                 ),
               ),
             ],

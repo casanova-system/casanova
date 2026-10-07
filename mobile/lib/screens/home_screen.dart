@@ -81,8 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: _abrirScanner,
         backgroundColor: Cv.blue,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.qr_code_scanner),
-        label: const Text('Escanear'),
+        icon: const Icon(Icons.qr_code),
+        label: const Text('Escanear QR Code'),
       ),
       body: Column(
         children: [
@@ -238,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 4),
             Text(
-              'Escaneie o código de barras para iniciar.',
+              'Escaneie o QR Code para iniciar.',
               style: TextStyle(color: Cv.textFaint, fontSize: 13),
             ),
           ],
