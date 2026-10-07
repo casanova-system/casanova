@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 860px;">
+<div class="container-fluid px-4 py-3">
 
     {% include 'core/partials/messages.html' %}
 
@@ -38,17 +38,27 @@
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <div class="text-muted small fw-semibold text-uppercase">Obra</div>
                     <div class="fw-semibold">{{ info.obra }}</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-5">
                     <div class="text-muted small fw-semibold text-uppercase">Produto</div>
-                    <div class="fw-semibold">{{ info.produto }}</div>
+                    <div class="fw-semibold" style="font-size: 0.85rem; line-height: 1.4;">{{ info.produto }}</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="text-muted small fw-semibold text-uppercase">Variante</div>
                     <div class="fw-semibold">{{ info.variante }}</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small fw-semibold text-uppercase">Status</div>
+                    {% if rastreio and rastreio.concluida %}
+                        <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
+                    {% elif rastreio %}
+                        <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
+                    {% else %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">Não iniciada</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -82,11 +92,14 @@
                         {% comment %} setor pulado (sem vidro) {% endcomment %}
                     {% else %}
                         <div class="fluxo-setor
-                            {% if s.codigo == rastreio.setor_atual %}atual pulso
+                            {% if rastreio.concluida %}concluido
+                            {% elif s.codigo == rastreio.setor_atual %}atual pulso
                             {% elif forloop.counter0 < setores.index %}concluido
                             {% endif %}">
                             <div class="fluxo-icone">
-                                {% if s.codigo == rastreio.setor_atual %}
+                                {% if rastreio.concluida %}
+                                    <i class="fa-solid fa-check"></i>
+                                {% elif s.codigo == rastreio.setor_atual %}
                                     <i class="fa-solid fa-location-dot"></i>
                                 {% elif forloop.counter0 < setores.index %}
                                     <i class="fa-solid fa-check"></i>
@@ -187,13 +200,15 @@
     <div class="card shadow-sm border-0">
         <div class="card-header list-card-header">
             <h5 class="list-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Histórico de Movimentações</h5>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">{{ movimentacoes|length }} registro{{ movimentacoes|length|pluralize }}</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3">Setor</th>
+                            <th class="ps-3" style="width: 40px;">#</th>
+                            <th>Setor</th>
                             <th>Usuário</th>
                             <th>Data / Hora</th>
                             <th>Tempo no Setor</th>
@@ -203,10 +218,23 @@
                     <tbody>
                         {% for m in movimentacoes %}
                         <tr>
-                            <td class="ps-3 fw-semibold">{{ m.setor_nome }}</td>
+                            <td class="ps-3 text-muted fw-semibold">{{ forloop.counter }}</td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                    {% if m.setor == 'estoque' %}<i class="fa-solid fa-warehouse me-1"></i>
+                                    {% elif m.setor == 'separacao' %}<i class="fa-solid fa-boxes-stacked me-1"></i>
+                                    {% elif m.setor == 'corte' %}<i class="fa-solid fa-scissors me-1"></i>
+                                    {% elif m.setor == 'usinagem' %}<i class="fa-solid fa-gears me-1"></i>
+                                    {% elif m.setor == 'mesa' %}<i class="fa-solid fa-table-cells me-1"></i>
+                                    {% elif m.setor == 'encaixilhamento' %}<i class="fa-solid fa-border-all me-1"></i>
+                                    {% elif m.setor == 'expedicao' %}<i class="fa-solid fa-truck me-1"></i>
+                                    {% else %}<i class="fa-solid fa-industry me-1"></i>{% endif %}
+                                    {{ m.setor_nome }}
+                                </span>
+                            </td>
                             <td>
                                 {% if m.usuario %}
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1">
                                         <i class="fa-solid fa-user me-1"></i> {{ m.usuario.username }}
                                     </span>
                                 {% else %}
@@ -216,17 +244,19 @@
                             <td class="text-nowrap text-muted">{{ m.data_hora|date:"d/m/Y H:i:s" }}</td>
                             <td>
                                 {% if m.tempo_no_setor_formatado != '—' %}
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1">
                                         <i class="fa-solid fa-clock me-1"></i> {{ m.tempo_no_setor_formatado }}
                                     </span>
                                 {% else %}
-                                    <span class="text-muted small">—</span>
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1">
+                                        <i class="fa-solid fa-hourglass-half me-1"></i> Em andamento
+                                    </span>
                                 {% endif %}
                             </td>
                             <td class="pe-3 text-muted">{{ m.observacao|default:"—" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

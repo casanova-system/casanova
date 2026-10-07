@@ -1585,3 +1585,22 @@ body.mobile-menu-open {
     color: var(--cv-text-faint);
     font-weight: 500;
 }
+
+/* Ícones específicos por setor no fluxo */
+.fluxo-setor-icone-estoque { color: #8b5cf6; }
+.fluxo-setor-icone-separacao { color: #06b6d4; }
+.fluxo-setor-icone-corte { color: #f59e0b; }
+.fluxo-setor-icone-usinagem { color: #3b82f6; }
+.fluxo-setor-icone-mesa { color: #10b981; }
+.fluxo-setor-icone-encaixilhamento { color: #ec4899; }
+.fluxo-setor-icone-expedicao { color: #16a34a; }
+
+/* Melhorias na tabela de histórico */
+.table-historico td {
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+.table-historico .badge {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.6rem;
+}
