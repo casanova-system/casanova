@@ -1467,7 +1467,148 @@ body.mobile-menu-open {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 16. RASTREIO DE PRODUÇÃO — status de tempo (verde/amarelo/vermelho)         */
+/* 16. RASTREIO DE PRODUÇÃO — cards de fluxo com cores por status              */
+/* -------------------------------------------------------------------------- */
+.fluxo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem;
+    border-radius: var(--cv-radius);
+    border: 2px solid var(--cv-line);
+    background: var(--cv-surface);
+    text-align: center;
+    transition: all 0.25s var(--cv-ease);
+    height: 100%;
+}
+.fluxo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cv-shadow-md);
+}
+.fluxo-card-icone {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: var(--cv-surface-2);
+    border: 2px solid var(--cv-line-strong);
+    color: var(--cv-text-faint);
+    transition: all 0.25s var(--cv-ease);
+}
+.fluxo-card-nome {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--cv-text-muted);
+    line-height: 1.2;
+}
+.fluxo-card-tempo {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--cv-text-faint);
+}
+
+/* Card concluído (verde) */
+.fluxo-card-concluido {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(22, 163, 74, 0.04);
+}
+.fluxo-card-concluido .fluxo-card-icone {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: #16a34a;
+    color: #16a34a;
+}
+.fluxo-card-concluido .fluxo-card-nome {
+    color: #16a34a;
+}
+.fluxo-card-concluido .fluxo-card-tempo {
+    color: #16a34a;
+}
+
+/* Card atual (azul, pulsante) */
+.fluxo-card-atual {
+    border-color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+    box-shadow: 0 0 0 3px var(--cv-blue-ring);
+}
+.fluxo-card-atual .fluxo-card-icone {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    color: #ffffff;
+    animation: fluxo-card-pulse 2s infinite;
+}
+.fluxo-card-atual .fluxo-card-nome {
+    color: var(--cv-blue);
+}
+.fluxo-card-atual .fluxo-card-tempo {
+    color: var(--cv-blue);
+}
+@keyframes fluxo-card-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px var(--cv-blue-ring); }
+    50% { box-shadow: 0 0 0 7px transparent; }
+}
+
+/* Card status OK (verde) */
+.fluxo-card.status-ok {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(22, 163, 74, 0.04);
+}
+.fluxo-card.status-ok .fluxo-card-icone {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: #16a34a;
+    color: #16a34a;
+}
+.fluxo-card.status-ok .fluxo-card-nome {
+    color: #16a34a;
+}
+.fluxo-card.status-ok .fluxo-card-tempo {
+    color: #16a34a;
+}
+
+/* Card status atenção (amarelo) */
+.fluxo-card.status-atencao {
+    border-color: rgba(217, 119, 6, 0.35);
+    background: rgba(217, 119, 6, 0.04);
+}
+.fluxo-card.status-atencao .fluxo-card-icone {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: #d97706;
+    color: #d97706;
+}
+.fluxo-card.status-atencao .fluxo-card-nome {
+    color: #d97706;
+}
+.fluxo-card.status-atencao .fluxo-card-tempo {
+    color: #d97706;
+}
+
+/* Card status crítico (vermelho, pulsante) */
+.fluxo-card.status-critico {
+    border-color: rgba(220, 38, 38, 0.35);
+    background: rgba(220, 38, 38, 0.04);
+}
+.fluxo-card.status-critico .fluxo-card-icone {
+    background: rgba(220, 38, 38, 0.12);
+    border-color: #dc2626;
+    color: #dc2626;
+    animation: fluxo-card-pulse-red 1s infinite;
+}
+.fluxo-card.status-critico .fluxo-card-nome {
+    color: #dc2626;
+}
+.fluxo-card.status-critico .fluxo-card-tempo {
+    color: #dc2626;
+}
+@keyframes fluxo-card-pulse-red {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25); }
+    50% { box-shadow: 0 0 0 7px transparent; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 17. RASTREIO DE PRODUÇÃO — status de tempo (verde/amarelo/vermelho)         */
 /* -------------------------------------------------------------------------- */
 .status-ok {
     --status-color: #16a34a;
