@@ -512,13 +512,15 @@ def registrar_movimentacao(request, op_id):
 
 
 def _extrair_op_id_do_qr(codigo):
-    """Extrai o ID da OP do conteúdo do QR Code.
+    """Extrai o ID da OP do conteúdo do QR Code ou do código digitado.
 
-    O QR Code contém um JSON com as informações da OP (ObraOP).
-    Esta função faz o parse do JSON e retorna o ID da OP.
-    Se não conseguir fazer o parse, tenta extrair números do código.
+    Aceita:
+    - JSON do QR Code (ex: {"id": 21, "op": "J01", ...})
+    - ID numérico (ex: 21)
+    - Código do documento (ex: J01, J02, etc.)
     """
     import json
+    import re
 
     codigo = codigo.strip()
 
@@ -535,7 +537,16 @@ def _extrair_op_id_do_qr(codigo):
     except (json.JSONDecodeError, ValueError, TypeError):
         pass
 
-    # Fallback: extrai números do código (compatibilidade com código de barras antigo)
+    # Verifica se é um código de documento (ex: J01, J02, etc.)
+    match = re.match(r'^([A-Za-z]+)(\d+)$', codigo)
+    if match:
+        # Busca ObraOP pelo código do documento
+        from core.models import ObraOP
+        obra_op = ObraOP.objects.filter(codigo_documento=codigo).first()
+        if obra_op:
+            return obra_op.pk
+
+    # Fallback: extrai números do código (compatibilidade com ID numérico)
     numeros = ''.join(ch for ch in codigo if ch.isdigit())
     if numeros:
         return int(numeros)
