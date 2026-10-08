@@ -291,7 +291,8 @@ def _converter_op_local(obra_op):
     return {
         'IdOrdemProducao': obra_op.pk,
         'obra_op_id': obra_op.pk,
-        'Documento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+        'Documento': obra_op.codigo_formatado,
+        'CodigoFormatado': obra_op.codigo_formatado,
         'CodEsquadria': obra_op.codigo_esquadria,
         'Descricao': obra_op.descricao or obra_op.codigo_esquadria,
         'ObraCodigo': obra_op.obra.codigo,
@@ -488,7 +489,7 @@ def _conteudo_barcode(obra_op_id):
     if obra_op:
         dados = {
             'id': obra_op.pk,
-            'op': obra_op.codigo_documento or obra_op.codigo_esquadria,
+            'op': obra_op.codigo_formatado,
             'esquadria': obra_op.codigo_esquadria,
             'obra': obra_op.obra.codigo if obra_op.obra else '',
             'descricao': obra_op.descricao or '',
@@ -560,7 +561,7 @@ def imprimir_barcode_ordem_producao(request, op_id):
     obra_op = ObraOP.objects.filter(pk=op_id).first()
     if obra_op:
         dados = {
-            'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+            'NumeroDocumento': obra_op.codigo_formatado,
             'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '—',
             'Produto': obra_op.descricao or '—',
             'Variante': obra_op.codigo_esquadria or '—',

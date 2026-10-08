@@ -1,35 +1,10 @@
 """Leitura da planilha de Ordens de Produção gerada pelo Alumisoft (CEM Pro).
 
-Formato do arquivo
-------------------
-Uma única aba (``Page 1``) onde cada OP ocupa uma faixa vertical da planilha.
-A OP é identificada pelo valor da coluna **E** no formato ``J01``, ``J02``...
+Dois formatos são suportados:
+- Consolidado (01.xlsx): OP na coluna E, largura na C, altura na E
+- Individual (Documents/op/*.xlsx): OP na coluna F, largura na D, altura na F
 
-::
-
-    E1   J01                              <- identificação da OP
-    A4   Emitido por: <nome>      O4 <data>
-    A5   Cód Esqd:    <código>    E5 Proj.: <projeto>
-    A6   Descrição:   <texto>
-    A8   Qtde: <qtd>  C8 <largura vão>  E8 <altura vão>
-    A9   Tratamento:  <texto>
-    A10  Cód. Obra:   <código>
-    A12  Cliente:     <nome>
-    A13  Obra:        <nome>
-    A16  Vidros: <descrição>      N16 <localização>
-    A21  Perfis       -> tabela de perfis
-    A52  Componentes  -> tabela de componentes
-    A93  Vidros       -> tabela de vidros
-
-Repetição de blocos
--------------------
-Quando o relatório passa de página, o Alumisoft **repete o cabeçalho** das
-tabelas: ``Perfis``/``Componentes``/``Vidros`` aparecem mais de uma vez dentro
-da mesma OP (ex.: a OP J01 tem 2 blocos de Perfis e 2 de Componentes).
-
-O leitor percorre a OP inteira e **soma todos os blocos**. Parar na primeira
-linha em branco — comportamento anterior — descartava silenciosamente metade
-dos perfis e componentes de cada OP.
+O formato é detectado automaticamente na primeira linha da planilha.
 """
 from decimal import Decimal, InvalidOperation
 import re
@@ -42,42 +17,65 @@ from core.models import Obra, ObraOP, ObraOPComponente, ObraOPItem, ObraOPVidro
 
 ABA_PADRAO = 'Page 1'
 
-# Identificação da OP na coluna E (ex.: J01, J02, ...)
-PADRAO_DOCUMENTO = re.compile(r'^(J\d+)$')
+# Identificação da OP (ex.: J01, J02, P01, ...)
+PADRAO_DOCUMENTO = re.compile(r'^([JP]\d+)$')
 
 # Seções (tabelas) que podem se repetir dentro da mesma OP
 SECOES = ('Perfis', 'Componentes', 'Vidros')
 
 # ---------------------------------------------------------------------------
-# Mapa de colunas (1 = A)
+# Detecção de formato
+# ---------------------------------------------------------------------------
+class Formato:
+    """Armazena as posições das colunas conforme o formato detectado."""
+    
+    def __init__(self, col_op, col_largura, col_altura, col_data, col_loc_rotulo, col_loc_valor):
+        self.col_op = col_op
+        self.col_largura = col_largura
+        self.col_altura = col_altura
+        self.col_data = col_data
+        self.col_loc_rotulo = col_loc_rotulo
+        self.col_loc_valor = col_loc_valor
+
+
+def detectar_formato(ws):
+    """Detecta o formato do arquivo baseado na posição do J01 na primeira linha."""
+    for col in range(3, 9):
+        valor = _celula(ws, 1, col)
+        if PADRAO_DOCUMENTO.match(valor):
+            if col == 5:  # Formato consolidado (01.xlsx)
+                return Formato(5, 3, 5, 15, 13, 14)
+            elif col == 6:  # Formato individual (Documents/op/)
+                return Formato(6, 4, 6, 16, 14, 15)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Mapa de colunas (1 = A) - Fixo para todos os formatos
 # ---------------------------------------------------------------------------
 COL_ROTULO = 1                 # A  rótulo do cabeçalho
 COL_VALOR = 2                  # B  valor do cabeçalho
-COL_DOCUMENTO = 5              # E  identificação da OP (J01...)
-COL_LARGURA_VAO = 3            # C  largura do vão acabado
-COL_ALTURA_VAO = 5             # E  altura do vão acabado
-COL_DATA_EMISSAO = 15          # O  data de emissão
-COL_LOCALIZACAO_ROTULO = 13    # M  rótulo "Localização:"
-COL_LOCALIZACAO_VALOR = 14     # N  localização do vidro
 
-COLS_PERFIL = {
-    'codigo': 2,        # B
-    'tipo': 4,          # D  (ID: CM, SA, TA, AZ, SBRUTO...)
-    'orientacao': 6,    # F  (L/H)
-    'corte': 8,         # H
-    'tamanho': 11,      # K
-    'quantidade': 13,   # M
-    'peso': 14,         # N
-    'observacao': 16,   # P
-}
-COLS_COMPONENTE = {
+# Posições base das tabelas (formato individual - OP na coluna F)
+# No formato consolidado (OP na coluna E), todas as posições são deslocadas -1
+COLS_PERFIL_BASE = {
     'codigo': 3,        # C
-    'descricao': 5,     # E
+    'tipo': 5,          # E
+    'orientacao': 7,    # G
+    'corte': 9,         # I
+    'tamanho': 12,      # L
     'quantidade': 14,   # N
-    'unidade': 16,      # P
+    'peso': 15,         # O
     'observacao': 17,   # Q
 }
-COLS_VIDRO = {
+COLS_COMPONENTE_BASE = {
+    'codigo': 3,        # C
+    'descricao': 6,     # F
+    'quantidade': 15,   # O
+    'unidade': 17,      # Q
+    'observacao': 18,   # R
+}
+COLS_VIDRO_BASE = {
     'codigo': 2,        # B
     'descricao': 4,     # D
     'cor': 9,           # I
@@ -101,8 +99,7 @@ ROTULOS_CABECALHO = {
     'vidros': 'vidro_descricao',
 }
 
-# ID do perfil (coluna D) -> tipo de perfil do sistema. Casa pelo prefixo
-# porque o Excel traz o acabamento junto (ex.: AZ-P-RAL9005F).
+# ID do perfil (coluna D) -> tipo de perfil do sistema
 MAPA_TIPO_PERFIL = (
     ('SBRUTO', 'CONEXAO'),
     ('CUNHA', 'CUNHA'),
@@ -116,7 +113,7 @@ MAPA_TIPO_PERFIL = (
     ('CONEXAO', 'CONEXAO'),
 )
 
-# Limites dos campos de texto (evita erro de banco em descrições longas)
+# Limites dos campos de texto
 LIMITE_CODIGO = 50
 LIMITE_OBSERVACAO = 255
 LIMITE_UNIDADE = 10
@@ -200,11 +197,7 @@ def _inteiro(valor, padrao=0):
 
 
 def _decimal(valor, padrao=None):
-    """Converte para Decimal tolerando separadores pt-BR.
-
-    ``padrao`` é devolvido quando o valor não é numérico (o chamador decide se
-    usa ``Decimal('0')`` ou ``None`` para "não informado").
-    """
+    """Converte para Decimal tolerando separadores pt-BR."""
     if isinstance(valor, bool):
         return padrao
     if isinstance(valor, Decimal):
@@ -249,22 +242,17 @@ def mapear_tipo_perfil(valor):
 # ---------------------------------------------------------------------------
 # Leitura da planilha
 # ---------------------------------------------------------------------------
-def _localizar_marcadores(ws):
-    """Linhas (1-based) onde começa cada OP (coluna E com J01, J02...)."""
+def _localizar_marcadores(ws, formato):
+    """Linhas (1-based) onde começa cada OP."""
     return [
         linha
         for linha in range(1, ws.max_row + 1)
-        if PADRAO_DOCUMENTO.match(_celula(ws, linha, COL_DOCUMENTO))
+        if PADRAO_DOCUMENTO.match(_celula(ws, linha, formato.col_op))
     ]
 
 
 def _localizar_blocos(ws, linha_inicio, linha_fim):
-    """Faixas das tabelas dentro de uma OP.
-
-    Devolve ``[(nome, linha_cabecalho, linha_fim_exclusiva), ...]``. Como o
-    Alumisoft repete os cabeçalhos a cada quebra de página, podem existir
-    vários blocos com o mesmo nome — todos são devolvidos.
-    """
+    """Faixas das tabelas dentro de uma OP."""
     marcadores = []
     for linha in range(linha_inicio, linha_fim):
         marcador = _celula(ws, linha, COL_ROTULO)
@@ -274,7 +262,6 @@ def _localizar_blocos(ws, linha_inicio, linha_fim):
     blocos = []
     for indice, (nome, linha_marcador) in enumerate(marcadores):
         proximo = marcadores[indice + 1][1] if indice + 1 < len(marcadores) else linha_fim
-        # linha_marcador + 1 é a linha de títulos ("Pos.", "Código"...)
         blocos.append((nome, linha_marcador + 1, proximo))
     return blocos
 
@@ -284,10 +271,10 @@ def _linha_de_dados(ws, linha):
     return _celula(ws, linha, COL_ROTULO) != 'Pos.'
 
 
-def _ler_cabecalho(ws, linha_inicio, linha_fim):
+def _ler_cabecalho(ws, linha_inicio, linha_fim, formato):
     """Extrai o cabeçalho da OP casando os rótulos da coluna A."""
     dados = {
-        'documento': _celula(ws, linha_inicio, COL_DOCUMENTO),
+        'documento': _celula(ws, linha_inicio, formato.col_op),
         'codigo_esquadria': '',
         'descricao': '',
         'tratamento': '',
@@ -313,25 +300,26 @@ def _ler_cabecalho(ws, linha_inicio, linha_fim):
         valor = _celula(ws, linha, COL_VALOR)
         if chave == 'quantidade':
             dados['quantidade'] = _inteiro(valor, 1) or 1
-            dados['largura'] = _inteiro(_celula(ws, linha, COL_LARGURA_VAO), 0)
-            dados['altura'] = _inteiro(_celula(ws, linha, COL_ALTURA_VAO), 0)
+            dados['largura'] = _inteiro(_celula(ws, linha, formato.col_largura), 0)
+            dados['altura'] = _inteiro(_celula(ws, linha, formato.col_altura), 0)
         elif chave == 'vidro_descricao':
             dados['vidro_descricao'] = valor
-            if _normalizar(_celula(ws, linha, COL_LOCALIZACAO_ROTULO)) == 'localizacao':
-                dados['vidro_localizacao'] = _celula(ws, linha, COL_LOCALIZACAO_VALOR)
+            if _normalizar(_celula(ws, linha, formato.col_loc_rotulo)) == 'localizacao':
+                dados['vidro_localizacao'] = _celula(ws, linha, formato.col_loc_valor)
         elif chave == 'emitido_por':
             dados['emitido_por'] = valor
-            dados['data_emissao'] = _celula(ws, linha, COL_DATA_EMISSAO)
+            dados['data_emissao'] = _celula(ws, linha, formato.col_data)
         else:
             dados[chave] = valor
 
     return dados
 
 
-def _ler_perfis(ws, linha_inicio, linha_fim):
+def _ler_perfis(ws, linha_inicio, linha_fim, deslocamento=0):
     """Perfis de todos os blocos + o 'Peso Total:' impresso pelo Alumisoft."""
     perfis = []
     peso_total = None
+    C = {k: v + deslocamento for k, v in COLS_PERFIL_BASE.items()}
 
     for nome, linha_cabecalho, fim in _localizar_blocos(ws, linha_inicio, linha_fim):
         if nome != 'Perfis':
@@ -340,33 +328,34 @@ def _ler_perfis(ws, linha_inicio, linha_fim):
             if not _linha_de_dados(ws, linha):
                 continue
 
-            tamanho = _celula(ws, linha, COLS_PERFIL['tamanho'])
+            tamanho = _celula(ws, linha, C['tamanho'])
             if tamanho.lower().startswith('peso total'):
-                peso_total = _decimal(_celula(ws, linha, COLS_PERFIL['peso']), None)
+                peso_total = _decimal(_celula(ws, linha, C['peso']), None)
                 continue
 
-            quantidade = _celula(ws, linha, COLS_PERFIL['quantidade'])
+            quantidade = _celula(ws, linha, C['quantidade'])
             if not _eh_numero(tamanho) or not _eh_numero(quantidade):
                 continue
 
             perfis.append({
-                'codigo': _celula(ws, linha, COLS_PERFIL['codigo']),
-                'tipo': _celula(ws, linha, COLS_PERFIL['tipo']),
-                'orientacao': _celula(ws, linha, COLS_PERFIL['orientacao']),
-                'corte': _celula(ws, linha, COLS_PERFIL['corte']),
+                'codigo': _celula(ws, linha, C['codigo']),
+                'tipo': _celula(ws, linha, C['tipo']),
+                'orientacao': _celula(ws, linha, C['orientacao']),
+                'corte': _celula(ws, linha, C['corte']),
                 'tamanho': _inteiro(tamanho, 0),
                 'quantidade': _inteiro(quantidade, 1) or 1,
-                'peso': _decimal(_celula(ws, linha, COLS_PERFIL['peso'])),
-                'observacao': _celula(ws, linha, COLS_PERFIL['observacao']),
+                'peso': _decimal(_celula(ws, linha, C['peso'])) or Decimal('0'),
+                'observacao': _celula(ws, linha, C['observacao']),
             })
 
     return perfis, peso_total
 
 
-def _ler_componentes(ws, linha_inicio, linha_fim):
+def _ler_componentes(ws, linha_inicio, linha_fim, deslocamento=0):
     """Componentes de todos os blocos, guardando a aplicação (Fábrica/Obra)."""
     componentes = []
     aplicacao = ''
+    C = {k: v + deslocamento for k, v in COLS_COMPONENTE_BASE.items()}
 
     for nome, linha_cabecalho, fim in _localizar_blocos(ws, linha_inicio, linha_fim):
         if nome != 'Componentes':
@@ -378,9 +367,9 @@ def _ler_componentes(ws, linha_inicio, linha_fim):
             if not _linha_de_dados(ws, linha):
                 continue
 
-            codigo = _celula(ws, linha, COLS_COMPONENTE['codigo'])
-            descricao = _celula(ws, linha, COLS_COMPONENTE['descricao'])
-            quantidade = _celula(ws, linha, COLS_COMPONENTE['quantidade'])
+            codigo = _celula(ws, linha, C['codigo'])
+            descricao = _celula(ws, linha, C['descricao'])
+            quantidade = _celula(ws, linha, C['quantidade'])
             if not (codigo or descricao) or not _eh_numero(quantidade):
                 continue
 
@@ -389,16 +378,17 @@ def _ler_componentes(ws, linha_inicio, linha_fim):
                 'descricao': descricao,
                 'aplicacao': aplicacao,
                 'quantidade': _inteiro(quantidade, 1) or 1,
-                'unidade': _celula(ws, linha, COLS_COMPONENTE['unidade']),
-                'observacao': _celula(ws, linha, COLS_COMPONENTE['observacao']),
+                'unidade': _celula(ws, linha, C['unidade']),
+                'observacao': _celula(ws, linha, C['observacao']),
             })
 
     return componentes
 
 
-def _ler_vidros(ws, linha_inicio, linha_fim):
+def _ler_vidros(ws, linha_inicio, linha_fim, deslocamento=0):
     """Vidros de todos os blocos da OP."""
     vidros = []
+    C = {k: v + deslocamento for k, v in COLS_VIDRO_BASE.items()}
 
     for nome, linha_cabecalho, fim in _localizar_blocos(ws, linha_inicio, linha_fim):
         if nome != 'Vidros':
@@ -407,30 +397,32 @@ def _ler_vidros(ws, linha_inicio, linha_fim):
             if not _linha_de_dados(ws, linha):
                 continue
 
-            codigo = _celula(ws, linha, COLS_VIDRO['codigo'])
-            descricao = _celula(ws, linha, COLS_VIDRO['descricao'])
+            codigo = _celula(ws, linha, C['codigo'])
+            descricao = _celula(ws, linha, C['descricao'])
             if not (codigo or descricao):
                 continue
 
             vidros.append({
                 'codigo': codigo,
                 'descricao': descricao,
-                'cor': _celula(ws, linha, COLS_VIDRO['cor']),
-                'quantidade': _inteiro(_celula(ws, linha, COLS_VIDRO['quantidade']), 1) or 1,
-                'largura': _inteiro(_celula(ws, linha, COLS_VIDRO['largura']), 0),
-                'altura': _inteiro(_celula(ws, linha, COLS_VIDRO['altura']), 0),
-                'observacao': _celula(ws, linha, COLS_VIDRO['observacao']),
+                'cor': _celula(ws, linha, C['cor']),
+                'quantidade': _inteiro(_celula(ws, linha, C['quantidade']), 1) or 1,
+                'largura': _inteiro(_celula(ws, linha, C['largura']), 0),
+                'altura': _inteiro(_celula(ws, linha, C['altura']), 0),
+                'observacao': _celula(ws, linha, C['observacao']),
             })
 
     return vidros
 
 
-def _ler_op(ws, linha_inicio, linha_fim):
+def _ler_op(ws, linha_inicio, linha_fim, formato):
     """Lê uma OP completa (cabeçalho + perfis + componentes + vidros)."""
-    cabecalho = _ler_cabecalho(ws, linha_inicio, linha_fim)
-    perfis, peso_total = _ler_perfis(ws, linha_inicio, linha_fim)
-    componentes = _ler_componentes(ws, linha_inicio, linha_fim)
-    vidros = _ler_vidros(ws, linha_inicio, linha_fim)
+    # No formato consolidado (OP na coluna E), as tabelas são deslocadas -1
+    deslocamento = -1 if formato.col_op == 5 else 0
+    cabecalho = _ler_cabecalho(ws, linha_inicio, linha_fim, formato)
+    perfis, peso_total = _ler_perfis(ws, linha_inicio, linha_fim, deslocamento)
+    componentes = _ler_componentes(ws, linha_inicio, linha_fim, deslocamento)
+    vidros = _ler_vidros(ws, linha_inicio, linha_fim, deslocamento)
 
     # Fallback: sem as dimensões do vão no cabeçalho, usa as do primeiro vidro
     if vidros:
@@ -461,13 +453,17 @@ def ler_ops(origem):
         if ws is None:
             return []
 
-        marcadores = _localizar_marcadores(ws)
+        formato = detectar_formato(ws)
+        if formato is None:
+            return []
+
+        marcadores = _localizar_marcadores(ws, formato)
         if not marcadores:
             return []
 
         limites = marcadores + [ws.max_row + 1]
         return [
-            _ler_op(ws, marcadores[i], limites[i + 1])
+            _ler_op(ws, marcadores[i], limites[i + 1], formato)
             for i in range(len(marcadores))
         ]
     finally:
@@ -611,10 +607,7 @@ def _gravar_op(obra, dados):
 
 @transaction.atomic
 def importar_ops(origem):
-    """Importa todas as OPs do arquivo numa única transação.
-
-    Se qualquer OP falhar, nada é gravado — evita importação pela metade.
-    """
+    """Importa todas as OPs do arquivo numa única transação."""
     ops = ler_ops(origem)
     if not ops:
         raise ErroImportacaoOP(

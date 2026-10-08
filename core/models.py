@@ -512,7 +512,13 @@ class ObraOP(models.Model):
         unique_together = ['obra', 'codigo_documento']
 
     def __str__(self):
-        return f'{self.obra.codigo} - {self.codigo_documento or self.codigo_esquadria} ({self.descricao[:50]})'
+        return f'{self.obra.codigo} - {self.codigo_formatado} ({self.descricao[:50]})'
+
+    @property
+    def codigo_formatado(self):
+        """Código da OP no formato '1-J01' (ID sequencial + documento)."""
+        documento = self.codigo_documento or self.codigo_esquadria
+        return f'{self.pk}-{documento}'
 
     @property
     def peso_total(self):
