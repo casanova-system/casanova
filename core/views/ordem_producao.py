@@ -576,22 +576,42 @@ def _gerar_codigo_barras_svg(conteudo):
             data = str(conteudo).strip()
 
     # Gera o código de barras Code 128 como SVG
+    # Usa dimensões físicas (mm) para impressão adequada
     code128 = barcode.get_barcode_class('code128')
     writer = SVGWriter()
     barcode_obj = code128(data, writer=writer)
 
     buffer = io.BytesIO()
     barcode_obj.write(buffer, options={
-        'module_width': 0.3,      # Largura da barra fina (mm)
-        'module_height': 15.0,    # Altura das barras (mm)
-        'quiet_zone': 2.0,        # Zona de silêncio lateral (mm)
-        'font_size': 10,          # Tamanho do texto abaixo
-        'text_distance': 2.0,     # Distância entre barras e texto (mm)
+        'module_width': 0.25,     # Largura da barra fina (mm) - mais fino para melhor leitura
+        'module_height': 12.0,    # Altura das barras (mm)
+        'quiet_zone': 3.0,        # Zona de silêncio lateral (mm) - maior para leitores laser
+        'font_size': 8,           # Tamanho do texto abaixo
+        'text_distance': 1.5,     # Distância entre barras e texto (mm)
         'background': 'white',
         'foreground': 'black',
+        'write_text': True,       # Mostra o número abaixo do código
     })
     svg_bytes = buffer.getvalue()
     svg_string = svg_bytes.decode('utf-8')
+
+    # Remove o DOCTYPE para evitar problemas de renderização no navegador
+    svg_string = re.sub(r'<\?xml[^?]*\?>', '', svg_string)
+    svg_string = re.sub(r'<!DOCTYPE[^>]*>', '', svg_string)
+
+    # O SVG gerado pelo python-barcode já tem dimensões em mm.
+    # Apenas garantimos que o formato está correto para impressão.
+    # Exemplo: width="17.500mm" height="12.000mm"
+    svg_string = re.sub(
+        r'width="([\d.]+)mm"',
+        lambda m: f'width="{float(m.group(1)):.2f}mm"',
+        svg_string
+    )
+    svg_string = re.sub(
+        r'height="([\d.]+)mm"',
+        lambda m: f'height="{float(m.group(1)):.2f}mm"',
+        svg_string
+    )
 
     return svg_string
 
