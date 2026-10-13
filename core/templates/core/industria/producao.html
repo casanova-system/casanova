@@ -98,6 +98,29 @@
         </form>
     </div>
 
+    <!-- Campo de observação - apenas para saída (2º bip) / B.O. -->
+    {% if resultado and resultado.bip == 'entrada' %}
+    <div class="w-100 mt-3" style="max-width: 600px;">
+        <form method="POST" action="{% url 'registrar_movimentacao' resultado.rastreio.op_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="saida">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text"><i class="fa-solid fa-exclamation-triangle text-warning"></i></span>
+                <input type="text" name="observacao" class="form-control"
+                       placeholder="Observação / B.O. (opcional) — ex: faltou material, peça danificada..."
+                       autocomplete="off">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fa-solid fa-flag-checkered me-1"></i> Finalizar
+                </button>
+            </div>
+            <small class="text-muted mt-1 d-block">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Se houve algum problema, descreva acima antes de finalizar.
+            </small>
+        </form>
+    </div>
+    {% endif %}
+
     <!-- Info mínima do operador -->
     <div class="mt-auto pt-3 text-center text-muted" style="font-size: 0.7rem;">
         {{ request.user.get_full_name|default:request.user.username }}

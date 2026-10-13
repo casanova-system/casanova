@@ -797,10 +797,16 @@ class MovimentacaoOP(models.Model):
     )
     setor = models.CharField(max_length=30, verbose_name='Setor')
     setor_nome = models.CharField(max_length=100, blank=True, default='', verbose_name='Nome do Setor')
-    usuario = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuário'
+    usuario_entrada = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='movimentacoes_entrada', verbose_name='Usuário (Entrada)'
     )
-    observacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação')
+    usuario_saida = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='movimentacoes_saida', verbose_name='Usuário (Saída)'
+    )
+    observacao_entrada = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação (Entrada)')
+    observacao_saida = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação (Saída/B.O.)')
     data_hora = models.DateTimeField(auto_now_add=True, verbose_name='Data/Hora')
     data_entrada = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Entrada')
     data_saida = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Saída')

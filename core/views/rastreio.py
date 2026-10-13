@@ -107,7 +107,7 @@ def _pode_gerenciar(user):
     return bool(perfil and perfil.nivel_acesso == 'GERENCIA')
 
 
-def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
+def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida=''):
     """Registra automaticamente a passagem da OP pelo setor do usuário.
 
     Lógica de DUPLO BIP:
@@ -165,8 +165,8 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
                 rastreio=rastreio,
                 setor=codigo_setor,
                 setor_nome=setor_usuario.nome,
-                usuario=request.user,
-                observacao='Início do rastreio (1º bip)',
+                usuario_entrada=request.user,
+                observacao_entrada='Início do rastreio',
                 data_entrada=timezone.now(),
             )
 
@@ -203,12 +203,16 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
         # Se já bipou a entrada e NÃO bipou a saída → este é o 2º bip (saída)
         if not rastreio.aguardando_saida:
             with transaction.atomic():
-                # Registrar a saída do setor atual
+                # Registrar a saída do setor atual + usuário de saída + observação
                 MovimentacaoOP.objects.filter(
                     rastreio=rastreio,
                     setor=codigo_setor,
                     data_saida__isnull=True,
-                ).update(data_saida=timezone.now())
+                ).update(
+                    data_saida=timezone.now(),
+                    usuario_saida=request.user,
+                    observacao_saida=observacao_saida,
+                )
 
                 rastreio.aguardando_saida = True
                 rastreio.save(update_fields=['aguardando_saida'])
@@ -269,8 +273,8 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
             rastreio=rastreio,
             setor=codigo_setor,
             setor_nome=setor_usuario.nome,
-            usuario=request.user,
-            observacao='Recebimento no setor (1º bip)',
+            usuario_entrada=request.user,
+            observacao_entrada='Recebimento no setor',
             data_entrada=timezone.now(),
         )
 
@@ -503,7 +507,8 @@ def registrar_movimentacao(request, op_id):
         return redirect('rastreio_op', op_id=op_id)
 
     acao = request.POST.get('acao', '').strip()
-    observacao = request.POST.get('observacao', '').strip()
+    # Observação de saída/B.O. — apenas quando o operário finaliza o trabalho
+    observacao_saida = request.POST.get('observacao', '').strip()
 
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
 
@@ -551,8 +556,8 @@ def registrar_movimentacao(request, op_id):
                 rastreio=rastreio,
                 setor=primeiro.codigo,
                 setor_nome=primeiro.nome,
-                usuario=request.user,
-                observacao=observacao or 'Início do rastreio (1º bip)',
+                usuario_entrada=request.user,
+                observacao_entrada='Início do rastreio',
                 data_entrada=timezone.now(),
             )
 
@@ -615,8 +620,8 @@ def registrar_movimentacao(request, op_id):
                 rastreio=rastreio,
                 setor=anterior.codigo,
                 setor_nome=anterior.nome,
-                usuario=request.user,
-                observacao=observacao or 'Retorno (correção)',
+                usuario_entrada=request.user,
+                observacao_entrada='Retorno (correção)',
                 data_entrada=timezone.now(),
             )
 
@@ -665,8 +670,8 @@ def registrar_movimentacao(request, op_id):
             rastreio=rastreio,
             setor=proximo.codigo,
             setor_nome=proximo.nome,
-            usuario=request.user,
-            observacao=observacao or 'Recebimento no setor (1º bip)',
+            usuario_entrada=request.user,
+            observacao_entrada='Recebimento no setor',
             data_entrada=timezone.now(),
         )
 
