@@ -660,6 +660,9 @@ class RastreioOP(models.Model):
         max_length=20, choices=STATUS_CHOICES, default='EM_PRODUCAO', verbose_name='Status'
     )
 
+    # True = operador bipou para sair do setor, mas o próximo setor ainda não bipou para receber
+    aguardando_saida = models.BooleanField(default=False, verbose_name='Aguardando saída do setor')
+
     criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
     atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
 

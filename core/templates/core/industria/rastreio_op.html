@@ -210,6 +210,17 @@
                     {% else %}
                         <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
                         <div class="mb-3">
+                            {% if rastreio.aguardando_saida %}
+                                <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-3 py-2">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada — aguardando próximo setor
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-2">
+                                    <i class="fa-solid fa-gears me-1"></i> Em produção — bipar para liberar
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
                             <span class="status-badge {{ rastreio.status_tempo_classe }}">
                                 <i class="fa-solid
                                     {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
@@ -279,20 +290,37 @@
                     <div class="text-muted small fw-semibold text-uppercase mb-2">Ações</div>
                     <div class="d-flex flex-column gap-2">
                         {% if not rastreio.concluida %}
-                        <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="acao" value="avancar">
-                            <input type="text" name="observacao" class="form-control form-control-sm mb-2" placeholder="Observação (opcional)">
+                            {% if not rastreio.aguardando_saida %}
+                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="saida">
+                                <input type="text" name="observacao" class="form-control form-control-sm mb-2" placeholder="Observação (opcional)">
+                                <button type="submit" class="btn btn-info w-100 text-white">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Finalizar e Liberar (2º bip)
+                                </button>
+                            </form>
+                            {% else %}
+                            <div class="alert alert-info py-2 mb-2">
+                                <small><i class="fa-solid fa-circle-info me-1"></i> OP liberada. Aguardando o próximo setor receber.</small>
+                            </div>
+                            {% endif %}
                             {% if proximo %}
+                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="avancar">
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="fa-solid fa-arrow-right me-2"></i> Avançar para {{ proximo.nome }}
                                 </button>
+                            </form>
                             {% else %}
+                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="avancar">
                                 <button type="submit" class="btn btn-success w-100">
                                     <i class="fa-solid fa-flag-checkered me-2"></i> Concluir OP
                                 </button>
+                            </form>
                             {% endif %}
-                        </form>
                         {% if anterior %}
                         <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
                             {% csrf_token %}

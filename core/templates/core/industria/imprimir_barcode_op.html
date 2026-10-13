@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imprimir QR Code — OP {{ dados.NumeroDocumento }}</title>
+    <title>Imprimir QR Code / Código de Barras — OP {{ dados.NumeroDocumento }}</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -56,20 +56,39 @@
             text-align: center;
         }
 
-        .barcode-box {
-            width: 120mm;
-            height: 120mm;
+        .barcode-container {
             display: flex;
+            flex-wrap: wrap;
+            gap: 12mm;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .barcode-box {
+            width: 90mm;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
-            padding: 10mm;
+            padding: 8mm;
             background: #fff;
         }
         .barcode-box svg {
             width: 100%;
-            height: 100%;
+            max-width: 80mm;
+        }
+        .barcode-label {
+            margin-top: 4mm;
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0b3882;
+        }
+        .barcode-box.codigo-barras svg {
+            max-width: 80mm;
         }
 
         .op-numero {
@@ -127,8 +146,15 @@
         </div>
     {% else %}
     <div class="folha-a4">
-        <div class="barcode-box">
-            {{ barcode_svg|safe }}
+        <div class="barcode-container">
+            <div class="barcode-box">
+                {{ barcode_svg|safe }}
+                <div class="barcode-label">QR Code</div>
+            </div>
+            <div class="barcode-box codigo-barras">
+                {{ codigo_barras_svg|safe }}
+                <div class="barcode-label">Código de Barras</div>
+            </div>
         </div>
 
         <div class="op-numero">OP {{ dados.NumeroDocumento }}</div>

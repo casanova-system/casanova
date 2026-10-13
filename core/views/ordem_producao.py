@@ -541,6 +541,61 @@ def _gerar_barcode_svg(conteudo):
     return svg_string
 
 
+def _gerar_codigo_barras_svg(conteudo):
+    """Gera um código de barras Code 128 como SVG.
+
+    O código de barras contém apenas o ID numérico da OP (ex: "31449"),
+    enquanto o QR Code contém o JSON completo. Ambos levam ao mesmo
+    resultado: o leitor retorna o ID que o sistema usa no rastreio.
+    """
+    import io
+    import json
+    import re
+    import barcode
+    from barcode.writer import SVGWriter
+
+    # Extrai apenas o ID numérico do conteúdo (JSON ou string)
+    data = str(conteudo).strip()
+    try:
+        dados = json.loads(data)
+        if isinstance(dados, dict) and 'id' in dados:
+            data = str(dados['id'])
+        elif isinstance(dados, dict) and 'op' in dados:
+            numeros = ''.join(ch for ch in str(dados['op']) if ch.isdigit())
+            if numeros:
+                data = numeros
+    except (json.JSONDecodeError, ValueError, TypeError):
+        pass
+
+    # Fallback: extrai números do código
+    if not data.isdigit():
+        numeros = ''.join(ch for ch in data if ch.isdigit())
+        if numeros:
+            data = numeros
+        else:
+            data = str(conteudo).strip()
+
+    # Gera o código de barras Code 128 como SVG
+    code128 = barcode.get_barcode_class('code128')
+    writer = SVGWriter()
+    barcode_obj = code128(data, writer=writer)
+
+    buffer = io.BytesIO()
+    barcode_obj.write(buffer, options={
+        'module_width': 0.3,      # Largura da barra fina (mm)
+        'module_height': 15.0,    # Altura das barras (mm)
+        'quiet_zone': 2.0,        # Zona de silêncio lateral (mm)
+        'font_size': 10,          # Tamanho do texto abaixo
+        'text_distance': 2.0,     # Distância entre barras e texto (mm)
+        'background': 'white',
+        'foreground': 'black',
+    })
+    svg_bytes = buffer.getvalue()
+    svg_string = svg_bytes.decode('utf-8')
+
+    return svg_string
+
+
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def barcode_ordem_producao(request, op_id):
@@ -552,9 +607,11 @@ def barcode_ordem_producao(request, op_id):
 @login_required(login_url='login')
 @requer_rotina('lista_ordem_producao')
 def imprimir_barcode_ordem_producao(request, op_id):
-    """Página de impressão do QR Code em folha A4.
+    """Página de impressão do QR Code + Código de Barras em folha A4.
 
     Os dados vêm da OP (ObraOP) da rotina de ordem de produção.
+    O funcionário pode escanear o QR Code (smartphone/tablet) ou o código
+    de barras Code 128 (leitor laser) — ambos contêm o mesmo ID da OP.
     """
     from core.models import ObraOP
 
@@ -578,9 +635,12 @@ def imprimir_barcode_ordem_producao(request, op_id):
             'QtdProduzir': '—',
         }
 
+    conteudo = _conteudo_barcode(op_id)
+
     context = {
         'dados': dados,
-        'barcode_svg': _gerar_barcode_svg(_conteudo_barcode(op_id)),
-        'codigo': _conteudo_barcode(op_id),
+        'barcode_svg': _gerar_barcode_svg(conteudo),
+        'codigo_barras_svg': _gerar_codigo_barras_svg(conteudo),
+        'codigo': conteudo,
     }
     return render(request, 'core/industria/imprimir_barcode_op.html', context)

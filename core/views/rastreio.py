@@ -110,6 +110,11 @@ def _pode_gerenciar(user):
 def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
     """Registra automaticamente a passagem da OP pelo setor do usuário.
 
+    Lógica de DUPLO BIP:
+    - 1º bip (entrada): operador do setor bipa para iniciar o trabalho
+    - 2º bip (saída): operador do setor bipa novamente para finalizar e liberar
+    - O próximo setor só pode receber após o setor anterior ter bipado a saída
+
     Retorna (erro, resultado, precisa_vidro):
       - erro: mensagem de erro (ou None)
       - resultado: dict com dados do registro (ou None)
@@ -128,7 +133,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
                 None,
                 False,
             )
-
         # Busca dados da ObraOP
         obra_op = _buscar_obra_op_por_id(op_id)
         if obra_op:
@@ -155,21 +159,22 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
                 variante=dados.get('Variante') or '',
                 setor_atual=codigo_setor,
                 status='EM_PRODUCAO',
+                aguardando_saida=False,
             )
             MovimentacaoOP.objects.create(
                 rastreio=rastreio,
                 setor=codigo_setor,
                 setor_nome=setor_usuario.nome,
                 usuario=request.user,
-                observacao='Início do rastreio',
+                observacao='Início do rastreio (1º bip)',
                 data_entrada=timezone.now(),
             )
 
         logger.info(
-            'Rastreio iniciado — OP %s pelo usuário %s no setor %s',
+            'Rastreio iniciado — OP %s pelo usuário %s no setor %s (1º bip)',
             op_id, request.user.username, setor_usuario.nome,
         )
-        return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True}, False)
+        return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True, 'bip': 'entrada'}, False)
 
     # --- OP já concluída ---
     if rastreio.concluida:
@@ -193,10 +198,45 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
         # Ainda não decidiu: pergunta antes de qualquer avanço
         return (None, None, True)
 
-    # --- Já está neste setor ---
+    # --- OP está no MESMO setor do usuário: verificar se é 1º ou 2º bip ---
     if rastreio.setor_atual == codigo_setor:
+        # Se já bipou a entrada e NÃO bipou a saída → este é o 2º bip (saída)
+        if not rastreio.aguardando_saida:
+            with transaction.atomic():
+                # Registrar a saída do setor atual
+                MovimentacaoOP.objects.filter(
+                    rastreio=rastreio,
+                    setor=codigo_setor,
+                    data_saida__isnull=True,
+                ).update(data_saida=timezone.now())
+
+                rastreio.aguardando_saida = True
+                rastreio.save(update_fields=['aguardando_saida'])
+
+            logger.info(
+                'OP %s liberada do setor %s (2º bip) — usuário %s',
+                op_id, setor_usuario.nome, request.user.username,
+            )
+            return (
+                None,
+                {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'saida'},
+                False,
+            )
+        else:
+            # Já bipou a saída, está aguardando o próximo setor receber
+            return (
+                f'A OP já foi liberada do setor de {setor_usuario.nome}. '
+                f'Aguardando o próximo setor receber.',
+                None,
+                False,
+            )
+
+    # --- OP está em outro setor: verificar se pode receber ---
+    # O setor atual já bipou a saída? Se não, o próximo setor não pode receber
+    if not rastreio.aguardando_saida:
         return (
-            f'A OP já está registrada no setor de {setor_usuario.nome}.',
+            f'A OP ainda está em {rastreio.setor_atual_nome}. '
+            f'O operador precisa bipar a saída antes de liberar para o próximo setor.',
             None,
             False,
         )
@@ -215,32 +255,27 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
             False,
         )
 
-    # --- Avança ---
+    # --- Receber no próximo setor (1º bip) ---
     with transaction.atomic():
-        # Registrar a saída do setor anterior
-        MovimentacaoOP.objects.filter(
-            rastreio=rastreio,
-            setor=rastreio.setor_atual,
-            data_saida__isnull=True,
-        ).update(data_saida=timezone.now())
-
         rastreio.setor_atual = codigo_setor
+        rastreio.aguardando_saida = False
         # Se não há próximo setor, a OP é concluída ao chegar no último
         if _proximo_setor(codigo_setor, rastreio.tem_vidro) is None:
             rastreio.status = 'CONCLUIDA'
         else:
             rastreio.status = 'EM_PRODUCAO'
-        rastreio.save(update_fields=['setor_atual', 'status'])
+        rastreio.save(update_fields=['setor_atual', 'aguardando_saida', 'status'])
         MovimentacaoOP.objects.create(
             rastreio=rastreio,
             setor=codigo_setor,
             setor_nome=setor_usuario.nome,
             usuario=request.user,
+            observacao='Recebimento no setor (1º bip)',
             data_entrada=timezone.now(),
         )
 
     logger.info(
-        'OP %s avançou para %s (usuário %s)',
+        'OP %s recebida no setor %s (1º bip) — usuário %s',
         op_id, setor_usuario.nome, request.user.username,
     )
 
@@ -248,8 +283,7 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro=''):
     if codigo_setor == 'mesa' and rastreio.tem_vidro is None:
         return (None, None, True)
 
-    return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False}, False)
-
+    return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'entrada'}, False)
 
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
@@ -453,7 +487,14 @@ def rastreio_op(request, op_id):
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
 def registrar_movimentacao(request, op_id):
-    """Registra a passagem da OP por um setor (iniciar, avançar, retroceder)."""
+    """Registra a passagem da OP por um setor (iniciar, saída, avançar, retroceder).
+
+    Lógica de DUPLO BIP:
+    - iniciar: cria o rastreio (1º bip no Estoque)
+    - saída: operador bipa para finalizar e liberar o setor (2º bip)
+    - avançar: próximo setor bipa para receber (1º bip no próximo setor)
+    - retroceder: volta para setor anterior (correção)
+    """
     if request.method != 'POST':
         return redirect('rastreio_op', op_id=op_id)
 
@@ -466,7 +507,7 @@ def registrar_movimentacao(request, op_id):
 
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
 
-    # --- Iniciar rastreio (primeiro scan, na Separação) ---
+    # --- Iniciar rastreio (primeiro scan, no Estoque) ---
     if acao == 'iniciar':
         if rastreio:
             messages.info(request, 'Esta OP já possui rastreio iniciado.')
@@ -504,20 +545,22 @@ def registrar_movimentacao(request, op_id):
                 variante=dados.get('Variante') or '',
                 setor_atual=primeiro.codigo,
                 status='EM_PRODUCAO',
+                aguardando_saida=False,
             )
             MovimentacaoOP.objects.create(
                 rastreio=rastreio,
                 setor=primeiro.codigo,
                 setor_nome=primeiro.nome,
                 usuario=request.user,
-                observacao=observacao,
+                observacao=observacao or 'Início do rastreio (1º bip)',
+                data_entrada=timezone.now(),
             )
 
         logger.info(
             'Rastreio iniciado (manual) — OP %s pelo usuário %s no setor %s',
             op_id, request.user.username, primeiro.nome,
         )
-        messages.success(request, f'Rastreio iniciado em {primeiro.nome}.')
+        messages.success(request, f'Rastreio iniciado em {primeiro.nome} (1º bip).')
         return redirect('rastreio_op', op_id=op_id)
 
     if not rastreio:
@@ -533,6 +576,29 @@ def registrar_movimentacao(request, op_id):
             op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
         )
 
+    # --- Saída do setor (2º bip) ---
+    if acao == 'saida':
+        if rastreio.aguardando_saida:
+            messages.warning(request, 'A OP já foi liberada deste setor.')
+            return redirect('rastreio_op', op_id=op_id)
+
+        with transaction.atomic():
+            MovimentacaoOP.objects.filter(
+                rastreio=rastreio,
+                setor=rastreio.setor_atual,
+                data_saida__isnull=True,
+            ).update(data_saida=timezone.now())
+
+            rastreio.aguardando_saida = True
+            rastreio.save(update_fields=['aguardando_saida'])
+
+        logger.info(
+            'OP %s liberada do setor %s (2º bip) — usuário %s',
+            op_id, rastreio.setor_atual_nome, request.user.username,
+        )
+        messages.success(request, f'OP liberada do setor {rastreio.setor_atual_nome} (2º bip).')
+        return redirect('rastreio_op', op_id=op_id)
+
     # --- Retroceder (correção) ---
     if acao == 'retroceder':
         anterior = _setor_anterior(rastreio.setor_atual, rastreio.tem_vidro)
@@ -543,13 +609,15 @@ def registrar_movimentacao(request, op_id):
         with transaction.atomic():
             rastreio.setor_atual = anterior.codigo
             rastreio.status = 'EM_PRODUCAO'
-            rastreio.save(update_fields=['setor_atual', 'status'])
+            rastreio.aguardando_saida = False
+            rastreio.save(update_fields=['setor_atual', 'status', 'aguardando_saida'])
             MovimentacaoOP.objects.create(
                 rastreio=rastreio,
                 setor=anterior.codigo,
                 setor_nome=anterior.nome,
                 usuario=request.user,
                 observacao=observacao or 'Retorno (correção)',
+                data_entrada=timezone.now(),
             )
 
         logger.info(
@@ -559,7 +627,7 @@ def registrar_movimentacao(request, op_id):
         messages.success(request, f'OP retornada para {anterior.nome}.')
         return redirect('rastreio_op', op_id=op_id)
 
-    # --- Avançar ---
+    # --- Avançar (1º bip no próximo setor) ---
     if (
         rastreio.setor_atual == 'mesa'
         and rastreio.tem_vidro is None
@@ -568,6 +636,15 @@ def registrar_movimentacao(request, op_id):
         messages.warning(
             request,
             'Informe se a OP tem vidro antes de avançar da Mesa.',
+        )
+        return redirect('rastreio_op', op_id=op_id)
+
+    # Verifica se o setor atual já bipou a saída
+    if not rastreio.aguardando_saida:
+        messages.warning(
+            request,
+            f'A OP ainda está em {rastreio.setor_atual_nome}. '
+            f'Bipe a saída antes de avançar.',
         )
         return redirect('rastreio_op', op_id=op_id)
 
@@ -582,22 +659,23 @@ def registrar_movimentacao(request, op_id):
     with transaction.atomic():
         rastreio.setor_atual = proximo.codigo
         rastreio.status = 'EM_PRODUCAO'
-        rastreio.save(update_fields=['setor_atual', 'status'])
+        rastreio.aguardando_saida = False
+        rastreio.save(update_fields=['setor_atual', 'status', 'aguardando_saida'])
         MovimentacaoOP.objects.create(
             rastreio=rastreio,
             setor=proximo.codigo,
             setor_nome=proximo.nome,
             usuario=request.user,
-            observacao=observacao,
+            observacao=observacao or 'Recebimento no setor (1º bip)',
+            data_entrada=timezone.now(),
         )
 
     logger.info(
-        'OP %s avançou para %s (usuário %s)',
+        'OP %s recebida no setor %s (1º bip) — usuário %s',
         op_id, proximo.nome, request.user.username,
     )
-    messages.success(request, f'OP avançou para {proximo.nome}.')
+    messages.success(request, f'OP recebida no setor {proximo.nome} (1º bip).')
     return redirect('rastreio_op', op_id=op_id)
-
 
 def _extrair_op_id_do_qr(codigo):
     """Extrai o ID da OP do conteúdo do QR Code ou do código digitado.

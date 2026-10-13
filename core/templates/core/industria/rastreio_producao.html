@@ -166,6 +166,8 @@
                             <td>
                                 {% if r.concluida %}
                                     <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
+                                {% elif r.aguardando_saida %}
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada</span>
                                 {% else %}
                                     <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
                                 {% endif %}

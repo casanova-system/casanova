@@ -79,11 +79,26 @@
     <div class="card shadow-sm border-0 mb-3 border-start border-4 border-success">
         <div class="card-body">
             <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="fa-solid fa-circle-check text-success fs-4"></i>
-                <h5 class="fw-bold mb-0">
-                    {% if resultado.iniciou %}Rastreio iniciado{% else %}Movimentação registrada{% endif %}
-                </h5>
+                {% if resultado.bip == 'saida' %}
+                    <i class="fa-solid fa-arrow-right-from-bracket text-info fs-4"></i>
+                    <h5 class="fw-bold mb-0">OP Liberada (2º bip)</h5>
+                {% elif resultado.iniciou %}
+                    <i class="fa-solid fa-circle-check text-success fs-4"></i>
+                    <h5 class="fw-bold mb-0">Rastreio Iniciado (1º bip)</h5>
+                {% else %}
+                    <i class="fa-solid fa-circle-check text-success fs-4"></i>
+                    <h5 class="fw-bold mb-0">Recebida no Setor (1º bip)</h5>
+                {% endif %}
             </div>
+            {% if resultado.bip == 'saida' %}
+            <div class="alert alert-info py-2 mb-2">
+                <small><i class="fa-solid fa-circle-info me-1"></i> A OP foi liberada. O próximo setor pode agora receber a OP.</small>
+            </div>
+            {% elif resultado.bip == 'entrada' %}
+            <div class="alert alert-warning py-2 mb-2">
+                <small><i class="fa-solid fa-circle-info me-1"></i> Bipe novamente quando finalizar o trabalho para liberar a OP.</small>
+            </div>
+            {% endif %}
             <div class="row g-2 small">
                 <div class="col-6"><span class="text-muted">OP:</span> <strong>{{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}</strong></div>
                 <div class="col-6"><span class="text-muted">Setor:</span> <strong>{{ resultado.setor.nome }}</strong></div>
