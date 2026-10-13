@@ -149,46 +149,45 @@
             <h5 class="list-card-title"><i class="fa-solid fa-route me-2 text-primary"></i> Fluxo de Produção</h5>
         </div>
         <div class="card-body">
-            <div class="row g-3">
+            <div class="d-flex flex-wrap justify-content-center gap-3">
                 {% for s in setores %}
                     {% if s.requer_vidro and rastreio.tem_vidro is False %}
                         {% comment %} setor pulado (sem vidro) {% endcomment %}
                     {% else %}
-                        <div class="col-md-4 col-lg-2">
+                        <div class="text-center" style="min-width: 100px;">
                             {% if rastreio.concluida %}
-                                <div class="fluxo-card fluxo-card-concluido">
-                                    <div class="fluxo-card-icone">
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                    <div class="fluxo-card-nome">{{ s.nome }}</div>
-                                    <div class="fluxo-card-tempo">
-                                        {% if rastreio|tempo_no_setor:s.codigo != '—' %}
-                                            {{ rastreio|tempo_no_setor:s.codigo }}
-                                        {% endif %}
-                                    </div>
+                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(22, 163, 74, 0.15); color: #16a34a;">
+                                    <i class="fa-solid fa-check fa-lg"></i>
+                                </div>
+                                <div class="fw-semibold" style="font-size: 0.8rem; color: #16a34a;">{{ s.nome }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">
+                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
+                                        {{ rastreio|tempo_no_setor:s.codigo }}
+                                    {% endif %}
                                 </div>
                             {% elif s.codigo == rastreio.setor_atual %}
-                                <div class="fluxo-card fluxo-card-atual">
-                                    <div class="fluxo-card-icone">
-                                        <i class="fa-solid fa-location-dot"></i>
-                                    </div>
-                                    <div class="fluxo-card-nome">{{ s.nome }}</div>
-                                    <div class="fluxo-card-tempo">{{ rastreio.tempo_no_setor_atual_formatado }}</div>
+                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: var(--casanova-blue); color: white; box-shadow: 0 0 0 4px rgba(11, 56, 130, 0.2);">
+                                    <i class="fa-solid fa-location-dot fa-lg"></i>
                                 </div>
+                                <div class="fw-bold" style="font-size: 0.8rem; color: var(--casanova-blue);">{{ s.nome }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">{{ rastreio.tempo_no_setor_atual_formatado }}</div>
                             {% else %}
-                                <div class="fluxo-card {{ rastreio|status_tempo_setor_classe:s.codigo }}">
-                                    <div class="fluxo-card-icone">
-                                        <i class="fa-solid fa-circle"></i>
-                                    </div>
-                                    <div class="fluxo-card-nome">{{ s.nome }}</div>
-                                    <div class="fluxo-card-tempo">
-                                        {% if rastreio|tempo_no_setor:s.codigo != '—' %}
-                                            {{ rastreio|tempo_no_setor:s.codigo }}
-                                        {% endif %}
-                                    </div>
+                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+                                    <i class="fa-solid fa-circle fa-lg"></i>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.8rem;">{{ s.nome }}</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">
+                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
+                                        {{ rastreio|tempo_no_setor:s.codigo }}
+                                    {% endif %}
                                 </div>
                             {% endif %}
                         </div>
+                        {% if not forloop.last %}
+                            <div class="d-flex align-items-center text-muted" style="font-size: 1.2rem;">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             </div>
