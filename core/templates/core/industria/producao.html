@@ -2,311 +2,106 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-3 py-2 d-flex flex-column" style="height: calc(100vh - 56px);">
+<div class="container-fluid px-4 py-3 d-flex flex-column align-items-center" style="height: calc(100vh - 56px);">
 
-    <!-- Cabeçalho compacto -->
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-shrink-0">
+    <!-- Cabeçalho mínimo -->
+    <div class="d-flex justify-content-between align-items-center mb-4 w-100" style="max-width: 600px;">
         <div>
-            <h1 class="page-title mb-0" style="font-size: 1.2rem !important;">Produção</h1>
-            <p class="page-subtitle mb-0" style="font-size: 0.75rem !important;">Bipe a OP para iniciar ou finalizar o trabalho no setor.</p>
+            <h1 class="page-title mb-0" style="font-size: 1.1rem !important;">Produção</h1>
         </div>
         <a href="{% url 'menu_principal' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left me-1"></i> Início
+            <i class="fa-solid fa-arrow-left"></i>
         </a>
     </div>
 
-    <!-- Barra de status do operador -->
-    <div class="d-flex align-items-center justify-content-between mb-2 flex-shrink-0" style="background: var(--casanova-light-bg); border-radius: 8px; padding: 8px 12px;">
-        <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-user-shield text-primary"></i>
-            <span class="fw-semibold" style="font-size: 0.85rem;">{{ request.user.get_full_name|default:request.user.username }}</span>
-            {% if setor_usuario %}
-                <span class="text-muted" style="font-size: 0.75rem;">| Setor: <strong>{{ setor_usuario.nome }}</strong></span>
-            {% endif %}
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            {% if pode_gerenciar %}
-                <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.7rem;">
-                    <i class="fa-solid fa-check me-1"></i> Gerência
-                </span>
-            {% else %}
-                <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.7rem;">
-                    <i class="fa-solid fa-ban me-1"></i> Sem permissão
-                </span>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Alertas -->
-    {% if not pode_gerenciar %}
-    <div class="alert alert-danger py-2 mb-2 flex-shrink-0" role="alert" style="font-size: 0.8rem;">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        Apenas usuários de nível <strong>Gerência</strong> podem registrar movimentação.
-    </div>
-    {% elif not setor_usuario %}
-    <div class="alert alert-warning py-2 mb-2 flex-shrink-0" role="alert" style="font-size: 0.8rem;">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        Seu usuário não está vinculado a um setor de produção.
-    </div>
-    {% endif %}
-
-    <!-- Pergunta de vidro -->
-    {% if precisa_vidro %}
-    <div class="card shadow-sm border-0 mb-2 border-start border-4 border-info flex-shrink-0">
-        <div class="card-body py-2">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <i class="fa-solid fa-circle-question text-info"></i>
-                <span class="fw-bold" style="font-size: 0.85rem;">Esta OP tem vidro?</span>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-sm btn-info text-white">
-                    <i class="fa-solid fa-check me-1"></i> Sim
-                </a>
-                <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-xmark me-1"></i> Não
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Feedback do último bip -->
+    <!-- Mensagem principal: o que o operário precisa saber -->
     {% if resultado %}
-    <div class="card shadow-sm border-0 mb-2 border-start border-4 {% if resultado.bip == 'saida' %}border-info{% else %}border-success{% endif %} flex-shrink-0">
-        <div class="card-body py-2">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                {% if resultado.bip == 'saida' %}
-                    <i class="fa-solid fa-arrow-right-from-bracket text-info"></i>
-                    <span class="fw-bold" style="font-size: 0.85rem;">OP Liberada (2º bip)</span>
-                {% elif resultado.iniciou %}
-                    <i class="fa-solid fa-circle-check text-success"></i>
-                    <span class="fw-bold" style="font-size: 0.85rem;">Rastreio Iniciado (1º bip)</span>
-                {% else %}
-                    <i class="fa-solid fa-circle-check text-success"></i>
-                    <span class="fw-bold" style="font-size: 0.85rem;">Recebida no Setor (1º bip)</span>
-                {% endif %}
-            </div>
-            {% if resultado.bip == 'saida' %}
-            <div class="alert alert-info py-1 mb-1" style="font-size: 0.75rem;">
-                <small>A OP foi liberada. O próximo setor pode receber a OP.</small>
-            </div>
-            {% elif resultado.bip == 'entrada' %}
-            <div class="alert alert-warning py-1 mb-1" style="font-size: 0.75rem;">
-                <small>Bipe novamente quando finalizar o trabalho para liberar a OP.</small>
-            </div>
-            {% endif %}
-            <div class="d-flex flex-wrap gap-3" style="font-size: 0.75rem;">
-                <span><span class="text-muted">OP:</span> <strong>{{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}</strong></span>
-                <span><span class="text-muted">Setor:</span> <strong>{{ resultado.setor.nome }}</strong></span>
-                <span><span class="text-muted">Obra:</span> {{ resultado.rastreio.obra|default:"—" }}</span>
-                <span><span class="text-muted">Produto:</span> {{ resultado.rastreio.produto|default:"—" }}</span>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Erro -->
-    {% if erro %}
-    <div class="alert alert-danger py-2 mb-2 flex-shrink-0" role="alert" style="font-size: 0.8rem;">
-        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-        {{ erro }}
-    </div>
-    {% endif %}
-
-    <!-- Campo de leitura -->
-    <div class="card shadow-sm border-0 mb-2 flex-shrink-0">
-        <div class="card-body py-2">
-            <form method="GET" action="{% url 'producao' %}" id="formEscanear" class="d-flex align-items-center gap-2">
-                {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-qrcode"></i></span>
-                    <input type="text" name="codigo" id="campoCodigo" class="form-control text-center"
-                           style="letter-spacing: 1px;" placeholder="Escaneie ou digite o ID da OP"
-                           autocomplete="off" autofocus value="">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-arrow-right me-1"></i> Registrar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Conteúdo principal (scrollável) -->
-    <div class="row g-2 flex-grow-1" style="overflow: hidden;">
-        <!-- Coluna esquerda: Dados e fluxo -->
-        <div class="col-md-4 d-flex flex-column gap-2" style="overflow-y: auto;">
-            {% if rastreio %}
-            <!-- Dados da OP -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header py-2 px-3">
-                    <span class="fw-semibold" style="font-size: 0.8rem;"><i class="fa-solid fa-box me-1 text-primary"></i> Dados da OP</span>
-                </div>
-                <div class="card-body py-2 px-3">
-                    <div class="mb-2">
-                        <div class="text-muted" style="font-size: 0.65rem;">OP</div>
-                        <div class="fw-bold" style="font-size: 1rem;">{{ info.op_numero }}</div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="text-muted" style="font-size: 0.65rem;">Obra</div>
-                        <div class="fw-semibold" style="font-size: 0.8rem;">{{ info.obra }}</div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="text-muted" style="font-size: 0.65rem;">Produto</div>
-                        <div style="font-size: 0.75rem;">{{ info.produto }}</div>
-                    </div>
+        {% if resultado.bip == 'saida' %}
+            <div class="alert alert-success border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fa-solid fa-check-circle text-success" style="font-size: 2rem;"></i>
                     <div>
-                        <div class="text-muted" style="font-size: 0.65rem;">Variante</div>
-                        <div style="font-size: 0.75rem;">{{ info.variante }}</div>
+                        <div class="fw-bold" style="font-size: 1.1rem;">Trabalho Finalizado!</div>
+                        <div class="text-muted" style="font-size: 0.85rem;">A OP foi liberada. Próximo setor pode receber.</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Fluxo de Produção -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header py-2 px-3">
-                    <span class="fw-semibold" style="font-size: 0.8rem;"><i class="fa-solid fa-route me-1 text-primary"></i> Fluxo</span>
-                </div>
-                <div class="card-body py-2 px-3">
-                    <div class="d-flex flex-wrap align-items-center gap-1">
-                        {% for s in setores %}
-                            {% if s.requer_vidro and rastreio.tem_vidro is False %}
-                                {% comment %} setor pulado (sem vidro) {% endcomment %}
-                            {% else %}
-                                <span class="badge px-2 py-1" style="font-size: 0.65rem;
-                                    {% if s.codigo == rastreio.setor_atual %}background: var(--casanova-blue); color: white;
-                                    {% elif forloop.counter0 < setores.index %}background: rgba(22, 163, 74, 0.15); color: #16a34a;
-                                    {% else %}background: rgba(148, 163, 184, 0.15); color: #64748b;{% endif %}">
-                                    {% if s.codigo == rastreio.setor_atual %}<i class="fa-solid fa-location-dot me-1"></i>{% endif %}
-                                    {% if forloop.counter0 < setores.index %}<i class="fa-solid fa-check me-1"></i>{% endif %}
-                                    {{ s.nome }}
-                                </span>
-                                {% if not forloop.last %}<i class="fa-solid fa-arrow-right text-muted" style="font-size: 0.6rem;"></i>{% endif %}
-                            {% endif %}
-                        {% endfor %}
+        {% else %}
+            <div class="alert alert-primary border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fa-solid fa-play-circle text-primary" style="font-size: 2rem;"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 1.1rem;">Trabalho Iniciado!</div>
+                        <div class="text-muted" style="font-size: 0.85rem;">Bipe novamente quando terminar para liberar a OP.</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Estado Atual -->
-            <div class="card shadow-sm border-0">
-                <div class="card-body py-2 px-3 text-center">
-                    {% if rastreio.concluida %}
-                        <i class="fa-solid fa-circle-check text-success" style="font-size: 1.5rem;"></i>
-                        <div class="fw-bold" style="font-size: 0.85rem;">OP Concluída</div>
-                    {% else %}
-                        <div class="text-muted" style="font-size: 0.65rem;">Setor Atual</div>
-                        <div class="fw-bold" style="font-size: 1rem;">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</div>
-                        <div class="mt-1">
-                            {% if rastreio.aguardando_saida %}
-                                <span class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;">
-                                    <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada
-                                </span>
-                            {% else %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 0.7rem;">
-                                    <i class="fa-solid fa-gears me-1"></i> Em produção
-                                </span>
-                            {% endif %}
+        {% endif %}
+    {% else %}
+        {% if erro %}
+            <div class="alert alert-danger border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fa-solid fa-exclamation-circle text-danger" style="font-size: 2rem;"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 1.1rem;">Erro</div>
+                        <div class="text-muted" style="font-size: 0.85rem;">{{ erro }}</div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {% if precisa_vidro %}
+                <div class="alert alert-warning border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-circle-question text-warning" style="font-size: 2rem;"></i>
+                        <div>
+                            <div class="fw-bold" style="font-size: 1.1rem;">Esta OP tem vidro?</div>
+                            <div class="d-flex gap-2 mt-2">
+                                <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-info text-white">
+                                    <i class="fa-solid fa-check me-1"></i> Sim
+                                </a>
+                                <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-outline-secondary">
+                                    <i class="fa-solid fa-xmark me-1"></i> Não
+                                </a>
+                            </div>
                         </div>
-                        {% if proximo %}
-                        <div class="mt-1">
-                            <span class="text-muted" style="font-size: 0.65rem;">Próximo:</span>
-                            <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.65rem;">
-                                <i class="fa-solid fa-arrow-right me-1"></i> {{ proximo.nome }}
-                            </span>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Estado vazio: pedir para bipar -->
+                <div class="alert alert-secondary border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-qrcode text-secondary" style="font-size: 2rem;"></i>
+                        <div>
+                            <div class="fw-bold" style="font-size: 1.1rem;">Escaneie a OP</div>
+                            <div class="text-muted" style="font-size: 0.85rem;">Aponte o leitor para o código de barras ou QR Code.</div>
                         </div>
-                        {% endif %}
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="card shadow-sm border-0 text-center flex-grow-1 d-flex align-items-center justify-content-center">
-                <div class="card-body">
-                    <i class="fa-solid fa-qrcode text-muted" style="font-size: 2rem;"></i>
-                    <div class="fw-bold mt-2" style="font-size: 0.85rem;">Aguardando leitura...</div>
-                    <p class="text-muted mb-0" style="font-size: 0.7rem;">Escaneie o QR Code ou digite o ID da OP.</p>
-                </div>
-            </div>
             {% endif %}
-        </div>
-
-        <!-- Coluna direita: Histórico -->
-        <div class="col-md-8 d-flex flex-column" style="overflow: hidden;">
-            {% if rastreio %}
-            <div class="card shadow-sm border-0 flex-grow-1 d-flex flex-column" style="overflow: hidden;">
-                <div class="card-header py-2 px-3 flex-shrink-0">
-                    <span class="fw-semibold" style="font-size: 0.8rem;"><i class="fa-solid fa-clock-rotate-left me-1 text-primary"></i> Histórico</span>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.65rem;">{{ movimentacoes|length }} registro{{ movimentacoes|length|pluralize }}</span>
-                </div>
-                <div class="card-body p-0" style="overflow-y: auto;">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.75rem;">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th class="ps-3" style="width: 30px;">#</th>
-                                <th>Setor</th>
-                                <th>Usuário</th>
-                                <th>Data/Hora</th>
-                                <th>Tempo</th>
-                                <th class="pe-3">Observação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for m in movimentacoes %}
-                            <tr>
-                                <td class="ps-3 text-muted">{{ forloop.counter }}</td>
-                                <td>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary">
-                                        {{ m.setor_nome }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if m.usuario %}
-                                        <span class="text-muted">{{ m.usuario.username }}</span>
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-nowrap text-muted">{{ m.data_hora|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    {% if m.tempo_no_setor_formatado != '—' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success">{{ m.tempo_no_setor_formatado }}</span>
-                                    {% else %}
-                                        <span class="badge bg-warning bg-opacity-10 text-warning">Em andamento</span>
-                                    {% endif %}
-                                </td>
-                                <td class="pe-3 text-muted">{{ m.observacao|default:"—" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% else %}
-            <div class="card shadow-sm border-0 flex-grow-1 d-flex align-items-center justify-content-center">
-                <div class="card-body text-center">
-                    <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 2rem;"></i>
-                    <div class="fw-bold mt-2" style="font-size: 0.85rem;">Histórico vazio</div>
-                    <p class="text-muted mb-0" style="font-size: 0.7rem;">Escaneie uma OP para ver o histórico aqui.</p>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Simulação de setor (apenas superusuário) -->
-    {% if request.user.is_superuser %}
-    <div class="d-flex flex-wrap gap-1 mt-2 flex-shrink-0" style="padding: 6px 0; border-top: 1px solid var(--casanova-grey);">
-        <span class="text-muted" style="font-size: 0.65rem; align-self: center;">
-            <i class="fa-solid fa-flask me-1"></i> Simular:
-        </span>
-        {% for s in setores %}
-            <a href="?setor={{ s.codigo }}" class="btn btn-sm {% if setor_param == s.codigo %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="font-size: 0.65rem; padding: 2px 8px;">
-                {{ s.nome }}
-            </a>
-        {% endfor %}
-    </div>
+        {% endif %}
     {% endif %}
+
+    <!-- Campo de leitura - grande e central -->
+    <div class="w-100" style="max-width: 600px;">
+        <form method="GET" action="{% url 'producao' %}" id="formEscanear">
+            {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
+            <div class="input-group input-group-lg shadow-sm">
+                <span class="input-group-text" style="padding: 0 20px;"><i class="fa-solid fa-qrcode text-primary"></i></span>
+                <input type="text" name="codigo" id="campoCodigo" class="form-control text-center fw-bold"
+                       style="font-size: 1.2rem; letter-spacing: 2px; padding: 15px;"
+                       placeholder="Escaneie ou digite o ID da OP"
+                       autocomplete="off" autofocus value="">
+                <button type="submit" class="btn btn-primary btn-lg" style="padding: 0 30px;">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info mínima do operador -->
+    <div class="mt-auto pt-3 text-center text-muted" style="font-size: 0.7rem;">
+        {{ request.user.get_full_name|default:request.user.username }}
+    </div>
 </div>
 
 <script>

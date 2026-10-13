@@ -729,15 +729,13 @@ def _buscar_obra_op_por_id(obra_op_id):
 @login_required(login_url='login')
 @requer_rotina('producao')
 def producao(request):
-    """Tela de produção — operador bipa entrada e saída da OP com leitor de código de barras.
+    """Tela de produção — simplicidade máxima para o operário.
 
-    Lógica de DUPLO BIP:
-    - 1º bip (entrada): operador do setor bipa para iniciar o trabalho
-    - 2º bip (saída): operador do setor bipa novamente para finalizar e liberar
-    - O próximo setor só pode receber após o setor anterior ter bipado a saída
+    O operário só precisa:
+    1. Bipar para iniciar o trabalho
+    2. Bipar novamente para finalizar
 
-    O leitor de código de barras funciona como teclado: digita o ID da OP e
-    pressiona Enter. A tela mantém o campo sempre focado.
+    Sem distrações, sem informações desnecessárias.
     """
     if not _garantir_setores():
         messages.error(request, MSG_MIGRATION)
@@ -749,35 +747,21 @@ def producao(request):
     resultado = None
     precisa_vidro = False
     op_id_pendente = None
-    rastreio = None
-    dados = None
-    info = None
-    movimentacoes = []
-    setor_atual = None
-    proximo = None
-    anterior = None
-    precisa_decidir_vidro = False
 
     if codigo:
         op_id = _extrair_op_id_do_qr(codigo)
         if not op_id:
             erro = f'Código inválido: "{codigo}".'
         elif not _pode_gerenciar(request.user):
-            erro = (
-                'Apenas usuários de nível Gerência podem registrar a '
-                'movimentação da OP.'
-            )
+            erro = 'Apenas usuários de nível Gerência podem registrar.'
         else:
             setor_usuario = _setor_do_usuario(request.user, setor_param)
             if not setor_usuario:
-                erro = (
-                    'Seu usuário não está vinculado a um setor de produção. '
-                    'Peça ao administrador para definir o setor no seu perfil.'
-                )
+                erro = 'Sem setor vinculado.'
             else:
                 obra_op = _buscar_obra_op_por_id(op_id)
                 if not obra_op:
-                    erro = f'OP não encontrada para o ID {op_id}.'
+                    erro = f'OP não encontrada.'
                 else:
                     erro, resultado, precisa_vidro = _registrar_por_setor(
                         request, op_id, setor_usuario, vidro
@@ -785,53 +769,12 @@ def producao(request):
                     if precisa_vidro:
                         op_id_pendente = op_id
 
-    # Busca dados da OP para exibição (mesmo sem scan)
-    if not rastreio and not erro:
-        # Tenta pegar o último rastreio do setor do usuário
-        setor_usuario = _setor_do_usuario(request.user, setor_param)
-        if setor_usuario:
-            rastreio = RastreioOP.objects.filter(
-                setor_atual=setor_usuario.codigo
-            ).order_by('-atualizado_em').first()
-
-    if rastreio:
-        setor_atual = SetorProducao.objects.filter(codigo=rastreio.setor_atual).first()
-        proximo = _proximo_setor(rastreio.setor_atual, rastreio.tem_vidro)
-        anterior = _setor_anterior(rastreio.setor_atual, rastreio.tem_vidro)
-        movimentacoes = rastreio.movimentacoes.select_related('usuario').all()
-        dados = {
-            'NumeroDocumento': rastreio.op_numero,
-            'ProjetoObra': rastreio.obra,
-            'Produto': rastreio.produto,
-            'Variante': rastreio.variante,
-        }
-        info = {
-            'op_numero': rastreio.op_numero or str(rastreio.op_id),
-            'obra': rastreio.obra or '—',
-            'produto': rastreio.produto or '—',
-            'variante': rastreio.variante or '—',
-        }
-        precisa_decidir_vidro = bool(
-            rastreio.setor_atual == 'mesa' and rastreio.tem_vidro is None
-        )
-
     context = {
         'codigo': codigo,
         'erro': erro,
         'resultado': resultado,
         'precisa_vidro': precisa_vidro,
         'op_id_pendente': op_id_pendente,
-        'rastreio': rastreio,
-        'dados': dados,
-        'info': info,
-        'setores': _setores_ativos(),
-        'setor_atual': setor_atual,
-        'proximo': proximo,
-        'anterior': anterior,
-        'movimentacoes': movimentacoes,
-        'precisa_decidir_vidro': precisa_decidir_vidro,
-        'setor_usuario': _setor_do_usuario(request.user, setor_param),
-        'pode_gerenciar': _pode_gerenciar(request.user),
         'setor_param': setor_param,
     }
     return render(request, 'core/industria/producao.html', context)
