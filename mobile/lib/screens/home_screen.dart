@@ -16,10 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Rastreio> _rastreios = [];
   bool _carregando = true;
   String? _erro;
-  String _filtroStatus = '';
 
   @override
   void initState() {
@@ -33,13 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _erro = null;
     });
     try {
-      // Filtra por setor do usuário (apenas gerentes veem OPs do seu setor)
-      final setor = widget.usuario.setorProducao?.codigo;
-      final lista = await widget.api.rastreios(
-        status: _filtroStatus,
-        setor: setor,
-      );
-      setState(() => _rastreios = lista);
+      if (widget.usuario.setorProducao == null) {
+        setState(() => _erro = 'Sem setor de produção vinculado');
+        return;
+      }
     } catch (e) {
       setState(() => _erro = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -56,73 +51,53 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirScanner() async {
-    final resultado = await Navigator.of(context).push<bool>(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ScanScreen(api: widget.api, usuario: widget.usuario),
       ),
     );
-    if (resultado == true) _carregar();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const CvBrand(
-          fontSize: 17,
-          casanovaColor: Colors.white,
-          esquadriasColor: Cv.accent,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: _sair,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0B3882), Color(0xFF062254)],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _abrirScanner,
-        backgroundColor: Cv.blue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.qr_code),
-        label: const Text('Escanear QR Code'),
-      ),
-      body: Column(
-        children: [
-          _buildCartaoUsuario(),
-          _buildFiltros(),
-          Expanded(child: _buildLista()),
-        ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildConteudo()),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildCartaoUsuario() {
+  Widget _buildHeader() {
     final u = widget.usuario;
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: Cv.brandGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(Cv.radiusLg),
-          bottomRight: Radius.circular(Cv.radiusLg),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+    return Padding(
+      padding: const EdgeInsets.all(20),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
+              color: Colors.white.withValues(alpha: 0.15),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
-            child: const Icon(Icons.person, color: Colors.white),
+            child: const Icon(Icons.person, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,218 +107,97 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 18,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  u.setorProducao != null
-                      ? 'Setor: ${u.setorProducao!.nome}'
-                      : 'Sem setor de produção vinculado',
+                  u.setorProducao != null ? 'Setor: ${u.setorProducao!.nome}' : 'Sem setor',
                   style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 13),
                 ),
               ],
             ),
           ),
-          if (u.podeGerenciar)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Cv.success.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.verified_user, size: 13, color: Colors.white),
-                  SizedBox(width: 5),
-                  Text(
-                    'Gerência',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _sair,
+            tooltip: 'Sair',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFiltros() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
-      child: Row(
+  Widget _buildConteudo() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: SegmentedButton<String>(
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                textStyle: WidgetStateProperty.all(
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          const SizedBox(height: 40),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0B3882), Color(0xFF4DA6FF)],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0B3882).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 48),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Bipar OP',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Toque para escanear o QR Code\nou digitar o ID da OP',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton.icon(
+                onPressed: _carregando ? null : _abrirScanner,
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.qr_code, size: 22),
+                label: const Text(
+                  'Escanear OP',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
-              segments: const [
-                ButtonSegment(value: '', label: Text('Todas')),
-                ButtonSegment(value: 'EM_PRODUCAO', label: Text('Produção')),
-                ButtonSegment(value: 'CONCLUIDA', label: Text('Concluídas')),
-              ],
-              selected: {_filtroStatus},
-              onSelectionChanged: (s) {
-                setState(() => _filtroStatus = s.first);
-                _carregar();
-              },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLista() {
-    if (_carregando) {
-      return const Center(child: CircularProgressIndicator(color: Cv.blue));
-    }
-    if (_erro != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Cv.danger),
-              const SizedBox(height: 12),
-              Text(_erro!, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _carregar,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Tentar novamente'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    if (_rastreios.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.inbox_outlined, size: 64, color: Cv.textFaint),
-            SizedBox(height: 12),
-            Text(
-              'Nenhuma OP em rastreio',
-              style: TextStyle(color: Cv.textMuted, fontSize: 16),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Escaneie o QR Code para iniciar.',
-              style: TextStyle(color: Cv.textFaint, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _carregar,
-      color: Cv.blue,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 90),
-        itemCount: _rastreios.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) => _buildItem(_rastreios[i]),
-      ),
-    );
-  }
-
-  Widget _buildItem(Rastreio r) {
-    final cor = r.concluida ? Cv.success : Cv.warning;
-    return CvCard(
-      padding: EdgeInsets.zero,
-      shadow: Cv.shadowSm,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Cv.radius),
-
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: cor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(Cv.radiusSm),
-                ),
-                child: Icon(
-                  r.concluida
-                      ? Icons.check_circle
-                      : Icons.precision_manufacturing,
-                  color: cor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'OP ${r.titulo}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: Cv.text,
-                            ),
-                          ),
-                        ),
-                        CvBadge(
-                          texto: r.concluida ? 'Concluída' : 'Em produção',
-                          cor: cor,
-                        ),
-                      ],
-                    ),
-                    if (r.obra.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        r.obra,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Cv.textMuted, fontSize: 13),
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on,
-                            size: 14, color: Cv.textMuted),
-                        const SizedBox(width: 4),
-                        Text(
-                          r.setorAtualNome,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Cv.textMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: Cv.textFaint),
-            ],
-          ),
-        ),
       ),
     );
   }
