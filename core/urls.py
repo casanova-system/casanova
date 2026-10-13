@@ -1,6 +1,7 @@
 from core.views import usuario as views_usuario
 from core.views import permissao
 from core.views.app_mobile import app_mobile
+from core.views.certificado import baixar_ca, pagina_certificado
 from django.urls import path
 from django.views.generic.base import RedirectView
 
@@ -152,4 +153,9 @@ urlpatterns = [
     # APP MOBILE (Flutter Web) — acessível pelo navegador do celular
     # ==========================================
     path('app/', app_mobile, name='app_mobile'),
+    # ==========================================
+    # CERTIFICADO DA CA LOCAL (instalar no celular p/ camera em HTTPS)
+    # ==========================================
+    path('certificado/', pagina_certificado, name='pagina_certificado'),
+    path('certificado/casanova-ca.crt', baixar_ca, name='baixar_ca'),
 ]

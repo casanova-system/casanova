@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instalar Certificado | Casanova Esquadrias</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_semfundo.png' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #0b3882;
+            --azul-escuro: #062254;
+            --cinza-bg: #f4f6f9;
+            --texto: #1e293b;
+            --texto-suave: #64748b;
+            --borda: #e2e8f0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--cinza-bg);
+            color: var(--texto);
+            margin: 0;
+            padding: 24px 16px 48px;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; }
+        .topo {
+            background: linear-gradient(135deg, var(--azul) 0%, var(--azul-escuro) 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 28px 24px;
+            margin-bottom: 20px;
+        }
+        .topo h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 6px; }
+        .topo p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+        .card-c {
+            background: #fff;
+            border: 1px solid var(--borda);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 16px;
+        }
+        .card-c h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--azul);
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-baixar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            min-height: 58px;
+            background: var(--azul);
+            color: #fff !important;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+        .btn-baixar:hover { background: var(--azul-escuro); }
+        .aviso {
+            display: flex;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .aviso-atencao { background: #fef3c7; border-left: 4px solid #d97706; color: #78350f; }
+        .aviso-info { background: #e0f2fe; border-left: 4px solid #0284c7; color: #075985; }
+        .aviso i { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+        ol { padding-left: 22px; margin: 0; }
+        ol li { margin-bottom: 12px; font-size: 0.92rem; line-height: 1.55; }
+        ol li strong { color: var(--azul); }
+        code {
+            background: #f1f5f9;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            color: #be185d;
+        }
+        .passo-print {
+            background: #f8fafc;
+            border: 1px dashed var(--borda);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--texto-suave);
+        }
+        .rodape {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--texto-suave);
+            margin-top: 24px;
+            line-height: 1.6;
+        }
+        .tag {
+            display: inline-block;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        @media (max-width: 575.98px) {
+            .topo { padding: 22px 18px; }
+            .topo h1 { font-size: 1.2rem; }
+            .card-c { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="topo">
+        <h1><i class="fa-solid fa-shield-halved me-2"></i>Instalar Certificado de Segurança</h1>
+        <p>Casanova Esquadrias &mdash; libera a câmera do celular para escanear as OPs</p>
+    </div>
+
+    <div class="aviso aviso-info">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+            <strong>Por que isso é necessário?</strong><br>
+            O navegador só libera a câmera em conexões seguras. Como o sistema roda na rede interna
+            da fábrica (sem domínio na internet), é preciso instalar este certificado uma vez em cada
+            celular. Depois disso o aviso "Não seguro" desaparece e a câmera funciona normalmente.
+        </div>
+    </div>
+
+    {% if ca_disponivel %}
+    <div class="card-c">
+        <h2><i class="fa-solid fa-download"></i> Passo 1 &mdash; Baixar o certificado</h2>
+        <a href="{% url 'baixar_ca' %}" class="btn-baixar">
+            <i class="fa-solid fa-file-shield"></i> Baixar certificado
+        </a>
+        <p style="margin: 0; font-size: 0.82rem; color: var(--texto-suave); text-align: center;">
+            Arquivo <code>casanova-ca.crt</code> &mdash; é a parte pública do certificado, seguro de compartilhar.
+        </p>
+    </div>
+    {% else %}
+    <div class="aviso aviso-atencao">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>O certificado ainda não foi publicado no servidor. Fale com o responsável pelo sistema.</div>
+    </div>
+    {% endif %}
+
+    <div class="card-c">
+        <h2><i class="fa-brands fa-android"></i> No Android</h2>
+        <ol>
+            <li>Toque em <strong>Baixar certificado</strong> acima.</li>
+            <li>Abra <strong>Configurações</strong> &rarr; <strong>Segurança</strong> &rarr; <strong>Instalar certificado</strong> (em alguns aparelhos: <em>Criptografia e credenciais</em>).</li>
+            <li>Escolha <strong>Certificado de CA</strong> (não "VPN" nem "Wi-Fi").</li>
+            <li>Confirme o aviso de segurança e selecione o arquivo baixado.</li>
+            <li>Feche e abra o navegador novamente.</li>
+        </ol>
+        <div class="passo-print">
+            <i class="fa-solid fa-circle-info"></i>
+            Se o arquivo não aparecer na lista, abra-o pela pasta <strong>Downloads</strong> do aparelho.
+        </div>
+    </div>
+
+    <div class="card-c">
+        <h2><i class="fa-brands fa-apple"></i> No iPhone (iOS)</h2>
+        <ol>
+            <li>Toque em <strong>Baixar certificado</strong> &mdash; o iOS vai avisar "Este site está tentando baixar um perfil de configuração". Toque em <strong>Permitir</strong>.</li>
+            <li>Abra <strong>Ajustes</strong> &rarr; <strong>Geral</strong> &rarr; <strong>VPN e Gerenciamento de Dispositivo</strong>.</li>
+            <li>Toque no perfil <strong>Casanova Esquadrias</strong> e depois em <strong>Instalar</strong> (digite a senha do aparelho).</li>
+            <li>Volte em <strong>Ajustes</strong> &rarr; <strong>Geral</strong> &rarr; <strong>Sobre</strong> &rarr; <strong>Ajustes de Confiança do Certificado</strong>.</li>
+            <li>Ative a chave <strong>Casanova Esquadrias &mdash; CA Local</strong>.</li>
+            <li>Feche o Safari completamente (deslize para cima) e abra de novo.</li>
+        </ol>
+        <div class="passo-print">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            No iPhone são <strong>dois</strong> passos: instalar o perfil <em>e</em> ativar a confiança
+            (passo 5). Sem o passo 5 o certificado não funciona.
+        </div>
+    </div>
+
+    <div class="card-c">
+        <h2><i class="fa-solid fa-circle-check"></i> Pronto &mdash; testar</h2>
+        <ol>
+            <li>Abra <code>https://{{ host }}/industria/producao/</code> no celular.</li>
+            <li>O aviso "Não seguro" não deve mais aparecer.</li>
+            <li>Toque em <strong>Escanear com a câmera</strong> e permita o acesso quando o navegador pedir.</li>
+        </ol>
+        <div style="text-align:center; margin-top:14px;">
+            <span class="tag"><i class="fa-solid fa-check me-1"></i> Certificado válido por 3 anos</span>
+        </div>
+    </div>
+
+    <div class="aviso aviso-atencao">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+            <strong>Não quer instalar?</strong> O sistema continua funcionando sem o certificado:
+            basta tocar em <em>Avançado &rarr; Continuar</em> ao abrir o site. O único recurso perdido
+            é a câmera &mdash; a digitação do código e o leitor USB continuam normais.
+        </div>
+    </div>
+
+    <div class="rodape">
+        Casanova Esquadrias &mdash; Sistema de Gestão<br>
+        Em caso de dúvida, procure o responsável pela TI.
+    </div>
+
+</div>
+</body>
+</html>
