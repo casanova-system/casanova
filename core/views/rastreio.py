@@ -456,7 +456,7 @@ def rastreio_op(request, op_id):
         anterior = _setor_anterior(rastreio.setor_atual, rastreio.tem_vidro)
 
     movimentacoes = (
-        rastreio.movimentacoes.select_related('usuario').all() if rastreio else []
+        rastreio.movimentacoes.select_related('usuario_entrada', 'usuario_saida').all() if rastreio else []
     )
 
     # Dados exibidos no cabeçalho (prioriza o rastreio local; completa com o ERP)

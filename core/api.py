@@ -60,11 +60,14 @@ def _serializar_movimentacoes(rastreio):
         {
             'setor': m.setor,
             'setor_nome': m.setor_nome,
-            'usuario': m.usuario.username if m.usuario else None,
-            'observacao': m.observacao,
-            'data_hora': m.data_hora.isoformat(),
+            'usuario_entrada': m.usuario_entrada.username if m.usuario_entrada else None,
+            'usuario_saida': m.usuario_saida.username if m.usuario_saida else None,
+            'observacao_entrada': m.observacao_entrada,
+            'observacao_saida': m.observacao_saida,
+            'data_entrada': m.data_entrada.isoformat() if m.data_entrada else None,
+            'data_saida': m.data_saida.isoformat() if m.data_saida else None,
         }
-        for m in rastreio.movimentacoes.select_related('usuario').all()
+        for m in rastreio.movimentacoes.select_related('usuario_entrada', 'usuario_saida').all()
     ]
 
 
