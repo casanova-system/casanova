@@ -7,19 +7,133 @@
     {% include 'core/partials/messages.html' %}
 
     {% url 'menu_principal' as url_inicio %}
-    {% include 'core/partials/page_header.html' with titulo="Produção" subtitulo="Consulta rápida do andamento da OP na indústria." acao_icone="fa-industry" voltar_url=url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Produção" subtitulo="Bipe a OP para iniciar ou finalizar o trabalho no setor." acao_icone="fa-industry" voltar_url=url_inicio %}
 
-    <!-- Campo de busca -->
-    <div class="card shadow-sm border-0 mb-3">
+    <!-- Identificação do operador -->
+    <div class="card shadow-sm border-0 mb-3" style="flex-shrink: 0;">
+        <div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-user-shield text-primary"></i>
+                <div>
+                    <span class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    {% if setor_usuario %}
+                        <span class="text-muted small ms-2">Setor: <strong>{{ setor_usuario.nome }}</strong></span>
+                    {% else %}
+                        <span class="text-danger small ms-2">Sem setor vinculado</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if pode_gerenciar %}
+                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1">
+                        <i class="fa-solid fa-check me-1"></i> Gerência
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger fw-semibold px-2 py-1">
+                        <i class="fa-solid fa-ban me-1"></i> Sem permissão
+                    </span>
+                {% endif %}
+                {% if setor_param %}
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">
+                        <i class="fa-solid fa-flask me-1"></i> Simulando: {{ setor_usuario.nome }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de permissão/setor -->
+    {% if not pode_gerenciar %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3" style="flex-shrink: 0;" role="alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>Apenas usuários de nível <strong>Gerência</strong> podem registrar a movimentação da OP.</div>
+    </div>
+    {% elif not setor_usuario %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3" style="flex-shrink: 0;" role="alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>Seu usuário não está vinculado a um setor de produção. Peça ao administrador para definir o setor no seu perfil.</div>
+    </div>
+    {% endif %}
+
+    <!-- Pergunta de vidro (Mesa) -->
+    {% if precisa_vidro %}
+    <div class="card shadow-sm border-0 mb-3 border-start border-4 border-info" style="flex-shrink: 0;">
         <div class="card-body py-3">
-            <form method="GET" action="{% url 'producao' %}" class="d-flex flex-column align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-circle-question text-info"></i>
+                <h5 class="fw-bold mb-0">Esta OP tem vidro?</h5>
+            </div>
+            <p class="text-muted small mb-2">A OP está na <strong>Mesa</strong>. Informe para definir o próximo setor.</p>
+            <div class="d-flex gap-2">
+                <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-info text-white fw-semibold">
+                    <i class="fa-solid fa-check me-1"></i> Sim, tem vidro
+                </a>
+                <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-outline-secondary fw-semibold">
+                    <i class="fa-solid fa-xmark me-1"></i> Não tem vidro
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resultado do último bip -->
+    {% if resultado %}
+    <div class="card shadow-sm border-0 mb-3 border-start border-4 {% if resultado.bip == 'saida' %}border-info{% else %}border-success{% endif %}" style="flex-shrink: 0;">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                {% if resultado.bip == 'saida' %}
+                    <i class="fa-solid fa-arrow-right-from-bracket text-info"></i>
+                    <h5 class="fw-bold mb-0">OP Liberada (2º bip)</h5>
+                {% elif resultado.iniciou %}
+                    <i class="fa-solid fa-circle-check text-success"></i>
+                    <h5 class="fw-bold mb-0">Rastreio Iniciado (1º bip)</h5>
+                {% else %}
+                    <i class="fa-solid fa-circle-check text-success"></i>
+                    <h5 class="fw-bold mb-0">Recebida no Setor (1º bip)</h5>
+                {% endif %}
+            </div>
+            {% if resultado.bip == 'saida' %}
+            <div class="alert alert-info py-2 mb-2">
+                <small><i class="fa-solid fa-circle-info me-1"></i> A OP foi liberada. O próximo setor pode agora receber a OP.</small>
+            </div>
+            {% elif resultado.bip == 'entrada' %}
+            <div class="alert alert-warning py-2 mb-2">
+                <small><i class="fa-solid fa-circle-info me-1"></i> Bipe novamente quando finalizar o trabalho para liberar a OP.</small>
+            </div>
+            {% endif %}
+            <div class="row g-2 small">
+                <div class="col-6"><span class="text-muted">OP:</span> <strong>{{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}</strong></div>
+                <div class="col-6"><span class="text-muted">Setor:</span> <strong>{{ resultado.setor.nome }}</strong></div>
+                <div class="col-12"><span class="text-muted">Obra:</span> {{ resultado.rastreio.obra|default:"—" }}</div>
+                <div class="col-12"><span class="text-muted">Produto:</span> {{ resultado.rastreio.produto|default:"—" }}</div>
+            </div>
+            <a href="{% url 'rastreio_op' resultado.rastreio.op_id %}" class="btn btn-sm btn-outline-primary mt-2">
+                <i class="fa-solid fa-eye me-1"></i> Ver rastreio completo
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Erro -->
+    {% if erro %}
+    <div class="alert alert-danger d-flex align-items-start gap-2 py-2 mb-3" style="flex-shrink: 0;" role="alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>{{ erro }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Campo de leitura -->
+    <div class="card shadow-sm border-0 mb-3" style="flex-shrink: 0;">
+        <div class="card-body py-3">
+            <form method="GET" action="{% url 'producao' %}" id="formEscanear" class="d-flex flex-column align-items-center gap-2">
+                {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
                 <div class="input-group" style="max-width: 500px;">
                     <span class="input-group-text"><i class="fa-solid fa-qrcode"></i></span>
                     <input type="text" name="codigo" id="campoCodigo" class="form-control form-control-lg text-center fw-bold"
                            style="letter-spacing: 2px;" placeholder="Escaneie ou digite o ID da OP"
-                           autocomplete="off" autofocus value="{{ codigo|default:'' }}">
+                           autocomplete="off" autofocus value="">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-magnifying-glass"></i> Consultar
+                        <i class="fa-solid fa-arrow-right me-1"></i> Registrar
                     </button>
                 </div>
                 <small class="text-muted">
@@ -30,32 +144,28 @@
         </div>
     </div>
 
-    <!-- Erro -->
-    {% if erro %}
-    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
-        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
-        <div>{{ erro }}</div>
-    </div>
-    {% endif %}
-
-    <!-- Resultado -->
-    {% if rastreio %}
-    <div class="d-flex flex-column gap-3" style="overflow-y: auto;">
+    <!-- Dados da OP e histórico (scrollável) -->
+    <div class="d-flex flex-column gap-3" style="overflow-y: auto; flex-grow: 1;">
+        {% if rastreio %}
         <!-- Dados da OP -->
         <div class="card shadow-sm border-0">
-            <div class="card-body">
+            <div class="card-body py-3">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="text-muted small fw-semibold text-uppercase">OP</div>
                         <div class="fw-bold fs-5">{{ info.op_numero }}</div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="text-muted small fw-semibold text-uppercase">Obra</div>
                         <div class="fw-semibold">{{ info.obra }}</div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="text-muted small fw-semibold text-uppercase">Produto</div>
                         <div class="fw-semibold">{{ info.produto }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small fw-semibold text-uppercase">Variante</div>
+                        <div class="fw-semibold">{{ info.variante }}</div>
                     </div>
                 </div>
             </div>
@@ -63,8 +173,8 @@
 
         <!-- Fluxo de Produção -->
         <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <div class="text-muted small fw-semibold text-uppercase mb-3">Fluxo de Produção</div>
+            <div class="card-body py-3">
+                <div class="text-muted small fw-semibold text-uppercase mb-2">Fluxo de Produção</div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     {% for s in setores %}
                         {% if s.requer_vidro and rastreio.tem_vidro is False %}
@@ -87,28 +197,27 @@
 
         <!-- Estado Atual -->
         <div class="card shadow-sm border-0">
-            <div class="card-body text-center py-4">
-                {% if not rastreio %}
-                    <div class="empty-state-icon mb-2" style="color: #6c757d;"><i class="fa-solid fa-hourglass-half"></i></div>
-                    <h5 class="fw-bold mb-1">Rastreio Não Iniciado</h5>
-                    <p class="text-muted mb-0">Esta OP ainda não passou pelo Estoque. O rastreio será iniciado automaticamente quando o Estoque escanear o QR Code.</p>
-                {% elif rastreio.concluida %}
+            <div class="card-body py-3 text-center">
+                {% if rastreio.concluida %}
                     <div class="empty-state-icon mb-2" style="color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
                     <h5 class="fw-bold mb-1">OP Concluída</h5>
                     <p class="text-muted mb-0">Esta OP chegou ao fim do fluxo de produção.</p>
                 {% else %}
                     <div class="text-muted small fw-semibold text-uppercase mb-1">Setor Atual</div>
-                    <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
-
-                    {% if precisa_decidir_vidro %}
-                    <div class="alert alert-info d-inline-block text-start mb-3">
-                        <div class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-1"></i> Esta OP tem vidro?</div>
-                        <small class="text-muted">Aguardando decisão na Mesa.</small>
+                    <h3 class="fw-bold mb-2">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
+                    <div class="mb-2">
+                        {% if rastreio.aguardando_saida %}
+                            <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-3 py-1">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada — aguardando próximo setor
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-1">
+                                <i class="fa-solid fa-gears me-1"></i> Em produção — bipar para liberar
+                            </span>
+                        {% endif %}
                     </div>
-                    {% endif %}
-
                     {% if proximo %}
-                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <div class="d-flex align-items-center justify-content-center gap-2">
                         <span class="text-muted small">Próximo:</span>
                         <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1">
                             <i class="fa-solid fa-arrow-right me-1"></i> {{ proximo.nome }}
@@ -123,25 +232,41 @@
         <div class="card shadow-sm border-0">
             <div class="card-header list-card-header">
                 <h5 class="list-card-title"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Histórico de Movimentações</h5>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1">{{ movimentacoes|length }} registro{{ movimentacoes|length|pluralize }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-3">Setor</th>
+                                <th class="ps-3" style="width: 40px;">#</th>
+                                <th>Setor</th>
                                 <th>Usuário</th>
                                 <th>Data / Hora</th>
+                                <th>Tempo no Setor</th>
                                 <th class="pe-3">Observação</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for m in movimentacoes %}
                             <tr>
-                                <td class="ps-3 fw-semibold">{{ m.setor_nome }}</td>
+                                <td class="ps-3 text-muted fw-semibold">{{ forloop.counter }}</td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                        {% if m.setor == 'estoque' %}<i class="fa-solid fa-warehouse me-1"></i>
+                                        {% elif m.setor == 'separacao' %}<i class="fa-solid fa-boxes-stacked me-1"></i>
+                                        {% elif m.setor == 'corte' %}<i class="fa-solid fa-scissors me-1"></i>
+                                        {% elif m.setor == 'usinagem' %}<i class="fa-solid fa-gears me-1"></i>
+                                        {% elif m.setor == 'mesa' %}<i class="fa-solid fa-table-cells me-1"></i>
+                                        {% elif m.setor == 'encaixilhamento' %}<i class="fa-solid fa-border-all me-1"></i>
+                                        {% elif m.setor == 'expedicao' %}<i class="fa-solid fa-truck me-1"></i>
+                                        {% else %}<i class="fa-solid fa-industry me-1"></i>{% endif %}
+                                        {{ m.setor_nome }}
+                                    </span>
+                                </td>
                                 <td>
                                     {% if m.usuario %}
-                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                        <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1">
                                             <i class="fa-solid fa-user me-1"></i> {{ m.usuario.username }}
                                         </span>
                                     {% else %}
@@ -149,24 +274,53 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-nowrap text-muted">{{ m.data_hora|date:"d/m/Y H:i:s" }}</td>
+                                <td>
+                                    {% if m.tempo_no_setor_formatado != '—' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1">
+                                            <i class="fa-solid fa-clock me-1"></i> {{ m.tempo_no_setor_formatado }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1">
+                                            <i class="fa-solid fa-hourglass-half me-1"></i> Em andamento
+                                        </span>
+                                    {% endif %}
+                                </td>
                                 <td class="pe-3 text-muted">{{ m.observacao|default:"—" }}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+        {% else %}
+        <!-- Estado vazio -->
+        <div class="card shadow-sm border-0 text-center">
+            <div class="card-body py-5">
+                <div class="empty-state-icon mb-3"><i class="fa-solid fa-qrcode"></i></div>
+                <h5 class="fw-bold mb-2">Aguardando leitura...</h5>
+                <p class="text-muted mb-0">Escaneie o QR Code ou digite o ID da OP para iniciar o rastreio de produção.</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% elif not erro %}
-    <!-- Estado vazio -->
-    <div class="card shadow-sm border-0 text-center">
-        <div class="card-body py-5">
-            <div class="empty-state-icon mb-3"><i class="fa-solid fa-qrcode"></i></div>
-            <h5 class="fw-bold mb-2">Consultar OP</h5>
-            <p class="text-muted mb-0">Escaneie o QR Code ou digite o ID da OP para visualizar o andamento da produção.</p>
+
+    <!-- Simulação de setor (apenas superusuário) -->
+    {% if request.user.is_superuser %}
+    <div class="card shadow-sm border-0 mt-3" style="flex-shrink: 0;">
+        <div class="card-body py-2">
+            <div class="text-muted small fw-semibold text-uppercase mb-2">
+                <i class="fa-solid fa-flask me-1"></i> Simular setor (superusuário)
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for s in setores %}
+                    <a href="?setor={{ s.codigo }}" class="btn btn-sm {% if setor_param == s.codigo %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        {{ s.nome }}
+                    </a>
+                {% endfor %}
+            </div>
         </div>
     </div>
     {% endif %}
@@ -187,7 +341,7 @@
             clearTimeout(timer);
             timer = setTimeout(function () {
                 if (campo.value.trim().length >= 3) {
-                    campo.closest('form').submit();
+                    document.getElementById('formEscanear').submit();
                 }
             }, 400);
         });
