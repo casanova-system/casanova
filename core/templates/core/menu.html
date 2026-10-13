@@ -175,6 +175,19 @@
                 </a>
             </div>
             {% endif %}
+
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.producao %}
+            <div class="col-xl-3 col-md-6">
+                <a href="{% url 'producao' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #0b3882;"><i class="fa-solid fa-barcode"></i></span>
+                    <span class="quick-body">
+                        <span class="quick-title">Produção</span>
+                        <span class="quick-desc">Bipar OP no setor</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
