@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../api_service.dart';
 import '../models.dart';
 import '../theme.dart';
-import 'detail_screen.dart';
 import 'login_screen.dart';
 import 'scan_screen.dart';
 
@@ -270,14 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
       shadow: Cv.shadowSm,
       child: InkWell(
         borderRadius: BorderRadius.circular(Cv.radius),
-        onTap: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DetailScreen(api: widget.api, opId: r.opId),
-            ),
-          );
-          _carregar();
-        },
+
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(

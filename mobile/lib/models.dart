@@ -50,30 +50,7 @@ class Usuario {
       );
 }
 
-class Movimentacao {
-  final String setor;
-  final String setorNome;
-  final String? usuario;
-  final String observacao;
-  final DateTime dataHora;
 
-  Movimentacao({
-    required this.setor,
-    required this.setorNome,
-    this.usuario,
-    required this.observacao,
-    required this.dataHora,
-  });
-
-  factory Movimentacao.fromJson(Map<String, dynamic> j) => Movimentacao(
-        setor: j['setor'] ?? '',
-        setorNome: j['setor_nome'] ?? '',
-        usuario: j['usuario'],
-        observacao: j['observacao'] ?? '',
-        dataHora: DateTime.tryParse(j['data_hora'] ?? '')?.toLocal() ??
-            DateTime.now(),
-      );
-}
 
 class Rastreio {
   final int opId;
@@ -87,7 +64,6 @@ class Rastreio {
   final String status;
   final bool concluida;
   final DateTime atualizadoEm;
-  final List<Movimentacao> movimentacoes;
 
   Rastreio({
     required this.opId,
@@ -101,7 +77,6 @@ class Rastreio {
     required this.status,
     required this.concluida,
     required this.atualizadoEm,
-    this.movimentacoes = const [],
   });
 
   factory Rastreio.fromJson(Map<String, dynamic> j) => Rastreio(
@@ -117,9 +92,6 @@ class Rastreio {
         concluida: j['concluida'] ?? false,
         atualizadoEm:
             DateTime.tryParse(j['atualizado_em'] ?? '')?.toLocal() ?? DateTime.now(),
-        movimentacoes: (j['movimentacoes'] as List<dynamic>? ?? [])
-            .map((m) => Movimentacao.fromJson(m))
-            .toList(),
       );
 
   String get titulo => opNumero.isNotEmpty ? opNumero : opId.toString();

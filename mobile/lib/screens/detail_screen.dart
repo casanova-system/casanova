@@ -83,19 +83,7 @@ class _DetailScreenState extends State<DetailScreen> {
               r.temVidro == null ? 'A definir' : (r.temVidro! ? 'Sim' : 'Não'),
             ),
           ]),
-          const SizedBox(height: 16),
-          _secao('Histórico de Movimentações', [
-            if (r.movimentacoes.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'Nenhuma movimentação registrada.',
-                  style: TextStyle(color: Cv.textMuted),
-                ),
-              )
-            else
-              ...r.movimentacoes.map(_itemMovimentacao),
-          ]),
+
         ],
       ),
     );
@@ -195,56 +183,5 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _itemMovimentacao(Movimentacao m) {
-    final data =
-        '${m.dataHora.day.toString().padLeft(2, '0')}/${m.dataHora.month.toString().padLeft(2, '0')} '
-        '${m.dataHora.hour.toString().padLeft(2, '0')}:${m.dataHora.minute.toString().padLeft(2, '0')}';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: const BoxDecoration(
-                  color: Cv.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              Container(width: 2, height: 34, color: Cv.line),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  m.setorNome,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, color: Cv.text),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$data${m.usuario != null ? ' · ${m.usuario}' : ''}',
-                  style: const TextStyle(color: Cv.textMuted, fontSize: 12),
-                ),
-                if (m.observacao.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      m.observacao,
-                      style: const TextStyle(color: Cv.textFaint, fontSize: 12),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
