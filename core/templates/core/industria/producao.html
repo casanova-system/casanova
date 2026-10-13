@@ -2,148 +2,447 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3 d-flex flex-column align-items-center" style="height: calc(100vh - 56px);">
+<div class="prod-wrap">
 
-    <!-- Cabeçalho mínimo -->
-    <div class="d-flex justify-content-between align-items-center mb-4 w-100" style="max-width: 600px;">
+    <!-- Cabecalho minimo -->
+    <div class="prod-head">
         <div>
-            <h1 class="page-title mb-0" style="font-size: 1.1rem !important;">Produção</h1>
+            <span class="prod-title">Produção</span>
+            <span class="prod-user">{{ request.user.get_full_name|default:request.user.username }}</span>
         </div>
-        <a href="{% url 'menu_principal' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left"></i>
+        <a href="{% url 'menu_principal' %}" class="prod-back" title="Início">
+            <i class="fa-solid fa-house"></i>
         </a>
     </div>
 
-    <!-- Mensagem principal: o que o operário precisa saber -->
+    <!-- MENSAGEM PRINCIPAL - o operario so precisa ler isto -->
     {% if resultado %}
         {% if resultado.bip == 'saida' %}
-            <div class="alert alert-success border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fa-solid fa-check-circle text-success" style="font-size: 2rem;"></i>
-                    <div>
-                        <div class="fw-bold" style="font-size: 1.1rem;">Trabalho Finalizado!</div>
-                        <div class="text-muted" style="font-size: 0.85rem;">A OP foi liberada. Próximo setor pode receber.</div>
-                    </div>
+            <div class="prod-msg prod-msg-ok">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                    <strong>Trabalho Finalizado!</strong>
+                    <span>A OP foi liberada. O próximo setor pode receber.</span>
                 </div>
             </div>
         {% else %}
-            <div class="alert alert-primary border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fa-solid fa-play-circle text-primary" style="font-size: 2rem;"></i>
-                    <div>
-                        <div class="fw-bold" style="font-size: 1.1rem;">Trabalho Iniciado!</div>
-                        <div class="text-muted" style="font-size: 0.85rem;">Bipe novamente quando terminar para liberar a OP.</div>
-                    </div>
+            <div class="prod-msg prod-msg-start">
+                <i class="fa-solid fa-play-circle"></i>
+                <div>
+                    <strong>Trabalho Iniciado!</strong>
+                    <span>Bipe novamente quando terminar para liberar a OP.</span>
                 </div>
             </div>
         {% endif %}
+    {% elif erro %}
+        <div class="prod-msg prod-msg-erro">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                <strong>Erro</strong>
+                <span>{{ erro }}</span>
+            </div>
+        </div>
+    {% elif precisa_vidro %}
+        <div class="prod-msg prod-msg-vidro">
+            <i class="fa-solid fa-circle-question"></i>
+            <div>
+                <strong>Esta OP tem vidro?</strong>
+                <div class="prod-vidro-btns">
+                    <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-sim">
+                        <i class="fa-solid fa-check"></i> Sim
+                    </a>
+                    <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-nao">
+                        <i class="fa-solid fa-xmark"></i> Não
+                    </a>
+                </div>
+            </div>
+        </div>
     {% else %}
-        {% if erro %}
-            <div class="alert alert-danger border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fa-solid fa-exclamation-circle text-danger" style="font-size: 2rem;"></i>
-                    <div>
-                        <div class="fw-bold" style="font-size: 1.1rem;">Erro</div>
-                        <div class="text-muted" style="font-size: 0.85rem;">{{ erro }}</div>
-                    </div>
-                </div>
+        <div class="prod-msg prod-msg-idle">
+            <i class="fa-solid fa-qrcode"></i>
+            <div>
+                <strong>Escaneie a OP</strong>
+                <span>Use a câmera ou digite o código.</span>
             </div>
-        {% else %}
-            {% if precisa_vidro %}
-                <div class="alert alert-warning border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="fa-solid fa-circle-question text-warning" style="font-size: 2rem;"></i>
-                        <div>
-                            <div class="fw-bold" style="font-size: 1.1rem;">Esta OP tem vidro?</div>
-                            <div class="d-flex gap-2 mt-2">
-                                <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-info text-white">
-                                    <i class="fa-solid fa-check me-1"></i> Sim
-                                </a>
-                                <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="btn btn-outline-secondary">
-                                    <i class="fa-solid fa-xmark me-1"></i> Não
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <!-- Estado vazio: pedir para bipar -->
-                <div class="alert alert-secondary border-0 shadow-sm mb-4 w-100" style="max-width: 600px; padding: 24px;">
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="fa-solid fa-qrcode text-secondary" style="font-size: 2rem;"></i>
-                        <div>
-                            <div class="fw-bold" style="font-size: 1.1rem;">Escaneie a OP</div>
-                            <div class="text-muted" style="font-size: 0.85rem;">Aponte o leitor para o código de barras ou QR Code.</div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        {% endif %}
+        </div>
     {% endif %}
 
-    <!-- Campo de leitura - grande e central -->
-    <div class="w-100" style="max-width: 600px;">
+    <!-- ENTRADA DO CODIGO - camera (celular) + leitor/digitacao -->
+    <div class="prod-input-area">
         <form method="GET" action="{% url 'producao' %}" id="formEscanear">
             {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
-            <div class="input-group input-group-lg shadow-sm">
-                <span class="input-group-text" style="padding: 0 20px;"><i class="fa-solid fa-qrcode text-primary"></i></span>
-                <input type="text" name="codigo" id="campoCodigo" class="form-control text-center fw-bold"
-                       style="font-size: 1.2rem; letter-spacing: 2px; padding: 15px;"
-                       placeholder="Escaneie ou digite o ID da OP"
-                       autocomplete="off" autofocus value="">
-                <button type="submit" class="btn btn-primary btn-lg" style="padding: 0 30px;">
+            <div class="prod-input-group">
+                <input type="text" name="codigo" id="campoCodigo"
+                       class="prod-input"
+                       placeholder="Escaneie ou digite o código da OP"
+                       autocomplete="off" autocapitalize="off" autocorrect="off"
+                       autofocus value="">
+                <button type="submit" class="prod-btn-go" aria-label="Registrar">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
         </form>
+
+        <!-- Botao da camera: so aparece onde a API existe (HTTPS ou localhost) -->
+        <button type="button" class="prod-btn-camera" id="btnCamera" hidden>
+            <i class="fa-solid fa-camera"></i> Escanear com a câmera
+        </button>
+
+        <!-- Area do leitor de QR -->
+        <div class="prod-scanner" id="scannerBox" hidden>
+            <div id="qrReader"></div>
+            <button type="button" class="prod-btn-cancel" id="btnFecharCamera">
+                <i class="fa-solid fa-xmark"></i> Fechar câmera
+            </button>
+        </div>
+
+        <p class="prod-hint" id="dicaEntrada">
+            Aponte o leitor de código de barras ou digite o código e pressione Enter.
+        </p>
     </div>
 
-    <!-- Campo de observação - apenas para saída (2º bip) / B.O. -->
+    <!-- Observacao / B.O. - aparece so quando o trabalho foi iniciado (1o bip) -->
     {% if resultado and resultado.bip == 'entrada' %}
-    <div class="w-100 mt-3" style="max-width: 600px;">
-        <form method="POST" action="{% url 'registrar_movimentacao' resultado.rastreio.op_id %}">
-            {% csrf_token %}
-            <input type="hidden" name="acao" value="saida">
-            <div class="input-group shadow-sm">
-                <span class="input-group-text"><i class="fa-solid fa-exclamation-triangle text-warning"></i></span>
-                <input type="text" name="observacao" class="form-control"
-                       placeholder="Observação / B.O. (opcional) — ex: faltou material, peça danificada..."
-                       autocomplete="off">
-                <button type="submit" class="btn btn-warning">
-                    <i class="fa-solid fa-flag-checkered me-1"></i> Finalizar
-                </button>
-            </div>
-            <small class="text-muted mt-1 d-block">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                Se houve algum problema, descreva acima antes de finalizar.
-            </small>
-        </form>
-    </div>
+    <form method="POST" action="{% url 'registrar_movimentacao' resultado.rastreio.op_id %}" class="prod-obs">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="saida">
+        <label class="prod-obs-label">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            Teve algum problema? Descreva antes de finalizar.
+        </label>
+        <div class="prod-input-group">
+            <input type="text" name="observacao" class="prod-input prod-input-obs"
+                   placeholder="Observação / B.O. (opcional)"
+                   autocomplete="off">
+            <button type="submit" class="prod-btn-go prod-btn-obs">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </button>
+        </div>
+    </form>
     {% endif %}
 
-    <!-- Info mínima do operador -->
-    <div class="mt-auto pt-3 text-center text-muted" style="font-size: 0.7rem;">
-        {{ request.user.get_full_name|default:request.user.username }}
-    </div>
 </div>
 
+<script src="{% static 'js/html5-qrcode.min.js' %}"></script>
 <script>
-    (function () {
-        const campo = document.getElementById('campoCodigo');
-        if (!campo) return;
-        campo.focus();
-        document.addEventListener('click', function (e) {
-            if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') campo.focus();
-        });
-        let timer = null;
+(function () {
+    'use strict';
+
+    var campo = document.getElementById('campoCodigo');
+    var form = document.getElementById('formEscanear');
+    var btnCamera = document.getElementById('btnCamera');
+    var scannerBox = document.getElementById('scannerBox');
+    var btnFechar = document.getElementById('btnFecharCamera');
+    var dica = document.getElementById('dicaEntrada');
+    var leitor = null;
+    var enviando = false;
+
+    var DICA_PADRAO = 'Aponte o leitor de código de barras ou digite o código e pressione Enter.';
+
+    // No celular nao forcamos o foco: reabriria o teclado virtual a cada toque.
+    var ehToque = window.matchMedia('(pointer: coarse)').matches;
+
+    function focarCampo() {
+        if (!ehToque && campo && document.activeElement !== campo) campo.focus();
+    }
+    focarCampo();
+    document.addEventListener('click', function (e) {
+        var t = e.target.tagName;
+        if (t !== 'A' && t !== 'BUTTON' && t !== 'INPUT') focarCampo();
+    });
+
+    // Envio automatico ao digitar (leitor de codigo de barras digita como teclado)
+    var timer = null;
+    if (campo) {
         campo.addEventListener('input', function () {
             clearTimeout(timer);
             timer = setTimeout(function () {
-                if (campo.value.trim().length >= 3) {
-                    document.getElementById('formEscanear').submit();
-                }
+                if (campo.value.trim().length >= 3) submeter();
             }, 400);
         });
-    })();
+        campo.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); submeter(); }
+        });
+    }
+
+    function submeter() {
+        if (enviando) return;
+        if (!campo || !campo.value.trim()) return;
+        enviando = true;
+        pararCamera();
+        form.submit();
+    }
+
+    // CÂMERA - exige contexto seguro (HTTPS ou localhost)
+    var contextoOk = window.isSecureContext === true;
+    var temApi = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    if (contextoOk && temApi && btnCamera) {
+        btnCamera.hidden = false;
+    }
+
+    function pararCamera() {
+        if (leitor) {
+            try {
+                var l = leitor;
+                leitor = null;
+                l.stop().then(function () { l.clear(); }).catch(function () {});
+            } catch (err) { leitor = null; }
+        }
+    }
+
+    function fecharCamera() {
+        pararCamera();
+        if (scannerBox) scannerBox.hidden = true;
+        if (btnCamera && contextoOk && temApi) btnCamera.hidden = false;
+        if (dica) dica.textContent = DICA_PADRAO;
+    }
+
+    if (btnCamera) {
+        btnCamera.addEventListener('click', function () {
+            scannerBox.hidden = false;
+            btnCamera.hidden = true;
+            if (dica) dica.textContent = 'Aponte a câmera para o QR Code da OP.';
+
+            if (typeof Html5Qrcode === 'undefined') {
+                if (dica) dica.textContent = 'Leitor indisponível. Digite o código.';
+                return;
+            }
+
+            leitor = new Html5Qrcode('qrReader', { verbose: false });
+            leitor.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                function (texto) {
+                    if (campo) campo.value = texto;
+                    submeter();
+                },
+                function () { /* erros de frame: ignorar */ }
+            ).catch(function (err) {
+                var msg = String(err && err.message ? err.message : err);
+                if (dica) {
+                    dica.textContent = /permission|denied|NotAllowed/i.test(msg)
+                        ? 'Permissão da câmera negada. Autorize o acesso ou digite o código.'
+                        : 'Não foi possível abrir a câmera. Digite o código.';
+                }
+                pararCamera();
+                if (scannerBox) scannerBox.hidden = true;
+                if (btnCamera) btnCamera.hidden = false;
+            });
+        });
+    }
+
+    if (btnFechar) btnFechar.addEventListener('click', fecharCamera);
+})();
 </script>
+
+<style>
+/* TELA DE PRODUCAO - simples, grande, funciona no PC e no celular */
+.prod-wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 16px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.prod-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.prod-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--cv-text);
+}
+.prod-user {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--cv-text-muted);
+}
+.prod-back {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cv-surface-2);
+    border: 1px solid var(--cv-line);
+    color: var(--cv-text-muted);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.prod-back:hover { color: var(--cv-blue); border-color: var(--cv-blue); }
+
+/* Mensagem principal */
+.prod-msg {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid var(--cv-line);
+    background: var(--cv-surface);
+    box-shadow: var(--cv-shadow-sm);
+}
+.prod-msg i { font-size: 2.2rem; flex-shrink: 0; }
+.prod-msg strong { display: block; font-size: 1.15rem; color: var(--cv-text); }
+.prod-msg span { font-size: 0.88rem; color: var(--cv-text-muted); }
+
+.prod-msg-ok      { border-left: 5px solid #16a34a; }
+.prod-msg-ok i    { color: #16a34a; }
+.prod-msg-start   { border-left: 5px solid var(--cv-blue); }
+.prod-msg-start i { color: var(--cv-blue); }
+.prod-msg-erro    { border-left: 5px solid #dc2626; }
+.prod-msg-erro i  { color: #dc2626; }
+.prod-msg-vidro   { border-left: 5px solid #d97706; }
+.prod-msg-vidro i { color: #d97706; }
+.prod-msg-idle    { border-left: 5px solid var(--cv-text-faint); }
+.prod-msg-idle i  { color: var(--cv-text-faint); }
+
+.prod-vidro-btns { display: flex; gap: 10px; margin-top: 10px; }
+
+/* Botoes grandes (dedo, nao mouse) */
+.prod-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    text-decoration: none;
+    cursor: pointer;
+}
+.prod-btn-sim { background: #16a34a; color: #fff; }
+.prod-btn-nao { background: var(--cv-surface-2); color: var(--cv-text); border-color: var(--cv-line-strong); }
+
+/* Entrada do codigo */
+.prod-input-area { display: flex; flex-direction: column; gap: 12px; }
+
+.prod-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+.prod-input {
+    flex: 1;
+    min-width: 0;
+    min-height: 62px;
+    padding: 0 18px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 1px;
+    border-radius: 12px;
+    border: 2px solid var(--cv-line-strong);
+    background: var(--cv-surface);
+    color: var(--cv-text);
+    outline: none;
+}
+.prod-input:focus {
+    border-color: var(--cv-blue);
+    box-shadow: 0 0 0 4px var(--cv-blue-ring);
+}
+.prod-input::placeholder { font-weight: 400; letter-spacing: 0; }
+
+.prod-btn-go {
+    width: 70px;
+    min-height: 62px;
+    border-radius: 12px;
+    border: none;
+    background: var(--cv-blue);
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.prod-btn-go:active { transform: translateY(1px); }
+
+/* Botao da camera */
+.prod-btn-camera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    width: 100%;
+    border-radius: 12px;
+    border: 2px dashed var(--cv-line-strong);
+    background: var(--cv-surface-2);
+    color: var(--cv-text);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.prod-btn-camera:active { background: var(--cv-blue-soft); border-color: var(--cv-blue); }
+
+/* Leitor de QR */
+.prod-scanner {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid var(--cv-blue);
+    background: #000;
+}
+#qrReader { width: 100%; }
+#qrReader video { width: 100% !important; height: auto !important; display: block; }
+.prod-btn-cancel {
+    width: 100%;
+    min-height: 52px;
+    border: none;
+    background: #dc2626;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.prod-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--cv-text-muted);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Observacao / B.O. */
+.prod-obs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--cv-surface-2);
+    border: 1px solid var(--cv-line);
+}
+.prod-obs-label {
+    font-size: 0.82rem;
+    color: var(--cv-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.prod-obs-label i { color: #d97706; }
+.prod-input-obs { text-align: left; font-weight: 400; font-size: 0.95rem; min-height: 52px; }
+.prod-btn-obs { background: #d97706; }
+
+/* Celular: alvos maiores */
+@media (max-width: 575.98px) {
+    .prod-wrap { padding: 12px 12px 24px; gap: 14px; }
+    .prod-input { min-height: 68px; font-size: 1.1rem; }
+    .prod-btn-go { min-height: 68px; width: 64px; }
+    .prod-input-obs { min-height: 56px; }
+    .prod-btn-obs { min-height: 56px; }
+    .prod-msg { padding: 16px; gap: 12px; }
+    .prod-msg i { font-size: 1.9rem; }
+    .prod-msg strong { font-size: 1.05rem; }
+    .prod-btn { min-height: 56px; flex: 1; }
+}
+</style>
 {% endblock %}

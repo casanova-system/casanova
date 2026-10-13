@@ -36,7 +36,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.MobileRedirectMiddleware',  # Celular → /app/ (app mobile)
+    # MobileRedirectMiddleware DESATIVADO: o celular agora usa a mesma tela
+    # responsiva do PC (rotina de Produção com leitor de QR pela câmera).
+    # O app Flutter continua acessível manualmente em /app/ se necessário.
+    # 'core.middleware.MobileRedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -120,6 +123,22 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Arquivos de Mídia (Uploads de usuários / Fotos de perfil)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ==========================================
+# HTTPS atrás do nginx (proxy reverso)
+# ==========================================
+# O nginx termina o TLS e repassa X-Forwarded-Proto. Sem isto o Django acharia
+# que a requisição é HTTP e geraria redirects/URLs erradas (loop de redirecionamento).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Origens confiáveis para CSRF (acesso via HTTPS pelo IP da rede interna).
+# Necessário para a câmera funcionar: navegador só libera getUserMedia em HTTPS.
+CSRF_TRUSTED_ORIGINS = [
+    'https://10.12.50.53',
+    'https://casanova.sistema',
+    'http://10.12.50.53:8000',
+    'http://10.12.50.53',
+]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
