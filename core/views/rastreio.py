@@ -756,6 +756,7 @@ def producao(request):
     setor_atual = None
     proximo = None
     anterior = None
+    precisa_decidir_vidro = False
 
     if codigo:
         op_id = _extrair_op_id_do_qr(codigo)
