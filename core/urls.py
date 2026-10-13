@@ -45,7 +45,6 @@ from core.views.rastreio import (
     rastreio_producao,
     registrar_movimentacao,
 )
-from core.views.producao import relatorio_producao
 from core.views.relatorio import relatorio_fretes_mes  # <-- Importado do arquivo relatorio.py recém criado
 from core.views.veiculo import (
     cadastrar_veiculo,
@@ -139,8 +138,6 @@ urlpatterns = [
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
     # PRODUÇÃO (consulta rápida da OP na indústria)
     path('industria/producao/', producao, name='producao'),
-    # RELATÓRIO DE PRODUÇÃO (métricas de rastreio)
-    path('relatorios/producao/', relatorio_producao, name='relatorio_producao'),
     # ==========================================
     # API REST — App Mobile (Flutter)
     # ==========================================
