@@ -11,7 +11,11 @@
         (function() {
             const temaSalvo = localStorage.getItem('casanova_theme') || 'light';
             document.documentElement.setAttribute('data-bs-theme', temaSalvo);
-            
+
+            // Paleta de cor da marca (azul é a padrão do sistema)
+            const paletaSalva = localStorage.getItem('casanova_palette') || 'azul';
+            document.documentElement.setAttribute('data-palette', paletaSalva);
+
             const sidebarSalva = localStorage.getItem('casanova_sidebar_collapsed');
             if (sidebarSalva === 'true') {
                 document.documentElement.classList.add('preload-collapsed');
@@ -46,8 +50,8 @@
         }
 
         :root {
-            --casanova-blue: #0b3882;
-            --casanova-dark-blue: #062254;
+            --casanova-blue: rgb(var(--cv-brand-rgb));
+            --casanova-dark-blue: rgb(var(--cv-brand-dark-rgb));
             --casanova-grey: #8c929a;
             --casanova-light-bg: #f4f6f9;
         }
@@ -161,14 +165,14 @@
             white-space: nowrap;
         }
         .brand-casanova {
-            color: #0b3882;
+            color: var(--casanova-blue);
             font-weight: 900;
         }   
         [data-bs-theme="dark"] .brand-casanova {
             color: #ffffff;   
         }
         .brand-esquadrias {
-            color: #4da6ff;
+            color: var(--cv-accent, #4da6ff);
             font-weight: 300;
         }
 
@@ -274,7 +278,7 @@
             background-color: var(--casanova-dark-blue);
             color: #ffffff !important;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(11, 56, 130, 0.25);
+            box-shadow: 0 4px 12px rgba(var(--cv-brand-rgb), 0.25);
         }
 
         .card-custom {
@@ -312,13 +316,13 @@
             background-color: rgba(140, 146, 154, 0.1) !important;
         }
         .sidebar-item-compacto.active {
-            background-color: rgba(11, 56, 130, 0.12) !important;
+            background-color: rgba(var(--cv-brand-rgb), 0.12) !important;
             color: var(--casanova-blue) !important;
             font-weight: 600 !important;
         }
         [data-bs-theme="dark"] .sidebar-item-compacto.active {
-            background-color: rgba(59, 130, 246, 0.18) !important;
-            color: #58a6ff !important;
+            background-color: rgba(var(--cv-brand-rgb), 0.20) !important;
+            color: var(--cv-accent, #58a6ff) !important;
         }
 
         /* Subgrupos de setor dentro de Rotinas */
@@ -351,7 +355,7 @@
             color: #6e7681;
         }
         [data-bs-theme="dark"] .setor-toggle:hover {
-            color: #58a6ff;
+            color: var(--cv-accent, #58a6ff);
         }
         .setor-chevron {
             font-size: 0.55rem;
@@ -486,9 +490,9 @@
             color: #94a3b8;
         }
         .sidebar-search-input:focus {
-            border-color: #3b82f6;
+            border-color: var(--cv-blue);
             background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 0 3px rgba(var(--cv-brand-rgb), 0.15);
         }
         .sidebar-search-clear {
             position: absolute;
@@ -525,8 +529,8 @@
         }
         [data-bs-theme="dark"] .sidebar-search-input:focus {
             background: #161b22;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.18);
+            border-color: var(--cv-accent, #58a6ff);
+            box-shadow: 0 0 0 3px rgba(var(--cv-brand-rgb), 0.22);
         }
         [data-bs-theme="dark"] .sidebar-search-clear:hover {
             background: rgba(255,255,255,0.06);
@@ -554,14 +558,14 @@
             transition: color 0.16s ease;
         }
         .sidebar-link:hover {
-            background: rgba(11, 56, 130, 0.06);
+            background: rgba(var(--cv-brand-rgb), 0.06);
             color: var(--casanova-blue);
         }
         .sidebar-link:hover i {
             color: var(--casanova-blue);
         }
         .sidebar-link.active {
-            background: rgba(11, 56, 130, 0.10);
+            background: rgba(var(--cv-brand-rgb), 0.10);
             color: var(--casanova-blue);
             font-weight: 600;
         }
@@ -572,18 +576,18 @@
             color: #8b949e;
         }
         [data-bs-theme="dark"] .sidebar-link:hover {
-            background: rgba(88, 166, 255, 0.10);
-            color: #58a6ff;
+            background: rgba(var(--cv-brand-rgb), 0.12);
+            color: var(--cv-accent, #58a6ff);
         }
         [data-bs-theme="dark"] .sidebar-link:hover i {
-            color: #58a6ff;
+            color: var(--cv-accent, #58a6ff);
         }
         [data-bs-theme="dark"] .sidebar-link.active {
-            background: rgba(88, 166, 255, 0.14);
-            color: #58a6ff;
+            background: rgba(var(--cv-brand-rgb), 0.16);
+            color: var(--cv-accent, #58a6ff);
         }
         [data-bs-theme="dark"] .sidebar-link.active i {
-            color: #58a6ff;
+            color: var(--cv-accent, #58a6ff);
         }
 
         /* Sub-itens (dentro de um setor) — recuo sutil */
@@ -623,13 +627,53 @@
             color: #6e7681;
         }
         [data-bs-theme="dark"] .sidebar-section-toggle:hover {
-            color: #58a6ff;
+            color: var(--cv-accent, #58a6ff);
         }
 
         /* Estado recolhido: esconde busca e centraliza ícones */
         .sidebar-casanova.sidebar-collapsed .sidebar-search,
         .sidebar-casanova.sidebar-collapsed .sidebar-search-empty {
             display: none !important;
+        }
+
+        /* ==========================================================
+           SELETOR DE PALETA DE CORES (menu do perfil)
+           ========================================================== */
+        .palette-picker {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .palette-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: transparent;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+        .palette-swatch:hover {
+            transform: scale(1.12);
+        }
+        .palette-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: block;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+        }
+        .palette-swatch.active {
+            border-color: var(--cv-blue);
+            box-shadow: 0 0 0 2px rgba(var(--cv-brand-rgb), 0.18);
+        }
+        [data-bs-theme="dark"] .palette-swatch.active {
+            border-color: var(--cv-accent, #58a6ff);
+            box-shadow: 0 0 0 2px rgba(var(--cv-brand-rgb), 0.28);
         }
         .sidebar-casanova.sidebar-collapsed .sidebar-link {
             justify-content: center;
@@ -900,6 +944,31 @@
                         </li>
                         <li><hr class="dropdown-divider my-1"></li>
                         <li>
+                            <div class="px-3 py-2">
+                                <div class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.62rem; letter-spacing: 0.6px;">
+                                    <i class="fa-solid fa-palette me-1"></i> Cor do Sistema
+                                </div>
+                                <div class="palette-picker" id="palettePicker">
+                                    <button type="button" class="palette-swatch" data-palette="azul" title="Azul (padrão)" aria-label="Paleta azul">
+                                        <span class="palette-dot" style="background: #0b3882;"></span>
+                                    </button>
+                                    <button type="button" class="palette-swatch" data-palette="roxo" title="Roxo" aria-label="Paleta roxa">
+                                        <span class="palette-dot" style="background: #6d28d9;"></span>
+                                    </button>
+                                    <button type="button" class="palette-swatch" data-palette="rosa" title="Rosa" aria-label="Paleta rosa">
+                                        <span class="palette-dot" style="background: #db2777;"></span>
+                                    </button>
+                                    <button type="button" class="palette-swatch" data-palette="verde" title="Verde" aria-label="Paleta verde">
+                                        <span class="palette-dot" style="background: #059669;"></span>
+                                    </button>
+                                    <button type="button" class="palette-swatch" data-palette="laranja" title="Laranja" aria-label="Paleta laranja">
+                                        <span class="palette-dot" style="background: #ea580c;"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
                             <a class="dropdown-item text-danger d-flex align-items-center gap-2 py-2" href="{% url 'logout' %}">
                                 <i class="fa-solid fa-right-from-bracket" style="width: 16px;"></i> Sair do Sistema
                             </a>
@@ -1084,6 +1153,32 @@
                 input.focus();
             }
         }
+
+        // ===== SELETOR DE PALETA DE CORES =====
+        (function () {
+            const PALETAS = ['azul', 'roxo', 'rosa', 'verde', 'laranja'];
+            const htmlEl = document.documentElement;
+
+            function aplicarPaleta(nome) {
+                if (!PALETAS.includes(nome)) nome = 'azul';
+                htmlEl.setAttribute('data-palette', nome);
+                localStorage.setItem('casanova_palette', nome);
+
+                document.querySelectorAll('.palette-swatch').forEach(function (sw) {
+                    sw.classList.toggle('active', sw.getAttribute('data-palette') === nome);
+                });
+            }
+
+            // Sincroniza o destaque com a paleta ativa
+            aplicarPaleta(localStorage.getItem('casanova_palette') || 'azul');
+
+            document.querySelectorAll('.palette-swatch').forEach(function (sw) {
+                sw.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    aplicarPaleta(sw.getAttribute('data-palette'));
+                });
+            });
+        })();
 
         // PESQUISA DE ROTINAS (legado — mantido por compatibilidade)
         function filtrarRotinas() {

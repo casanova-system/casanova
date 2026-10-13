@@ -1,6 +1,6 @@
 /* ==========================================================================
    CASANOVA ESQUADRIAS — Design System
-   Camada de refinamento visual. Mantém a identidade (azul #0b3882) e o
+   Camada de refinamento visual. Mantém a identidade (azul var(--cv-blue)) e o
    layout existentes, adicionando profundidade, movimento e polimento.
    Carregado APÓS os estilos inline do base.html.
    ========================================================================== */
@@ -8,12 +8,24 @@
 /* --------------------------------------------------------------------------
    1. TOKENS
    -------------------------------------------------------------------------- */
+/* Cor de marca em canais RGB: permite gerar rgba() a partir de um hex.
+   As paletas (logo abaixo) trocam apenas estes trios; todo o resto deriva. */
 :root {
-    --cv-blue: #0b3882;
-    --cv-blue-dark: #062254;
-    --cv-blue-soft: rgba(11, 56, 130, 0.08);
-    --cv-blue-ring: rgba(11, 56, 130, 0.18);
-    --cv-accent: #4da6ff;
+    --cv-brand-rgb: 11, 56, 130;
+    --cv-brand-dark-rgb: 6, 34, 84;
+    --cv-brand-light-rgb: 88, 166, 255;
+
+    --cv-blue: rgb(var(--cv-brand-rgb));
+    --cv-blue-dark: rgb(var(--cv-brand-dark-rgb));
+    --cv-blue-soft: rgba(var(--cv-brand-rgb), 0.08);
+    --cv-blue-ring: rgba(var(--cv-brand-rgb), 0.18);
+    --cv-accent: rgb(var(--cv-brand-light-rgb));
+
+    /* Bootstrap 5.3 — badges/botões/links "primary" seguem a paleta */
+    --bs-primary: rgb(var(--cv-brand-rgb));
+    --bs-primary-rgb: var(--cv-brand-rgb);
+    --bs-link-color-rgb: var(--cv-brand-rgb);
+    --bs-link-hover-color-rgb: var(--cv-brand-dark-rgb);
 
     --cv-surface: #ffffff;
     --cv-surface-2: #f8fafc;
@@ -30,7 +42,7 @@
     --cv-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
     --cv-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
     --cv-shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.10), 0 4px 10px rgba(15, 23, 42, 0.05);
-    --cv-shadow-blue: 0 8px 22px rgba(11, 56, 130, 0.22);
+    --cv-shadow-blue: 0 8px 22px rgba(var(--cv-brand-rgb), 0.22);
 
     --cv-radius-sm: 8px;
     --cv-radius: 12px;
@@ -42,8 +54,8 @@
 }
 
 [data-bs-theme="dark"] {
-    --cv-blue-soft: rgba(59, 130, 246, 0.14);
-    --cv-blue-ring: rgba(59, 130, 246, 0.30);
+    --cv-blue-soft: rgba(var(--cv-brand-rgb), 0.16);
+    --cv-blue-ring: rgba(var(--cv-brand-rgb), 0.34);
 
     --cv-surface: #161b22;
     --cv-surface-2: #1c2128;
@@ -59,8 +71,49 @@
     --cv-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
     --cv-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.40);
     --cv-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.50);
-    --cv-shadow-blue: 0 8px 22px rgba(59, 130, 246, 0.20);
+    --cv-shadow-blue: 0 8px 22px rgba(var(--cv-brand-rgb), 0.20);
 }
+
+/* --------------------------------------------------------------------------
+   1b. PALETAS DE COR DA MARCA
+   A identidade padrão é o azul. O usuário escolhe outra paleta no menu do
+   perfil; cada paleta troca apenas os trios RGB da marca — todo o restante
+   (sombras, badges, botões, Bootstrap "primary") deriva automaticamente.
+   O tema claro/escuro continua funcionando em cima de qualquer paleta.
+   -------------------------------------------------------------------------- */
+[data-palette="azul"] {
+    --cv-brand-rgb: 11, 56, 130;
+    --cv-brand-dark-rgb: 6, 34, 84;
+    --cv-brand-light-rgb: 88, 166, 255;
+    --cv-accent: rgb(var(--cv-brand-light-rgb));
+}
+[data-palette="roxo"] {
+    --cv-brand-rgb: 109, 40, 217;
+    --cv-brand-dark-rgb: 76, 29, 149;
+    --cv-brand-light-rgb: 167, 139, 250;
+}
+[data-palette="rosa"] {
+    --cv-brand-rgb: 219, 39, 119;
+    --cv-brand-dark-rgb: 157, 23, 77;
+    --cv-brand-light-rgb: 244, 114, 182;
+}
+[data-palette="verde"] {
+    --cv-brand-rgb: 4, 120, 87;
+    --cv-brand-dark-rgb: 6, 78, 59;
+    --cv-brand-light-rgb: 52, 211, 153;
+}
+[data-palette="laranja"] {
+    --cv-brand-rgb: 194, 65, 12;
+    --cv-brand-dark-rgb: 124, 45, 18;
+    --cv-brand-light-rgb: 251, 146, 60;
+}
+
+/* No tema escuro o acento usa a variante clara da paleta, para manter contraste */
+[data-bs-theme="dark"][data-palette="azul"] { --cv-accent: #58a6ff; }
+[data-bs-theme="dark"][data-palette="roxo"] { --cv-accent: #a78bfa; }
+[data-bs-theme="dark"][data-palette="rosa"] { --cv-accent: #f472b6; }
+[data-bs-theme="dark"][data-palette="verde"] { --cv-accent: #34d399; }
+[data-bs-theme="dark"][data-palette="laranja"] { --cv-accent: #fb923c; }
 
 /* --------------------------------------------------------------------------
    2. BASE
@@ -269,7 +322,7 @@ body {
 }
 .btn-casanova:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 26px rgba(11, 56, 130, 0.30);
+    box-shadow: 0 12px 26px rgba(var(--cv-brand-rgb), 0.30);
 }
 
 /* Botões de ação das tabelas (ícones) */
@@ -855,7 +908,7 @@ body {
     color: #ffffff;
     background: var(--cv-blue);
     border-color: var(--cv-blue);
-    box-shadow: 0 1px 2px rgba(11, 56, 130, 0.25);
+    box-shadow: 0 1px 2px rgba(var(--cv-brand-rgb), 0.25);
 }
 .btn-action-primary:hover {
     background: var(--cv-blue-dark);
@@ -871,8 +924,8 @@ body {
     color: var(--cv-text);
     border-color: var(--cv-text-faint);
 }
-[data-bs-theme="dark"] .btn-action-primary { background: #1f6feb; border-color: #1f6feb; }
-[data-bs-theme="dark"] .btn-action-primary:hover { background: #388bfd; border-color: #388bfd; }
+[data-bs-theme="dark"] .btn-action-primary { background: var(--cv-blue); border-color: var(--cv-blue); }
+[data-bs-theme="dark"] .btn-action-primary:hover { background: var(--cv-accent); border-color: var(--cv-accent); }
 [data-bs-theme="dark"] .btn-action-secondary { color: #adb5bd; border-color: #30363d; }
 [data-bs-theme="dark"] .btn-action-secondary:hover { background: #21262d; color: #e6edf3; }
 
@@ -1772,7 +1825,7 @@ body.mobile-menu-open {
 .fluxo-setor-icone-estoque { color: #8b5cf6; }
 .fluxo-setor-icone-separacao { color: #06b6d4; }
 .fluxo-setor-icone-corte { color: #f59e0b; }
-.fluxo-setor-icone-usinagem { color: #3b82f6; }
+.fluxo-setor-icone-usinagem { color: var(--cv-accent); }
 .fluxo-setor-icone-mesa { color: #10b981; }
 .fluxo-setor-icone-encaixilhamento { color: #ec4899; }
 .fluxo-setor-icone-expedicao { color: #16a34a; }
