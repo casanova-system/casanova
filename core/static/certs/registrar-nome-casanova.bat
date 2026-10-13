@@ -1,8 +1,8 @@
 @echo off
 REM ============================================================
-REM  Registra o nome do sistema Casanova no arquivo hosts do Windows.
+REM  Casanova Esquadrias - Registra o nome do sistema no Windows
 REM
-REM  Cria as entradas:
+REM  Cria as entradas no arquivo hosts:
 REM     casanova.abra.local  -> 10.12.50.53
 REM     casanova.sistema     -> 10.12.50.53
 REM
@@ -11,8 +11,9 @@ REM  (clique com o botao direito -> Executar como administrador)
 REM ============================================================
 setlocal
 
-set HOSTS=%SystemRoot%\System32\drivers\etc\hosts
 set IP=10.12.50.53
+set HOSTS=%SystemRoot%\System32\drivers\etc\hosts
+set TMPHOSTS=%TEMP%\hosts_casanova.txt
 
 net session >nul 2>&1
 if not %errorLevel% == 0 (
@@ -20,7 +21,7 @@ if not %errorLevel% == 0 (
     echo  ============================================================
     echo   ERRO: precisa ser executado como ADMINISTRADOR
     echo.
-    echo   Clique com o botao direito neste arquivo e escolha:
+    echo   Clique com o botao DIREITO neste arquivo e escolha:
     echo      "Executar como administrador"
     echo  ============================================================
     echo.
@@ -33,30 +34,34 @@ echo  ============================================================
 echo   Casanova Esquadrias - Nome do sistema
 echo  ============================================================
 echo.
-echo  Arquivo: %HOSTS%
 echo  Servidor: %IP%
+echo  Arquivo : %HOSTS%
 echo.
 
-echo  --- Entradas ANTES ---
+echo  --- ANTES ---
 findstr /I "casanova" "%HOSTS%" 2>nul
-if errorlevel 1 echo    (nenhuma)
+if errorlevel 1 echo    (nenhuma entrada)
 echo.
 
-REM Backup com data
-for /f "tokens=1-4 delims=/ " %%a in ("%date%") do set D=%%d%%b%%c
-copy /Y "%HOSTS%" "%HOSTS%.bak_%D%" >nul
-echo  Backup: %HOSTS%.bak_%D%
+REM Backup do arquivo original
+copy /Y "%HOSTS%" "%HOSTS%.bak" >nul
+echo  Backup criado: %HOSTS%.bak
 
-REM Remove entradas antigas de casanova (inclui o apontamento errado para .99)
-powershell -NoProfile -Command ^
-  "$f='%HOSTS%'; $l = Get-Content $f -ErrorAction SilentlyContinue | Where-Object { $_ -notmatch 'casanova' }; Set-Content -Path $f -Value $l -Encoding ASCII;"
+REM Monta o novo arquivo: mantem tudo, menos linhas com "casanova"
+findstr /I /V "casanova" "%HOSTS%" > "%TMPHOSTS%"
 
-REM Adiciona as entradas corretas
-powershell -NoProfile -Command ^
-  "Add-Content -Path '%HOSTS%' -Value '`n%IP%    casanova.abra.local' -Encoding ASCII; Add-Content -Path '%HOSTS%' -Value '%IP%    casanova.sistema' -Encoding ASCII;"
+REM Acrescenta as entradas corretas (sem escape especial)
+echo.>> "%TMPHOSTS%"
+echo # Casanova Esquadrias - sistema de gestao>> "%TMPHOSTS%"
+echo %IP%    casanova.abra.local>> "%TMPHOSTS%"
+echo %IP%    casanova.sistema>> "%TMPHOSTS%"
+
+REM Substitui o arquivo (robocopy funciona mesmo com o arquivo em uso)
+copy /Y "%TMPHOSTS%" "%HOSTS%" >nul
+del "%TMPHOSTS%" 2>nul
 
 echo.
-echo  --- Entradas DEPOIS ---
+echo  --- DEPOIS ---
 findstr /I "casanova" "%HOSTS%"
 echo.
 
@@ -68,10 +73,9 @@ echo  ============================================================
 echo   PRONTO! Acesse no navegador:
 echo.
 echo      https://casanova.abra.local/industria/rastreio/
-echo      https://casanova.sistema/industria/rastreio/
 echo.
-echo   Se o aviso de certificado aparecer, aceite uma vez
-echo   (Avançado - Continuar) ou instale a CA em /certificado/
+echo   Se aparecer aviso de certificado, aceite uma vez
+echo   ou instale a CA em: https://%IP%/certificado/
 echo  ============================================================
 echo.
 pause
