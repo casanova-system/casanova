@@ -14,25 +14,39 @@ from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import render
 
+_CERT_DIR = ('core', 'static', 'certs')
 
-def _caminho_ca():
-    return os.path.join(settings.BASE_DIR, 'core', 'static', 'certs', 'casanova-ca.crt')
+
+def _caminho(nome):
+    return os.path.join(settings.BASE_DIR, *_CERT_DIR, nome)
 
 
 def pagina_certificado(request):
-    """Instrucoes de instalacao + link de download do certificado."""
+    """Instrucoes de instalacao + links de download."""
     return render(request, 'core/certificado.html', {
-        'ca_disponivel': os.path.exists(_caminho_ca()),
+        'ca_disponivel': os.path.exists(_caminho('casanova-ca.crt')),
+        'bat_disponivel': os.path.exists(_caminho('instalar-certificado-windows.bat')),
         'host': request.get_host().split(':')[0],
     })
 
 
 def baixar_ca(request):
     """Entrega o certificado publico da CA para instalacao no aparelho."""
-    caminho = _caminho_ca()
+    caminho = _caminho('casanova-ca.crt')
     if not os.path.exists(caminho):
         raise Http404('Certificado nao encontrado no servidor.')
 
     resp = FileResponse(open(caminho, 'rb'), content_type='application/x-x509-ca-cert')
     resp['Content-Disposition'] = 'attachment; filename="casanova-ca.crt"'
+    return resp
+
+
+def baixar_instalador_windows(request):
+    """Entrega o .bat que instala a CA no Windows com um duplo clique."""
+    caminho = _caminho('instalar-certificado-windows.bat')
+    if not os.path.exists(caminho):
+        raise Http404('Instalador nao encontrado no servidor.')
+
+    resp = FileResponse(open(caminho, 'rb'), content_type='application/octet-stream')
+    resp['Content-Disposition'] = 'attachment; filename="instalar-certificado-windows.bat"'
     return resp

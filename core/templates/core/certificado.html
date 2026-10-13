@@ -68,6 +68,14 @@
             margin-bottom: 10px;
         }
         .btn-baixar:hover { background: var(--azul-escuro); }
+        .btn-secundario {
+            background: #fff;
+            color: var(--azul) !important;
+            border: 2px solid var(--azul);
+            min-height: 52px;
+            font-size: 0.95rem;
+        }
+        .btn-secundario:hover { background: #eff6ff; }
         .aviso {
             display: flex;
             gap: 12px;
@@ -116,6 +124,16 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
+        .faca {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 6px;
+            padding: 1px 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-right: 4px;
+        }
         @media (max-width: 575.98px) {
             .topo { padding: 22px 18px; }
             .topo h1 { font-size: 1.2rem; }
@@ -128,7 +146,7 @@
 
     <div class="topo">
         <h1><i class="fa-solid fa-shield-halved me-2"></i>Instalar Certificado de Segurança</h1>
-        <p>Casanova Esquadrias &mdash; libera a câmera do celular para escanear as OPs</p>
+        <p>Casanova Esquadrias &mdash; remove o aviso "Não seguro" e libera a câmera do celular</p>
     </div>
 
     <div class="aviso aviso-info">
@@ -137,7 +155,7 @@
             <strong>Por que isso é necessário?</strong><br>
             O navegador só libera a câmera em conexões seguras. Como o sistema roda na rede interna
             da fábrica (sem domínio na internet), é preciso instalar este certificado uma vez em cada
-            celular. Depois disso o aviso "Não seguro" desaparece e a câmera funciona normalmente.
+            aparelho. Depois disso o aviso "Não seguro" desaparece e a câmera funciona normalmente.
         </div>
     </div>
 
@@ -145,10 +163,15 @@
     <div class="card-c">
         <h2><i class="fa-solid fa-download"></i> Passo 1 &mdash; Baixar o certificado</h2>
         <a href="{% url 'baixar_ca' %}" class="btn-baixar">
-            <i class="fa-solid fa-file-shield"></i> Baixar certificado
+            <i class="fa-solid fa-file-shield"></i> Baixar certificado (casanova-ca.crt)
         </a>
+        {% if bat_disponivel %}
+        <a href="{% url 'baixar_instalador_windows' %}" class="btn-baixar btn-secundario">
+            <i class="fa-brands fa-windows"></i> Baixar instalador automático (Windows)
+        </a>
+        {% endif %}
         <p style="margin: 0; font-size: 0.82rem; color: var(--texto-suave); text-align: center;">
-            Arquivo <code>casanova-ca.crt</code> &mdash; é a parte pública do certificado, seguro de compartilhar.
+            É a parte pública do certificado &mdash; seguro de compartilhar. A chave privada fica só no servidor.
         </p>
     </div>
     {% else %}
@@ -158,6 +181,44 @@
     </div>
     {% endif %}
 
+    <!-- ================= WINDOWS ================= -->
+    <div class="card-c">
+        <h2><i class="fa-brands fa-windows"></i> No Windows (PC)</h2>
+
+        {% if bat_disponivel %}
+        <div class="aviso aviso-info" style="margin-bottom: 14px;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <div>
+                <strong>Jeito mais rápido:</strong> baixe o <em>instalador automático</em> no Passo 1,
+                coloque o <code>.bat</code> e o <code>.crt</code> <strong>na mesma pasta</strong> e dê
+                duplo clique no <code>.bat</code>. Pronto.
+            </div>
+        </div>
+        {% endif %}
+
+        <p style="font-size: 0.88rem; font-weight: 600; margin-bottom: 10px;">
+            Ou faça manualmente:
+        </p>
+        <ol>
+            <li><span class="faca">1</span> Dê <strong>duplo clique</strong> no arquivo <code>casanova-ca.crt</code> baixado.</li>
+            <li><span class="faca">2</span> Clique em <strong>Instalar Certificado</strong>.</li>
+            <li><span class="faca">3</span> Escolha <strong>Usuário Atual</strong> e clique em <strong>Avançar</strong>.</li>
+            <li><span class="faca">4</span> Marque <strong>"Colocar todos os certificados no repositório a seguir"</strong>.</li>
+            <li><span class="faca">5</span> Clique em <strong>Procurar</strong> e selecione
+                <strong>Autoridades de Certificação Raiz Confiáveis</strong>.</li>
+            <li><span class="faca">6</span> <strong>Avançar</strong> &rarr; aparece um aviso de segurança &rarr;
+                clique em <strong>Sim</strong> &rarr; <strong>Concluir</strong>.</li>
+            <li><span class="faca">7</span> <strong>Feche e abra o navegador</strong> novamente.</li>
+        </ol>
+        <div class="passo-print">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            O passo 5 é o que todo mundo erra. Se você não escolher
+            <strong>"Autoridades de Certificação Raiz Confiáveis"</strong>, o certificado vai para o
+            lugar errado e o aviso continua aparecendo.
+        </div>
+    </div>
+
+    <!-- ================= ANDROID ================= -->
     <div class="card-c">
         <h2><i class="fa-brands fa-android"></i> No Android</h2>
         <ol>
@@ -173,10 +234,11 @@
         </div>
     </div>
 
+    <!-- ================= IPHONE ================= -->
     <div class="card-c">
         <h2><i class="fa-brands fa-apple"></i> No iPhone (iOS)</h2>
         <ol>
-            <li>Toque em <strong>Baixar certificado</strong> &mdash; o iOS vai avisar "Este site está tentando baixar um perfil de configuração". Toque em <strong>Permitir</strong>.</li>
+            <li>Toque em <strong>Baixar certificado</strong> &mdash; o iOS avisa "Este site está tentando baixar um perfil de configuração". Toque em <strong>Permitir</strong>.</li>
             <li>Abra <strong>Ajustes</strong> &rarr; <strong>Geral</strong> &rarr; <strong>VPN e Gerenciamento de Dispositivo</strong>.</li>
             <li>Toque no perfil <strong>Casanova Esquadrias</strong> e depois em <strong>Instalar</strong> (digite a senha do aparelho).</li>
             <li>Volte em <strong>Ajustes</strong> &rarr; <strong>Geral</strong> &rarr; <strong>Sobre</strong> &rarr; <strong>Ajustes de Confiança do Certificado</strong>.</li>
@@ -190,15 +252,34 @@
         </div>
     </div>
 
+    <!-- ================= FIREFOX ================= -->
+    <div class="card-c">
+        <h2><i class="fa-brands fa-firefox-browser"></i> Só para o Firefox</h2>
+        <p style="font-size: 0.88rem; margin-bottom: 12px;">
+            O Chrome e o Edge usam os certificados do Windows, então já funcionam depois dos passos acima.
+            O <strong>Firefox tem o próprio repositório</strong> e precisa de um passo extra:
+        </p>
+        <ol>
+            <li>Abra o Firefox &rarr; menu <strong>☰</strong> &rarr; <strong>Configurações</strong>.</li>
+            <li>Vá em <strong>Privacidade e Segurança</strong> e desça até <strong>Certificados</strong>.</li>
+            <li>Clique em <strong>Ver Certificados</strong>.</li>
+            <li>Na aba <strong>Autoridades</strong>, clique em <strong>Importar</strong>.</li>
+            <li>Selecione o arquivo <code>casanova-ca.crt</code>.</li>
+            <li>Marque <strong>"Confiar nesta CA para identificar sites"</strong> e confirme.</li>
+            <li>Reinicie o Firefox.</li>
+        </ol>
+    </div>
+
+    <!-- ================= TESTAR ================= -->
     <div class="card-c">
         <h2><i class="fa-solid fa-circle-check"></i> Pronto &mdash; testar</h2>
         <ol>
-            <li>Abra <code>https://{{ host }}/industria/producao/</code> no celular.</li>
+            <li>Abra <code>https://{{ host }}/industria/producao/</code>.</li>
             <li>O aviso "Não seguro" não deve mais aparecer.</li>
-            <li>Toque em <strong>Escanear com a câmera</strong> e permita o acesso quando o navegador pedir.</li>
+            <li>No celular, toque em <strong>Escanear com a câmera</strong> e permita o acesso quando o navegador pedir.</li>
         </ol>
         <div style="text-align:center; margin-top:14px;">
-            <span class="tag"><i class="fa-solid fa-check me-1"></i> Certificado válido por 3 anos</span>
+            <span class="tag"><i class="fa-solid fa-check me-1"></i> Certificado válido até 2029</span>
         </div>
     </div>
 

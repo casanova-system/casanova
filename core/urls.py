@@ -1,7 +1,11 @@
 from core.views import usuario as views_usuario
 from core.views import permissao
 from core.views.app_mobile import app_mobile
-from core.views.certificado import baixar_ca, pagina_certificado
+from core.views.certificado import (
+    baixar_ca,
+    baixar_instalador_windows,
+    pagina_certificado,
+)
 from django.urls import path
 from django.views.generic.base import RedirectView
 
@@ -158,4 +162,6 @@ urlpatterns = [
     # ==========================================
     path('certificado/', pagina_certificado, name='pagina_certificado'),
     path('certificado/casanova-ca.crt', baixar_ca, name='baixar_ca'),
+    path('certificado/instalar-certificado-windows.bat',
+         baixar_instalador_windows, name='baixar_instalador_windows'),
 ]
