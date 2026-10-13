@@ -152,5 +152,4 @@ urlpatterns = [
     # APP MOBILE (Flutter Web) — acessível pelo navegador do celular
     # ==========================================
     path('app/', app_mobile, name='app_mobile'),
-    path('app/v2/', app_mobile, name='app_mobile_v2'),
 ]
