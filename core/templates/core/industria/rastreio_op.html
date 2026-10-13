@@ -355,10 +355,12 @@
                         <tr>
                             <th class="ps-3" style="width: 40px;">#</th>
                             <th>Setor</th>
-                            <th>Usuário</th>
-                            <th>Data / Hora</th>
-                            <th>Tempo no Setor</th>
-                            <th class="pe-3">Observação</th>
+                            <th>Usuário Início</th>
+                            <th>Data/Hora Início</th>
+                            <th>Usuário Fim</th>
+                            <th>Data/Hora Fim</th>
+                            <th>Tempo</th>
+                            <th class="pe-3">Obs. Saída</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -380,15 +382,24 @@
                             </td>
                             <td>
                                 {% if m.usuario_entrada %}
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
-                                        <i class="fa-solid fa-user me-1"></i> {{ m.usuario_entrada.username }}
+                                    <span class="text-primary fw-semibold" style="font-size: 0.8rem;">
+                                        <i class="fa-solid fa-user me-1"></i>{{ m.usuario_entrada.username }}
                                     </span>
                                 {% else %}
                                     <span class="text-muted small">—</span>
                                 {% endif %}
                             </td>
-                            <td class="text-nowrap text-muted">{{ m.data_entrada|date:"d/m/Y H:i:s" }}</td>
-                            <td class="text-nowrap text-muted">{{ m.data_saida|date:"d/m/Y H:i:s" }}</td>
+                            <td class="text-nowrap text-muted" style="font-size: 0.8rem;">{{ m.data_entrada|date:"d/m/Y H:i:s" }}</td>
+                            <td>
+                                {% if m.usuario_saida %}
+                                    <span class="text-info fw-semibold" style="font-size: 0.8rem;">
+                                        <i class="fa-solid fa-user me-1"></i>{{ m.usuario_saida.username }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-nowrap text-muted" style="font-size: 0.8rem;">{{ m.data_saida|date:"d/m/Y H:i:s" }}</td>
                             <td>
                                 {% if m.tempo_no_setor_formatado != '—' %}
                                     <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1">
@@ -400,10 +411,10 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td class="pe-3 text-muted">{{ m.observacao_saida|default:"—" }}</td>
+                            <td class="pe-3 text-muted" style="font-size: 0.8rem;">{{ m.observacao_saida|default:"—" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
