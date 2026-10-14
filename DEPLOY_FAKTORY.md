@@ -72,9 +72,9 @@ Adicione ao `.env` do servidor (ou ao `Environment=` do systemd):
 
 ```env
 FAKTORY_DB_NAME=faktory_CASANOVA
-FAKTORY_DB_USER=pb
-FAKTORY_DB_PASSWORD=prefbrasil
-FAKTORY_DB_HOST=10.12.50.90
+FAKTORY_DB_USER=<usuario>
+FAKTORY_DB_PASSWORD=<senha>
+FAKTORY_DB_HOST=<host-do-erp>
 FAKTORY_DB_PORT=1433
 FAKTORY_DB_DRIVER=ODBC Driver 18 for SQL Server
 ```
@@ -120,5 +120,5 @@ sudo systemctl restart casanova
 |---|---|
 | Pacote Python | `python -c "import mssql"` |
 | Driver ODBC | `odbcinst -q -d` |
-| Rede até o SQL Server | `nc -zv 10.12.50.90 1433` |
+| Rede até o SQL Server | `nc -zv <host-do-erp> 1433` |
 | Conexão Django | `python manage.py shell -c "from django.db import connections; connections['faktory'].ensure_connection(); print('OK')"` |

@@ -73,10 +73,12 @@ DATABASES = {
     },
     'faktory': {
         'ENGINE': 'mssql',
+        # Sem valores default: as credenciais do ERP vem SEMPRE do .env.
+        # Isso evita credencial fixa no codigo e falha explicita se faltar.
         'NAME': config('FAKTORY_DB_NAME', default='faktory_CASANOVA'),
-        'USER': config('FAKTORY_DB_USER', default='pb'),
-        'PASSWORD': config('FAKTORY_DB_PASSWORD', default='prefbrasil'),
-        'HOST': config('FAKTORY_DB_HOST', default='10.12.50.90'),
+        'USER': config('FAKTORY_DB_USER'),
+        'PASSWORD': config('FAKTORY_DB_PASSWORD'),
+        'HOST': config('FAKTORY_DB_HOST'),
         'PORT': config('FAKTORY_DB_PORT', default='1433'),
         'OPTIONS': {
             'driver': config('FAKTORY_DB_DRIVER', default='ODBC Driver 18 for SQL Server'),

@@ -1,5 +1,38 @@
-db.sqlite3
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Ambiente
 .env
+.env.*
+!.env.example
 venv/
+.venv/
+env/
+
+# Banco local
+db.sqlite3
+*.sqlite3
+
+# Arquivos de midia enviados pelos usuarios (dados de execucao, nao de codigo)
+media/
+fotos_perfil/
+
+# Estaticos gerados
+staticfiles/
+
+# Editores / SO
+.idea/
+.vscode/
+.continue/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Temporarios de desenvolvimento
+*.log
+nohup.out
+chrome_perfil_*/
+hosts_novo.txt
