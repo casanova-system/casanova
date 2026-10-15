@@ -1,0 +1,55 @@
+{% extends 'pontosecullum/base.html' %}
+
+{% block title %}{{ tabela }} — PontoSecullum {{ banco|title }}{% endblock %}
+
+{% block ponto_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table"></i> <strong>{{ tabela }}</strong></span>
+        <a href="{% url 'ponto_tabelas' banco %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+    <div class="card-body">
+        {% if erro %}
+            <div class="alert alert-danger">{{ erro }}</div>
+        {% else %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted">
+                    {{ total_rows }} registro{{ total_rows|pluralize }}
+                    {% if limit_atingido %}(limite de 500 atingido){% endif %}
+                </span>
+                <a href="{% url 'ponto_ver_tabela' banco tabela %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </a>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="table table-striped table-sm table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            {% for col in col_names %}
+                            <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            {% for cell in row %}
+                            <td>{{ cell|default:"—" }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{{ col_names|length }}" class="text-center text-muted">
+                                Nenhum registro encontrado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

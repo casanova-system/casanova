@@ -147,48 +147,28 @@
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header list-card-header">
             <h5 class="list-card-title"><i class="fa-solid fa-route me-2 text-primary"></i> Fluxo de Produção</h5>
+            {% if rastreio.concluida %}
+                <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1">
+                    <i class="fa-solid fa-circle-check me-1"></i> Concluída
+                </span>
+            {% endif %}
         </div>
         <div class="card-body">
-            <div class="d-flex flex-wrap justify-content-center gap-3">
-                {% for s in setores %}
-                    {% if s.requer_vidro and rastreio.tem_vidro is False %}
-                        {% comment %} setor pulado (sem vidro) {% endcomment %}
-                    {% else %}
-                        <div class="text-center" style="min-width: 100px;">
-                            {% if rastreio.concluida %}
-                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(22, 163, 74, 0.15); color: #16a34a;">
-                                    <i class="fa-solid fa-check fa-lg"></i>
-                                </div>
-                                <div class="fw-semibold" style="font-size: 0.8rem; color: #16a34a;">{{ s.nome }}</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">
-                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
-                                        {{ rastreio|tempo_no_setor:s.codigo }}
-                                    {% endif %}
-                                </div>
-                            {% elif s.codigo == rastreio.setor_atual %}
-                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: var(--casanova-blue); color: white; box-shadow: 0 0 0 4px rgba(11, 56, 130, 0.2);">
-                                    <i class="fa-solid fa-location-dot fa-lg"></i>
-                                </div>
-                                <div class="fw-bold" style="font-size: 0.8rem; color: var(--casanova-blue);">{{ s.nome }}</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">{{ rastreio.tempo_no_setor_atual_formatado }}</div>
+            <div class="fluxo-producao">
+                {% for f in fluxo %}
+                    <div class="fluxo-setor {{ f.estado }}{% if f.estado == 'atual' %} pulso{% endif %}">
+                        <div class="fluxo-icone">
+                            {% if f.estado == 'concluido' %}
+                                <i class="fa-solid fa-check"></i>
+                            {% elif f.estado == 'atual' %}
+                                <i class="fa-solid {{ f.icone }}"></i>
                             {% else %}
-                                <div class="d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
-                                    <i class="fa-solid fa-circle fa-lg"></i>
-                                </div>
-                                <div class="text-muted" style="font-size: 0.8rem;">{{ s.nome }}</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">
-                                    {% if rastreio|tempo_no_setor:s.codigo != '—' %}
-                                        {{ rastreio|tempo_no_setor:s.codigo }}
-                                    {% endif %}
-                                </div>
+                                <i class="fa-solid {{ f.icone }}"></i>
                             {% endif %}
                         </div>
-                        {% if not forloop.last %}
-                            <div class="d-flex align-items-center text-muted" style="font-size: 1.2rem;">
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </div>
-                        {% endif %}
-                    {% endif %}
+                        <div class="fluxo-nome">{{ f.nome }}</div>
+                        {% if f.tempo %}<div class="fluxo-tempo">{{ f.tempo }}</div>{% endif %}
+                    </div>
                 {% endfor %}
             </div>
         </div>
@@ -196,148 +176,168 @@
 
     <!-- Estado atual e ações -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center py-4">
-                    <div class="text-muted small fw-semibold text-uppercase mb-2">Setor Atual</div>
-                    {% if rastreio.concluida %}
-                        <div class="d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(22, 163, 74, 0.1); color: #16a34a; margin: 0 auto;">
-                            <i class="fa-solid fa-circle-check fa-2x"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1">OP Concluída</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">Esta OP chegou ao fim do fluxo de produção.</p>
-                    {% else %}
-                        <h3 class="fw-bold mb-3">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</h3>
-                        <div class="mb-3">
-                            {% if rastreio.aguardando_saida %}
-                                <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-3 py-2">
-                                    <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada — aguardando próximo setor
-                                </span>
-                            {% else %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-2">
-                                    <i class="fa-solid fa-gears me-1"></i> Em produção — bipar para liberar
-                                </span>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <span class="status-badge {{ rastreio.status_tempo_classe }}">
-                                <i class="fa-solid
-                                    {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
-                                    {% elif rastreio.status_tempo == 'ATENCAO' %}fa-triangle-exclamation
-                                    {% else %}fa-circle-check{% endif %}"></i>
-                                {{ rastreio.status_tempo_texto }}
-                                {% if rastreio.tempo_no_setor_atual %}
-                                    · {{ rastreio.tempo_no_setor_atual_formatado }}
-                                {% endif %}
+        <!-- Card: Setor Atual -->
+        <div class="col-lg-5">
+            <div class="rastreio-painel h-100">
+                <div class="rastreio-painel-head">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Setor Atual</span>
+                </div>
+
+                {% if rastreio.concluida %}
+                    <div class="rastreio-estado rastreio-estado-ok">
+                        <div class="rastreio-estado-icone"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="rastreio-estado-titulo">OP Concluída</div>
+                        <div class="rastreio-estado-texto">Esta OP chegou ao fim do fluxo de produção.</div>
+                    </div>
+                {% else %}
+                    <div class="rastreio-setor-nome">{{ setor_atual.nome|default:rastreio.setor_atual_nome }}</div>
+
+                    <div class="rastreio-status-linha">
+                        {% if rastreio.aguardando_saida %}
+                            <span class="status-badge status-liberada">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Liberada — aguardando próximo setor
                             </span>
-                        </div>
-                        {% if precisa_decidir_vidro %}
-                        <div class="alert alert-info d-inline-block text-start mb-0" style="font-size: 0.85rem;">
-                            <div class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-1"></i> Esta OP tem vidro?</div>
-                            <div class="d-flex gap-2">
-                                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="acao" value="vidro_sim">
-                                    <button type="submit" class="btn btn-sm btn-info text-white fw-semibold">
-                                        <i class="fa-solid fa-check me-1"></i> Sim
-                                    </button>
-                                </form>
-                                <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="acao" value="vidro_nao">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold">
-                                        <i class="fa-solid fa-xmark me-1"></i> Não
-                                    </button>
-                                </form>
-                            </div>
+                        {% else %}
+                            <span class="status-badge status-producao">
+                                <i class="fa-solid fa-gears"></i> Em produção — bipar para liberar
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if rastreio.tempo_no_setor_atual %}
+                    <div class="rastreio-status-linha">
+                        <span class="status-badge {{ rastreio.status_tempo_classe }}">
+                            <i class="fa-solid
+                                {% if rastreio.status_tempo == 'CRITICO' %}fa-circle-xmark
+                                {% elif rastreio.status_tempo == 'ATENCAO' %}fa-triangle-exclamation
+                                {% else %}fa-circle-check{% endif %}"></i>
+                            {{ rastreio.status_tempo_texto }} · {{ rastreio.tempo_no_setor_atual_formatado }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if rastreio.quantidade_total or rastreio.quantidade_produzida_total %}
+                    <div class="rastreio-metricas">
+                        {% if rastreio.quantidade_total %}
+                        <div class="rastreio-metrica">
+                            <div class="rastreio-metrica-valor">{{ rastreio.quantidade_total }}</div>
+                            <div class="rastreio-metrica-rotulo">Total da OP</div>
                         </div>
                         {% endif %}
+                        {% if rastreio.quantidade_produzida_total %}
+                        <div class="rastreio-metrica rastreio-metrica-ok">
+                            <div class="rastreio-metrica-valor">{{ rastreio.quantidade_produzida_total }}</div>
+                            <div class="rastreio-metrica-rotulo">Produzidas</div>
+                        </div>
+                        {% endif %}
+                    </div>
                     {% endif %}
-                </div>
+
+                    {% if precisa_decidir_vidro %}
+                    <div class="rastreio-decisao">
+                        <div class="rastreio-decisao-titulo">
+                            <i class="fa-solid fa-circle-question"></i> Esta OP tem vidro?
+                        </div>
+                        <div class="rastreio-decisao-btns">
+                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="vidro_sim">
+                                <button type="submit" class="btn-acao btn-acao-ok">
+                                    <i class="fa-solid fa-check"></i> Sim
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="vidro_nao">
+                                <button type="submit" class="btn-acao btn-acao-neutro">
+                                    <i class="fa-solid fa-xmark"></i> Não
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center py-4">
-                    <div class="text-muted small fw-semibold text-uppercase mb-2">Próximo Setor</div>
-                    {% if proximo %}
-                        <h4 class="fw-bold mb-3">{{ proximo.nome }}</h4>
-                        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
-                            <i class="fa-solid fa-arrow-right text-muted"></i>
-                            <span class="text-muted small">Avançar para o próximo setor</span>
-                        </div>
+
+        <!-- Card: Ações -->
+        <div class="col-lg-7">
+            <div class="rastreio-painel h-100">
+                <div class="rastreio-painel-head">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Ações</span>
+                </div>
+
+                {% if not rastreio.concluida %}
+                    {% if not rastreio.aguardando_saida %}
+                        <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="saida">
+                            <div class="rastreio-acao-campo">
+                                <label class="rastreio-acao-label">Quantidade produzida neste setor</label>
+                                <div class="rastreio-acao-linha">
+                                    <input type="number" name="quantidade_produzida"
+                                           class="rastreio-acao-input" placeholder="0"
+                                           inputmode="numeric" min="0" max="99999">
+                                    <input type="text" name="observacao"
+                                           class="rastreio-acao-input rastreio-acao-input-obs"
+                                           placeholder="Observação / B.O. (opcional)">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-acao btn-acao-primario btn-acao-largo">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                Finalizar e liberar do setor
+                            </button>
+                        </form>
                     {% else %}
-                        <h4 class="fw-bold mb-3 text-success">Finalizar</h4>
-                        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
-                            <i class="fa-solid fa-flag-checkered text-success"></i>
-                            <span class="text-muted small">Concluir OP</span>
+                        <div class="rastreio-aviso rastreio-aviso-info">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <div>
+                                <strong>OP liberada</strong>
+                                <span>Aguardando o próximo setor receber a peça.</span>
+                            </div>
                         </div>
                     {% endif %}
 
-                    {% if anterior %}
-                    <div class="mt-3 pt-3" style="border-top: 1px solid var(--cv-line);">
-                        <div class="text-muted small fw-semibold text-uppercase mb-2">Setor Anterior</div>
-                        <span class="text-muted">{{ anterior.nome }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center py-4">
-                    <div class="text-muted small fw-semibold text-uppercase mb-2">Ações</div>
-                    <div class="d-flex flex-column gap-2">
-                        {% if not rastreio.concluida %}
-                            {% if not rastreio.aguardando_saida %}
-                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="acao" value="saida">
-                                <input type="text" name="observacao" class="form-control form-control-sm mb-2" placeholder="Observação (opcional)">
-                                <button type="submit" class="btn btn-info w-100 text-white">
-                                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Finalizar e Liberar (2º bip)
-                                </button>
-                            </form>
-                            {% else %}
-                            <div class="alert alert-info py-2 mb-2">
-                                <small><i class="fa-solid fa-circle-info me-1"></i> OP liberada. Aguardando o próximo setor receber.</small>
-                            </div>
-                            {% endif %}
-                            {% if proximo %}
-                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="acao" value="avancar">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fa-solid fa-arrow-right me-2"></i> Avançar para {{ proximo.nome }}
-                                </button>
-                            </form>
-                            {% else %}
-                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="acao" value="avancar">
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="fa-solid fa-flag-checkered me-2"></i> Concluir OP
-                                </button>
-                            </form>
-                            {% endif %}
+                    <div class="rastreio-acao-linha2">
+                        {% if proximo %}
+                        <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="avancar">
+                            <button type="submit" class="btn-acao btn-acao-primario btn-acao-largo">
+                                <i class="fa-solid fa-arrow-right"></i> Avançar para {{ proximo.nome }}
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="avancar">
+                            <button type="submit" class="btn-acao btn-acao-ok btn-acao-largo">
+                                <i class="fa-solid fa-flag-checkered"></i> Concluir OP
+                            </button>
+                        </form>
+                        {% endif %}
+
                         {% if anterior %}
                         <form method="POST" action="{% url 'registrar_movimentacao' op_id %}">
                             {% csrf_token %}
                             <input type="hidden" name="acao" value="retroceder">
-                            <button type="submit" class="btn btn-outline-secondary w-100">
-                                <i class="fa-solid fa-rotate-left me-2"></i> Voltar para {{ anterior.nome }}
+                            <button type="submit" class="btn-acao btn-acao-neutro btn-acao-largo">
+                                <i class="fa-solid fa-rotate-left"></i> Voltar para {{ anterior.nome }}
                             </button>
                         </form>
                         {% endif %}
-                        {% else %}
-                        <div class="d-flex align-items-center justify-content-center gap-2 text-success mb-3">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <span class="fw-semibold">OP Finalizada</span>
-                        </div>
-                        <p class="text-muted small mb-0">Esta OP foi concluída e não pode receber novas movimentações.</p>
-                        {% endif %}
                     </div>
-                </div>
+                {% else %}
+                    <div class="rastreio-aviso rastreio-aviso-ok">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <strong>OP finalizada</strong>
+                            <span>Esta OP foi concluída e não pode receber novas movimentações.</span>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -350,7 +350,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 rastreio-historico">
                     <thead class="table-light">
                         <tr>
                             <th class="ps-3" style="width: 40px;">#</th>
@@ -360,6 +360,7 @@
                             <th>Usuário Fim</th>
                             <th>Data/Hora Fim</th>
                             <th>Tempo</th>
+                            <th>Qtd. Produzida</th>
                             <th class="pe-3">Obs. Saída</th>
                         </tr>
                     </thead>
@@ -411,10 +412,19 @@
                                     </span>
                                 {% endif %}
                             </td>
+                            <td style="font-size: 0.8rem;">
+                                {% if m.quantidade_produzida is not None %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                        <i class="fa-solid fa-boxes-stacked me-1"></i> {{ m.quantidade_produzida }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
                             <td class="pe-3 text-muted" style="font-size: 0.8rem;">{{ m.observacao_saida|default:"—" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">Nenhuma movimentação registrada.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

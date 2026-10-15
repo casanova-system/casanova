@@ -49,55 +49,99 @@
 
     <!-- Gráficos -->
     <div class="row g-3 mb-3" style="flex-shrink: 0;">
-        <div class="col-md-4">
+
+        <!-- Tempo por Setor -->
+        <div class="col-xl-4 col-lg-6">
             <div class="chart-panel">
                 <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Tempo Médio por Setor</h6>
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Tempo por Setor</h6>
+                    <div class="chart-ctrl">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Métrica">
+                            <button type="button" class="chart-toggle active" data-grupo="tempo" data-valor="medio">Média</button>
+                            <button type="button" class="chart-toggle" data-grupo="tempo" data-valor="total">Total</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="chart-body">
                     <canvas id="graficoTempoSetor" height="200"></canvas>
                 </div>
+                <div class="chart-foot">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Tempo em horário de fábrica (7h–11h · 12h12–17h), sem noites nem fins de semana.
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
+
+        <!-- Distribuição -->
+        <div class="col-xl-4 col-lg-6">
             <div class="chart-panel">
                 <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-chart-pie me-1 text-primary"></i> Distribuição por Setor</h6>
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-pie me-1 text-primary"></i> Distribuição</h6>
+                    <div class="chart-ctrl">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Agrupar por">
+                            <button type="button" class="chart-toggle active" data-grupo="dist" data-valor="setor">Setor</button>
+                            <button type="button" class="chart-toggle" data-grupo="dist" data-valor="status">Status</button>
+                            <button type="button" class="chart-toggle" data-grupo="dist" data-valor="vidro">Vidro</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="chart-body">
                     <canvas id="graficoDistribuicao" height="200"></canvas>
                 </div>
+                <div class="chart-foot" id="distResumo"></div>
             </div>
         </div>
-        <div class="col-md-4">
+
+        <!-- Concluídas por Dia -->
+        <div class="col-xl-4">
             <div class="chart-panel">
                 <div class="chart-head">
                     <h6 class="chart-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Concluídas por Dia</h6>
+                    <div class="chart-ctrl">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Período">
+                            <button type="button" class="chart-toggle active" data-grupo="dias" data-valor="7">7d</button>
+                            <button type="button" class="chart-toggle" data-grupo="dias" data-valor="30">30d</button>
+                            <button type="button" class="chart-toggle" data-grupo="dias" data-valor="90">90d</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="chart-body">
                     <canvas id="graficoConcluidas" height="200"></canvas>
                 </div>
+                <div class="chart-foot" id="concResumo"></div>
             </div>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="filtros-bar">
+    <!-- Filtros (alimentam KPIs, gráficos e tabela) -->
+    <div class="filtros-bar{% if tem_filtro_ativo %} filtros-ativos{% endif %}">
         <form method="GET" action="" class="filtros-bar-form">
             <div class="filtros-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" name="q" value="{{ filtros.q|default:'' }}" placeholder="Buscar por OP, obra ou produto...">
+                <input type="text" name="q" value="{{ filtros.q|default:'' }}" placeholder="Buscar por OP, obra, produto ou variante...">
             </div>
-            <select name="setor" class="form-select form-select-sm" style="max-width: 190px;">
+            <select name="obra" class="form-select form-select-sm" style="max-width: 210px;">
+                <option value="">Todas as obras</option>
+                {% for o in obras %}
+                    <option value="{{ o }}" {% if filtros.obra == o %}selected{% endif %}>{{ o }}</option>
+                {% endfor %}
+            </select>
+            <select name="setor" class="form-select form-select-sm" style="max-width: 165px;">
                 <option value="">Todos os setores</option>
                 {% for s in setores %}
                     <option value="{{ s.codigo }}" {% if filtros.setor == s.codigo %}selected{% endif %}>{{ s.nome }}</option>
                 {% endfor %}
             </select>
-            <select name="status" class="form-select form-select-sm" style="max-width: 170px;">
+            <select name="status" class="form-select form-select-sm" style="max-width: 150px;">
                 <option value="">Todos os status</option>
                 <option value="EM_PRODUCAO" {% if filtros.status == 'EM_PRODUCAO' %}selected{% endif %}>Em Produção</option>
                 <option value="CONCLUIDA" {% if filtros.status == 'CONCLUIDA' %}selected{% endif %}>Concluída</option>
+            </select>
+            <select name="vidro" class="form-select form-select-sm" style="max-width: 145px;">
+                <option value="">Vidro: todos</option>
+                <option value="sim" {% if filtros.vidro == 'sim' %}selected{% endif %}>Com vidro</option>
+                <option value="nao" {% if filtros.vidro == 'nao' %}selected{% endif %}>Sem vidro</option>
+                <option value="a_definir" {% if filtros.vidro == 'a_definir' %}selected{% endif %}>A definir</option>
             </select>
             <button type="submit" class="btn btn-primary">
                 <i class="fa-solid fa-magnifying-glass"></i> Localizar
@@ -106,6 +150,12 @@
                 <i class="fa-solid fa-rotate-left"></i> Limpar
             </a>
         </form>
+        {% if tem_filtro_ativo %}
+        <div class="filtros-nota">
+            <i class="fa-solid fa-filter"></i>
+            KPIs e gráficos refletem os filtros aplicados.
+        </div>
+        {% endif %}
     </div>
 
     <!-- Tabela -->
@@ -128,6 +178,7 @@
                         <col style="width: 170px;">
                         <col style="width: 160px;">
                         <col style="width: 150px;">
+                        <col style="width: 120px;">
                         <col style="width: 110px;">
                     </colgroup>
                     <thead class="table-light sticky-top">
@@ -139,6 +190,7 @@
                             <th>Setor Atual<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th>Última Atualização<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th>Status<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th>Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
@@ -172,6 +224,15 @@
                                     <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
                                 {% endif %}
                             </td>
+                            <td>
+                                {% if r.quantidade_produzida_total is not None %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                        <i class="fa-solid fa-boxes-stacked me-1"></i> {{ r.quantidade_produzida_total }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
                                     <a href="{% url 'rastreio_op' r.op_id %}" class="btn-row btn-row-view" title="Abrir rastreio"><i class="fa-solid fa-eye"></i></a>
@@ -180,7 +241,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="p-0">
+                            <td colspan="9" class="p-0">
                                 {% url 'rastreio_producao' as url_lista %}
                                 {% include 'core/partials/empty_state.html' with icone="fa-route" busca=filtros.q titulo_vazio="Nenhuma OP em rastreio" texto_vazio="Escaneie o QR Code de uma OP para iniciar o rastreio de produção." limpar_url=url_lista %}
                             </td>
@@ -194,150 +255,206 @@
     </div>
 </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Chart.js (local, sem CDN — fábrica não depende de internet) -->
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
 <script>
-    // Dados para gráficos
-    const tempoMedioSetores = {{ tempo_medio_setores|safe }};
-    const distribuicaoSetores = {{ distribuicao_setores|safe }};
-    const concluidasPorDia = {{ concluidas_por_dia|safe }};
+(function () {
+    'use strict';
 
-    // Cores do sistema Casanova
-    const cores = {
-        azul: '#0b3882',
-        azulClaro: '#4da6ff',
-        verde: '#16a34a',
-        amarelo: '#d97706',
-        vermelho: '#dc2626',
-        cinza: '#94a3b8',
-        azulMedio: '#3b82f6',
-        roxo: '#7c3aed',
-        rosa: '#ec4899',
-        ciano: '#06b6d4',
+    // ---- Dados vindos da view (já filtrados pela barra de filtros) ----
+    const DADOS = {
+        tempoMedio: {{ tempo_setores_medio|safe }},
+        tempoTotal: {{ tempo_setores_total|safe }},
+        dist: {
+            setor:  {{ dist_setor|safe }},
+            status: {{ dist_status|safe }},
+            vidro:  {{ dist_vidro|safe }},
+        },
+        concluidas: {
+            7:  {{ concluidas_7|safe }},
+            30: {{ concluidas_30|safe }},
+            90: {{ concluidas_90|safe }},
+        },
     };
 
-    // Gráfico de barras: Tempo Médio por Setor
-    const ctxTempo = document.getElementById('graficoTempoSetor').getContext('2d');
-    new Chart(ctxTempo, {
-        type: 'bar',
-        data: {
-            labels: tempoMedioSetores.map(s => s.nome),
-            datasets: [{
-                label: 'Tempo Médio (min)',
-                data: tempoMedioSetores.map(s => s.tempo_medio),
-                backgroundColor: [
-                    cores.azul,
-                    cores.azulClaro,
-                    cores.verde,
-                    cores.amarelo,
-                    cores.vermelho,
-                    cores.azulMedio,
-                    cores.roxo,
-                ],
-                borderRadius: 6,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.parsed.y + ' min';
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                    ticks: { font: { size: 11 } }
+    const CORES = ['#0b3882', '#4da6ff', '#16a34a', '#d97706', '#dc2626',
+                   '#3b82f6', '#7c3aed', '#ec4899', '#06b6d4', '#94a3b8'];
+
+    const eixoY = {
+        beginAtZero: true,
+        grid: { color: 'rgba(128,140,160,0.12)' },
+        ticks: { font: { size: 11 }, precision: 0 },
+    };
+    const eixoX = {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, autoSkip: true, maxRotation: 0 },
+    };
+
+    function totalDe(serie) {
+        return serie.reduce((s, d) => s + (d.quantidade || 0), 0);
+    }
+
+    // ================= Gráfico 1: Tempo por Setor =================
+    const graficoTempo = new Chart(
+        document.getElementById('graficoTempoSetor').getContext('2d'),
+        {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            // Mostra o valor já formatado em h/min, não o número cru.
+                            label: (ctx) => ' ' + (ctx.dataset.textos[ctx.dataIndex] || '—'),
+                        },
+                    },
                 },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 10 } }
-                }
-            }
+                scales: { y: eixoY, x: eixoX },
+            },
         }
+    );
+
+    function renderTempo(metrica) {
+        const serie = metrica === 'total' ? DADOS.tempoTotal : DADOS.tempoMedio;
+        graficoTempo.data.labels = serie.map((s) => s.nome);
+        graficoTempo.data.datasets = [{
+            label: metrica === 'total' ? 'Tempo Total' : 'Tempo Médio',
+            data: serie.map((s) => s.valor),
+            textos: serie.map((s) => s.texto),
+            backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 46,
+        }];
+        graficoTempo.update();
+    }
+
+    // ================= Gráfico 2: Distribuição =================
+    const graficoDist = new Chart(
+        document.getElementById('graficoDistribuicao').getContext('2d'),
+        {
+            type: 'doughnut',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 11 }, padding: 8, boxWidth: 12 },
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const total = totalDe(ctx.dataset.itens);
+                                const pct = total ? ((ctx.parsed / total) * 100).toFixed(0) : 0;
+                                return ` ${ctx.parsed} OP${ctx.parsed === 1 ? '' : 's'} (${pct}%)`;
+                            },
+                        },
+                    },
+                },
+                cutout: '62%',
+            },
+        }
+    );
+
+    function renderDist(agrupar) {
+        const serie = DADOS.dist[agrupar] || [];
+        graficoDist.data.labels = serie.map((s) => s.nome);
+        graficoDist.data.datasets = [{
+            data: serie.map((s) => s.quantidade),
+            itens: serie,
+            backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
+            borderWidth: 2,
+            borderColor: 'rgba(255,255,255,0.85)',
+        }];
+        graficoDist.update();
+
+        const total = totalDe(serie);
+        const rotulo = { setor: 'setor', status: 'status', vidro: 'vidro' }[agrupar];
+        document.getElementById('distResumo').innerHTML = total
+            ? `<i class="fa-solid fa-layer-group"></i> ${total} OP${total === 1 ? '' : 's'} por ${rotulo}`
+            : '<i class="fa-solid fa-circle-info"></i> Sem dados para os filtros aplicados.';
+    }
+
+    // ================= Gráfico 3: Concluídas por Dia =================
+    const graficoConc = new Chart(
+        document.getElementById('graficoConcluidas').getContext('2d'),
+        {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                interaction: { mode: 'index', intersect: false },
+                scales: { y: { ...eixoY, ticks: { ...eixoY.ticks, stepSize: 1 } }, x: eixoX },
+            },
+        }
+    );
+
+    function renderConc(dias) {
+        const serie = DADOS.concluidas[dias] || [];
+        graficoConc.data.labels = serie.map((d) => d.dia);
+        graficoConc.data.datasets = [{
+            label: 'Concluídas',
+            data: serie.map((d) => d.quantidade),
+            borderColor: '#0b3882',
+            backgroundColor: 'rgba(11,56,130,0.10)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#0b3882',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+        }];
+        graficoConc.update();
+
+        const total = totalDe(serie);
+        document.getElementById('concResumo').innerHTML = total
+            ? `<i class="fa-solid fa-flag-checkered"></i> ${total} concluída${total === 1 ? '' : 's'} nos últimos ${dias} dias`
+            : `<i class="fa-solid fa-circle-info"></i> Nenhuma conclusão nos últimos ${dias} dias.`;
+    }
+
+    // ================= Liga os botões de cada gráfico =================
+    // Um listener por grupo: troca a opção sem recarregar a página.
+    const renderizadores = {
+        tempo: renderTempo,
+        dist: renderDist,
+        dias: renderConc,
+    };
+
+    document.querySelectorAll('.chart-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const grupo = btn.getAttribute('data-grupo');
+            const valor = btn.getAttribute('data-valor');
+
+            // marca só o botão clicado dentro do seu grupo
+            document.querySelectorAll(`.chart-toggle[data-grupo="${grupo}"]`)
+                .forEach((b) => b.classList.toggle('active', b === btn));
+
+            const render = renderizadores[grupo];
+            if (render) render(valor);
+        });
     });
 
-    // Gráfico de pizza: Distribuição por Setor
-    const ctxDist = document.getElementById('graficoDistribuicao').getContext('2d');
-    new Chart(ctxDist, {
-        type: 'doughnut',
-        data: {
-            labels: distribuicaoSetores.map(s => s.nome),
-            datasets: [{
-                data: distribuicaoSetores.map(s => s.quantidade),
-                backgroundColor: [
-                    cores.azul,
-                    cores.azulClaro,
-                    cores.verde,
-                    cores.amarelo,
-                    cores.vermelho,
-                    cores.azulMedio,
-                    cores.roxo,
-                ],
-                borderWidth: 2,
-                borderColor: '#ffffff',
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { font: { size: 11 }, padding: 8 }
-                }
-            },
-            cutout: '60%',
-        }
-    });
+    // ================= Estado inicial =================
+    // Os gráficos de tempo e distribuição acompanham os botões que já vêm
+    // marcados como ativos no HTML, então o servidor e a tela nunca divergem.
+    function valorAtivo(grupo, padrao) {
+        const ativo = document.querySelector(`.chart-toggle[data-grupo="${grupo}"].active`);
+        return ativo ? ativo.getAttribute('data-valor') : padrao;
+    }
 
-    // Gráfico de linha: Concluídas por Dia
-    const ctxConc = document.getElementById('graficoConcluidas').getContext('2d');
-    new Chart(ctxConc, {
-        type: 'line',
-        data: {
-            labels: concluidasPorDia.map(d => d.dia),
-            datasets: [{
-                label: 'OPs Concluídas',
-                data: concluidasPorDia.map(d => d.quantidade),
-                borderColor: cores.azul,
-                backgroundColor: 'rgba(11, 56, 130, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: cores.azul,
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                    ticks: { font: { size: 11 }, stepSize: 1 }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 10 } }
-                }
-            }
-        }
-    });
+    renderTempo(valorAtivo('tempo', 'medio'));
+    renderDist(valorAtivo('dist', 'setor'));
+    renderConc(valorAtivo('dias', '7'));
+})();
 </script>
 
 {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaRastreio" storage_key="casanova_rastreio_larguras" %}

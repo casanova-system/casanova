@@ -36,3 +36,14 @@ Thumbs.db
 nohup.out
 chrome_perfil_*/
 hosts_novo.txt
+
+# Scripts de deploy/verificacao locais
+# ATENCAO: contem a senha do servidor de producao em texto puro. NUNCA versionar.
+_deploy/
+
+# Cookies e tokens capturados em testes locais (sessao assinada)
+cookies_*.txt
+*.cookies
+
+# Scripts auxiliares de operacao
+gh_*.sh

@@ -1,0 +1,21 @@
+{% extends 'pontosecullum/base.html' %}
+
+{% block title %}PontoSecullum — {{ banco|title }}{% endblock %}
+
+{% block ponto_content %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table"></i> Tabelas do banco {{ banco|upper }}
+    </div>
+    <div class="card-body">
+        <p class="text-muted">
+            Total de <strong>{{ total_tabelas }}</strong> tabelas encontradas.
+            Clique em uma tabela para visualizar os dados.
+        </p>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>Modo somente leitura.</strong> Nenhuma alteração é feita no banco.
+        </div>
+    </div>
+</div>
+{% endblock %}

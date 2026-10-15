@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}PontoSecullum — {{ banco|title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>
+        <i class="bi bi-clock-history"></i> PontoSecullum
+        <span class="badge bg-secondary">{{ banco|upper }}</span>
+    </h2>
+
+    <!-- Seletor de banco -->
+    <div class="btn-group mb-3" role="group">
+        <a href="{% url 'ponto_tabelas' 'casanova' %}"
+           class="btn btn-sm {% if banco == 'casanova' %}btn-primary{% else %}btn-outline-primary{% endif %}">Casanova</a>
+        <a href="{% url 'ponto_tabelas' 'abra' %}"
+           class="btn btn-sm {% if banco == 'abra' %}btn-primary{% else %}btn-outline-primary{% endif %}">ABRA</a>
+        <a href="{% url 'ponto_tabelas' 'steel' %}"
+           class="btn btn-sm {% if banco == 'steel' %}btn-primary{% else %}btn-outline-primary{% endif %}">STEEL</a>
+    </div>
+
+    <!-- Mensagens de erro/sucesso -->
+    {% if erro %}
+    <div class="alert alert-danger">{{ erro }}</div>
+    {% endif %}
+    {% if mensagem %}
+    <div class="alert alert-success">{{ mensagem }}</div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Menu lateral: tabelas -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> Tabelas ({{ total_tabelas }})
+                </div>
+                <div class="list-group list-group-flush" style="max-height: 600px; overflow-y: auto;">
+                    {% for t in tabelas %}
+                    <a href="{% url 'ponto_ver_tabela' banco t %}"
+                       class="list-group-item list-group-item-action {% if t == tabela %}active{% endif %}"
+                       style="font-size: 0.85rem;">
+                        {{ t }}
+                    </a>
+                    {% empty %}
+                    <div class="list-group-item text-muted">Nenhuma tabela encontrada.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="col-md-9">
+            {% block ponto_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

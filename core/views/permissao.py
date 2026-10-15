@@ -126,8 +126,6 @@ def form_permissao(request, user_id):
 
     rotinas_por_categoria = {
         'ROTINA': agrupar_por_setor(todas_rotinas.filter(categoria='ROTINA')),
-        'GRAFICO': agrupar_por_setor(todas_rotinas.filter(categoria='GRAFICO')),
-        'RELATORIO': agrupar_por_setor(todas_rotinas.filter(categoria='RELATORIO')),
     }
 
     context = {

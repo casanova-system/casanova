@@ -15,6 +15,12 @@
     --cv-brand-dark-rgb: 6, 34, 84;
     --cv-brand-light-rgb: 88, 166, 255;
 
+    /* Tipografia — definida em fontes.css (@font-face local) */
+    --cv-font: 'Nunito', 'Segoe UI Variable Text', 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --cv-font-mono: 'Cascadia Mono', Consolas, 'SF Mono', 'DejaVu Sans Mono',
+                    'Courier New', monospace;
+
     --cv-blue: rgb(var(--cv-brand-rgb));
     --cv-blue-dark: rgb(var(--cv-brand-dark-rgb));
     --cv-blue-soft: rgba(var(--cv-brand-rgb), 0.08);
@@ -118,10 +124,102 @@
 /* --------------------------------------------------------------------------
    2. BASE
    -------------------------------------------------------------------------- */
-body {
+
+/* Tipografia global — cobre TODAS as rotinas do sistema.
+   Aplicada em html/body com seletor de elemento para vencer o Bootstrap, e
+   herdada por tudo. Nenhuma rotina precisa declarar fonte própria. */
+html {
+    font-family: var(--cv-font);
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+body,
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: var(--cv-font);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+}
+
+body {
+    font-size: 0.9375rem;      /* 15px — densidade de sistema corporativo */
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Títulos: peso 600 e leve aperto, padrão de software (não de site).
+   O Bootstrap usa 500 e letter-spacing frouxo nos headings. */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: var(--cv-font);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
+h1, .h1 { font-size: 1.5rem; }
+h2, .h2 { font-size: 1.25rem; }
+h3, .h3 { font-size: 1.125rem; }
+h4, .h4 { font-size: 1rem; }
+h5, .h5 { font-size: 0.9375rem; }
+h6, .h6 { font-size: 0.875rem; }
+
+/* Tabelas: números alinhados e leitura densa.
+   `tabular-nums` evita que a largura dos dígitos "dance" ao atualizar
+   quantidades, medidas e horários. */
+table {
+    font-variant-numeric: tabular-nums;
+}
+.table {
+    font-size: 0.875rem;
+}
+.table th {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.table td {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Campos de formulário e botões herdam a fonte do sistema */
+.form-control,
+.form-select,
+.btn,
+.input-group-text,
+.dropdown-menu,
+.modal-content {
+    font-family: var(--cv-font);
+}
+
+/* Rótulos e textos auxiliares: um pouco mais firmes que o padrão do Bootstrap */
+.form-label,
+label {
+    font-weight: 500;
+}
+small, .small {
+    font-size: 0.8125rem;
+}
+
+/* Códigos, IDs de OP e valores técnicos em monoespaçada */
+code, kbd, samp, pre,
+.font-mono,
+.font-monospace {
+    font-family: var(--cv-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Números que precisam de destaque em painéis/KPIs */
+.kpi-value,
+.rastreio-metrica-valor,
+.prod-input-qtd {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
 }
 
 /* Foco acessível e consistente */
@@ -649,6 +747,79 @@ body {
 .chart-panel .chart-head .badge {
     flex-shrink: 0;
 }
+
+/* Controles dentro do cabeçalho do gráfico (Média/Total, Setor/Status, 7d/30d) */
+.chart-panel .chart-ctrl { flex-shrink: 0; }
+.chart-panel .chart-ctrl .btn-group { flex-wrap: nowrap; }
+
+.chart-toggle {
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.32rem 0.55rem;
+    border: 1px solid var(--cv-line);
+    background: transparent;
+    color: var(--cv-text-muted);
+    cursor: pointer;
+    transition: background-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease);
+}
+.chart-toggle:hover {
+    background: var(--cv-surface-2);
+    color: var(--cv-text);
+}
+.chart-toggle.active {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    color: #ffffff;
+}
+/* Cantos arredondados só nas pontas do grupo */
+.chart-toggle:first-child { border-radius: 7px 0 0 7px; }
+.chart-toggle:last-child { border-radius: 0 7px 7px 0; }
+.chart-toggle:not(:first-child) { margin-left: -1px; }
+.chart-toggle:focus-visible {
+    outline: 2px solid var(--cv-blue);
+    outline-offset: 1px;
+    z-index: 1;
+}
+
+/* Rodapé explicativo do gráfico (ex.: regra de horário útil) */
+.chart-panel .chart-foot {
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--cv-line);
+    font-size: 0.68rem;
+    line-height: 1.35;
+    color: var(--cv-text-faint);
+}
+.chart-panel .chart-foot i { margin-right: 0.25rem; }
+.chart-panel .chart-foot:empty { display: none; }
+
+/* Corpo do gráfico com altura fixa — o Chart.js precisa disso para dimensionar */
+.chart-panel .chart-body {
+    position: relative;
+    height: 200px;
+    margin-top: 0.6rem;
+}
+
+/* Estado "filtro ativo" na barra de filtros */
+.filtros-bar.filtros-ativos {
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid var(--cv-blue-ring);
+    background: var(--cv-blue-soft);
+}
+.filtros-nota {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--cv-blue);
+}
+[data-bs-theme="dark"] .filtros-nota { color: var(--cv-accent); }
 
 /* --------------------------------------------------------------------------
    13e. FORMULÁRIOS — cartões e seções
@@ -1286,7 +1457,7 @@ body.mobile-menu-open {
         box-shadow: var(--cv-shadow-sm);
     }
     .mobile-topbar .mobile-brand {
-        font-family: 'Inter', sans-serif;
+        font-family: var(--cv-font);
         font-size: 0.9rem;
         letter-spacing: 0.3px;
         white-space: nowrap;
@@ -1839,3 +2010,290 @@ body.mobile-menu-open {
     font-size: 0.72rem;
     padding: 0.35rem 0.6rem;
 }
+
+/* -------------------------------------------------------------------------- */
+/* 18. RASTREIO DE OP — painéis de Setor Atual e Ações                         */
+/* -------------------------------------------------------------------------- */
+.rastreio-painel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.15rem 1.25rem 1.35rem;
+    border: 1px solid var(--cv-line);
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    box-shadow: var(--cv-shadow-sm);
+    transition: box-shadow var(--cv-dur) var(--cv-ease);
+}
+.rastreio-painel:hover { box-shadow: var(--cv-shadow-md); }
+
+.rastreio-painel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--cv-line);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted);
+}
+.rastreio-painel-head i { color: var(--cv-blue); font-size: 0.8rem; }
+
+/* Nome do setor atual */
+.rastreio-setor-nome {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--cv-text);
+}
+
+.rastreio-status-linha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+/* Badges de estado do fluxo (usam o padrão .status-badge) */
+.status-badge.status-producao {
+    --status-color: #d97706;
+    --status-bg: rgba(217, 119, 6, 0.10);
+}
+.status-badge.status-liberada {
+    --status-color: #0284c7;
+    --status-bg: rgba(2, 132, 199, 0.10);
+}
+
+/* Métricas (total da OP x produzidas) */
+.rastreio-metricas {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.2rem;
+}
+.rastreio-metrica {
+    flex: 1;
+    min-width: 0;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid var(--cv-line);
+    background: var(--cv-surface-2);
+}
+.rastreio-metrica-ok {
+    border-color: rgba(22, 163, 74, 0.28);
+    background: rgba(22, 163, 74, 0.06);
+}
+.rastreio-metrica-valor {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--cv-text);
+}
+.rastreio-metrica-ok .rastreio-metrica-valor { color: #16a34a; }
+.rastreio-metrica-rotulo {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted);
+    margin-top: 0.15rem;
+}
+
+/* Estado concluído (dentro do painel) */
+.rastreio-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.2rem 0.5rem;
+    text-align: center;
+}
+.rastreio-estado-icone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    background: rgba(22, 163, 74, 0.10);
+    color: #16a34a;
+}
+.rastreio-estado-titulo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--cv-text);
+}
+.rastreio-estado-texto {
+    font-size: 0.85rem;
+    color: var(--cv-text-muted);
+    line-height: 1.45;
+}
+
+/* Decisão de vidro */
+.rastreio-decisao {
+    margin-top: 0.2rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid rgba(217, 119, 6, 0.30);
+    background: rgba(217, 119, 6, 0.06);
+}
+.rastreio-decisao-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #b45309;
+    margin-bottom: 0.7rem;
+}
+.rastreio-decisao-btns { display: flex; gap: 0.5rem; }
+
+/* -------------------------------------------------------------------------- */
+/* 18b. BOTÕES DE AÇÃO (padrão único para o rastreio)                          */
+/* -------------------------------------------------------------------------- */
+.btn-acao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.62rem 1.1rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid transparent;
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--cv-dur) var(--cv-ease),
+                border-color var(--cv-dur) var(--cv-ease),
+                color var(--cv-dur) var(--cv-ease),
+                box-shadow var(--cv-dur) var(--cv-ease);
+}
+.btn-acao-largo { width: 100%; }
+.btn-acao i { font-size: 0.82rem; }
+
+.btn-acao-primario {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(var(--cv-brand-rgb), 0.25);
+}
+.btn-acao-primario:hover { background: var(--cv-blue-dark); border-color: var(--cv-blue-dark); color: #ffffff; }
+
+.btn-acao-ok {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #ffffff;
+}
+.btn-acao-ok:hover { background: #15803d; border-color: #15803d; color: #ffffff; }
+
+.btn-acao-neutro {
+    background: transparent;
+    border-color: var(--cv-line-strong);
+    color: var(--cv-text-muted);
+}
+.btn-acao-neutro:hover { background: var(--cv-surface-2); border-color: var(--cv-text-faint); color: var(--cv-text); }
+
+[data-bs-theme="dark"] .btn-acao-primario:hover { background: var(--cv-accent); border-color: var(--cv-accent); color: #0d1117; }
+
+/* Formulário de saída (quantidade + observação) */
+.rastreio-acao-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.rastreio-acao-campo { display: flex; flex-direction: column; gap: 0.4rem; }
+.rastreio-acao-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted);
+    margin: 0;
+}
+.rastreio-acao-linha {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.rastreio-acao-input {
+    flex: 1 1 130px;
+    min-width: 0;
+    min-height: 46px;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid var(--cv-line-strong);
+    background: var(--cv-surface);
+    color: var(--cv-text);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color var(--cv-dur) var(--cv-ease), box-shadow var(--cv-dur) var(--cv-ease);
+}
+.rastreio-acao-input:focus {
+    border-color: var(--cv-blue);
+    box-shadow: 0 0 0 3px var(--cv-blue-ring);
+}
+.rastreio-acao-input-obs { flex: 2 1 220px; font-weight: 400; font-size: 0.9rem; }
+
+.rastreio-acao-linha2 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--cv-line);
+}
+
+/* Avisos dentro do painel */
+.rastreio-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--cv-radius-sm);
+    border: 1px solid var(--cv-line);
+    background: var(--cv-surface-2);
+}
+.rastreio-aviso i { font-size: 1.15rem; flex-shrink: 0; margin-top: 0.1rem; }
+.rastreio-aviso strong { display: block; font-size: 0.9rem; color: var(--cv-text); }
+.rastreio-aviso span { font-size: 0.82rem; color: var(--cv-text-muted); line-height: 1.4; }
+
+.rastreio-aviso-info {
+    border-color: rgba(2, 132, 199, 0.28);
+    background: rgba(2, 132, 199, 0.06);
+}
+.rastreio-aviso-info i { color: #0284c7; }
+
+.rastreio-aviso-ok {
+    border-color: rgba(22, 163, 74, 0.28);
+    background: rgba(22, 163, 74, 0.06);
+}
+.rastreio-aviso-ok i { color: #16a34a; }
+
+/* -------------------------------------------------------------------------- */
+/* 18c. HISTÓRICO DE MOVIMENTAÇÕES — tabela mais legível                       */
+/* -------------------------------------------------------------------------- */
+.rastreio-historico thead th {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--cv-text-muted);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--cv-line);
+}
+.rastreio-historico tbody td {
+    font-size: 0.82rem;
+    vertical-align: middle;
+    border-color: var(--cv-line);
+}
+
+@media (max-width: 575.98px) {
+    .rastreio-setor-nome { font-size: 1.35rem; }
+    .rastreio-metrica-valor { font-size: 1.2rem; }
+    .rastreio-painel { padding: 1rem; }
+}
+

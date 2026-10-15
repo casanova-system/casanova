@@ -30,6 +30,7 @@ from django.db.models import Avg, Count, Q, F, ExpressionWrapper, DurationField
 from datetime import timedelta
 from core.views.ordem_producao import _buscar_op_por_id
 from core.views.permissao import requer_rotina
+from core.producao import calcular_minutos_producao
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,131 @@ def _pode_gerenciar(user):
     return bool(perfil and perfil.nivel_acesso == 'GERENCIA')
 
 
-def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida=''):
+def _pode_registrar(user):
+    """Quem pode registrar movimentação na tela de Produção.
+
+    O operador de chão de fábrica (peão) tem um setor de produção vinculado no
+    perfil — é ele quem bipa a peça. Gerência e superusuário também podem.
+    """
+    if user.is_superuser:
+        return True
+    perfil = getattr(user, 'perfil', None)
+    if not perfil:
+        return False
+    if perfil.nivel_acesso == 'GERENCIA':
+        return True
+    return bool(perfil.setor_producao_id)
+
+
+ICONES_SETOR = {
+    'estoque': 'fa-warehouse',
+    'separacao': 'fa-boxes-stacked',
+    'corte': 'fa-scissors',
+    'usinagem': 'fa-gears',
+    'mesa': 'fa-table-cells',
+    'encaixilhamento': 'fa-border-all',
+    'expedicao': 'fa-truck',
+}
+
+
+def _minutos_para_texto(minutos):
+    """Formata minutos para '2h 30min' / '45min'. Usado nos gráficos."""
+    if not minutos or minutos <= 0:
+        return '—'
+    if minutos < 60:
+        return f'{int(round(minutos))}min'
+    horas = int(minutos // 60)
+    mins = int(round(minutos % 60))
+    return f'{horas}h {mins}min' if mins else f'{horas}h'
+
+
+def _tem_filtro_ativo(get_params):
+    """True se algum filtro está aplicado (para destacar a barra na tela)."""
+    return any(
+        (get_params.get(chave) or '').strip()
+        for chave in ('q', 'setor', 'status', 'vidro', 'obra')
+    )
+
+
+def _filtrar_rastreios(queryset, get_params):
+    """Aplica os filtros da barra sobre um queryset de RastreioOP.
+
+    Fonte única de verdade: a mesma função alimenta KPIs, os três gráficos e a
+    tabela. Antes cada bloco montava seu próprio queryset e os gráficos ficavam
+    presos ao banco inteiro — filtrar por setor não mudava nada neles.
+    """
+    q = (get_params.get('q') or '').strip()
+    setor = (get_params.get('setor') or '').strip()
+    status = (get_params.get('status') or '').strip()
+    vidro = (get_params.get('vidro') or '').strip()
+    obra = (get_params.get('obra') or '').strip()
+
+    if q:
+        queryset = queryset.filter(
+            Q(op_numero__icontains=q)
+            | Q(obra__icontains=q)
+            | Q(produto__icontains=q)
+            | Q(variante__icontains=q)
+        )
+    if setor:
+        queryset = queryset.filter(setor_atual=setor)
+    if status:
+        queryset = queryset.filter(status=status)
+    if vidro == 'sim':
+        queryset = queryset.filter(tem_vidro=True)
+    elif vidro == 'nao':
+        queryset = queryset.filter(tem_vidro=False)
+    elif vidro == 'a_definir':
+        queryset = queryset.filter(tem_vidro__isnull=True)
+    if obra:
+        queryset = queryset.filter(obra=obra)
+
+    return queryset
+
+
+def _montar_fluxo(rastreio):
+    """Monta a trilha do fluxo produtivo com o estado de cada setor.
+
+    Devolve uma lista de dicts (codigo, nome, icone, estado, tempo) pronta para
+    o template — evita lógica condicional pesada dentro do HTML.
+    estado: 'concluido' | 'atual' | 'pendente'
+    """
+    setores = _setores_ativos()
+    tem_vidro = rastreio.tem_vidro if rastreio else None
+
+    # Setores que fazem parte do fluxo desta OP (pula Encaixilhamento sem vidro)
+    ativos = [
+        s for s in setores
+        if not (s.requer_vidro and tem_vidro is False)
+    ]
+    codigos = [s.codigo for s in ativos]
+    atual = rastreio.setor_atual if rastreio else ''
+    idx_atual = codigos.index(atual) if atual in codigos else -1
+
+    fluxo = []
+    for pos, setor in enumerate(ativos):
+        tempo = rastreio.tempo_no_setor_formatado(setor.codigo) if rastreio else '—'
+        if not rastreio:
+            estado = 'pendente'
+        elif rastreio.concluida:
+            estado = 'concluido'
+        elif setor.codigo == atual:
+            estado = 'atual'
+        elif idx_atual >= 0 and pos < idx_atual:
+            estado = 'concluido'
+        else:
+            estado = 'pendente'
+        fluxo.append({
+            'codigo': setor.codigo,
+            'nome': setor.nome,
+            'icone': ICONES_SETOR.get(setor.codigo, 'fa-industry'),
+            'estado': estado,
+            'tempo': tempo if tempo != '—' else '',
+        })
+    return fluxo
+
+
+def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida='', quantidade_produzida=None):
     """Registra automaticamente a passagem da OP pelo setor do usuário.
 
     Lógica de DUPLO BIP:
@@ -150,6 +275,11 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                 dados = None
         dados = dados or {}
 
+        # Busca quantidade total da OP na ObraOP
+        quantidade_total = None
+        if obra_op:
+            quantidade_total = obra_op.quantidade
+
         with transaction.atomic():
             rastreio = RastreioOP.objects.create(
                 op_id=op_id,
@@ -160,6 +290,7 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                 setor_atual=codigo_setor,
                 status='EM_PRODUCAO',
                 aguardando_saida=False,
+                quantidade_total=quantidade_total,
             )
             MovimentacaoOP.objects.create(
                 rastreio=rastreio,
@@ -202,17 +333,30 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
     if rastreio.setor_atual == codigo_setor:
         # Se já bipou a entrada e NÃO bipou a saída → este é o 2º bip (saída)
         if not rastreio.aguardando_saida:
+            # Sem a quantidade informada, não registra a saída: devolve o
+            # formulário de quantidade (o operador bipou de novo em vez de
+            # digitar quantas peças produziu).
+            if quantidade_produzida is None:
+                return (
+                    None,
+                    {'rastreio': rastreio, 'setor': setor_usuario,
+                     'iniciou': False, 'bip': 'entrada', 'precisa_quantidade': True},
+                    False,
+                )
             with transaction.atomic():
-                # Registrar a saída do setor atual + usuário de saída + observação
+                update_fields = {
+                    'data_saida': timezone.now(),
+                    'usuario_saida': request.user,
+                    'observacao_saida': observacao_saida,
+                }
+                if quantidade_produzida is not None:
+                    update_fields['quantidade_produzida'] = quantidade_produzida
+
                 MovimentacaoOP.objects.filter(
                     rastreio=rastreio,
                     setor=codigo_setor,
                     data_saida__isnull=True,
-                ).update(
-                    data_saida=timezone.now(),
-                    usuario_saida=request.user,
-                    observacao_saida=observacao_saida,
-                )
+                ).update(**update_fields)
 
                 rastreio.aguardando_saida = True
                 rastreio.save(update_fields=['aguardando_saida'])
@@ -292,7 +436,15 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
 def rastreio_producao(request):
-    """Painel com todas as OPs em rastreio."""
+    """Painel com todas as OPs em rastreio.
+
+    Filtros: a barra de filtros alimenta TUDO — KPIs, os três gráficos e a
+    tabela. Antes os gráficos eram calculados sobre o banco inteiro, então
+    filtrar não mudava nada neles.
+
+    Cada gráfico ainda tem seus próprios controles (métrica, agrupamento,
+    janela de dias), resolvidos no navegador para trocar sem recarregar.
+    """
     if not _garantir_setores():
         messages.error(request, MSG_MIGRATION)
         return render(request, 'core/industria/rastreio_producao.html', {
@@ -304,21 +456,13 @@ def rastreio_producao(request):
             'migration_pendente': True,
         })
 
-    q = request.GET.get('q', '').strip()
-    setor = request.GET.get('setor', '').strip()
-    status = request.GET.get('status', '').strip()
+    setores = _setores_ativos()
 
-    rastreios = RastreioOP.objects.all()
-    if q:
-        rastreios = rastreios.filter(
-            Q(op_numero__icontains=q)
-            | Q(obra__icontains=q)
-            | Q(produto__icontains=q)
-        )
-    if setor:
-        rastreios = rastreios.filter(setor_atual=setor)
-    if status:
-        rastreios = rastreios.filter(status=status)
+    # ------------------------------------------------------------------
+    # Base: todos os rastreios. Os filtros abaixo reduzem este conjunto e o
+    # resultado alimenta KPIs, gráficos e tabela (antes só a tabela).
+    # ------------------------------------------------------------------
+    rastreios = _filtrar_rastreios(RastreioOP.objects.all(), request.GET)
 
     paginator = Paginator(rastreios, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -326,14 +470,13 @@ def rastreio_producao(request):
     params = request.GET.copy()
     params.pop('page', None)
 
-    # KPIs e dados para gráficos
-    rastreios_ativos = RastreioOP.objects.filter(status='EM_PRODUCAO')
-    rastreios_concluidos = RastreioOP.objects.filter(status='CONCLUIDA')
+    # ------------------------------------------------------------------
+    # KPIs — calculados sobre o conjunto filtrado
+    # ------------------------------------------------------------------
+    rastreios_ativos = rastreios.filter(status='EM_PRODUCAO')
+    rastreios_concluidos = rastreios.filter(status='CONCLUIDA')
 
-    # Contagem por status de tempo
-    ops_sem_problema = 0
-    ops_atencao = 0
-    ops_critico = 0
+    ops_sem_problema = ops_atencao = ops_critico = 0
     for r in rastreios_ativos:
         if r.status_tempo == 'CRITICO':
             ops_critico += 1
@@ -342,62 +485,120 @@ def rastreio_producao(request):
         else:
             ops_sem_problema += 1
 
-    # Dados para gráfico de barras: tempo médio por setor
-    setores = _setores_ativos()
-    tempo_medio_setores = []
+    # ------------------------------------------------------------------
+    # Gráfico 1 — Tempo por setor (média e total, em horário útil)
+    #
+    # Usa `calcular_minutos_producao`, o mesmo cálculo do resto do sistema:
+    # conta só o horário de fábrica (7h-11h, 12h12-17h; sexta até 16h) e
+    # ignora noites, almoço e fins de semana. Antes o gráfico subtraía os
+    # timestamps direto, então uma OP que ficou das 17h de sexta às 7h de
+    # segunda aparecia com ~3.800 min de "trabalho" que nunca existiu.
+    # ------------------------------------------------------------------
+    movimentacoes = MovimentacaoOP.objects.filter(
+        rastreio__in=rastreios,
+        data_entrada__isnull=False,
+    )
+    movs_por_setor = {}
+    for mov in movimentacoes.only('setor', 'data_entrada', 'data_saida'):
+        minutos = calcular_minutos_producao(mov.data_entrada, mov.data_saida)
+        if minutos <= 0:
+            continue
+        acumulado = movs_por_setor.setdefault(mov.setor, {'soma': 0.0, 'n': 0})
+        acumulado['soma'] += minutos
+        acumulado['n'] += 1
+
+    tempo_setores_medio = []
+    tempo_setores_total = []
     for setor in setores:
-        movimentacoes = MovimentacaoOP.objects.filter(
-            setor=setor.codigo,
-            data_entrada__isnull=False,
-            data_saida__isnull=False,
-        ).annotate(
-            duracao=ExpressionWrapper(
-                F('data_saida') - F('data_entrada'),
-                output_field=DurationField(),
-            )
-        )
-        if movimentacoes.exists():
-            tempo_medio = movimentacoes.aggregate(
-                avg_duracao=Avg('duracao')
-            )['avg_duracao']
-            tempo_medio_minutos = tempo_medio.total_seconds() / 60 if tempo_medio else 0
+        dados = movs_por_setor.get(setor.codigo)
+        if dados:
+            media = dados['soma'] / dados['n']
+            total = dados['soma']
         else:
-            tempo_medio_minutos = 0
-        tempo_medio_setores.append({
+            media = total = 0
+        tempo_setores_medio.append({
             'nome': setor.nome,
-            'tempo_medio': round(tempo_medio_minutos, 1),
+            'valor': round(media, 1),
+            'texto': _minutos_para_texto(media),
+        })
+        tempo_setores_total.append({
+            'nome': setor.nome,
+            'valor': round(total, 1),
+            'texto': _minutos_para_texto(total),
         })
 
-    # Dados para gráfico de pizza: distribuição por setor
-    distribuicao_setores = []
-    for setor in setores:
-        count = rastreios_ativos.filter(setor_atual=setor.codigo).count()
-        if count > 0:
-            distribuicao_setores.append({
-                'nome': setor.nome,
-                'quantidade': count,
+    # ------------------------------------------------------------------
+    # Gráfico 2 — Distribuição (por setor atual, status ou vidro)
+    # ------------------------------------------------------------------
+    def _distribuicao(rotulos):
+        """Conta o conjunto filtrado para cada rótulo e descarta os zeros."""
+        itens = []
+        for chave, nome in rotulos:
+            if chave is None:
+                qtd = rastreios.filter(tem_vidro__isnull=True).count()
+            elif chave in ('SIM', 'NAO'):
+                qtd = rastreios.filter(tem_vidro=(chave == 'SIM')).count()
+            elif chave in ('EM_PRODUCAO', 'CONCLUIDA'):
+                qtd = rastreios.filter(status=chave).count()
+            else:
+                qtd = rastreios.filter(setor_atual=chave).count()
+            if qtd:
+                itens.append({'nome': nome, 'quantidade': qtd})
+        return itens
+
+    dist_setor = _distribuicao([(s.codigo, s.nome) for s in setores])
+    dist_status = _distribuicao([
+        ('EM_PRODUCAO', 'Em Produção'),
+        ('CONCLUIDA', 'Concluída'),
+    ])
+    dist_vidro = _distribuicao([
+        ('SIM', 'Com vidro'),
+        ('NAO', 'Sem vidro'),
+        (None, 'A definir'),
+    ])
+
+    # ------------------------------------------------------------------
+    # Gráfico 3 — Concluídas por dia (janelas de 7, 30 e 90 dias)
+    # ------------------------------------------------------------------
+    def _concluidas_por_dia(dias):
+        from datetime import date, timedelta as _td
+        hoje = date.today()
+        # Uma consulta só: agrupa por dia e depois preenche os vazios.
+        contagem = (
+            rastreios_concluidos
+            .filter(atualizado_em__date__gte=hoje - _td(days=dias - 1))
+            .values_list('atualizado_em__date', flat=True)
+        )
+        por_dia = {}
+        for d in contagem:
+            por_dia[d] = por_dia.get(d, 0) + 1
+        serie = []
+        for i in range(dias - 1, -1, -1):
+            dia = hoje - _td(days=i)
+            serie.append({
+                'dia': dia.strftime('%d/%m'),
+                'quantidade': por_dia.get(dia, 0),
             })
+        return serie
 
-    # Dados para gráfico de linha: OPs concluídas por dia (últimos 7 dias)
-    from datetime import date, timedelta
-    hoje = date.today()
-    concluidas_por_dia = []
-    for i in range(6, -1, -1):
-        dia = hoje - timedelta(days=i)
-        count = rastreios_concluidos.filter(
-            atualizado_em__date=dia
-        ).count()
-        concluidas_por_dia.append({
-            'dia': dia.strftime('%d/%m'),
-            'quantidade': count,
-        })
+    # ------------------------------------------------------------------
+    # Opções de filtro (obras existentes, período selecionado)
+    # ------------------------------------------------------------------
+    obras = list(
+        RastreioOP.objects.exclude(obra='')
+        .values_list('obra', flat=True)
+        .distinct()
+        .order_by('obra')
+    )
 
     context = {
         'page_obj': page_obj,
         'rastreios': page_obj.object_list,
         'setores': setores,
+        'obras': obras,
         'filtros': request.GET,
         'querystring': params.urlencode(),
+        'tem_filtro_ativo': _tem_filtro_ativo(request.GET),
         'kpis': {
             'total_ativas': rastreios_ativos.count(),
             'total_concluidas': rastreios_concluidos.count(),
@@ -405,9 +606,14 @@ def rastreio_producao(request):
             'atencao': ops_atencao,
             'critico': ops_critico,
         },
-        'tempo_medio_setores': tempo_medio_setores,
-        'distribuicao_setores': distribuicao_setores,
-        'concluidas_por_dia': concluidas_por_dia,
+        'tempo_setores_medio': tempo_setores_medio,
+        'tempo_setores_total': tempo_setores_total,
+        'dist_setor': dist_setor,
+        'dist_status': dist_status,
+        'dist_vidro': dist_vidro,
+        'concluidas_7': _concluidas_por_dia(7),
+        'concluidas_30': _concluidas_por_dia(30),
+        'concluidas_90': _concluidas_por_dia(90),
     }
     return render(request, 'core/industria/rastreio_producao.html', context)
 
@@ -475,6 +681,7 @@ def rastreio_op(request, op_id):
         'info': info,
         'erro_conexao': erro_conexao,
         'setores': _setores_ativos(),
+        'fluxo': _montar_fluxo(rastreio),
         'setor_atual': setor_atual,
         'proximo': proximo,
         'anterior': anterior,
@@ -509,6 +716,8 @@ def registrar_movimentacao(request, op_id):
     acao = request.POST.get('acao', '').strip()
     # Observação de saída/B.O. — apenas quando o operário finaliza o trabalho
     observacao_saida = request.POST.get('observacao', '').strip()
+    # Quantidade produzida no setor (informada pelo operário no 2º bip)
+    quantidade_produzida = request.POST.get('quantidade_produzida', '').strip()
 
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
 
@@ -541,6 +750,11 @@ def registrar_movimentacao(request, op_id):
                 dados = None
         dados = dados or {}
 
+        # Busca quantidade total da OP na ObraOP
+        quantidade_total = None
+        if obra_op:
+            quantidade_total = obra_op.quantidade
+
         with transaction.atomic():
             rastreio = RastreioOP.objects.create(
                 op_id=op_id,
@@ -551,6 +765,7 @@ def registrar_movimentacao(request, op_id):
                 setor_atual=primeiro.codigo,
                 status='EM_PRODUCAO',
                 aguardando_saida=False,
+                quantidade_total=quantidade_total,
             )
             MovimentacaoOP.objects.create(
                 rastreio=rastreio,
@@ -587,21 +802,43 @@ def registrar_movimentacao(request, op_id):
             messages.warning(request, 'A OP já foi liberada deste setor.')
             return redirect('rastreio_op', op_id=op_id)
 
+        # Validar quantidade produzida (opcional, mas recomendada)
+        qtd_produzida = None
+        if quantidade_produzida:
+            try:
+                qtd_produzida = int(quantidade_produzida)
+                if qtd_produzida < 0:
+                    raise ValueError
+            except ValueError:
+                messages.error(request, 'Quantidade produzida inválida.')
+                return redirect('rastreio_op', op_id=op_id)
+
         with transaction.atomic():
             MovimentacaoOP.objects.filter(
                 rastreio=rastreio,
                 setor=rastreio.setor_atual,
                 data_saida__isnull=True,
-            ).update(data_saida=timezone.now())
+            ).update(
+                data_saida=timezone.now(),
+                quantidade_produzida=qtd_produzida,
+            )
 
             rastreio.aguardando_saida = True
             rastreio.save(update_fields=['aguardando_saida'])
 
         logger.info(
-            'OP %s liberada do setor %s (2º bip) — usuário %s',
+            'OP %s liberada do setor %s (2º bip) — usuário %s, qtd: %s',
             op_id, rastreio.setor_atual_nome, request.user.username,
+            qtd_produzida if qtd_produzida else 'N/A',
         )
-        messages.success(request, f'OP liberada do setor {rastreio.setor_atual_nome} (2º bip).')
+        if qtd_produzida is not None:
+            messages.success(
+                request,
+                f'OP liberada do setor {rastreio.setor_atual_nome} (2º bip). '
+                f'Produzidas: {qtd_produzida} de {rastreio.quantidade_total or "?"} peças.',
+            )
+        else:
+            messages.success(request, f'OP liberada do setor {rastreio.setor_atual_nome} (2º bip).')
         return redirect('rastreio_op', op_id=op_id)
 
     # --- Retroceder (correção) ---
@@ -734,20 +971,32 @@ def _buscar_obra_op_por_id(obra_op_id):
 @login_required(login_url='login')
 @requer_rotina('producao')
 def producao(request):
-    """Tela de produção — simplicidade máxima para o operário.
+    """Tela de Produção — o operador de chão de fábrica só faz três coisas:
 
-    O operário só precisa:
-    1. Bipar para iniciar o trabalho
-    2. Bipar novamente para finalizar
+    1. Bipa (ou digita) o código da OP.
+    2. Se for a entrada no setor, o sistema pede a quantidade produzida.
+    3. Digita a quantidade e confirma — a OP é liberada e ele já pode bipar a
+       próxima peça, sem sair da tela.
 
-    Sem distrações, sem informações desnecessárias.
+    O foco nunca sai do campo de leitura: o leitor de código de barras digita
+    como teclado e manda Enter sozinho, então o ciclo inteiro é feito sem mouse.
     """
     if not _garantir_setores():
         messages.error(request, MSG_MIGRATION)
 
+    # ---------------------------------------------------------------
+    # POST — 2º bip: finaliza o trabalho informando a quantidade produzida
+    # ---------------------------------------------------------------
+    if request.method == 'POST':
+        return _producao_finalizar(request)
+
+    # ---------------------------------------------------------------
+    # GET — leitura do código (1º bip de entrada / troca de setor)
+    # ---------------------------------------------------------------
     codigo = request.GET.get('codigo', '').strip()
     vidro = request.GET.get('vidro', '').strip()
     setor_param = request.GET.get('setor', '').strip()
+
     erro = None
     resultado = None
     precisa_vidro = False
@@ -756,17 +1005,20 @@ def producao(request):
     if codigo:
         op_id = _extrair_op_id_do_qr(codigo)
         if not op_id:
-            erro = f'Código inválido: "{codigo}".'
-        elif not _pode_gerenciar(request.user):
-            erro = 'Apenas usuários de nível Gerência podem registrar.'
+            erro = f'Código não reconhecido: "{codigo}".'
+        elif not _pode_registrar(request.user):
+            erro = (
+                'Seu usuário não está liberado para registrar produção. '
+                'Peça ao administrador para vincular um setor ao seu perfil.'
+            )
         else:
             setor_usuario = _setor_do_usuario(request.user, setor_param)
             if not setor_usuario:
-                erro = 'Sem setor vinculado.'
+                erro = 'Sem setor vinculado ao seu perfil.'
             else:
                 obra_op = _buscar_obra_op_por_id(op_id)
                 if not obra_op:
-                    erro = f'OP não encontrada.'
+                    erro = 'OP não encontrada.'
                 else:
                     erro, resultado, precisa_vidro = _registrar_por_setor(
                         request, op_id, setor_usuario, vidro
@@ -781,6 +1033,105 @@ def producao(request):
         'precisa_vidro': precisa_vidro,
         'op_id_pendente': op_id_pendente,
         'setor_param': setor_param,
+        'setor_usuario': _setor_do_usuario(request.user, setor_param),
+        'pode_registrar': _pode_registrar(request.user),
+    }
+    return render(request, 'core/industria/producao.html', context)
+
+
+def _producao_finalizar(request):
+    """Finaliza o trabalho do setor (2º bip) a partir da tela de Produção.
+
+    Diferente de `registrar_movimentacao`, esta view NÃO manda o operador para
+    a tela de rastreio (que é a visão do gestor) — ela volta para a própria
+    tela de Produção, pronta para a próxima leitura.
+    """
+    setor_param = request.POST.get('setor', '').strip()
+    op_id = request.POST.get('op_id', '').strip()
+    quantidade = request.POST.get('quantidade_produzida', '').strip()
+    observacao = request.POST.get('observacao', '').strip()
+
+    context = {
+        'codigo': '',
+        'erro': None,
+        'resultado': None,
+        'precisa_vidro': False,
+        'op_id_pendente': None,
+        'setor_param': setor_param,
+        'setor_usuario': _setor_do_usuario(request.user, setor_param),
+        'pode_registrar': _pode_registrar(request.user),
+    }
+
+    if not _pode_registrar(request.user):
+        context['erro'] = 'Seu usuário não está liberado para registrar produção.'
+        return render(request, 'core/industria/producao.html', context)
+
+    try:
+        op_id_int = int(op_id)
+    except (TypeError, ValueError):
+        context['erro'] = 'OP inválida.'
+        return render(request, 'core/industria/producao.html', context)
+
+    rastreio = RastreioOP.objects.filter(op_id=op_id_int).first()
+    if not rastreio:
+        context['erro'] = 'Rastreio não encontrado. Bipe a OP novamente.'
+        return render(request, 'core/industria/producao.html', context)
+
+    if rastreio.aguardando_saida:
+        context['erro'] = (
+            f'A OP já foi liberada do setor de {rastreio.setor_atual_nome}. '
+            f'Bipe a próxima peça.'
+        )
+        return render(request, 'core/industria/producao.html', context)
+
+    # Quantidade produzida — obrigatória para liberar o setor
+    qtd = None
+    if quantidade:
+        try:
+            qtd = int(quantidade)
+            if qtd < 0:
+                raise ValueError
+        except ValueError:
+            context['erro'] = 'Quantidade inválida. Informe apenas números.'
+            context['resultado'] = {
+                'rastreio': rastreio,
+                'bip': 'entrada',
+                'setor': context['setor_usuario'],
+            }
+            return render(request, 'core/industria/producao.html', context)
+    else:
+        context['erro'] = 'Informe a quantidade produzida antes de finalizar.'
+        context['resultado'] = {
+            'rastreio': rastreio,
+            'bip': 'entrada',
+            'setor': context['setor_usuario'],
+        }
+        return render(request, 'core/industria/producao.html', context)
+
+    with transaction.atomic():
+        MovimentacaoOP.objects.filter(
+            rastreio=rastreio,
+            setor=rastreio.setor_atual,
+            data_saida__isnull=True,
+        ).update(
+            data_saida=timezone.now(),
+            usuario_saida=request.user,
+            observacao_saida=observacao,
+            quantidade_produzida=qtd,
+        )
+        rastreio.aguardando_saida = True
+        rastreio.save(update_fields=['aguardando_saida'])
+
+    logger.info(
+        'Produção: OP %s liberada do setor %s — usuário %s, qtd %s',
+        op_id_int, rastreio.setor_atual_nome, request.user.username, qtd,
+    )
+
+    context['resultado'] = {
+        'rastreio': rastreio,
+        'bip': 'saida',
+        'setor': context['setor_usuario'],
+        'quantidade_produzida': qtd,
     }
     return render(request, 'core/industria/producao.html', context)
 
@@ -801,6 +1152,7 @@ def escanear(request):
     codigo = request.GET.get('codigo', '').strip()
     vidro = request.GET.get('vidro', '').strip()
     setor_param = request.GET.get('setor', '').strip()
+    quantidade_produzida = request.GET.get('quantidade_produzida', '').strip()
     erro = None
     resultado = None
     precisa_vidro = False
@@ -829,9 +1181,19 @@ def escanear(request):
                 if not obra_op:
                     erro = f'OP não encontrada para o ID {op_id}.'
                 else:
-                    erro, resultado, precisa_vidro = _registrar_por_setor(
-                        request, op_id, setor_usuario, vidro
-                    )
+                    # Converte quantidade para int se fornecida
+                    qtd = None
+                    if quantidade_produzida:
+                        try:
+                            qtd = int(quantidade_produzida)
+                            if qtd < 0:
+                                raise ValueError
+                        except ValueError:
+                            erro = 'Quantidade produzida inválida.'
+                    if not erro:
+                        erro, resultado, precisa_vidro = _registrar_por_setor(
+                            request, op_id, setor_usuario, vidro, quantidade_produzida=qtd
+                        )
                     if precisa_vidro:
                         op_id_pendente = op_id
 

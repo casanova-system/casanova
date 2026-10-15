@@ -160,56 +160,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Seção: Gráficos -->
-                    <div class="perm-section mb-3">
-                        <h6 class="perm-section-title text-success">
-                            <i class="fas fa-chart-pie me-2"></i> Gráficos
-                        </h6>
-                        <div class="row">
-                            {% for setor_key, rotinas_setor in rotinas_por_categoria.GRAFICO.items %}
-                                {% for rotina in rotinas_setor %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-success fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                                <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% empty %}
-                                <p class="text-muted mb-0">Nenhum gráfico cadastrado.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Seção: Relatórios -->
-                    <div class="perm-section">
-                        <h6 class="perm-section-title text-warning">
-                            <i class="fas fa-file-lines me-2"></i> Relatórios
-                        </h6>
-                        <div class="row">
-                            {% for setor_key, rotinas_setor in rotinas_por_categoria.RELATORIO.items %}
-                                {% for rotina in rotinas_setor %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-warning fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                                <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">{{ rotina.get_setor_display }}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% empty %}
-                                <p class="text-muted mb-0">Nenhum relatório cadastrado.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
                 </div>
 
                 <div class="form-actions">

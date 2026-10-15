@@ -20,7 +20,7 @@
                     
                     <!-- Nome da Empresa em Destaque Absoluto -->
                     <div class="my-1">
-                        <h1 class="fw-bold text-white mb-2" style="font-size: 2rem; letter-spacing: 1.5px; font-family: 'Inter', sans-serif; text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
+                        <h1 class="fw-bold text-white mb-2" style="font-size: 2rem; letter-spacing: 1.5px; font-family: var(--cv-font); text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
                             CASANOVA <span style="color: #60a5fa; font-weight: 300;">ESQUADRIAS</span>
                         </h1>
                     </div>
@@ -131,32 +131,6 @@
                     <span class="quick-body">
                         <span class="quick-title">Rastreio de Produção</span>
                         <span class="quick-desc">Acompanhe a OP pelos setores</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_graficos %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'grafico_custo_frete' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #d97706;"><i class="fa-solid fa-chart-pie"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Gráficos</span>
-                        <span class="quick-desc">Análise visual de custos</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.tem_relatorios %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'relatorio_fretes_mes' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #dc2626;"><i class="fa-solid fa-file-lines"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Relatórios</span>
-                        <span class="quick-desc">Fretes consolidados do mês</span>
                     </span>
                     <i class="fa-solid fa-chevron-right quick-arrow"></i>
                 </a>

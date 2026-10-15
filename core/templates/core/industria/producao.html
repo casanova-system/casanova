@@ -8,37 +8,87 @@
     <div class="prod-head">
         <div>
             <span class="prod-title">Produção</span>
-            <span class="prod-user">{{ request.user.get_full_name|default:request.user.username }}</span>
+            <span class="prod-user">
+                {{ request.user.get_full_name|default:request.user.username }}
+                {% if setor_usuario %}<span class="prod-setor-chip">{{ setor_usuario.nome }}</span>{% endif %}
+            </span>
         </div>
         <a href="{% url 'menu_principal' %}" class="prod-back" title="Início">
             <i class="fa-solid fa-house"></i>
         </a>
     </div>
 
-    <!-- MENSAGEM PRINCIPAL - o operario so precisa ler isto -->
-    {% if resultado %}
-        {% if resultado.bip == 'saida' %}
-            <div class="prod-msg prod-msg-ok">
-                <i class="fa-solid fa-circle-check"></i>
+    <!-- ============================== -->
+    <!-- ETAPA 2: QUANTIDADE PRODUZIDA  -->
+    <!-- Aparece so depois do 1o bip    -->
+    <!-- ============================== -->
+    {% if resultado and resultado.bip == 'entrada' %}
+        <div class="prod-step">
+            <div class="prod-step-head">
+                <span class="prod-step-num">2</span>
                 <div>
-                    <strong>Trabalho Finalizado!</strong>
-                    <span>A OP foi liberada. O próximo setor pode receber.</span>
+                    <strong>Quantas peças você produziu?</strong>
+                    <span class="prod-step-sub">
+                        OP {{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}
+                        · total da OP: {{ resultado.rastreio.quantidade_total|default:"?" }}
+                        · setor: {{ resultado.setor.nome }}
+                    </span>
                 </div>
             </div>
-        {% else %}
-            <div class="prod-msg prod-msg-start">
-                <i class="fa-solid fa-play-circle"></i>
-                <div>
-                    <strong>Trabalho Iniciado!</strong>
-                    <span>Bipe novamente quando terminar para liberar a OP.</span>
+
+            <form method="POST" action="{% url 'producao' %}" class="prod-form-qtd" id="formQuantidade">
+                {% csrf_token %}
+                <input type="hidden" name="op_id" value="{{ resultado.rastreio.op_id }}">
+                {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
+
+                <div class="prod-qtd-row">
+                    <button type="button" class="prod-qtd-step" data-step="-1" aria-label="Menos um">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <input type="number" name="quantidade_produzida" id="campoQtd"
+                           class="prod-input prod-input-qtd"
+                           inputmode="numeric" pattern="[0-9]*"
+                           placeholder="0" min="0" max="99999"
+                           autocomplete="off" required>
+                    <button type="button" class="prod-qtd-step" data-step="1" aria-label="Mais um">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
                 </div>
+
+                <button type="submit" class="prod-btn-confirmar">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                    Finalizar e liberar
+                </button>
+
+                <details class="prod-details">
+                    <summary><i class="fa-solid fa-triangle-exclamation"></i> Teve algum problema? (opcional)</summary>
+                    <input type="text" name="observacao" class="prod-input prod-input-obs"
+                           placeholder="Ex: peça trincada, material faltando…"
+                           autocomplete="off">
+                </details>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- ============================== -->
+    <!-- MENSAGEM DE ESTADO             -->
+    <!-- ============================== -->
+    {% if resultado and resultado.bip == 'saida' %}
+        <div class="prod-msg prod-msg-ok">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+                <strong>Trabalho finalizado!</strong>
+                <span>
+                    {{ resultado.quantidade_produzida }} peça{{ resultado.quantidade_produzida|pluralize }}
+                    em {{ resultado.setor.nome }}. Bipe a próxima OP.
+                </span>
             </div>
-        {% endif %}
+        </div>
     {% elif erro %}
         <div class="prod-msg prod-msg-erro">
             <i class="fa-solid fa-circle-exclamation"></i>
             <div>
-                <strong>Erro</strong>
+                <strong>Ops…</strong>
                 <span>{{ erro }}</span>
             </div>
         </div>
@@ -57,24 +107,40 @@
                 </div>
             </div>
         </div>
-    {% else %}
+    {% elif not pode_registrar %}
+        <div class="prod-msg prod-msg-erro">
+            <i class="fa-solid fa-user-lock"></i>
+            <div>
+                <strong>Sem setor vinculado</strong>
+                <span>Peça ao administrador para vincular um setor de produção ao seu perfil.</span>
+            </div>
+        </div>
+    {% elif not resultado %}
         <div class="prod-msg prod-msg-idle">
             <i class="fa-solid fa-qrcode"></i>
             <div>
                 <strong>Escaneie a OP</strong>
-                <span>Use a câmera ou digite o código.</span>
+                <span>Aponte o leitor para o código e ele registra sozinho.</span>
             </div>
         </div>
     {% endif %}
 
-    <!-- ENTRADA DO CODIGO - camera (celular) + leitor/digitacao -->
-    <div class="prod-input-area">
+    <!-- ============================== -->
+    <!-- ETAPA 1: CAMPO DE LEITURA      -->
+    <!-- ============================== -->
+    {% if pode_registrar %}
+    <div class="prod-scan {% if resultado and resultado.bip == 'entrada' %}prod-scan-muted{% endif %}">
+        <div class="prod-scan-head">
+            <span class="prod-step-num {% if resultado and resultado.bip == 'entrada' %}prod-step-num-off{% endif %}">1</span>
+            <strong>Bipe ou digite o código da OP</strong>
+        </div>
+
         <form method="GET" action="{% url 'producao' %}" id="formEscanear">
             {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
             <div class="prod-input-group">
                 <input type="text" name="codigo" id="campoCodigo"
                        class="prod-input"
-                       placeholder="Escaneie ou digite o código da OP"
+                       placeholder="Escaneie aqui"
                        autocomplete="off" autocapitalize="off" autocorrect="off"
                        autofocus value="">
                 <button type="submit" class="prod-btn-go" aria-label="Registrar">
@@ -97,28 +163,9 @@
         </div>
 
         <p class="prod-hint" id="dicaEntrada">
-            Aponte o leitor de código de barras ou digite o código e pressione Enter.
+            Aponte o leitor para o código e ele registra sozinho.
         </p>
     </div>
-
-    <!-- Observacao / B.O. - aparece so quando o trabalho foi iniciado (1o bip) -->
-    {% if resultado and resultado.bip == 'entrada' %}
-    <form method="POST" action="{% url 'registrar_movimentacao' resultado.rastreio.op_id %}" class="prod-obs">
-        {% csrf_token %}
-        <input type="hidden" name="acao" value="saida">
-        <label class="prod-obs-label">
-            <i class="fa-solid fa-exclamation-triangle"></i>
-            Teve algum problema? Descreva antes de finalizar.
-        </label>
-        <div class="prod-input-group">
-            <input type="text" name="observacao" class="prod-input prod-input-obs"
-                   placeholder="Observação / B.O. (opcional)"
-                   autocomplete="off">
-            <button type="submit" class="prod-btn-go prod-btn-obs">
-                <i class="fa-solid fa-flag-checkered"></i>
-            </button>
-        </div>
-    </form>
     {% endif %}
 
 </div>
@@ -130,6 +177,8 @@
 
     var campo = document.getElementById('campoCodigo');
     var form = document.getElementById('formEscanear');
+    var campoQtd = document.getElementById('campoQtd');
+    var formQtd = document.getElementById('formQuantidade');
     var btnCamera = document.getElementById('btnCamera');
     var scannerBox = document.getElementById('scannerBox');
     var btnFechar = document.getElementById('btnFecharCamera');
@@ -137,7 +186,7 @@
     var leitor = null;
     var enviando = false;
 
-    var DICA_PADRAO = 'Aponte o leitor de código de barras ou digite o código e pressione Enter.';
+    var DICA_PADRAO = 'Aponte o leitor para o código e ele registra sozinho.';
 
     // No celular nao forcamos o foco: reabriria o teclado virtual a cada toque.
     var ehToque = window.matchMedia('(pointer: coarse)').matches;
@@ -145,11 +194,53 @@
     function focarCampo() {
         if (!ehToque && campo && document.activeElement !== campo) campo.focus();
     }
-    focarCampo();
-    document.addEventListener('click', function (e) {
-        var t = e.target.tagName;
-        if (t !== 'A' && t !== 'BUTTON' && t !== 'INPUT') focarCampo();
-    });
+
+    // ---------------------------------------------------------------
+    // Etapa 2 ativa: o foco vai para a quantidade, nao para a leitura.
+    // O operador digita os numeros e manda Enter — sem tocar no mouse.
+    // ---------------------------------------------------------------
+    if (campoQtd) {
+        if (!ehToque) {
+            campoQtd.focus();
+            campoQtd.select();
+        }
+        campoQtd.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); formQtd.submit(); }
+        });
+        // O operador pode, em vez de digitar a quantidade, bipar o próximo
+        // código com o foco ainda aqui. Um código de barras/QR nunca é um
+        // número curto: se o conteúdo não for numérico, tratamos como leitura
+        // e mandamos para o campo de código.
+        campoQtd.addEventListener('input', function () {
+            var v = campoQtd.value.trim();
+            if (v.length > 5 || (v.length && !/^[0-9]+$/.test(v))) {
+                if (campo) campo.value = v;
+                campoQtd.value = '';
+                submeter();
+            }
+        });
+    } else {
+        focarCampo();
+        document.addEventListener('click', function (e) {
+            var t = e.target.tagName;
+            if (t !== 'A' && t !== 'BUTTON' && t !== 'INPUT' && t !== 'SUMMARY') focarCampo();
+        });
+    }
+
+    // Botoes +/- da quantidade
+    var passos = document.querySelectorAll('.prod-qtd-step');
+    for (var i = 0; i < passos.length; i++) {
+        passos[i].addEventListener('click', function () {
+            if (!campoQtd) return;
+            var passo = parseInt(this.getAttribute('data-step'), 10) || 0;
+            var atual = parseInt(campoQtd.value, 10);
+            if (isNaN(atual)) atual = 0;
+            var novo = atual + passo;
+            if (novo < 0) novo = 0;
+            campoQtd.value = novo;
+            campoQtd.focus();
+        });
+    }
 
     // Envio automatico ao digitar (leitor de codigo de barras digita como teclado)
     var timer = null;
@@ -237,30 +328,49 @@
 </script>
 
 <style>
-/* TELA DE PRODUCAO - simples, grande, funciona no PC e no celular */
+/* ==========================================================================
+   TELA DE PRODUCAO — operador de chao de fabrica (PC + celular)
+   Alvos grandes, alto contraste, ciclo completo sem mouse.
+   ========================================================================== */
 .prod-wrap {
-    max-width: 560px;
+    max-width: 620px;
     margin: 0 auto;
-    padding: 16px 16px 32px;
+    padding: 16px 16px 40px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
 }
 
+/* ---- Cabecalho ---- */
 .prod-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
 }
 .prod-title {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--cv-text);
 }
 .prod-user {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--cv-text-muted);
+    margin-top: 2px;
+}
+.prod-setor-chip {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+    border: 1px solid var(--cv-blue-ring);
 }
 .prod-back {
     width: 44px;
@@ -274,28 +384,27 @@
     color: var(--cv-text-muted);
     text-decoration: none;
     flex-shrink: 0;
+    transition: all var(--cv-dur) var(--cv-ease);
 }
 .prod-back:hover { color: var(--cv-blue); border-color: var(--cv-blue); }
 
-/* Mensagem principal */
+/* ---- Mensagem principal ---- */
 .prod-msg {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px;
-    border-radius: 14px;
+    padding: 18px 20px;
+    border-radius: var(--cv-radius);
     border: 1px solid var(--cv-line);
     background: var(--cv-surface);
     box-shadow: var(--cv-shadow-sm);
 }
-.prod-msg i { font-size: 2.2rem; flex-shrink: 0; }
-.prod-msg strong { display: block; font-size: 1.15rem; color: var(--cv-text); }
-.prod-msg span { font-size: 0.88rem; color: var(--cv-text-muted); }
+.prod-msg i { font-size: 2.1rem; flex-shrink: 0; }
+.prod-msg strong { display: block; font-size: 1.12rem; color: var(--cv-text); }
+.prod-msg span { font-size: 0.88rem; color: var(--cv-text-muted); line-height: 1.4; }
 
 .prod-msg-ok      { border-left: 5px solid #16a34a; }
 .prod-msg-ok i    { color: #16a34a; }
-.prod-msg-start   { border-left: 5px solid var(--cv-blue); }
-.prod-msg-start i { color: var(--cv-blue); }
 .prod-msg-erro    { border-left: 5px solid #dc2626; }
 .prod-msg-erro i  { color: #dc2626; }
 .prod-msg-vidro   { border-left: 5px solid #d97706; }
@@ -303,17 +412,66 @@
 .prod-msg-idle    { border-left: 5px solid var(--cv-text-faint); }
 .prod-msg-idle i  { color: var(--cv-text-faint); }
 
-.prod-vidro-btns { display: flex; gap: 10px; margin-top: 10px; }
+.prod-vidro-btns { display: flex; gap: 10px; margin-top: 12px; }
 
-/* Botoes grandes (dedo, nao mouse) */
+/* ---- Passos numerados ---- */
+.prod-step,
+.prod-scan {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-line);
+    box-shadow: var(--cv-shadow-sm);
+}
+.prod-step { border-color: var(--cv-blue-ring); box-shadow: var(--cv-shadow-md); }
+.prod-scan-muted { opacity: 0.5; }
+
+.prod-step-head,
+.prod-scan-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: var(--cv-text);
+}
+.prod-step-head strong,
+.prod-scan-head strong { font-weight: 700; }
+
+.prod-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--cv-blue);
+}
+.prod-step-num-off { background: var(--cv-text-faint); }
+
+.prod-step-sub {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--cv-text-muted);
+    margin-top: 2px;
+}
+
+/* ---- Botoes grandes (dedo, nao mouse) ---- */
 .prod-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 52px;
+    min-height: 54px;
     padding: 0 24px;
-    border-radius: 12px;
+    border-radius: var(--cv-radius);
     font-size: 1.05rem;
     font-weight: 600;
     border: 1px solid transparent;
@@ -323,9 +481,7 @@
 .prod-btn-sim { background: #16a34a; color: #fff; }
 .prod-btn-nao { background: var(--cv-surface-2); color: var(--cv-text); border-color: var(--cv-line-strong); }
 
-/* Entrada do codigo */
-.prod-input-area { display: flex; flex-direction: column; gap: 12px; }
-
+/* ---- Campos de entrada ---- */
 .prod-input-group {
     display: flex;
     gap: 8px;
@@ -334,38 +490,117 @@
 .prod-input {
     flex: 1;
     min-width: 0;
-    min-height: 62px;
+    min-height: 64px;
     padding: 0 18px;
     font-size: 1.15rem;
     font-weight: 600;
     text-align: center;
     letter-spacing: 1px;
-    border-radius: 12px;
+    border-radius: var(--cv-radius);
     border: 2px solid var(--cv-line-strong);
     background: var(--cv-surface);
     color: var(--cv-text);
     outline: none;
+    transition: border-color var(--cv-dur) var(--cv-ease), box-shadow var(--cv-dur) var(--cv-ease);
 }
 .prod-input:focus {
     border-color: var(--cv-blue);
     box-shadow: 0 0 0 4px var(--cv-blue-ring);
 }
-.prod-input::placeholder { font-weight: 400; letter-spacing: 0; }
+.prod-input::placeholder { font-weight: 400; letter-spacing: 0; color: var(--cv-text-faint); }
 
 .prod-btn-go {
-    width: 70px;
-    min-height: 62px;
-    border-radius: 12px;
+    width: 72px;
+    min-height: 64px;
+    border-radius: var(--cv-radius);
     border: none;
     background: var(--cv-blue);
     color: #fff;
     font-size: 1.3rem;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background var(--cv-dur) var(--cv-ease);
 }
+.prod-btn-go:hover { background: var(--cv-blue-dark); }
 .prod-btn-go:active { transform: translateY(1px); }
 
-/* Botao da camera */
+/* ---- Quantidade produzida ---- */
+.prod-form-qtd { display: flex; flex-direction: column; gap: 12px; }
+
+.prod-qtd-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+.prod-qtd-step {
+    width: 64px;
+    min-height: 68px;
+    flex-shrink: 0;
+    border-radius: var(--cv-radius);
+    border: 2px solid var(--cv-line-strong);
+    background: var(--cv-surface-2);
+    color: var(--cv-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all var(--cv-dur) var(--cv-ease);
+}
+.prod-qtd-step:hover { border-color: var(--cv-blue); color: var(--cv-blue); }
+.prod-qtd-step:active { transform: translateY(1px); }
+
+.prod-input-qtd {
+    min-height: 68px;
+    font-size: 1.7rem;
+    font-weight: 700;
+    border-color: #16a34a;
+}
+.prod-input-qtd:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.16);
+}
+
+.prod-btn-confirmar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 62px;
+    border: none;
+    border-radius: var(--cv-radius);
+    background: #16a34a;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter var(--cv-dur) var(--cv-ease);
+}
+.prod-btn-confirmar:hover { filter: brightness(1.06); }
+.prod-btn-confirmar:active { transform: translateY(1px); }
+
+/* ---- Observacao / B.O. (colapsada) ---- */
+.prod-details {
+    border-top: 1px dashed var(--cv-line-strong);
+    padding-top: 10px;
+}
+.prod-details summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cv-text-muted);
+    list-style: none;
+    padding: 6px 0;
+}
+.prod-details summary::-webkit-details-marker { display: none; }
+.prod-details summary i { color: #d97706; margin-right: 4px; }
+.prod-details[open] summary { margin-bottom: 8px; }
+.prod-input-obs {
+    text-align: left;
+    font-weight: 400;
+    font-size: 0.95rem;
+    min-height: 54px;
+}
+
+/* ---- Botao da camera ---- */
 .prod-btn-camera {
     display: flex;
     align-items: center;
@@ -373,19 +608,21 @@
     gap: 10px;
     min-height: 56px;
     width: 100%;
-    border-radius: 12px;
+    border-radius: var(--cv-radius);
     border: 2px dashed var(--cv-line-strong);
     background: var(--cv-surface-2);
     color: var(--cv-text);
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     font-weight: 600;
     cursor: pointer;
+    transition: all var(--cv-dur) var(--cv-ease);
 }
-.prod-btn-camera:active { background: var(--cv-blue-soft); border-color: var(--cv-blue); }
+.prod-btn-camera:hover { border-color: var(--cv-blue); color: var(--cv-blue); }
+.prod-btn-camera:active { background: var(--cv-blue-soft); }
 
-/* Leitor de QR */
+/* ---- Leitor de QR ---- */
 .prod-scanner {
-    border-radius: 14px;
+    border-radius: var(--cv-radius);
     overflow: hidden;
     border: 2px solid var(--cv-blue);
     background: #000;
@@ -411,38 +648,20 @@
     line-height: 1.4;
 }
 
-/* Observacao / B.O. */
-.prod-obs {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-radius: 12px;
-    background: var(--cv-surface-2);
-    border: 1px solid var(--cv-line);
-}
-.prod-obs-label {
-    font-size: 0.82rem;
-    color: var(--cv-text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.prod-obs-label i { color: #d97706; }
-.prod-input-obs { text-align: left; font-weight: 400; font-size: 0.95rem; min-height: 52px; }
-.prod-btn-obs { background: #d97706; }
-
-/* Celular: alvos maiores */
+/* ---- Celular: alvos maiores ---- */
 @media (max-width: 575.98px) {
-    .prod-wrap { padding: 12px 12px 24px; gap: 14px; }
+    .prod-wrap { padding: 12px 12px 32px; gap: 14px; }
     .prod-input { min-height: 68px; font-size: 1.1rem; }
     .prod-btn-go { min-height: 68px; width: 64px; }
+    .prod-qtd-step { width: 60px; min-height: 72px; }
+    .prod-input-qtd { min-height: 72px; font-size: 1.8rem; }
+    .prod-btn-confirmar { min-height: 66px; }
     .prod-input-obs { min-height: 56px; }
-    .prod-btn-obs { min-height: 56px; }
     .prod-msg { padding: 16px; gap: 12px; }
-    .prod-msg i { font-size: 1.9rem; }
-    .prod-msg strong { font-size: 1.05rem; }
+    .prod-msg i { font-size: 1.85rem; }
+    .prod-msg strong { font-size: 1.02rem; }
     .prod-btn { min-height: 56px; flex: 1; }
+    .prod-step, .prod-scan { padding: 15px; }
 }
 </style>
 {% endblock %}

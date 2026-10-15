@@ -89,11 +89,17 @@ ROTINAS_PADRAO = [
     ('003', 'Cadastro de Veículo', 'lista_veiculos', 'ROTINA', 'FROTAS'),
     ('004', 'Cadastro de Custo', 'lista_custo', 'ROTINA', 'FINANCEIRO'),
     ('005', 'Gerenciar Permissões', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
-    ('006', 'Gráfico de Custo de Frete', 'grafico_custo_frete', 'GRAFICO', 'COMERCIAL'),
-    ('007', 'Relatório de Fretes do Mês', 'relatorio_fretes_mes', 'RELATORIO', 'COMERCIAL'),
     ('008', 'Ordem de Produção (OP)', 'lista_ordem_producao', 'ROTINA', 'INDUSTRIA'),
     ('009', 'Rastreio de Produção', 'rastreio_producao', 'ROTINA', 'INDUSTRIA'),
     ('010', 'Produção', 'producao', 'ROTINA', 'INDUSTRIA'),
+]
+
+# Rotinas descontinuadas — removidas do menu e da tela de permissões.
+# Mantidas aqui para que garantir_rotinas_padrao() possa apagá-las de bancos
+# que já as tenham, sem deixar checkbox órfão no formulário de permissão.
+ROTINAS_REMOVIDAS = [
+    ('006', 'grafico_custo_frete'),   # Gráficos
+    ('007', 'relatorio_fretes_mes'),  # Relatórios
 ]
 
 
@@ -120,6 +126,10 @@ def garantir_rotinas_padrao():
             rotina.categoria = categoria
             rotina.setor = setor
             rotina.save(update_fields=['url_name', 'nome', 'categoria', 'setor'])
+
+    # Remove as rotinas descontinuadas (Gráficos / Relatórios). O M2M de
+    # permissões é limpo automaticamente ao apagar a Rotina.
+    Rotina.objects.filter(codigo__in=[c for c, _ in ROTINAS_REMOVIDAS]).delete()
 
 
 class Rotina(models.Model):
@@ -663,6 +673,12 @@ class RastreioOP(models.Model):
     # True = operador bipou para sair do setor, mas o próximo setor ainda não bipou para receber
     aguardando_saida = models.BooleanField(default=False, verbose_name='Aguardando saída do setor')
 
+    quantidade_total = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name='Qtd. Total da OP',
+        help_text='Quantidade total de peças desta OP (vinda da ObraOP).',
+    )
+
     criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
     atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
 
@@ -687,9 +703,13 @@ class RastreioOP(models.Model):
 
     @property
     def tempo_no_setor_atual(self):
-        """Retorna o tempo (em minutos) que a OP está no setor atual."""
+        """Retorna o tempo (em minutos) que a OP está no setor atual.
+        Considera apenas horário de produção (seg-sex 7:00-11:00, 12:12-17:00,
+        sexta até 16:00, sem sáb/dom).
+        """
         if not self.setor_atual or self.concluida:
             return None
+        from core.producao import calcular_minutos_producao
         from django.utils import timezone
         agora = timezone.now()
         # Busca a última movimentação de entrada no setor atual
@@ -697,7 +717,7 @@ class RastreioOP(models.Model):
             setor=self.setor_atual
         ).order_by('-data_hora').first()
         if ultima_entrada:
-            return (agora - ultima_entrada.data_hora).total_seconds() / 60
+            return calcular_minutos_producao(ultima_entrada.data_hora, agora)
         return None
 
     @property
@@ -744,17 +764,30 @@ class RastreioOP(models.Model):
             return 'Demorando um pouco'
         return 'Sem problema'
 
+    @property
+    def quantidade_produzida_total(self):
+        """Soma das quantidades produzidas informadas em cada setor."""
+        total = 0
+        for mov in self.movimentacoes.all():
+            if mov.quantidade_produzida:
+                total += mov.quantidade_produzida
+        return total if total > 0 else None
+
     def tempo_no_setor(self, codigo_setor):
-        """Retorna o tempo (em minutos) que a OP ficou em um setor específico."""
+        """Retorna o tempo (em minutos) que a OP ficou em um setor específico.
+        Considera apenas horário de produção (seg-sex 7:00-11:00, 12:12-17:00,
+        sexta até 16:00, sem sáb/dom).
+        """
+        from core.producao import calcular_minutos_producao
         from django.utils import timezone
         movimentacoes = self.movimentacoes.filter(setor=codigo_setor).order_by('data_hora')
-        total_minutos = 0
+        total_minutos = 0.0
         for mov in movimentacoes:
             if mov.data_entrada and mov.data_saida:
-                total_minutos += (mov.data_saida - mov.data_entrada).total_seconds() / 60
+                total_minutos += calcular_minutos_producao(mov.data_entrada, mov.data_saida)
             elif mov.data_entrada and not mov.data_saida:
                 # Setor atual - calcula até agora
-                total_minutos += (timezone.now() - mov.data_entrada).total_seconds() / 60
+                total_minutos += calcular_minutos_producao(mov.data_entrada)
         return total_minutos
 
     def tempo_no_setor_formatado(self, codigo_setor):
@@ -807,6 +840,11 @@ class MovimentacaoOP(models.Model):
     )
     observacao_entrada = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação (Entrada)')
     observacao_saida = models.CharField(max_length=255, blank=True, default='', verbose_name='Observação (Saída/B.O.)')
+    quantidade_produzida = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name='Qtd. Produzida',
+        help_text='Quantidade de peças produzidas neste setor (informada no 2º bip).',
+    )
     data_hora = models.DateTimeField(auto_now_add=True, verbose_name='Data/Hora')
     data_entrada = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Entrada')
     data_saida = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Saída')

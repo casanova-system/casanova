@@ -67,6 +67,11 @@ from core.views.views import (
     relatorios_view,
     rotinas_view,
 )
+from core.pontosecullum.views import (
+    listar_tabelas_ponto,
+    ver_tabela_ponto,
+    consultar_ponto,
+)
 
 urlpatterns = [
     # LOGIN/LOGOUT
@@ -164,4 +169,11 @@ urlpatterns = [
     path('certificado/casanova-ca.crt', baixar_ca, name='baixar_ca'),
     path('certificado/instalar-certificado-windows.bat',
          baixar_instalador_windows, name='baixar_instalador_windows'),
+    # ==========================================
+    # PONTOSECULLUM — Visualização READ-ONLY
+    # ==========================================
+    path('pontosecullum/', listar_tabelas_ponto, {'banco': 'casanova'}, name='ponto_tabelas'),
+    path('pontosecullum/<str:banco>/', listar_tabelas_ponto, name='ponto_tabelas'),
+    path('pontosecullum/<str:banco>/tabela/<str:tabela>/', ver_tabela_ponto, name='ponto_ver_tabela'),
+    path('pontosecullum/<str:banco>/consultar/', consultar_ponto, name='ponto_consultar'),
 ]

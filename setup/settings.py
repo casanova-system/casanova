@@ -85,7 +85,46 @@ DATABASES = {
             'extra_params': 'TrustServerCertificate=yes;Encrypt=no;',
             'timeout': 15,
         },
-    }
+    },
+    'pontosecullum': {
+        'ENGINE': 'mssql',
+        'NAME': config('PONTOSECULLUM_DB_NAME', default='PontoSecullum4'),
+        'USER': config('PONTOSECULLUM_DB_USER', default=''),
+        'PASSWORD': config('PONTOSECULLUM_DB_PASSWORD', default=''),
+        'HOST': config('PONTOSECULLUM_DB_HOST', default='SRV-AD01'),
+        'PORT': config('PONTOSECULLUM_DB_PORT', default='52568'),
+        'OPTIONS': {
+            'driver': config('PONTOSECULLUM_DB_DRIVER', default='ODBC Driver 18 for SQL Server'),
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=no;Trusted_Connection=yes;',
+            'timeout': 15,
+        },
+    },
+    'pontosecullum_abra': {
+        'ENGINE': 'mssql',
+        'NAME': config('PONTOSECULLUM_ABRA_DB_NAME', default='PontoSecullum4_ABRA'),
+        'USER': config('PONTOSECULLUM_ABRA_DB_USER', default=''),
+        'PASSWORD': config('PONTOSECULLUM_ABRA_DB_PASSWORD', default=''),
+        'HOST': config('PONTOSECULLUM_ABRA_DB_HOST', default='SRV-AD01'),
+        'PORT': config('PONTOSECULLUM_ABRA_DB_PORT', default='52568'),
+        'OPTIONS': {
+            'driver': config('PONTOSECULLUM_ABRA_DB_DRIVER', default='ODBC Driver 18 for SQL Server'),
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=no;Trusted_Connection=yes;',
+            'timeout': 15,
+        },
+    },
+    'pontosecullum_steel': {
+        'ENGINE': 'mssql',
+        'NAME': config('PONTOSECULLUM_STEEL_DB_NAME', default='PontoSecullum4_STEEL'),
+        'USER': config('PONTOSECULLUM_STEEL_DB_USER', default=''),
+        'PASSWORD': config('PONTOSECULLUM_STEEL_DB_PASSWORD', default=''),
+        'HOST': config('PONTOSECULLUM_STEEL_DB_HOST', default='SRV-AD01'),
+        'PORT': config('PONTOSECULLUM_STEEL_DB_PORT', default='52568'),
+        'OPTIONS': {
+            'driver': config('PONTOSECULLUM_STEEL_DB_DRIVER', default='ODBC Driver 18 for SQL Server'),
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=no;Trusted_Connection=yes;',
+            'timeout': 15,
+        },
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [

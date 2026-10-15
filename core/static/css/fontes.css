@@ -1,0 +1,92 @@
+/* ==========================================================================
+   CASANOVA ESQUADRIAS — Tipografia
+   ==========================================================================
+   Nunito, servida LOCALMENTE (sem CDN).
+
+   Por que Nunito: é uma sans-serif de PONTAS ARREDONDADAS — as extremidades
+   dos traços são semicírculos reais, não cantos retos. Isso dá o desenho
+   acolhedor e moderno que prende o olho, sem virar fonte decorativa: a
+   estrutura continua neutra e legível em tabela densa e em tela de fábrica.
+
+   Diferença prática: numa fonte geométrica comum (Inter, Helvetica, Rubik) o
+   traço termina em corte reto. Aqui ele termina em curva — é o que o usuário
+   percebe como "arredondada".
+
+   Por que local e não Google Fonts: a fábrica não pode depender de internet
+   para renderizar a interface. Com @font-face apontando para arquivos do
+   próprio servidor, a fonte carrega sempre — inclusive em rede isolada.
+
+   Pesos disponíveis: 300 (Light) · 400 (Regular) · 500 (Medium)
+                      600 (SemiBold) · 700 (Bold) · 800 (ExtraBold)
+   Subset latin: cobre todo o português (ç ã õ é á í ó ú â ê ô à).
+   ========================================================================== */
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-300-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-700-normal.woff2') format('woff2');
+}
+
+/* A Nunito vai até 800 (ExtraBold) de verdade. O 900 continua mapeado para o
+   800 real, evitando o "faux bold" sintetizado pelo navegador. */
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-800-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url('../fonts/nunito-latin-800-normal.woff2') format('woff2');
+}
+
+/* --------------------------------------------------------------------------
+   Fallback de sistema
+   Enquanto o woff2 carrega (font-display: swap), a interface usa a fonte
+   nativa da plataforma — que já tem cara de sistema operacional, não de site.
+   -------------------------------------------------------------------------- */
+:root {
+    --cv-font: 'Nunito', 'Segoe UI Variable Text', 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --cv-font-mono: 'Cascadia Mono', Consolas, 'SF Mono', 'DejaVu Sans Mono',
+                    'Courier New', monospace;
+}
