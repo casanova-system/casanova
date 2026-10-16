@@ -212,11 +212,17 @@
 
         /* rodape do usuario: nunca encolhe, nunca sai da tela */
         .sidebar-bottom-container {
+            /* sai do fluxo rolavel: a sidebar e uma coluna de 3 partes
+               (header fixo / nav rolavel / rodape fixo). Sem isso o rodape
+               e empurrado conforme o conteudo do menu. */
             flex: 0 0 auto;
-            position: sticky;
-            bottom: 0;
+            position: relative;
+            bottom: auto;
+            margin-top: auto;
             background-color: #ffffff;
-            z-index: 5;
+            border-top: 1px solid rgba(0, 0, 0, 0.07);
+            box-shadow: 0 -6px 12px -8px rgba(0, 0, 0, 0.12);
+            z-index: 6;
         }
         [data-bs-theme="dark"] .sidebar-bottom-container {
             background-color: #161b22;
@@ -297,6 +303,11 @@
             pointer-events: auto !important;
         }
         
+        /* header da sidebar: nunca encolhe nem sai da tela */
+        .sidebar-header-box {
+            flex: 0 0 auto;
+        }
+
         .sidebar-casanova.sidebar-collapsed .sidebar-header-box {
             justify-content: center !important;
             padding-left: 0 !important;
@@ -974,7 +985,7 @@
                                             <span>PRODUÇÃO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' or request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' or request.resolver_match.url_name == 'producao' or request.resolver_match.url_name == 'lista_estruturas' or request.resolver_match.url_name == 'detalhe_estrutura' %}show{% endif %}" id="modProducao">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' or request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' or request.resolver_match.url_name == 'producao' or request.resolver_match.url_name == 'lista_estruturas' or request.resolver_match.url_name == 'detalhe_estrutura' %} show menu-grupo-atual{% endif %}" id="modProducao">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 %}
                                                 <a href="{% url 'lista_ordem_producao' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' %}active{% endif %}" title="Ordem de Produção">
@@ -1008,7 +1019,7 @@
                                             <span>ESTOQUE</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'lista_movimentos_hist' %}show{% endif %}" id="modEstoque">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'lista_movimentos_hist' %} show menu-grupo-atual{% endif %}" id="modEstoque">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estoque or request.user.perfil.tem_rotina.012 %}
                                                 <a href="{% url 'lista_estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' %}active{% endif %}" title="Saldo e Movimentação">
@@ -1032,7 +1043,7 @@
                                             <span>COMPRAS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' or request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' %}show{% endif %}" id="modCompras">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' or request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' %} show menu-grupo-atual{% endif %}" id="modCompras">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_compras or request.user.perfil.tem_rotina.013 %}
                                                 <a href="{% url 'lista_compras' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' %}active{% endif %}" title="Requisições e Pedidos">
@@ -1061,7 +1072,7 @@
                                             <span>EXPEDIÇÃO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %}show{% endif %}" id="modExpedicao">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %} show menu-grupo-atual{% endif %}" id="modExpedicao">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_romaneios or request.user.perfil.tem_rotina.011 %}
                                                 <a href="{% url 'lista_romaneios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %}active{% endif %}" title="Romaneio de Carga">
@@ -1080,7 +1091,7 @@
                                             <span>CUSTOS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' or request.resolver_match.url_name == 'custos_setores' %}show{% endif %}" id="modCustos">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' or request.resolver_match.url_name == 'custos_setores' %} show menu-grupo-atual{% endif %}" id="modCustos">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custos or request.user.perfil.tem_rotina.014 %}
                                                 <a href="{% url 'lista_custos' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' %}active{% endif %}" title="Custo por OP">
@@ -1104,7 +1115,7 @@
                                             <span>COMERCIAL</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' or request.resolver_match.url_name == 'lista_propostas' or request.resolver_match.url_name == 'detalhe_proposta' %}show{% endif %}" id="modComercial">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' or request.resolver_match.url_name == 'lista_propostas' or request.resolver_match.url_name == 'detalhe_proposta' %} show menu-grupo-atual{% endif %}" id="modComercial">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_vendas or request.user.perfil.tem_rotina.015 %}
                                                 <a href="{% url 'lista_vendas' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' %}active{% endif %}" title="Pedidos de Venda">
@@ -1128,7 +1139,7 @@
                                             <span>FINANCEIRO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'painel_financeiro' or request.resolver_match.url_name == 'lista_contas_pagar' or request.resolver_match.url_name == 'lista_contas_receber' or request.resolver_match.url_name == 'lista_notas' or request.resolver_match.url_name == 'detalhe_nota' %}show{% endif %}" id="modFinanceiro">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'painel_financeiro' or request.resolver_match.url_name == 'lista_contas_pagar' or request.resolver_match.url_name == 'lista_contas_receber' or request.resolver_match.url_name == 'lista_notas' or request.resolver_match.url_name == 'detalhe_nota' %} show menu-grupo-atual{% endif %}" id="modFinanceiro">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.painel_financeiro or request.user.perfil.tem_rotina.017 %}
                                                 <a href="{% url 'painel_financeiro' %}" class="menu-item {% if request.resolver_match.url_name == 'painel_financeiro' %}active{% endif %}" title="Painel Financeiro">
@@ -1162,7 +1173,7 @@
                                             <span>PESSOAS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' %}show{% endif %}" id="modPessoas">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' %} show menu-grupo-atual{% endif %}" id="modPessoas">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 %}
                                                 <a href="{% url 'lista_funcionarios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' %}active{% endif %}" title="Funcionários">
@@ -1315,12 +1326,10 @@
             }
             htmlEl.classList.remove('preload-collapsed'); // Remove a classe de bloqueio visual inicial
 
-            // Expande a sidebar automaticamente se houver um item de menu ativo
-            const activeLink = sidebar.querySelector('.sidebar-link.active');
-            if (activeLink && sidebar.classList.contains('sidebar-collapsed')) {
-                sidebar.classList.remove('sidebar-collapsed');
-                localStorage.setItem('casanova_sidebar_collapsed', 'false');
-            }
+            // O estado recolhido/expandido e escolha do usuario e fica salvo.
+            // NAO expandir sozinho ao abrir uma tela: quem recolheu quer o
+            // menu recolhido, e antes essa regra forcava a abertura a cada
+            // clique em rotina (e ainda gravava 'false', perdendo a escolha).
 
             if (toggleBtn && sidebar) {
                 toggleBtn.addEventListener('click', function() {
@@ -1379,8 +1388,17 @@
                 links.forEach(l => { l.style.display = ''; });
                 setores.forEach(s => { s.style.display = ''; });
                 secoes.forEach(s => { s.style.display = ''; });
+                // Fecha TODOS os grupos que a busca abriu. Sem isto o grupo
+                // fica com 'show' e aparece aberto do nada ao voltar a tela.
                 document.querySelectorAll('#listaNavegacao .collapse').forEach(c => {
                     c.classList.remove('busca-aberta');
+                    if (!c.classList.contains('menu-grupo-atual')) {
+                        c.classList.remove('show');
+                        const tit = c.parentElement
+                            ? c.parentElement.querySelector('.menu-grupo-titulo')
+                            : null;
+                        if (tit) tit.setAttribute('aria-expanded', 'false');
+                    }
                 });
                 if (vazio) vazio.style.display = 'none';
                 return;
@@ -1402,7 +1420,11 @@
                 grupo.style.display = visiveis.length > 0 ? '' : 'none';
                 // Abre o collapse do grupo para mostrar o resultado
                 const col = grupo.querySelector('.collapse');
-                if (col && visiveis.length > 0) col.classList.add('show', 'busca-aberta');
+                if (col && visiveis.length > 0) {
+                    col.classList.add('show', 'busca-aberta');
+                    const tit = grupo.querySelector('.menu-grupo-titulo');
+                    if (tit) tit.setAttribute('aria-expanded', 'true');
+                }
             });
 
             // Mostra/esconde seções (Rotinas/Gráficos/Relatórios)
