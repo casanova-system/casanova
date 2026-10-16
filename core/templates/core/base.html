@@ -16,10 +16,10 @@
             const paletaSalva = localStorage.getItem('casanova_palette') || 'azul';
             document.documentElement.setAttribute('data-palette', paletaSalva);
 
-            const sidebarSalva = localStorage.getItem('casanova_sidebar_collapsed');
-            if (sidebarSalva === 'true') {
-                document.documentElement.classList.add('preload-collapsed');
-            }
+            // NAO aplicar preload-collapsed aqui: se o localStorage tiver 'true'
+            // salvo (da regra antiga que gravava errado), o menu abre encolhido
+            // com width: 72px !important antes do CSS carregar. O usuario quer
+            // que o menu acompanhe ele, nao que encolha ao trocar de rotina.
         })();
     </script>
     
@@ -1320,11 +1320,10 @@
             const sidebar = document.getElementById('sidebarCasanova');
             const htmlEl = document.documentElement;
 
-            // Restaura o estado inicial salvo
-            if (localStorage.getItem('casanova_sidebar_collapsed') === 'true') {
-                sidebar.classList.add('sidebar-collapsed');
-            }
-            htmlEl.classList.remove('preload-collapsed'); // Remove a classe de bloqueio visual inicial
+            // NAO restaurar sidebar-collapsed do localStorage: o usuario quer
+            // que o menu acompanhe ele ao trocar de rotina, nao que encolha.
+            // O toggle manual continua funcionando para quem quiser encolher.
+            htmlEl.classList.remove('preload-collapsed');
 
             // O estado recolhido/expandido e escolha do usuario e fica salvo.
             // NAO expandir sozinho ao abrir uma tela: quem recolheu quer o
