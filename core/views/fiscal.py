@@ -53,7 +53,8 @@ def lista_notas(request):
     if participante:
         qs = qs.filter(participante_nome__icontains=participante)
     if projeto:
-        qs = qs.filter(projeto__icontains=projeto)
+        # NotaFiscal não tem campo projeto direto; busca pelo codigo_faktory
+        qs = qs.filter(codigo_faktory__icontains=projeto)
 
     hoje = timezone.localdate()
     de = _parse(request.GET.get('de', ''))

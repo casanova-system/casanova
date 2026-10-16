@@ -77,7 +77,7 @@ def lista_vendas(request):
     if participante:
         qs = qs.filter(cliente_nome__icontains=participante)
     if projeto:
-        qs = qs.filter(projeto__icontains=projeto)
+        qs = qs.filter(obra__codigo__icontains=projeto)
 
     qs, de, ate = _filtra_periodo(qs, 'data_cadastro', request)
     qs = qs.order_by('-data_cadastro', '-id')
@@ -152,7 +152,6 @@ def lista_propostas(request):
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
     participante = request.GET.get('participante', '').strip()
-    projeto = request.GET.get('projeto', '').strip()
 
     qs = VendaProposta.objects.all()
     if query:
@@ -162,8 +161,6 @@ def lista_propostas(request):
         qs = qs.filter(status=status)
     if participante:
         qs = qs.filter(cliente_nome__icontains=participante)
-    if projeto:
-        qs = qs.filter(projeto__icontains=projeto)
 
     qs, de, ate = _filtra_periodo(qs, 'data_cadastro', request)
     qs = qs.order_by('-data_cadastro', '-id')
@@ -184,7 +181,6 @@ def lista_propostas(request):
         'query': query,
         'status_atual': status,
         'participante': participante,
-        'projeto': projeto,
         'status_opcoes': VendaProposta._meta.get_field('status').choices,
         'de': de, 'ate': ate,
         'dias': request.GET.get('dias', ''),

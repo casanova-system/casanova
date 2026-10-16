@@ -49,7 +49,11 @@ def _filtro_comum(request, qs, campo_data):
     if documento:
         qs = qs.filter(numero__icontains=documento)
     if projeto:
-        qs = qs.filter(projeto__icontains=projeto)
+        # ContaPagar vai por pedido_compra; ContaReceber por venda
+        if hasattr(qs.model, 'pedido_compra'):
+            qs = qs.filter(pedido_compra__requisicao__obra_op__obra__codigo__icontains=projeto)
+        elif hasattr(qs.model, 'venda'):
+            qs = qs.filter(venda__projeto__icontains=projeto)
 
     # situacao e o filtro que o financeiro usa de verdade
     if situacao == 'vencido':
