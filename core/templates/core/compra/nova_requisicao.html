@@ -1,0 +1,188 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 1000px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Nova Requisição</h1>
+            <p class="page-subtitle mb-0">Escolha o que precisa comprar.</p>
+        </div>
+        <a href="{% url 'lista_compras' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post" id="formReq">
+        {% csrf_token %}
+
+        {% if sugestoes %}
+        <div class="card shadow-sm border-0 mb-3 sugestao">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0"><i class="fa-solid fa-triangle-exclamation text-danger me-1"></i>
+                        Abaixo do mínimo — sugerido pelo sistema</h6>
+                    <button type="button" class="btn btn-sm btn-danger" id="btnMarcarSug">
+                        Marcar todos
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th style="width:40px;"></th><th>Produto</th><th class="text-end">Saldo</th><th class="text-end">Mínimo</th><th class="text-end">Comprar</th></tr></thead>
+                        <tbody>
+                        {% for p in sugestoes %}
+                            <tr>
+                                <td><input type="checkbox" name="produtos" value="{{ p.pk }}" class="form-check-input chk-sug"></td>
+                                <td class="small"><strong>{{ p.codigo }}</strong> — {{ p.descricao|truncatechars:40 }}</td>
+                                <td class="text-end num text-danger">{{ p.saldo_total|moeda }}</td>
+                                <td class="text-end small text-muted">{{ p.estoque_minimo|quantidade }}</td>
+                                <td style="width:130px;">
+                                    <input type="text" name="qtd_{{ p.pk }}" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="auto">
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Deixando a quantidade vazia, o sistema sugere o necessário para
+                    voltar ao mínimo.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados da requisição</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Origem</label>
+                        <select name="origem" class="form-select">
+                            <option value="MINIMO">Estoque mínimo</option>
+                            <option value="OP">Ordem de produção</option>
+                            <option value="MANUAL" selected>Solicitação manual</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Prioridade</label>
+                        <select name="prioridade" class="form-select">
+                            <option value="BAIXA">Baixa</option>
+                            <option value="NORMAL" selected>Normal</option>
+                            <option value="URGENTE">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Necessário até</label>
+                        <input type="date" name="data_necessaria" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Setor solicitante</label>
+                        <input type="text" name="setor" class="form-control" placeholder="Ex: Corte, Usinagem...">
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label small fw-semibold">Justificativa</label>
+                        <input type="text" name="justificativa" class="form-control" placeholder="Por que este material é necessário?">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Outros materiais</h6>
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-8">
+                        <label class="form-label small fw-semibold">Produto</label>
+                        <select id="selProduto" class="form-select">
+                            <option value="">Escolha para adicionar...</option>
+                            {% for p in produtos %}
+                                <option value="{{ p.pk }}" data-cod="{{ p.codigo }}" data-desc="{{ p.descricao|truncatechars:44 }}">
+                                    {{ p.codigo }} — {{ p.descricao|truncatechars:52 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-8 col-md-2">
+                        <label class="form-label small fw-semibold">Qtd</label>
+                        <input type="text" id="inpQtd" class="form-control" inputmode="decimal" placeholder="1">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <button type="button" class="btn btn-outline-primary w-100" id="btnAdd">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="listaExtras" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lista_compras' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-check me-1"></i> Criar requisição</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    var btnSug = document.getElementById('btnMarcarSug');
+    var sugs = document.querySelectorAll('.chk-sug');
+    if (btnSug) {
+        btnSug.addEventListener('click', function () {
+            var todas = Array.prototype.every.call(sugs, function (c) { return c.checked; });
+            sugs.forEach(function (c) { c.checked = !todas; });
+            btnSug.textContent = todas ? 'Marcar todos' : 'Desmarcar todos';
+        });
+    }
+
+    var sel = document.getElementById('selProduto');
+    var qtd = document.getElementById('inpQtd');
+    var btn = document.getElementById('btnAdd');
+    var lista = document.getElementById('listaExtras');
+    var n = 0;
+
+    if (btn) {
+        btn.addEventListener('click', function () {
+            if (!sel || !sel.value) return;
+            var opt = sel.options[sel.selectedIndex];
+            var q = qtd && qtd.value ? qtd.value : '1';
+            n++;
+            var div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center border rounded p-2 mb-1';
+            div.innerHTML = '<span class="small"><strong>' + opt.dataset.cod + '</strong> — ' +
+                opt.dataset.desc + '</span>' +
+                '<span class="small fw-bold">' + q + '</span>' +
+                '<input type="hidden" name="produtos" value="' + sel.value + '">' +
+                '<input type="hidden" name="qtd_' + sel.value + '" value="' + q + '">';
+            lista.appendChild(div);
+            sel.value = '';
+            if (qtd) qtd.value = '';
+        });
+    }
+})();
+</script>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.ped-aberto   { background: #e2e8f0; color: #334155; }
+.ped-enviado  { background: #dbeafe; color: #1e40af; }
+.ped-parcial  { background: #fef3c7; color: #92400e; }
+.ped-recebido { background: #dcfce7; color: #166534; }
+.ped-cancelado{ background: #fee2e2; color: #991b1b; }
+.pri-baixa    { background: #f1f5f9; color: #64748b; }
+.pri-normal   { background: #e2e8f0; color: #334155; }
+.pri-urgente  { background: #fee2e2; color: #991b1b; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+</style>
+{% endblock %}

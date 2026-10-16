@@ -1,0 +1,121 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Custo por Setor</h1>
+            <p class="page-subtitle mb-0">Quanto custa a hora de trabalho em cada posto da fábrica.</p>
+        </div>
+        <a href="{% url 'lista_custos' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="alert alert-info small">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        O custo/hora é o que transforma <strong>tempo em dinheiro</strong>. Sem ele o
+        rastreio mede tempo, mas não diz quanto custou. Os valores em cinza são os
+        padrões de fábrica — cadastre os reais para afinar o cálculo.
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr>
+                        <th>Setor</th><th class="text-center">Situação</th>
+                        <th class="text-end">Custo/hora</th><th class="text-end">Indireto/hora</th>
+                        <th class="text-end">Total/hora</th><th style="width:120px;"></th>
+                    </tr></thead>
+                    <tbody>
+                    {% for s in setores %}
+                        <tr>
+                            <td><strong class="small">{{ s.nome }}</strong>
+                                <div class="text-muted" style="font-size:.7rem;">{{ s.codigo }}</div></td>
+                            <td class="text-center">
+                                {% if s.cadastrado %}<span class="badge bg-success">Cadastrado</span>
+                                {% else %}<span class="badge bg-secondary">Padrão</span>{% endif %}
+                            </td>
+                            <td class="text-end num {% if not s.cadastrado %}text-muted{% endif %}">{{ s.custo_hora|moeda_simbolo }}</td>
+                            <td class="text-end num {% if not s.cadastrado %}text-muted{% endif %}">{{ s.custo_hora_indireto|moeda_simbolo }}</td>
+                            <td class="text-end num fw-bold">{{ s.custo_hora|moeda_simbolo }}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                        data-bs-target="#modal{{ forloop.counter }}">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <td colspan="4" class="text-end fw-bold">Média da fábrica</td>
+                            <td class="text-end num fw-bold">{{ media_hora|moeda_simbolo }}/h</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3">
+        {{ cadastrados }} de {{ total_setores }} setores com valor cadastrado.
+    </p>
+
+    {% for s in setores %}
+    <div class="modal fade" id="modal{{ forloop.counter }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ s.nome }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="setor" value="{{ s.codigo }}">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Nome</label>
+                        <input type="text" name="nome" class="form-control" value="{{ s.nome }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Custo por hora (R$)</label>
+                        <input type="text" name="custo_hora" class="form-control"
+                               value="{{ s.custo_hora|moeda }}" inputmode="decimal">
+                        <div class="form-text">Salário + encargos + máquina.</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Custo indireto por hora (R$)</label>
+                        <input type="text" name="custo_hora_indireto" class="form-control"
+                               value="{{ s.custo_hora_indireto|moeda }}" inputmode="decimal">
+                        <div class="form-text">Energia, aluguel e supervisão rateados.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.margem-boa    { background: #dcfce7; color: #166534; }
+.margem-atencao{ background: #fef3c7; color: #92400e; }
+.margem-ruim   { background: #fee2e2; color: #991b1b; }
+.margem-neutra { background: #e2e8f0; color: #334155; }
+.barra { height: 26px; display: flex; border-radius: 6px; overflow: hidden; }
+.barra > div { display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; }
+.barra-mat { background: #3b82f6; }
+.barra-mo  { background: #10b981; }
+.barra-ind { background: #f59e0b; }
+</style>
+{% endblock %}

@@ -107,7 +107,9 @@
                     <input type="number" name="quantidade_produzida"
                            class="form-control fw-bold text-center"
                            style="max-width: 160px;" placeholder="0"
-                           inputmode="numeric" min="0" max="99999" autofocus required>
+                           inputmode="numeric" min="0"
+                           max="{{ resultado.rastreio.quantidade_total|default:99999 }}"
+                           autofocus required>
                 </div>
                 <button type="submit" class="btn btn-success fw-semibold">
                     <i class="fa-solid fa-flag-checkered me-1"></i> Finalizar e liberar
@@ -198,15 +200,50 @@
         document.addEventListener('click', function (e) {
             if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') campo.focus();
         });
-        // Se o leitor enviar sem Enter, submete ao detectar pausa na digitação
+        // Envio adaptativo: distingue o leitor (rajada rapida) da digitacao
+        // manual (lenta). Com timer fixo de 400ms quem digitava a mao era
+        // enviado no meio do codigo. Ver producao.html para o detalhamento.
+        const MIN_CHARS = 3;
+        const GAP_LEITOR = 120;
+        const ESPERA_LEITOR = 150;
+        const ESPERA_HUMANO = 4000;
+        const PAUSA_LONGA = 2000;
+
         let timer = null;
+        let ultimaTecla = 0;
+        let somaGaps = 0;
+        let nGaps = 0;
+
+        function enviar() {
+            document.getElementById('formEscanear').submit();
+        }
+
         campo.addEventListener('input', function () {
+            const agora = Date.now();
+            if (ultimaTecla) {
+                const gap = agora - ultimaTecla;
+                if (gap > PAUSA_LONGA) { somaGaps = 0; nGaps = 0; }
+                else { somaGaps += gap; nGaps += 1; }
+            }
+            ultimaTecla = agora;
+
             clearTimeout(timer);
+            if (campo.value.trim().length < MIN_CHARS) return;
+
+            const media = nGaps > 0 ? somaGaps / nGaps : 9999;
+            const veioDeLeitor = nGaps >= 3 && media <= GAP_LEITOR;
             timer = setTimeout(function () {
-                if (campo.value.trim().length >= 3) {
-                    document.getElementById('formEscanear').submit();
-                }
-            }, 400);
+                if (campo.value.trim().length >= MIN_CHARS) enviar();
+            }, veioDeLeitor ? ESPERA_LEITOR : ESPERA_HUMANO);
+        });
+
+        // Enter envia na hora
+        campo.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(timer);
+                enviar();
+            }
         });
     })();
 </script>

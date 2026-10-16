@@ -56,6 +56,12 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # Filtros de formatação brasileira (moeda, quantidade, percentual)
+            # disponíveis em TODOS os templates sem precisar de {% load %}.
+            # Ficam em builtins de propósito: o sistema inteiro é pt-BR, e
+            # esquecer o load em um template novo mostraria 46965576.42 em vez
+            # de 46.965.576,42 — exatamente o erro que queremos evitar.
+            'builtins': ['core.templatetags.br'],
         },
     },
 ]
@@ -90,7 +96,7 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': config('PONTOSECULLUM_DB_NAME', default='PontoSecullum4'),
         'USER': config('PONTOSECULLUM_DB_USER', default=''),
-        'PASSWORD': config('PONTOSECULLUM_DB_PASSWORD', default=''),
+        'PASSWORD': config('PONTOSECULLUM_DB_PASSWORD', default=''), 
         'HOST': config('PONTOSECULLUM_DB_HOST', default='SRV-AD01'),
         'PORT': config('PONTOSECULLUM_DB_PORT', default='52568'),
         'OPTIONS': {

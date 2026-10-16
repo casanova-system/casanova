@@ -18,7 +18,24 @@ from core.models import Obra, ObraOP, ObraOPComponente, ObraOPItem, ObraOPVidro
 ABA_PADRAO = 'Page 1'
 
 # Identificação da OP (ex.: J01, J02, P01, ...)
-PADRAO_DOCUMENTO = re.compile(r'^([JP]\d+)$')
+#
+# O Alumisoft gera o código com sufixo de revisão em alguns relatórios
+# (ex.: 'J01_2', 'P03_REV01'). O sufixo NÃO faz parte da identidade da OP —
+# a identidade é o documento (J01) dentro da obra. Sem tolerar o sufixo, a
+# detecção de formato falha e a importação inteira é abortada em silêncio.
+PADRAO_DOCUMENTO = re.compile(r'^([JP]\d+)(?:[_\-\s].*)?$')
+
+
+def documento_base(valor):
+    """Extrai o documento (J01, P03) de um código possivelmente com sufixo.
+
+    'J01_2'      -> 'J01'
+    'P03_REV01'  -> 'P03'
+    'J01'        -> 'J01'
+    """
+    texto = str(valor or '').strip()
+    m = PADRAO_DOCUMENTO.match(texto)
+    return m.group(1) if m else texto
 
 # Seções (tabelas) que podem se repetir dentro da mesma OP
 SECOES = ('Perfis', 'Componentes', 'Vidros')
@@ -274,7 +291,7 @@ def _linha_de_dados(ws, linha):
 def _ler_cabecalho(ws, linha_inicio, linha_fim, formato):
     """Extrai o cabeçalho da OP casando os rótulos da coluna A."""
     dados = {
-        'documento': _celula(ws, linha_inicio, formato.col_op),
+        'documento': documento_base(_celula(ws, linha_inicio, formato.col_op)),
         'codigo_esquadria': '',
         'descricao': '',
         'tratamento': '',
@@ -443,23 +460,40 @@ def _ler_op(ws, linha_inicio, linha_fim, formato):
 
 
 def ler_ops(origem):
-    """Lê o arquivo (caminho ou upload) e devolve a lista de OPs encontradas."""
+    """Lê o arquivo (caminho ou upload) e devolve a lista de OPs encontradas.
+
+    Levanta ErroImportacaoOP com o motivo REAL quando nada é encontrado. Antes
+    devolvia [] e a view mostrava uma mensagem genérica sobre "coluna E" — o
+    operador ficava sem saber o que havia de errado no arquivo dele.
+    """
     wb = openpyxl.load_workbook(origem, data_only=True)
     try:
         if ABA_PADRAO in wb.sheetnames:
             ws = wb[ABA_PADRAO]
         else:
             ws = wb.active
+
         if ws is None:
-            return []
+            raise ErroImportacaoOP('A planilha não tem nenhuma aba com dados.')
 
         formato = detectar_formato(ws)
         if formato is None:
-            return []
+            amostra = [_celula(ws, 1, c) for c in range(1, 10)]
+            amostra = [v for v in amostra if v]
+            raise ErroImportacaoOP(
+                f'Não reconheci o formato desta planilha (aba "{ws.title}"). '
+                f'O código da OP deve estar na coluna E (ex.: J01, J02, P01) ou '
+                f'na coluna F, na primeira linha. '
+                f'Conteúdo da primeira linha: {amostra or "vazia"}. '
+                f'Confirme que é o relatório de OP gerado pelo Alumisoft.'
+            )
 
         marcadores = _localizar_marcadores(ws, formato)
         if not marcadores:
-            return []
+            raise ErroImportacaoOP(
+                'O formato foi reconhecido, mas nenhuma OP foi encontrada na '
+                'planilha. Verifique se o relatório está completo.'
+            )
 
         limites = marcadores + [ws.max_row + 1]
         return [

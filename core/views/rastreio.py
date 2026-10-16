@@ -232,7 +232,35 @@ def _montar_fluxo(rastreio):
     return fluxo
 
 
-def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida='', quantidade_produzida=None):
+def _limite_quantidade(rastreio):
+    """Quantidade maxima que a OP comporta (None = sem limite conhecido)."""
+    total = getattr(rastreio, 'quantidade_total', None)
+    return total if total else None
+
+
+def _validar_quantidade(rastreio, qtd):
+    """Confere a quantidade informada contra o total da OP.
+
+    O operador nao pode informar que produziu mais pecas do que a OP pede.
+    Um erro de digitacao (55 em vez de 5) liberava o setor com um numero
+    impossivel e o rastreio ficava com quantidade maior que a OP inteira.
+
+    Retorna a mensagem de erro, ou None se estiver dentro do limite.
+    """
+    if qtd is None:
+        return None
+    limite = _limite_quantidade(rastreio)
+    if limite and qtd > limite:
+        plural = 'pecas' if limite != 1 else 'peca'
+        return (
+            f'Quantidade maior que a OP: ela pede {limite} {plural} '
+            f'e voce informou {qtd}. Corrija para no maximo {limite}.'
+        )
+    return None
+
+
+def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida='',
+                         quantidade_produzida=None, pedir_quantidade=True):
     """Registra automaticamente a passagem da OP pelo setor do usuário.
 
     Lógica de DUPLO BIP:
@@ -244,6 +272,12 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
       - erro: mensagem de erro (ou None)
       - resultado: dict com dados do registro (ou None)
       - precisa_vidro: True se o setor Mesa precisa decidir sobre vidro
+
+    `pedir_quantidade`:
+      - True (padrão)  — no 2º bip sem quantidade, devolve o formulário para o
+        operador informar quantas peças produziu (tela "Escanear OP").
+      - False          — no 2º bip libera o setor direto, sem perguntar nada
+        (tela "Produção", onde a quantidade não é coletada).
     """
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
     codigo_setor = setor_usuario.codigo
@@ -333,16 +367,22 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
     if rastreio.setor_atual == codigo_setor:
         # Se já bipou a entrada e NÃO bipou a saída → este é o 2º bip (saída)
         if not rastreio.aguardando_saida:
-            # Sem a quantidade informada, não registra a saída: devolve o
-            # formulário de quantidade (o operador bipou de novo em vez de
-            # digitar quantas peças produziu).
-            if quantidade_produzida is None:
+            # Sem a quantidade informada: na tela de Produção a saída é
+            # registrada direto (a quantidade não é coletada lá). Na tela
+            # "Escanear OP" devolve o formulário, como antes.
+            if quantidade_produzida is None and pedir_quantidade:
                 return (
                     None,
                     {'rastreio': rastreio, 'setor': setor_usuario,
                      'iniciou': False, 'bip': 'entrada', 'precisa_quantidade': True},
                     False,
                 )
+
+            # Nao deixa informar mais pecas do que a OP pede
+            erro_qtd = _validar_quantidade(rastreio, quantidade_produzida)
+            if erro_qtd:
+                return (erro_qtd, None, False)
+
             with transaction.atomic():
                 update_fields = {
                     'data_saida': timezone.now(),
@@ -919,45 +959,148 @@ def registrar_movimentacao(request, op_id):
     messages.success(request, f'OP recebida no setor {proximo.nome} (1º bip).')
     return redirect('rastreio_op', op_id=op_id)
 
-def _extrair_op_id_do_qr(codigo):
-    """Extrai o ID da OP do conteúdo do QR Code ou do código digitado.
+def _explicar_codigo_nao_encontrado(codigo):
+    """Explica por que o codigo nao achou a OP — sem culpar o codigo.
 
-    Aceita:
-    - JSON do QR Code (ex: {"id": 21, "op": "J01", ...})
-    - ID numérico (ex: 21)
-    - Código do documento (ex: J01, J02, etc.)
+    Caso importante: a OP pode estar no RASTREIO mas ter o cadastro removido.
+    RastreioOP.op_id e um inteiro solto (nao e ForeignKey), entao excluir a
+    ObraOP nao apaga o rastreio: sobra um rastreio orfao. O operador ve a OP
+    listada no rastreio e recebe "codigo nao reconhecido" — confuso, porque a
+    OP existe na tela.
+
+    Aqui a mensagem diz o que realmente aconteceu.
+    """
+    import re
+
+    from core.models import RastreioOP
+
+    codigo = (codigo or '').strip()
+    if not codigo:
+        return 'Código não reconhecido.'
+
+    # Tenta achar um rastreio cujo codigo case com o que foi lido
+    alvo = None
+    m = re.match(r'^(.+?)[^A-Za-z0-9_]+([A-Za-z]\d+)$', codigo)
+    if m:
+        obra_cod, doc = m.group(1).strip(), m.group(2).strip()
+        alvo = (
+            RastreioOP.objects.filter(obra__iexact=obra_cod,
+                                      op_numero__iexact=doc).first()
+            or RastreioOP.objects.filter(op_numero__iexact=doc).first()
+        )
+    if not alvo and re.match(r'^[A-Za-z]+\d+$', codigo):
+        alvo = RastreioOP.objects.filter(op_numero__iexact=codigo).first()
+    if not alvo and codigo.isdigit():
+        alvo = RastreioOP.objects.filter(op_id=int(codigo)).first()
+
+    if alvo:
+        return (
+            f'A OP {alvo.op_numero} (obra {alvo.obra}) está no rastreio, no '
+            f'setor de {alvo.setor_atual_nome}, mas o cadastro dela foi '
+            f'removido da Ordem de Produção. Por isso o código não encontra a '
+            f'OP. Peça ao responsável para reimportar a OP.'
+        )
+
+    return f'Código não reconhecido: "{codigo}".'
+
+
+def _achar_por_obra_e_doc(obra_cod, doc):
+    """Procura a OP casando obra + documento, com tolerancia de caixa."""
+    from core.models import ObraOP
+
+    if not doc:
+        return None
+    return (
+        ObraOP.objects.filter(
+            obra__codigo=obra_cod, codigo_documento__iexact=doc
+        ).first()
+        or ObraOP.objects.filter(
+            obra__codigo__iexact=obra_cod, codigo_documento__iexact=doc
+        ).first()
+    )
+
+
+def _extrair_op_id_do_qr(codigo):
+    """Extrai o pk da ObraOP a partir do que o leitor enviou.
+
+    Formatos aceitos, na ordem em que são tentados:
+      1. JSON do QR Code      — {"id": 21, "op": "44-J01", ...}
+      2. OBRA + separador + DOCUMENTO — "26-0053-02_PROD-J01"
+      3. J01                  — só o documento (etiquetas antigas)
+      4. 21                   — só o ID numérico (etiquetas antigas)
+
+    TOLERÂNCIA DE SEPARADOR (importante):
+    O leitor laser emula teclado, então o caractere separador depende do layout
+    do teclado dele. Na prática o '|' chega como '}' (visto em produção:
+    '?codigo=26-0053-02_PROD%7DJ01'). Por isso o parser aceita QUALQUER
+    separador não-alfanumérico e também o caso sem separador nenhum — assim a
+    etiqueta continua sendo lida mesmo que o leitor troque o caractere.
     """
     import json
     import re
 
-    codigo = codigo.strip()
+    from core.models import ObraOP
 
-    # Tenta fazer parse do JSON
+    codigo = (codigo or '').strip()
+    if not codigo:
+        return None
+
+    # --- 1. JSON do QR Code ---
     try:
         dados = json.loads(codigo)
-        if isinstance(dados, dict) and 'id' in dados:
-            return int(dados['id'])
-        if isinstance(dados, dict) and 'op' in dados:
-            # Se tiver o campo 'op', tenta extrair números
-            numeros = ''.join(ch for ch in str(dados['op']) if ch.isdigit())
-            if numeros:
-                return int(numeros)
+        if isinstance(dados, dict):
+            if 'id' in dados:
+                try:
+                    return int(dados['id'])
+                except (TypeError, ValueError):
+                    pass
+            # 'op' vem como '44-J01' (pk-documento): o pk é o número ANTES do
+            # hífen. Pegar todos os dígitos daria '4401' e apontaria errado.
+            m = re.match(r'^(\d+)', str(dados.get('op') or ''))
+            if m:
+                return int(m.group(1))
     except (json.JSONDecodeError, ValueError, TypeError):
         pass
 
-    # Verifica se é um código de documento (ex: J01, J02, etc.)
-    match = re.match(r'^([A-Za-z]+)(\d+)$', codigo)
-    if match:
-        # Busca ObraOP pelo código do documento
-        from core.models import ObraOP
-        obra_op = ObraOP.objects.filter(codigo_documento=codigo).first()
+    # --- 2. OBRA + separador + DOCUMENTO ---
+    # Qualquer caractere que não seja letra/dígito/hífen/underscore conta como
+    # separador (pega '|', '}', '/', '!', espaço, etc).
+    m = re.match(r'^(.+?)[^A-Za-z0-9_]+([A-Za-z]\d+)$', codigo)
+    if m:
+        obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
         if obra_op:
             return obra_op.pk
 
-    # Fallback: extrai números do código (compatibilidade com ID numérico)
-    numeros = ''.join(ch for ch in codigo if ch.isdigit())
-    if numeros:
-        return int(numeros)
+    # Sem separador (o leitor pode ter engolido o caractere): o documento é o
+    # bloco 'J01'/'P03' no fim. Pega o ÚLTIMO hífen como divisória.
+    m = re.match(r'^(.+)-([A-Za-z]\d+)$', codigo)
+    if m:
+        obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
+        if obra_op:
+            return obra_op.pk
+
+    # Separador totalmente engolido pelo leitor: '26-0053-02_PRODJ01'.
+    # O documento é sempre letra(s)+dígito(s) no fim; tenta achar a divisória
+    # que casa com uma OP existente, do fim para o começo.
+    for i in range(len(codigo) - 2, 0, -1):
+        prefixo, sufixo = codigo[:i], codigo[i:]
+        if re.match(r'^[A-Za-z]+\d+$', sufixo):
+            obra_op = _achar_por_obra_e_doc(prefixo.strip(), sufixo.strip())
+            if obra_op:
+                return obra_op.pk
+
+    # --- 3. Só o documento (ex.: J01) ---
+    if re.match(r'^[A-Za-z]+\d+$', codigo):
+        obra_op = (
+            ObraOP.objects.filter(codigo_documento__iexact=codigo).first()
+            or ObraOP.objects.filter(codigo_esquadria__iexact=codigo).first()
+        )
+        if obra_op:
+            return obra_op.pk
+
+    # --- 4. Só o ID numérico ---
+    if codigo.isdigit():
+        return int(codigo)
 
     return None
 
@@ -971,12 +1114,11 @@ def _buscar_obra_op_por_id(obra_op_id):
 @login_required(login_url='login')
 @requer_rotina('producao')
 def producao(request):
-    """Tela de Produção — o operador de chão de fábrica só faz três coisas:
+    """Tela de Produção — o operador de chão de fábrica só faz uma coisa:
 
-    1. Bipa (ou digita) o código da OP.
-    2. Se for a entrada no setor, o sistema pede a quantidade produzida.
-    3. Digita a quantidade e confirma — a OP é liberada e ele já pode bipar a
-       próxima peça, sem sair da tela.
+    Bipa (ou digita) o código da OP. O sistema decide sozinho se é a entrada
+    no setor ou a liberação para o próximo — ciclo de duplo bip, sem digitar
+    quantidade (a quantidade não é coletada nesta tela).
 
     O foco nunca sai do campo de leitura: o leitor de código de barras digita
     como teclado e manda Enter sozinho, então o ciclo inteiro é feito sem mouse.
@@ -1005,7 +1147,7 @@ def producao(request):
     if codigo:
         op_id = _extrair_op_id_do_qr(codigo)
         if not op_id:
-            erro = f'Código não reconhecido: "{codigo}".'
+            erro = _explicar_codigo_nao_encontrado(codigo)
         elif not _pode_registrar(request.user):
             erro = (
                 'Seu usuário não está liberado para registrar produção. '
@@ -1021,7 +1163,8 @@ def producao(request):
                     erro = 'OP não encontrada.'
                 else:
                     erro, resultado, precisa_vidro = _registrar_por_setor(
-                        request, op_id, setor_usuario, vidro
+                        request, op_id, setor_usuario, vidro,
+                        pedir_quantidade=False,
                     )
                     if precisa_vidro:
                         op_id_pendente = op_id
@@ -1084,7 +1227,9 @@ def _producao_finalizar(request):
         )
         return render(request, 'core/industria/producao.html', context)
 
-    # Quantidade produzida — obrigatória para liberar o setor
+    # Quantidade produzida — OPCIONAL nesta tela (não é mais coletada).
+    # O campo continua aceito para não quebrar chamadas antigas, e se vier
+    # algum valor ele ainda é validado contra o total da OP.
     qtd = None
     if quantidade:
         try:
@@ -1099,14 +1244,17 @@ def _producao_finalizar(request):
                 'setor': context['setor_usuario'],
             }
             return render(request, 'core/industria/producao.html', context)
-    else:
-        context['erro'] = 'Informe a quantidade produzida antes de finalizar.'
-        context['resultado'] = {
-            'rastreio': rastreio,
-            'bip': 'entrada',
-            'setor': context['setor_usuario'],
-        }
-        return render(request, 'core/industria/producao.html', context)
+
+        # Nao deixa informar mais pecas do que a OP pede
+        erro_qtd = _validar_quantidade(rastreio, qtd)
+        if erro_qtd:
+            context['erro'] = erro_qtd
+            context['resultado'] = {
+                'rastreio': rastreio,
+                'bip': 'entrada',
+                'setor': context['setor_usuario'],
+            }
+            return render(request, 'core/industria/producao.html', context)
 
     with transaction.atomic():
         MovimentacaoOP.objects.filter(
@@ -1162,7 +1310,7 @@ def escanear(request):
         # Tenta extrair o ID do JSON do QR Code
         op_id = _extrair_op_id_do_qr(codigo)
         if not op_id:
-            erro = f'Código inválido: "{codigo}".'
+            erro = _explicar_codigo_nao_encontrado(codigo)
         elif not _pode_gerenciar(request.user):
             erro = (
                 'Apenas usuários de nível Gerência podem registrar a '

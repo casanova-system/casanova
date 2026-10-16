@@ -43,6 +43,37 @@ from core.views.ordem_producao import (
     imprimir_barcode_ordem_producao,
     lista_ordem_producao,
 )
+from core.views.custo_producao import (
+    calcular_op,
+    custos_setores,
+    detalhe_custo_producao,
+    lista_custos,
+    recalcular_todos,
+)
+from core.views.compra import (
+    detalhe_pedido,
+    detalhe_requisicao,
+    lista_fornecedores,
+    lista_pedidos,
+    lista_requisicoes,
+    nova_requisicao,
+    novo_fornecedor,
+)
+from core.views.estoque import (
+    lista_estoque,
+    lista_produtos,
+    movimentar,
+    movimentos,
+    novo_produto,
+    saldo_produto,
+)
+from core.views.romaneio import (
+    detalhe_romaneio,
+    excluir_romaneio,
+    imprimir_romaneio,
+    lista_romaneios,
+    novo_romaneio,
+)
 from core.views.rastreio import (
     escanear,
     producao,
@@ -148,6 +179,44 @@ urlpatterns = [
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
     # PRODUÇÃO (consulta rápida da OP na indústria)
     path('industria/producao/', producao, name='producao'),
+
+    # Custo de Produção
+    path('industria/custos/', lista_custos, name='lista_custos'),
+    path('industria/custos/<int:custo_id>/', detalhe_custo_producao,
+         name='detalhe_custo_producao'),
+    path('industria/custos/op/<int:op_id>/calcular/', calcular_op, name='calcular_op'),
+    path('industria/custos/setores/', custos_setores, name='custos_setores'),
+    path('industria/custos/recalcular/', recalcular_todos, name='recalcular_todos'),
+
+    # Compras
+    path('industria/compras/', lista_requisicoes, name='lista_compras'),
+    path('industria/compras/requisicoes/', lista_requisicoes, name='lista_requisicoes'),
+    path('industria/compras/requisicoes/nova/', nova_requisicao, name='nova_requisicao'),
+    path('industria/compras/requisicoes/<int:requisicao_id>/',
+         detalhe_requisicao, name='detalhe_requisicao'),
+    path('industria/compras/pedidos/', lista_pedidos, name='lista_pedidos'),
+    path('industria/compras/pedidos/<int:pedido_id>/',
+         detalhe_pedido, name='detalhe_pedido'),
+    path('industria/compras/fornecedores/', lista_fornecedores, name='lista_fornecedores'),
+    path('industria/compras/fornecedores/novo/', novo_fornecedor, name='novo_fornecedor'),
+
+    # Estoque
+    path('industria/estoque/', lista_estoque, name='lista_estoque'),
+    path('industria/estoque/movimentar/', movimentar, name='movimentar_estoque'),
+    path('industria/estoque/movimentos/', movimentos, name='movimentos_estoque'),
+    path('industria/estoque/produtos/', lista_produtos, name='lista_produtos_estoque'),
+    path('industria/estoque/produtos/novo/', novo_produto, name='novo_produto_estoque'),
+    path('industria/estoque/produto/<int:produto_id>/', saldo_produto, name='saldo_produto'),
+
+    # Romaneio de Carga (a Expedicao e o setor final do fluxo)
+    path('industria/romaneios/', lista_romaneios, name='lista_romaneios'),
+    path('industria/romaneios/novo/', novo_romaneio, name='novo_romaneio'),
+    path('industria/romaneios/<int:romaneio_id>/', detalhe_romaneio,
+         name='detalhe_romaneio'),
+    path('industria/romaneios/<int:romaneio_id>/imprimir/', imprimir_romaneio,
+         name='imprimir_romaneio'),
+    path('industria/romaneios/<int:romaneio_id>/excluir/', excluir_romaneio,
+         name='excluir_romaneio'),
     # ==========================================
     # API REST — App Mobile (Flutter)
     # ==========================================

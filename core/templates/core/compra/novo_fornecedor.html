@@ -1,0 +1,110 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Novo Fornecedor</h1>
+            <p class="page-subtitle mb-0">Quem entrega o material para a fábrica.</p>
+        </div>
+        <a href="{% url 'lista_fornecedores' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Identificação</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Razão social *</label>
+                        <input type="text" name="razao_social" class="form-control" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Nome fantasia</label>
+                        <input type="text" name="nome_fantasia" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">CNPJ</label>
+                        <input type="text" name="cnpj" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Inscrição estadual</label>
+                        <input type="text" name="inscricao_estadual" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Prazo de entrega (dias)</label>
+                        <input type="text" name="prazo_entrega_dias" class="form-control" inputmode="numeric" placeholder="Ex: 15">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Contato e endereço</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Contato</label>
+                        <input type="text" name="contato" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Telefone</label>
+                        <input type="text" name="telefone" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">E-mail</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Endereço</label>
+                        <input type="text" name="endereco" class="form-control">
+                    </div>
+                    <div class="col-8 col-md-4">
+                        <label class="form-label small fw-semibold">Cidade</label>
+                        <input type="text" name="cidade" class="form-control">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <label class="form-label small fw-semibold">UF</label>
+                        <input type="text" name="uf" class="form-control" maxlength="2">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Observação</label>
+                        <textarea name="observacao" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lista_fornecedores' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-check me-1"></i> Cadastrar</button>
+        </div>
+    </form>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.ped-aberto   { background: #e2e8f0; color: #334155; }
+.ped-enviado  { background: #dbeafe; color: #1e40af; }
+.ped-parcial  { background: #fef3c7; color: #92400e; }
+.ped-recebido { background: #dcfce7; color: #166534; }
+.ped-cancelado{ background: #fee2e2; color: #991b1b; }
+.pri-baixa    { background: #f1f5f9; color: #64748b; }
+.pri-normal   { background: #e2e8f0; color: #334155; }
+.pri-urgente  { background: #fee2e2; color: #991b1b; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+</style>
+{% endblock %}

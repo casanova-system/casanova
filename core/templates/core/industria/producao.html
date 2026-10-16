@@ -19,58 +19,6 @@
     </div>
 
     <!-- ============================== -->
-    <!-- ETAPA 2: QUANTIDADE PRODUZIDA  -->
-    <!-- Aparece so depois do 1o bip    -->
-    <!-- ============================== -->
-    {% if resultado and resultado.bip == 'entrada' %}
-        <div class="prod-step">
-            <div class="prod-step-head">
-                <span class="prod-step-num">2</span>
-                <div>
-                    <strong>Quantas peças você produziu?</strong>
-                    <span class="prod-step-sub">
-                        OP {{ resultado.rastreio.op_numero|default:resultado.rastreio.op_id }}
-                        · total da OP: {{ resultado.rastreio.quantidade_total|default:"?" }}
-                        · setor: {{ resultado.setor.nome }}
-                    </span>
-                </div>
-            </div>
-
-            <form method="POST" action="{% url 'producao' %}" class="prod-form-qtd" id="formQuantidade">
-                {% csrf_token %}
-                <input type="hidden" name="op_id" value="{{ resultado.rastreio.op_id }}">
-                {% if setor_param %}<input type="hidden" name="setor" value="{{ setor_param }}">{% endif %}
-
-                <div class="prod-qtd-row">
-                    <button type="button" class="prod-qtd-step" data-step="-1" aria-label="Menos um">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-                    <input type="number" name="quantidade_produzida" id="campoQtd"
-                           class="prod-input prod-input-qtd"
-                           inputmode="numeric" pattern="[0-9]*"
-                           placeholder="0" min="0" max="99999"
-                           autocomplete="off" required>
-                    <button type="button" class="prod-qtd-step" data-step="1" aria-label="Mais um">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-
-                <button type="submit" class="prod-btn-confirmar">
-                    <i class="fa-solid fa-flag-checkered"></i>
-                    Finalizar e liberar
-                </button>
-
-                <details class="prod-details">
-                    <summary><i class="fa-solid fa-triangle-exclamation"></i> Teve algum problema? (opcional)</summary>
-                    <input type="text" name="observacao" class="prod-input prod-input-obs"
-                           placeholder="Ex: peça trincada, material faltando…"
-                           autocomplete="off">
-                </details>
-            </form>
-        </div>
-    {% endif %}
-
-    <!-- ============================== -->
     <!-- MENSAGEM DE ESTADO             -->
     <!-- ============================== -->
     {% if resultado and resultado.bip == 'saida' %}
@@ -79,8 +27,8 @@
             <div>
                 <strong>Trabalho finalizado!</strong>
                 <span>
-                    {{ resultado.quantidade_produzida }} peça{{ resultado.quantidade_produzida|pluralize }}
-                    em {{ resultado.setor.nome }}. Bipe a próxima OP.
+                    OP liberada do setor {{ resultado.setor.nome }}.
+                    {% if resultado.quantidade_produzida %}Produzidas: {{ resultado.quantidade_produzida }} peça{{ resultado.quantidade_produzida|pluralize }}. {% endif %}Bipe a próxima OP.
                 </span>
             </div>
         </div>
@@ -154,6 +102,17 @@
             <i class="fa-solid fa-camera"></i> Escanear com a câmera
         </button>
 
+        <!-- Fora do HTTPS o navegador bloqueia a camera e esconde o botao.
+             Sem este aviso o operador nao ve botao nenhum e nao sabe por que. -->
+        <div class="prod-aviso-https" id="avisoHttps" hidden>
+            <i class="fa-solid fa-lock" id="avisoHttpsIcone"></i>
+            <div class="prod-aviso-corpo">
+                <strong id="avisoHttpsTitulo"></strong>
+                <span id="avisoHttpsTexto"></span>
+                <a href="#" id="avisoHttpsLink" class="prod-aviso-link"></a>
+            </div>
+        </div>
+
         <!-- Area do leitor de QR -->
         <div class="prod-scanner" id="scannerBox" hidden>
             <div id="qrReader"></div>
@@ -177,8 +136,6 @@
 
     var campo = document.getElementById('campoCodigo');
     var form = document.getElementById('formEscanear');
-    var campoQtd = document.getElementById('campoQtd');
-    var formQtd = document.getElementById('formQuantidade');
     var btnCamera = document.getElementById('btnCamera');
     var scannerBox = document.getElementById('scannerBox');
     var btnFechar = document.getElementById('btnFecharCamera');
@@ -195,64 +152,84 @@
         if (!ehToque && campo && document.activeElement !== campo) campo.focus();
     }
 
-    // ---------------------------------------------------------------
-    // Etapa 2 ativa: o foco vai para a quantidade, nao para a leitura.
-    // O operador digita os numeros e manda Enter — sem tocar no mouse.
-    // ---------------------------------------------------------------
-    if (campoQtd) {
-        if (!ehToque) {
-            campoQtd.focus();
-            campoQtd.select();
-        }
-        campoQtd.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); formQtd.submit(); }
-        });
-        // O operador pode, em vez de digitar a quantidade, bipar o próximo
-        // código com o foco ainda aqui. Um código de barras/QR nunca é um
-        // número curto: se o conteúdo não for numérico, tratamos como leitura
-        // e mandamos para o campo de código.
-        campoQtd.addEventListener('input', function () {
-            var v = campoQtd.value.trim();
-            if (v.length > 5 || (v.length && !/^[0-9]+$/.test(v))) {
-                if (campo) campo.value = v;
-                campoQtd.value = '';
-                submeter();
-            }
-        });
-    } else {
-        focarCampo();
-        document.addEventListener('click', function (e) {
-            var t = e.target.tagName;
-            if (t !== 'A' && t !== 'BUTTON' && t !== 'INPUT' && t !== 'SUMMARY') focarCampo();
-        });
-    }
+    // O foco fica sempre no campo de leitura: o operador bipa e o ciclo
+    // inteiro acontece sem mouse. (A etapa de quantidade foi removida desta
+    // tela — o 2º bip libera o setor direto.)
+    focarCampo();
+    document.addEventListener('click', function (e) {
+        var t = e.target.tagName;
+        if (t !== 'A' && t !== 'BUTTON' && t !== 'INPUT' && t !== 'SUMMARY') focarCampo();
+    });
 
-    // Botoes +/- da quantidade
-    var passos = document.querySelectorAll('.prod-qtd-step');
-    for (var i = 0; i < passos.length; i++) {
-        passos[i].addEventListener('click', function () {
-            if (!campoQtd) return;
-            var passo = parseInt(this.getAttribute('data-step'), 10) || 0;
-            var atual = parseInt(campoQtd.value, 10);
-            if (isNaN(atual)) atual = 0;
-            var novo = atual + passo;
-            if (novo < 0) novo = 0;
-            campoQtd.value = novo;
-            campoQtd.focus();
-        });
-    }
+    // ------------------------------------------------------------------
+    // ENVIO AUTOMATICO ADAPTATIVO
+    //
+    // O leitor de codigo de barras "digita" o codigo como se fosse teclado,
+    // mas numa rajada muito rapida (~5-30ms entre caracteres). Uma pessoa
+    // digita bem mais devagar (~200-600ms).
+    //
+    // Um timer FIXO nao serve: com 400ms, quem digita a mao e enviado no meio
+    // do codigo (bug relatado no galpao — o operador nao conseguia terminar).
+    //
+    // Aqui medimos o intervalo entre as teclas e escolhemos a espera:
+    //   veio de leitor -> 150ms de silencio ja envia (rapido como antes)
+    //   digitacao humana -> 4s de silencio, ou o Enter (sem cortar nada)
+    // ------------------------------------------------------------------
+    var MIN_CHARS = 3;            // codigo mais curto aceito (ex.: J01)
+    var GAP_LEITOR = 120;         // ms: acima disso nao e leitor, e pessoa
+    var ESPERA_LEITOR = 150;      // ms de silencio apos a rajada do leitor
+    var ESPERA_HUMANO = 4000;     // ms de silencio para digitacao manual
+    var PAUSA_LONGA = 2000;       // pausa que reinicia a medicao
 
-    // Envio automatico ao digitar (leitor de codigo de barras digita como teclado)
     var timer = null;
+    var ultimaTecla = 0;
+    var somaGaps = 0;
+    var nGaps = 0;
+
+    function reiniciarMedicao() {
+        ultimaTecla = 0;
+        somaGaps = 0;
+        nGaps = 0;
+    }
+
     if (campo) {
         campo.addEventListener('input', function () {
+            var agora = Date.now();
+
+            // Mede o intervalo desde a tecla anterior. Pausas longas
+            // (ex.: operador pensando) reiniciam a medicao: e uma nova
+            // digitacao, nao continuacao da rajada do leitor.
+            if (ultimaTecla) {
+                var gap = agora - ultimaTecla;
+                if (gap > PAUSA_LONGA) {
+                    somaGaps = 0;
+                    nGaps = 0;
+                } else {
+                    somaGaps += gap;
+                    nGaps += 1;
+                }
+            }
+            ultimaTecla = agora;
+
             clearTimeout(timer);
+            if (campo.value.trim().length < MIN_CHARS) return;
+
+            // Media dos intervalos: abaixo do limite = rajada de leitor
+            var media = nGaps > 0 ? somaGaps / nGaps : 9999;
+            var veioDeLeitor = nGaps >= 3 && media <= GAP_LEITOR;
+
             timer = setTimeout(function () {
-                if (campo.value.trim().length >= 3) submeter();
-            }, 400);
+                if (campo.value.trim().length >= MIN_CHARS) submeter();
+            }, veioDeLeitor ? ESPERA_LEITOR : ESPERA_HUMANO);
         });
+
+        // Enter envia na hora, sem esperar (digitacao manual)
         campo.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); submeter(); }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(timer);
+                submeter();
+            }
         });
     }
 
@@ -264,12 +241,56 @@
         form.submit();
     }
 
-    // CÂMERA - exige contexto seguro (HTTPS ou localhost)
+    // CÂMERA - o navegador só libera a câmera em contexto seguro.
+    // "Seguro" = HTTPS com certificado VÁLIDO. Aceitar o aviso de certificado
+    // inválido NÃO basta: window.isSecureContext continua false. Em HTTP puro
+    // o navegador nem expõe navigator.mediaDevices.
     var contextoOk = window.isSecureContext === true;
     var temApi = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    var avisoHttps = document.getElementById('avisoHttps');
 
     if (contextoOk && temApi && btnCamera) {
         btnCamera.hidden = false;
+    } else if (avisoHttps) {
+        var ehHttps = window.location.protocol === 'https:';
+        var aTitulo = document.getElementById('avisoHttpsTitulo');
+        var aTexto = document.getElementById('avisoHttpsTexto');
+        var aLink = document.getElementById('avisoHttpsLink');
+        var aIcone = document.getElementById('avisoHttpsIcone');
+
+        if (!ehHttps) {
+            // Está em HTTP puro: basta trocar para HTTPS.
+            if (aTitulo) aTitulo.textContent = 'Para usar a câmera, abra em conexão segura';
+            if (aTexto) aTexto.textContent =
+                'O navegador só libera a câmera em HTTPS. Você está acessando por HTTP.';
+            if (aLink) {
+                // Só o hostname: a porta do HTTP (80 ou 8000) não tem TLS.
+                // https://host:8000 daria erro de conexão — o HTTPS é na 443.
+                aLink.href = 'https://' + window.location.hostname
+                           + window.location.pathname;
+                aLink.textContent = 'Abrir versão segura (HTTPS)';
+            }
+        } else if (!temApi) {
+            // HTTPS válido, mas o navegador é antigo e não expõe a API.
+            if (aIcone) aIcone.className = 'fa-solid fa-circle-info';
+            if (aTitulo) aTitulo.textContent = 'Este navegador não abre a câmera';
+            if (aTexto) aTexto.textContent =
+                'A conexão está segura, mas o navegador não tem o leitor de '
+                + 'câmera. Use o leitor USB ou digite o código.';
+            if (aLink) aLink.hidden = true;
+        } else {
+            // Já está em HTTPS, mas o aparelho não confia no certificado.
+            if (aIcone) aIcone.className = 'fa-solid fa-triangle-exclamation';
+            if (aTitulo) aTitulo.textContent = 'Certificado não instalado neste aparelho';
+            if (aTexto) aTexto.textContent =
+                'Aceitar o aviso do navegador não libera a câmera. '
+                + 'Instale o certificado da Casanova (leva 1 minuto).';
+            if (aLink) {
+                aLink.href = '/certificado/';
+                aLink.textContent = 'Ver como instalar';
+            }
+        }
+        avisoHttps.hidden = false;
     }
 
     function pararCamera() {
@@ -619,6 +640,43 @@
 }
 .prod-btn-camera:hover { border-color: var(--cv-blue); color: var(--cv-blue); }
 .prod-btn-camera:active { background: var(--cv-blue-soft); }
+
+/* ---- Aviso: camera bloqueada pelo navegador ---- */
+.prod-aviso-https {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--cv-radius);
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-line);
+    border-left: 5px solid #ea580c;
+}
+.prod-aviso-https > i {
+    color: #ea580c;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.prod-aviso-corpo { display: flex; flex-direction: column; gap: 4px; }
+.prod-aviso-corpo strong { font-size: 0.98rem; color: var(--cv-text); }
+.prod-aviso-corpo span {
+    font-size: 0.85rem;
+    color: var(--cv-text-muted);
+    line-height: 1.45;
+}
+.prod-aviso-link {
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #ea580c;
+    color: #fff !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.prod-aviso-link:hover { background: #c2410c; }
 
 /* ---- Leitor de QR ---- */
 .prod-scanner {

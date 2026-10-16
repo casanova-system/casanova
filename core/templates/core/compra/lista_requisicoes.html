@@ -1,0 +1,166 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Compras</h1>
+            <p class="page-subtitle mb-0">Requisição, pedido e recebimento de material.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'nova_requisicao' %}" class="btn-action btn-action-primary">
+                <i class="fa-solid fa-plus"></i> Nova requisição
+            </a>
+            <a href="{% url 'lista_pedidos' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-file-invoice"></i> Pedidos
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Requisições abertas</div>
+                <div class="kpi-value">{{ kpi.abertas }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Aprovadas</div>
+                <div class="kpi-value">{{ kpi.aprovadas }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Pedidos ativos</div>
+                <div class="kpi-value">{{ kpi.pedidos }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Aguardando entrega</div>
+                <div class="kpi-value">{{ kpi.aguardando }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    {% if sugestoes %}
+    <div class="card shadow-sm border-0 mb-3 sugestao">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h6 class="fw-bold mb-1">
+                        <i class="fa-solid fa-triangle-exclamation text-danger me-1"></i>
+                        {{ total_sugestoes }} material(is) abaixo do mínimo
+                    </h6>
+                    <p class="text-muted small mb-2">
+                        Estes produtos estão com saldo abaixo do mínimo e ainda não têm
+                        requisição aberta. É o que precisa ser comprado.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for p in sugestoes|slice:":8" %}
+                            <span class="badge bg-white text-dark border">
+                                {{ p.codigo }} — {{ p.saldo_total|moeda }}/{{ p.estoque_minimo|numero }} {{ p.unidade_efetiva }}
+                            </span>
+                        {% endfor %}
+                        {% if total_sugestoes > 8 %}
+                            <span class="badge bg-light text-muted">+{{ total_sugestoes|add:"-8" }} outros</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'nova_requisicao' %}" class="btn btn-danger">
+                    <i class="fa-solid fa-cart-plus me-1"></i> Gerar requisição
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold mb-1">Buscar</label>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Número, OP ou justificativa...">
+                </div>
+                <div class="col-8 col-md-4">
+                    <label class="form-label small fw-semibold mb-1">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        {% for v, n in status_opcoes %}<option value="{{ v }}" {% if status_atual == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-4 col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i></button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr>
+                        <th>Número</th><th>Origem</th><th>Solicitante</th><th>OP</th>
+                        <th class="text-center">Itens</th><th class="text-end">Estimado</th>
+                        <th class="text-center">Prioridade</th><th>Status</th><th class="text-end">Ações</th>
+                    </tr></thead>
+                    <tbody>
+                        {% for r in requisicoes %}
+                        <tr>
+                            <td><strong>{{ r.numero }}</strong><div class="text-muted" style="font-size:.72rem;">{{ r.criado_em|date:"d/m/Y H:i" }}</div></td>
+                            <td class="small">{{ r.get_origem_display }}</td>
+                            <td class="small">{{ r.solicitante.username|default:"—" }}</td>
+                            <td class="small">{% if r.obra_op %}{{ r.obra_op.codigo_formatado }}{% else %}—{% endif %}</td>
+                            <td class="text-center">{{ r.total_itens }}</td>
+                            <td class="text-end num">{{ r.valor_estimado|moeda_simbolo }}</td>
+                            <td class="text-center"><span class="bdg {{ r.prioridade_classe }}">{{ r.get_prioridade_display }}</span></td>
+                            <td><span class="bdg {{ r.status_classe }}">{{ r.status_nome }}</span></td>
+                            <td class="text-end">
+                                <a href="{% url 'detalhe_requisicao' r.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-cart-shopping fs-1 d-block mb-2 opacity-50"></i>
+                            Nenhuma requisição ainda.
+                            <br><a href="{% url 'nova_requisicao' %}">Criar a primeira</a>
+                        </td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3"><ul class="pagination justify-content-center mb-0">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&laquo;</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&raquo;</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.ped-aberto   { background: #e2e8f0; color: #334155; }
+.ped-enviado  { background: #dbeafe; color: #1e40af; }
+.ped-parcial  { background: #fef3c7; color: #92400e; }
+.ped-recebido { background: #dcfce7; color: #166534; }
+.ped-cancelado{ background: #fee2e2; color: #991b1b; }
+.pri-baixa    { background: #f1f5f9; color: #64748b; }
+.pri-normal   { background: #e2e8f0; color: #334155; }
+.pri-urgente  { background: #fee2e2; color: #991b1b; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+</style>
+{% endblock %}

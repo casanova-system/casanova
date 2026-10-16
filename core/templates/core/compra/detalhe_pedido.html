@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Pedido {{ pedido.numero }}
+                <span class="bdg {{ pedido.status_classe }} ms-2">{{ pedido.status_nome }}</span>
+            </h1>
+            <p class="page-subtitle mb-0">{{ pedido.fornecedor.nome_curto }}
+                {% if pedido.requisicao %} · da requisição {{ pedido.requisicao.numero }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_pedidos' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr>
+                                <th>Produto</th><th class="text-end">Pedido</th>
+                                <th class="text-end">Recebido</th><th class="text-end">Pendente</th>
+                                <th class="text-end">Preço un.</th><th class="text-end">Total</th>
+                                {% if pode_receber %}<th class="text-end">Receber agora</th>{% endif %}
+                            </tr></thead>
+                            <tbody>
+                            {% for i in itens %}
+                                <tr {% if i.recebido_completo %}class="table-success"{% endif %}>
+                                    <td><strong class="small">{{ i.produto.codigo }}</strong>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ i.produto.descricao|truncatechars:40 }}</div>
+                                        {% if i.local_destino %}<div class="text-muted" style="font-size:.7rem;">→ {{ i.local_destino.nome|truncatechars:24 }}</div>{% endif %}
+                                    </td>
+                                    <td class="text-end num">{{ i.quantidade|quantidade }}</td>
+                                    <td class="text-end num">{{ i.quantidade_recebida|quantidade }}</td>
+                                    <td class="text-end num {% if i.pendente > 0 %}text-warning{% endif %}">{{ i.pendente|quantidade }}</td>
+                                    <td class="text-end small">{{ i.preco_unitario|moeda_simbolo }}</td>
+                                    <td class="text-end num">{{ i.valor_total|moeda_simbolo }}</td>
+                                    {% if pode_receber %}
+                                    <td style="width:130px;">
+                                        <input type="text" name="receber_{{ i.pk }}" form="formReceber"
+                                               class="form-control form-control-sm text-end" inputmode="decimal"
+                                               placeholder="{{ i.pendente|quantidade }}">
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="7" class="text-center py-4 text-muted">Nenhum item.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="5" class="text-end fw-bold">Produtos</td>
+                                    <td class="text-end num fw-bold">{{ pedido.valor_produtos|moeda_simbolo }}</td>
+                                    {% if pode_receber %}<td></td>{% endif %}
+                                </tr>
+                                {% if pedido.frete %}
+                                <tr class="table-light">
+                                    <td colspan="5" class="text-end">Frete</td>
+                                    <td class="text-end num">{{ pedido.frete|moeda_simbolo }}</td>
+                                    {% if pode_receber %}<td></td>{% endif %}
+                                </tr>
+                                {% endif %}
+                                <tr class="table-light">
+                                    <td colspan="5" class="text-end fw-bold">Total do pedido</td>
+                                    <td class="text-end num fw-bold">{{ pedido.valor_total|moeda_simbolo }}</td>
+                                    {% if pode_receber %}<td></td>{% endif %}
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if pode_receber %}
+            <div class="card shadow-sm border-0 mt-3 border-start border-4 border-success">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-2"><i class="fa-solid fa-truck-ramp-box text-success me-1"></i>
+                        Receber material</h6>
+                    <p class="text-muted small mb-3">
+                        Informe as quantidades recebidas. Ao confirmar, o material
+                        <strong>entra no estoque automaticamente</strong> — não precisa
+                        lançar a entrada em outro lugar.
+                    </p>
+                    <form method="post" id="formReceber">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="receber">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small fw-semibold">Local de entrada (se o item não tiver)</label>
+                                <select name="local_recebimento" class="form-select">
+                                    <option value="">Escolha o local...</option>
+                                    {% for l in locais %}<option value="{{ l.pk }}">{{ l.nome }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <button type="submit" class="btn btn-success w-100"
+                                        onclick="return confirm('Confirmar o recebimento e dar entrada no estoque?');">
+                                    <i class="fa-solid fa-check me-1"></i> Confirmar recebimento
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados do pedido</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><td class="text-muted">Fornecedor</td><td class="text-end">{{ pedido.fornecedor.nome_curto }}</td></tr>
+                            <tr><td class="text-muted">Data</td><td class="text-end">{{ pedido.data_pedido|date:"d/m/Y"|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Previsão</td><td class="text-end">{{ pedido.previsao_entrega|date:"d/m/Y"|default:"—" }}</td></tr>
+                            {% if pedido.data_recebimento %}<tr><td class="text-muted">Recebido em</td><td class="text-end">{{ pedido.data_recebimento|date:"d/m/Y" }}</td></tr>{% endif %}
+                            <tr><td class="text-muted">Comprador</td><td class="text-end">{{ pedido.comprador.username|default:"—" }}</td></tr>
+                        </tbody>
+                    </table>
+                    {% if pedido.condicao_pagamento %}
+                        <div class="mt-2 small"><span class="text-muted">Pagamento:</span> {{ pedido.condicao_pagamento }}</div>
+                    {% endif %}
+                    {% if pedido.observacao %}
+                        <div class="mt-2 p-2 bg-body-tertiary rounded small">{{ pedido.observacao }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if pedido.pode_editar %}
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Editar pedido</h6>
+                    <form method="post" class="d-flex flex-column gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="editar">
+                        <input type="text" name="condicao_pagamento" class="form-control" value="{{ pedido.condicao_pagamento }}" placeholder="Condição de pagamento">
+                        <input type="date" name="previsao_entrega" class="form-control" value="{{ pedido.previsao_entrega|date:'Y-m-d' }}">
+                        <input type="text" name="frete" class="form-control" value="{{ pedido.frete|default_if_none:'' }}" placeholder="Frete" inputmode="decimal">
+                        <input type="text" name="observacao" class="form-control" value="{{ pedido.observacao }}" placeholder="Observação">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> Salvar</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Situação</h6>
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="status">
+                        <select name="status" class="form-select">
+                            {% for v, n in pedido.StatusOpcoes %}{% endfor %}
+                            <option value="ABERTO" {% if pedido.status == 'ABERTO' %}selected{% endif %}>Aberto</option>
+                            <option value="ENVIADO" {% if pedido.status == 'ENVIADO' %}selected{% endif %}>Enviado ao fornecedor</option>
+                            <option value="PARCIAL" {% if pedido.status == 'PARCIAL' %}selected{% endif %}>Recebido parcial</option>
+                            <option value="RECEBIDO" {% if pedido.status == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
+                            <option value="CANCELADO" {% if pedido.status == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.ped-aberto   { background: #e2e8f0; color: #334155; }
+.ped-enviado  { background: #dbeafe; color: #1e40af; }
+.ped-parcial  { background: #fef3c7; color: #92400e; }
+.ped-recebido { background: #dcfce7; color: #166534; }
+.ped-cancelado{ background: #fee2e2; color: #991b1b; }
+.pri-baixa    { background: #f1f5f9; color: #64748b; }
+.pri-normal   { background: #e2e8f0; color: #334155; }
+.pri-urgente  { background: #fee2e2; color: #991b1b; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+</style>
+{% endblock %}

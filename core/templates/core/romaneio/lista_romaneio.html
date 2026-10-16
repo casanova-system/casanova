@@ -1,0 +1,186 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Romaneio de Carga</h1>
+            <p class="page-subtitle mb-0">Agrupe as OPs que saem juntas numa entrega.</p>
+        </div>
+        <a href="{% url 'novo_romaneio' %}" class="btn-action btn-action-primary">
+            <i class="fa-solid fa-plus"></i> Novo Romaneio
+        </a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Abertos</div>
+                    <div class="kpi-value">{{ contagem.abertos }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Em carga</div>
+                    <div class="kpi-value">{{ contagem.em_carga }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Saíram</div>
+                    <div class="kpi-value">{{ contagem.saiu }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Entregues</div>
+                    <div class="kpi-value">{{ contagem.entregue }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPs prontas para carregar -->
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3">
+        <i class="fa-solid fa-circle-info"></i>
+        <div class="small">
+            <strong>{{ disponiveis }}</strong> OP(s) já chegaram na Expedição e estão
+            prontas para entrar num romaneio.
+            {% if disponiveis %}<a href="{% url 'novo_romaneio' %}" class="ms-1">Montar carga</a>{% endif %}
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold mb-1">Buscar</label>
+                    <input type="text" name="q" value="{{ query }}" class="form-control"
+                           placeholder="Romaneio, obra, motorista ou placa...">
+                </div>
+                <div class="col-8 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, nome in status_opcoes %}
+                            <option value="{{ valor }}" {% if status_atual == valor %}selected{% endif %}>{{ nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-4 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <a href="{% url 'lista_romaneios' %}" class="btn btn-outline-secondary flex-fill">
+                        <i class="fa-solid fa-rotate"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Romaneio</th>
+                            <th>Obra</th>
+                            <th>Veículo</th>
+                            <th>Motorista</th>
+                            <th class="text-center">OPs</th>
+                            <th class="text-center">Peças</th>
+                            <th>Status</th>
+                            <th>Saída</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in romaneios %}
+                        <tr>
+                            <td><strong>{{ r.numero }}</strong></td>
+                            <td>
+                                <div class="fw-semibold">{{ r.obra.codigo }}</div>
+                                <div class="text-muted small">{{ r.obra.nome|truncatechars:32 }}</div>
+                            </td>
+                            <td>{{ r.veiculo.placa|default:"—" }}</td>
+                            <td>{{ r.motorista|default:"—" }}</td>
+                            <td class="text-center">{{ r.total_ops }}</td>
+                            <td class="text-center">{{ r.total_pecas }}</td>
+                            <td><span class="rom-badge {{ r.status_classe }}">{{ r.status_nome }}</span></td>
+                            <td class="small text-muted">
+                                {% if r.data_saida %}{{ r.data_saida|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'detalhe_romaneio' r.pk %}" class="btn btn-sm btn-outline-primary" title="Abrir">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{% url 'imprimir_romaneio' r.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Imprimir">
+                                    <i class="fa-solid fa-print"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-truck-ramp-box fs-1 d-block mb-2 opacity-50"></i>
+                                Nenhum romaneio ainda.
+                                {% if disponiveis %}
+                                    Há {{ disponiveis }} OP(s) prontas na Expedição —
+                                    <a href="{% url 'novo_romaneio' %}">montar o primeiro romaneio</a>.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&laquo;</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.rom-badge {
+    display: inline-block; padding: 3px 11px; border-radius: 999px;
+    font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.rom-aberto   { background: #e2e8f0; color: #334155; }
+.rom-carga    { background: #fef3c7; color: #92400e; }
+.rom-saiu     { background: #dbeafe; color: #1e40af; }
+.rom-entregue { background: #dcfce7; color: #166534; }
+.rom-cancelado{ background: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}

@@ -432,15 +432,15 @@
     <div class="rf-kpis no-print">
         <div class="rf-kpi" style="--rf-kpi-color: #0b3882;">
             <div class="rf-kpi-label">Custo Total</div>
-            <div class="rf-kpi-value">R$ {{ total_custo|floatformat:2 }}</div>
+            <div class="rf-kpi-value">{{ total_custo|moeda_simbolo }}</div>
         </div>
         <div class="rf-kpi" style="--rf-kpi-color: #047857;">
             <div class="rf-kpi-label">Distância Total</div>
-            <div class="rf-kpi-value">{{ total_distancia|floatformat:1 }} <small>km</small></div>
+            <div class="rf-kpi-value">{{ total_distancia|quantidade_curta }} <small>km</small></div>
         </div>
         <div class="rf-kpi" style="--rf-kpi-color: #0e7490;">
             <div class="rf-kpi-label">Custo Médio / Frete</div>
-            <div class="rf-kpi-value">R$ {{ media_custo|floatformat:2 }}</div>
+            <div class="rf-kpi-value">{{ media_custo|moeda_simbolo }}</div>
         </div>
         <div class="rf-kpi" style="--rf-kpi-color: #b45309;">
             <div class="rf-kpi-label">Operações</div>
@@ -452,15 +452,15 @@
     <div class="rf-print-summary">
         <div class="cell">
             <div class="lbl">Custo Total</div>
-            <div class="val">R$ {{ total_custo|floatformat:2 }}</div>
+            <div class="val">{{ total_custo|moeda_simbolo }}</div>
         </div>
         <div class="cell">
             <div class="lbl">Distância Total</div>
-            <div class="val">{{ total_distancia|floatformat:1 }} km</div>
+            <div class="val">{{ total_distancia|quantidade_curta }} km</div>
         </div>
         <div class="cell">
             <div class="lbl">Custo Médio / Frete</div>
-            <div class="val">R$ {{ media_custo|floatformat:2 }}</div>
+            <div class="val">{{ media_custo|moeda_simbolo }}</div>
         </div>
         <div class="cell">
             <div class="lbl">Operações</div>
@@ -495,8 +495,8 @@
                         <td>{{ frete.nome|default:"—" }}</td>
                         <td>{{ frete.cliente|default:"—" }}</td>
                         <td>{{ frete.veiculo.marca_modelo|default:"—" }}</td>
-                        <td class="ctr">{{ frete.distancia_km|floatformat:1 }} km</td>
-                        <td class="num money">R$ {{ frete.custo_total_deslocamento|floatformat:2 }}</td>
+                        <td class="ctr">{{ frete.distancia_km|quantidade_curta }} km</td>
+                        <td class="num money">{{ frete.custo_total_deslocamento|moeda_simbolo }}</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -513,8 +513,8 @@
                 <tfoot>
                     <tr>
                         <td colspan="5">TOTAL GERAL — {{ total_operacoes }} operaç{{ total_operacoes|pluralize:"ão,ões" }}</td>
-                        <td class="ctr">{{ total_distancia|floatformat:1 }} km</td>
-                        <td class="num">R$ {{ total_custo|floatformat:2 }}</td>
+                        <td class="ctr">{{ total_distancia|quantidade_curta }} km</td>
+                        <td class="num">{{ total_custo|moeda_simbolo }}</td>
                     </tr>
                 </tfoot>
                 {% endif %}

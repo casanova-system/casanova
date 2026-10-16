@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romaneio {{ romaneio.numero }} — {{ romaneio.obra.codigo }}</title>
+    {% load static %}
+    <style>
+        /* ==================================================================
+           ROMANEIO DE CARGA - FOLHA A4 (retrato)
+
+           Area util 190 x 277mm (A4 menos 10mm de margem de cada lado).
+           P&B: a impressora do galpao e laser preto e branco.
+
+           Este e o documento que o motorista leva e colhe assinatura —
+           e a prova de que a peca saiu da fabrica e chegou ao destino.
+           ================================================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            background: #eef1f5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .barra-acoes {
+            position: sticky; top: 0;
+            display: flex; gap: 10px; justify-content: center;
+            padding: 12px; background: #fff;
+            border-bottom: 1px solid #dee2e6; z-index: 10;
+        }
+        .barra-acoes button {
+            padding: 9px 20px; font-size: 14px; font-weight: 600;
+            font-family: inherit; border-radius: 6px;
+            border: 1px solid #0b3882; background: #0b3882;
+            color: #fff; cursor: pointer;
+        }
+        .barra-acoes button.secundario { background: #fff; color: #0b3882; }
+
+        .folha-a4 {
+            width: 210mm; min-height: 297mm;
+            margin: 16px auto; background: #fff;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.16);
+            padding: 10mm; display: flex; flex-direction: column;
+        }
+
+        /* ---- Cabecalho ---- */
+        .cabecalho {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 6mm; padding-bottom: 3mm; border-bottom: 2.5pt solid #000;
+        }
+        .empresa { display: flex; align-items: center; gap: 4mm; }
+        .empresa img { height: 12mm; width: auto; }
+        .empresa-texto .nome { font-size: 13pt; font-weight: 800; line-height: 1.1; }
+        .empresa-texto .doc {
+            font-size: 7.5pt; font-weight: 700; letter-spacing: 1.2px;
+            text-transform: uppercase; color: #444; margin-top: 1mm;
+        }
+        .selo {
+            text-align: right; border: 2pt solid #000;
+            padding: 2mm 4mm; min-width: 52mm;
+        }
+        .selo .rotulo {
+            font-size: 7pt; font-weight: 700; letter-spacing: 1.2px;
+            text-transform: uppercase; color: #444;
+        }
+        .selo .valor { font-size: 17pt; font-weight: 800; line-height: 1.1; }
+
+        /* ---- Faixa de dados ---- */
+        .dados {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 3mm; padding: 3mm 0; border-bottom: 1pt solid #000;
+        }
+        .campo .rotulo {
+            font-size: 6.5pt; font-weight: 700; letter-spacing: .8px;
+            text-transform: uppercase; color: #555; margin-bottom: .6mm;
+        }
+        .campo .valor { font-size: 10pt; font-weight: 700; line-height: 1.25; word-break: break-word; }
+        .campo.largo { grid-column: span 3; }
+
+        /* ---- Tabela de itens ---- */
+        .secao-titulo {
+            font-size: 8pt; font-weight: 800; letter-spacing: 1.2px;
+            text-transform: uppercase; margin: 3mm 0 2mm;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #000; color: #fff; font-size: 7.5pt;
+            font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+            padding: 2mm 1.5mm; text-align: left;
+        }
+        tbody td {
+            font-size: 8.5pt; padding: 1.8mm 1.5mm;
+            border-bottom: .5pt solid #999; vertical-align: top;
+        }
+        tbody tr:nth-child(even) td { background: #f4f4f4; }
+        .centro { text-align: center; }
+        .direita { text-align: right; }
+        .desc { font-size: 7.5pt; color: #333; }
+
+        /* ---- Totais ---- */
+        .totais {
+            display: flex; justify-content: flex-end; gap: 8mm;
+            padding: 2.5mm 0; border-top: 1.5pt solid #000; margin-top: 1mm;
+        }
+        .total-item { text-align: right; }
+        .total-item .rotulo {
+            font-size: 6.5pt; font-weight: 700; letter-spacing: .8px;
+            text-transform: uppercase; color: #555;
+        }
+        .total-item .valor { font-size: 12pt; font-weight: 800; }
+
+        /* ---- Observacao ---- */
+        .observacao {
+            border: 1pt solid #000; padding: 2.5mm; margin-top: 3mm;
+            font-size: 8pt; min-height: 14mm;
+        }
+        .observacao .rotulo {
+            font-size: 6.5pt; font-weight: 700; letter-spacing: .8px;
+            text-transform: uppercase; color: #555; margin-bottom: 1mm;
+        }
+
+        /* ---- Assinaturas ---- */
+        .assinaturas {
+            margin-top: auto; padding-top: 8mm;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10mm;
+        }
+        .assinatura { text-align: center; }
+        .assinatura .linha {
+            border-top: 1pt solid #000; padding-top: 1.5mm;
+            font-size: 7.5pt; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .6px;
+        }
+        .assinatura .sub { font-size: 7pt; color: #555; margin-top: .8mm; }
+
+        .rodape {
+            margin-top: 4mm; padding-top: 2mm; border-top: .5pt dotted #999;
+            font-size: 7pt; color: #555; text-align: center;
+        }
+
+        @media print {
+            html, body { background: #fff; }
+            .barra-acoes { display: none !important; }
+            @page { size: A4 portrait; margin: 10mm; }
+            .folha-a4 {
+                margin: 0; box-shadow: none; padding: 0;
+                width: 190mm; min-height: auto;
+            }
+            tbody tr { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="barra-acoes">
+        <button type="button" onclick="window.print()">Imprimir</button>
+        <button type="button" class="secundario" onclick="window.close()">Fechar</button>
+    </div>
+
+    <div class="folha-a4">
+
+        <!-- ============ CABECALHO ============ -->
+        <div class="cabecalho">
+            <div class="empresa">
+                <img src="{% static 'img/logo_semfundo.png' %}" alt="Casanova Esquadrias">
+                <div class="empresa-texto">
+                    <div class="nome">CASANOVA ESQUADRIAS</div>
+                    <div class="doc">Romaneio de Carga</div>
+                </div>
+            </div>
+            <div class="selo">
+                <div class="rotulo">Romaneio</div>
+                <div class="valor">{{ romaneio.numero }}</div>
+            </div>
+        </div>
+
+        <!-- ============ DADOS ============ -->
+        <div class="dados">
+            <div class="campo">
+                <div class="rotulo">Obra / Destino</div>
+                <div class="valor">{{ romaneio.obra.codigo }}</div>
+            </div>
+            <div class="campo">
+                <div class="rotulo">Cliente</div>
+                <div class="valor">{{ romaneio.obra.cliente|default:"—" }}</div>
+            </div>
+            <div class="campo">
+                <div class="rotulo">Data</div>
+                <div class="valor">{% if romaneio.data_saida %}{{ romaneio.data_saida|date:"d/m/Y" }}{% else %}{{ gerado_em|date:"d/m/Y" }}{% endif %}</div>
+            </div>
+            <div class="campo largo">
+                <div class="rotulo">Endereço de entrega</div>
+                <div class="valor">{{ romaneio.endereco_entrega|default:"—" }}</div>
+            </div>
+            <div class="campo">
+                <div class="rotulo">Veículo</div>
+                <div class="valor">{{ romaneio.veiculo.placa|default:"—" }}</div>
+            </div>
+            <div class="campo">
+                <div class="rotulo">Motorista</div>
+                <div class="valor">{{ romaneio.motorista|default:"—" }}</div>
+            </div>
+            <div class="campo">
+                <div class="rotulo">Distância</div>
+                <div class="valor">{% if romaneio.distancia_km %}{{ romaneio.distancia_km }} km{% else %}—{% endif %}</div>
+            </div>
+        </div>
+
+        <!-- ============ ITENS ============ -->
+        <div class="secao-titulo">Relação de material</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:22mm;">OP</th>
+                    <th style="width:34mm;">Tipologia</th>
+                    <th>Descrição</th>
+                    <th class="centro" style="width:16mm;">Qtd</th>
+                    <th class="centro" style="width:28mm;">Medidas</th>
+                    <th class="centro" style="width:18mm;">Conf.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td><strong>{{ item.obra_op.codigo_formatado }}</strong></td>
+                    <td>{{ item.tipologia|default:"—" }}</td>
+                    <td>
+                        {{ item.descricao|default:"—" }}
+                        {% if item.observacao %}<div class="desc">Obs: {{ item.observacao }}</div>{% endif %}
+                    </td>
+                    <td class="centro"><strong>{{ item.quantidade }}</strong></td>
+                    <td class="centro">{{ item.medidas }}</td>
+                    <td class="centro">{% if item.conferido %}X{% else %}&nbsp;{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="centro" style="padding:8mm;">Nenhuma OP neste romaneio.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totais">
+            <div class="total-item">
+                <div class="rotulo">OPs</div>
+                <div class="valor">{{ romaneio.total_ops }}</div>
+            </div>
+            <div class="total-item">
+                <div class="rotulo">Total de peças</div>
+                <div class="valor">{{ romaneio.total_pecas }}</div>
+            </div>
+            {% if romaneio.peso_total %}
+            <div class="total-item">
+                <div class="rotulo">Peso</div>
+                <div class="valor">{{ romaneio.peso_total }} kg</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============ OBSERVACAO ============ -->
+        <div class="observacao">
+            <div class="rotulo">Observações</div>
+            {{ romaneio.observacao|default:"" }}
+        </div>
+
+        <!-- ============ ASSINATURAS ============ -->
+        <div class="assinaturas">
+            <div class="assinatura">
+                <div class="linha">Entregue por</div>
+                <div class="sub">Casanova Esquadrias — {{ romaneio.criado_por.username|default:"" }}</div>
+            </div>
+            <div class="assinatura">
+                <div class="linha">Recebido por</div>
+                <div class="sub">{{ romaneio.recebido_por|default:"Nome legível e assinatura" }}</div>
+            </div>
+        </div>
+
+        <div class="rodape">
+            Documento gerado pelo Casanova System em {{ gerado_em|date:"d/m/Y H:i" }} —
+            {{ romaneio.numero }}
+        </div>
+
+    </div>
+
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 400);
+        });
+    </script>
+</body>
+</html>

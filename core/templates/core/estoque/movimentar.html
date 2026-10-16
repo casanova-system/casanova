@@ -1,0 +1,146 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 860px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Movimentar Estoque</h1>
+            <p class="page-subtitle mb-0">Entrada de material, saída ou ajuste de contagem.</p>
+        </div>
+        <a href="{% url 'lista_estoque' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Produto *</label>
+                        <select name="produto" class="form-select" required>
+                            <option value="">Escolha o produto...</option>
+                            {% for p in produtos %}
+                                <option value="{{ p.pk }}" {% if produto_selecionado == p.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ p.codigo }} — {{ p.descricao|truncatechars:52 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Tipo *</label>
+                        <select name="tipo" class="form-select" id="selTipo">
+                            <option value="ENTRADA">Entrada</option>
+                            <option value="SAIDA">Saída</option>
+                            <option value="AJUSTE">Ajuste de inventário</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Origem</label>
+                        <select name="origem" class="form-select">
+                            <option value="MANUAL">Lançamento manual</option>
+                            <option value="COMPRA">Compra / Nota fiscal</option>
+                            <option value="PRODUCAO">Consumo em produção</option>
+                            <option value="DEVOLUCAO">Devolução</option>
+                            <option value="TRANSFERENCIA">Transferência</option>
+                            <option value="AJUSTE">Ajuste / inventário</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Local *</label>
+                        <select name="local" class="form-select" required>
+                            <option value="">Escolha o local...</option>
+                            {% for l in locais %}
+                                <option value="{{ l.pk }}">{{ l.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Quantidade *</label>
+                        <input type="text" name="quantidade" class="form-control" required
+                               placeholder="Ex: 12,5" inputmode="decimal">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Valor unitário</label>
+                        <input type="text" name="valor_unitario" class="form-control"
+                               placeholder="Ex: 45,90" inputmode="decimal">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Documento</label>
+                        <input type="text" name="documento" class="form-control"
+                               placeholder="NF, OP, requisição...">
+                    </div>
+                    <div class="col-12" id="blocoOp" style="display:none;">
+                        <label class="form-label small fw-semibold">OP (consumo em produção)</label>
+                        <select name="obra_op" class="form-select">
+                            <option value="">—</option>
+                            {% for op in ops %}
+                                <option value="{{ op.pk }}">{{ op.codigo_formatado }} — {{ op.descricao|truncatechars:40 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Observação</label>
+                        <input type="text" name="observacao" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lista_estoque' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="fa-solid fa-check me-1"></i> Registrar movimento
+            </button>
+        </div>
+    </form>
+
+    {% if ultimos %}
+    <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+            <h6 class="fw-bold text-uppercase small text-muted mb-3">Últimos movimentos</h6>
+            <table class="table table-sm mb-0">
+                <tbody>
+                {% for m in ultimos %}
+                    <tr>
+                        <td><span class="est-badge {{ m.tipo_classe }}">{{ m.tipo_nome }}</span></td>
+                        <td class="small"><strong>{{ m.produto.codigo }}</strong></td>
+                        <td class="small text-muted">{{ m.local.nome|truncatechars:20 }}</td>
+                        <td class="text-end num">{{ m.quantidade|quantidade }}</td>
+                        <td class="small text-muted text-end">{{ m.data|date:"d/m H:i" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    var sel = document.getElementById('selTipo');
+    var bloco = document.getElementById('blocoOp');
+    function atualizar() {
+        // a OP so aparece quando a saida vem da producao
+        if (bloco) bloco.style.display = sel && sel.value === 'SAIDA' ? '' : 'none';
+    }
+    if (sel) sel.addEventListener('change', atualizar);
+    atualizar();
+})();
+</script>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-card.alerta { border-left-color: #dc2626; }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.kpi-value.alerta { color: #dc2626; }
+.est-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.mov-entrada { background: #dcfce7; color: #166534; }
+.mov-saida   { background: #fee2e2; color: #991b1b; }
+.mov-ajuste  { background: #fef3c7; color: #92400e; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.zerado { color: #dc2626; }
+</style>
+{% endblock %}

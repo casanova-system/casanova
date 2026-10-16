@@ -1,0 +1,189 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Requisição {{ requisicao.numero }}
+                <span class="bdg {{ requisicao.status_classe }} ms-2">{{ requisicao.status_nome }}</span>
+                <span class="bdg {{ requisicao.prioridade_classe }} ms-1">{{ requisicao.get_prioridade_display }}</span>
+            </h1>
+            <p class="page-subtitle mb-0">{{ requisicao.get_origem_display }}
+                {% if requisicao.obra_op %} · OP {{ requisicao.obra_op.codigo_formatado }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_compras' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr>
+                                <th>Produto</th><th>Grupo</th><th class="text-end">Qtd</th>
+                                <th class="text-end">Preço est.</th><th class="text-end">Total</th>
+                                <th class="text-end">Ações</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for i in itens %}
+                                <tr>
+                                    <td><strong class="small">{{ i.produto.codigo }}</strong>
+                                        <div class="text-muted" style="font-size:.72rem;">{{ i.produto.descricao|truncatechars:44 }}</div></td>
+                                    <td class="small">{{ i.produto.grupo.nome }}</td>
+                                    <td class="text-end num">{{ i.quantidade|quantidade }} <span class="text-muted small">{{ i.produto.unidade_efetiva }}</span></td>
+                                    <td class="text-end small">{{ i.preco_estimado|moeda_simbolo }}</td>
+                                    <td class="text-end num">{{ i.valor_estimado|moeda_simbolo }}</td>
+                                    <td class="text-end">
+                                        {% if requisicao.pode_editar %}
+                                        <form method="post" class="d-inline" onsubmit="return confirm('Remover este item?');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="acao" value="remover">
+                                            <input type="hidden" name="item_id" value="{{ i.pk }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-xmark"></i></button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Nenhum item.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="4" class="text-end fw-bold">Total estimado</td>
+                                    <td class="text-end num fw-bold">{{ requisicao.valor_estimado|moeda_simbolo }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if requisicao.pode_editar %}
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Adicionar material</h6>
+                    <form method="post" class="row g-2 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="adicionar">
+                        <div class="col-12 col-md-7">
+                            <select name="produto" class="form-select" required>
+                                <option value="">Escolha o produto...</option>
+                                {% for p in produtos %}<option value="{{ p.pk }}">{{ p.codigo }} — {{ p.descricao|truncatechars:48 }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <input type="text" name="quantidade" class="form-control" placeholder="Quantidade" inputmode="decimal" required>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Situação</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><td class="text-muted">Solicitante</td><td class="text-end">{{ requisicao.solicitante.username|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Setor</td><td class="text-end">{{ requisicao.setor|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Criada em</td><td class="text-end">{{ requisicao.criado_em|date:"d/m/Y H:i" }}</td></tr>
+                            {% if requisicao.data_necessaria %}<tr><td class="text-muted">Necessário até</td><td class="text-end">{{ requisicao.data_necessaria|date:"d/m/Y" }}</td></tr>{% endif %}
+                            {% if requisicao.aprovado_por %}<tr><td class="text-muted">Aprovada por</td><td class="text-end">{{ requisicao.aprovado_por.username }}</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                    {% if requisicao.justificativa %}
+                        <div class="mt-2 p-2 bg-body-tertiary rounded small">{{ requisicao.justificativa }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if requisicao.pode_aprovar %}
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="aprovar">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fa-solid fa-check me-1"></i> Aprovar requisição
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if requisicao.status == 'APROVADA' and itens %}
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Gerar pedido</h6>
+                    <form method="post" class="d-flex flex-column gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="gerar_pedido">
+                        <select name="fornecedor" class="form-select" required>
+                            <option value="">Escolha o fornecedor...</option>
+                            {% for f in fornecedores %}<option value="{{ f.pk }}">{{ f.nome_curto }}</option>{% endfor %}
+                        </select>
+                        <select name="local_destino" class="form-select">
+                            <option value="">Local de entrada do material...</option>
+                            {% for l in locais %}<option value="{{ l.pk }}">{{ l.nome }}</option>{% endfor %}
+                        </select>
+                        <input type="text" name="condicao_pagamento" class="form-control" placeholder="Condição de pagamento">
+                        <input type="text" name="observacao_pedido" class="form-control" placeholder="Observação do pedido">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-file-invoice me-1"></i> Gerar pedido
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if requisicao.status not in 'CANCELADA,ATENDIDA' %}
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <form method="post" onsubmit="return confirm('Cancelar a requisição {{ requisicao.numero }}?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="cancelar">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="fa-solid fa-ban me-1"></i> Cancelar requisição
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.ped-aberto   { background: #e2e8f0; color: #334155; }
+.ped-enviado  { background: #dbeafe; color: #1e40af; }
+.ped-parcial  { background: #fef3c7; color: #92400e; }
+.ped-recebido { background: #dcfce7; color: #166534; }
+.ped-cancelado{ background: #fee2e2; color: #991b1b; }
+.pri-baixa    { background: #f1f5f9; color: #64748b; }
+.pri-normal   { background: #e2e8f0; color: #334155; }
+.pri-urgente  { background: #fee2e2; color: #991b1b; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+</style>
+{% endblock %}

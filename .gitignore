@@ -47,3 +47,7 @@ cookies_*.txt
 
 # Scripts auxiliares de operacao
 gh_*.sh
+
+# Backups de dados (retrato do banco antes de importar; nao e codigo)
+_backup_dados/
+_backup_*/

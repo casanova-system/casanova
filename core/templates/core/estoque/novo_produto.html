@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Novo Produto</h1>
+            <p class="page-subtitle mb-0">Material que passa a ser controlado no estoque.</p>
+        </div>
+        <a href="{% url 'lista_produtos_estoque' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Identificação</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Código *</label>
+                        <input type="text" name="codigo" class="form-control" required placeholder="Ex: PERF-AL-001">
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label small fw-semibold">Descrição *</label>
+                        <input type="text" name="descricao" class="form-control" required placeholder="Ex: PERFIL ALUMÍNIO LINHA 25 BRANCO">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Grupo *</label>
+                        <select name="grupo" class="form-select" required>
+                            <option value="">Escolha...</option>
+                            {% for g in grupos %}<option value="{{ g.pk }}">{{ g.nome }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Unidade</label>
+                        <input type="text" name="unidade" class="form-control" placeholder="PC, BR, M2, KG" maxlength="6">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Cor / Tratamento</label>
+                        <input type="text" name="cor" class="form-control" placeholder="Ex: BRANCO, PRETO, NATURAL">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Medidas (mm)</h6>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Comprimento</label>
+                        <input type="text" name="comprimento" class="form-control" inputmode="decimal">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Largura</label>
+                        <input type="text" name="largura" class="form-control" inputmode="decimal">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Altura</label>
+                        <input type="text" name="altura" class="form-control" inputmode="decimal">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Controle</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-semibold">Custo médio</label>
+                        <input type="text" name="custo_medio" class="form-control" inputmode="decimal" placeholder="0,00">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-semibold">Estoque mínimo</label>
+                        <input type="text" name="estoque_minimo" class="form-control" inputmode="decimal" placeholder="0">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-semibold">Ponto de pedido</label>
+                        <input type="text" name="ponto_pedido" class="form-control" inputmode="decimal" placeholder="0">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-semibold">Código de barras</label>
+                        <input type="text" name="codigo_ean" class="form-control">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Código no Faktory</label>
+                        <input type="text" name="codigo_faktory" class="form-control" placeholder="Para conciliar com o ERP">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lista_produtos_estoque' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-check me-1"></i> Cadastrar</button>
+        </div>
+    </form>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-card.alerta { border-left-color: #dc2626; }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.kpi-value.alerta { color: #dc2626; }
+.est-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.mov-entrada { background: #dcfce7; color: #166534; }
+.mov-saida   { background: #fee2e2; color: #991b1b; }
+.mov-ajuste  { background: #fef3c7; color: #92400e; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.zerado { color: #dc2626; }
+</style>
+{% endblock %}

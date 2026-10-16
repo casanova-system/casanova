@@ -87,7 +87,7 @@
                             <td class="fw-semibold text-truncate" title="{{ obra.nome }}">{{ obra.nome }}</td>
                             <td class="text-truncate" title="{{ obra.cliente|default:'Não informado' }}">{{ obra.cliente|default:"Não informado" }}</td>
                             <td><span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2 py-1 text-nowrap">{{ obra.distancia_km }} KM</span></td>
-                            <td class="fw-bold text-success text-nowrap">R$ {{ obra.custo_total_deslocamento|floatformat:2 }}</td>
+                            <td class="fw-bold text-success text-nowrap">{{ obra.custo_total_deslocamento|moeda_simbolo }}</td>
                             
                             <!-- Desconto com a mesma cor azul da tag de usuário -->
                             <td>

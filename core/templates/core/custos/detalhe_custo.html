@@ -1,54 +1,229 @@
 {% extends 'core/base.html' %}
-{% load l10n %}
-
 {% block content %}
-<div class="container-fluid px-4 py-3">
-    <div class="form-page">
-        {% include 'core/partials/messages.html' %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
 
-        {% url 'lista_custo' as url_lista %}
-        {% url 'editar_custo' custo.id as url_editar %}
-        {% include 'core/partials/page_header.html' with titulo="Detalhe do Custo" subtitulo="Visualização completa do registro de custo." acao_url=url_editar acao_texto="Editar" acao_icone="fa-pen" voltar_url=url_lista voltar_texto="Voltar" %}
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Custo da OP {{ obra_op.codigo_formatado }}</h1>
+            <p class="page-subtitle mb-0">{{ obra_op.descricao|truncatechars:60 }}
+                {% if obra_op.obra %} · {{ obra_op.obra.nome }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_custos' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
 
-        <div class="card form-card">
-            <div class="card-header">
-                <i class="fa-solid fa-money-bill-wave text-primary"></i> {{ custo.tipo }}
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Custo total</div>
+                <div class="kpi-value">{{ custo.custo_total|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Custo por peça</div>
+                <div class="kpi-value">{{ custo.custo_unitario|moeda_simbolo }}</div>
+                <div class="small text-muted">{{ custo.quantidade }} peça(s)</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Horas de produção</div>
+                <div class="kpi-value">{{ custo.horas_totais|quantidade_curta }}h</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Pesa mais</div>
+                <div class="kpi-value" style="font-size:1.15rem;">{{ custo.parcela_dominante|default:"—" }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Composição do custo</h6>
+                    <div class="barra mb-2">
+                        {% for p in composicao %}
+                            <div class="barra-{{ p.classe }}" style="width: {{ p.percentual }}%;"
+                                 title="{{ p.nome }}: {{ p.valor|moeda_simbolo }} ({{ p.percentual }}%)">
+                                {% if p.percentual >= 12 %}{{ p.percentual }}%{% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                        {% for p in composicao %}
+                            <tr>
+                                <td><span class="badge barra-{{ p.classe }}" style="width:12px;height:12px;">&nbsp;</span>
+                                    {{ p.nome }}</td>
+                                <td class="text-end num">{{ p.valor|moeda_simbolo }}</td>
+                                <td class="text-end text-muted small">{{ p.percentual }}%</td>
+                            </tr>
+                        {% endfor %}
+                            <tr class="table-light">
+                                <td class="fw-bold">TOTAL</td>
+                                <td class="text-end num fw-bold">{{ custo.custo_total|moeda_simbolo }}</td>
+                                <td class="text-end fw-bold">100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body">
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Tipo / Categoria</span>
-                    <span class="detail-value">{{ custo.tipo }}</span>
+
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body p-0">
+                    <div class="px-3 pt-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">Custo por setor — onde o tempo foi</h6></div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr>
+                                <th>Setor</th><th class="text-center">Tempo</th>
+                                <th class="text-end">R$/hora</th><th class="text-end">Custo</th>
+                                <th class="text-end">% da mão de obra</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for s in setores %}
+                                <tr>
+                                    <td><strong class="small">{{ s.setor_nome }}</strong></td>
+                                    <td class="text-center small">{{ s.tempo_formatado }}</td>
+                                    <td class="text-end small">{{ s.custo_hora|moeda_simbolo }}</td>
+                                    <td class="text-end num">{{ s.custo|moeda_simbolo }}</td>
+                                    <td class="text-end small">{{ s.percentual }}%</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" class="text-center py-4 text-muted small">
+                                    Esta OP não tem movimentação de rastreio — sem tempo, sem custo de mão de obra.
+                                </td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Valor (R$)</span>
-                    <span class="detail-value text-success">R$ {{ custo.valor|floatformat:2 }}</span>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="px-3 pt-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">Material consumido</h6></div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr>
+                                <th>Código</th><th>Descrição</th>
+                                <th class="text-end">Qtd</th><th class="text-end">Valor un.</th>
+                                <th class="text-end">Custo</th><th class="text-end">%</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for m in materiais %}
+                                <tr>
+                                    <td><strong class="small">{{ m.codigo }}</strong></td>
+                                    <td class="small text-muted">{{ m.descricao|truncatechars:38 }}</td>
+                                    <td class="text-end small">{{ m.quantidade|quantidade }} {{ m.unidade }}</td>
+                                    <td class="text-end small">{{ m.valor_unitario|moeda_simbolo }}</td>
+                                    <td class="text-end num">{{ m.custo|moeda_simbolo }}</td>
+                                    <td class="text-end small">{{ m.percentual }}%</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center py-4 text-muted small">
+                                    Nenhum material ligado a esta OP.
+                                </td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Cadastrado por</span>
-                    <span class="detail-value">{{ custo.usuario_responsavel.username|default:"-" }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Data de Criação</span>
-                    <span class="detail-value">{{ custo.data_criacao|date:"d/m/Y H:i"|default:"-" }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Custo Fixo do Sistema</span>
-                    <span class="detail-value">
-                        {% if custo.fixo %}
-                            <span class="badge bg-warning text-dark">Sim</span>
-                        {% else %}
-                            <span class="badge bg-secondary">Não</span>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Preço de venda e margem</h6>
+                    <form method="post" class="d-flex gap-2 mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="venda">
+                        <input type="text" name="valor_venda" class="form-control"
+                               value="{{ custo.valor_venda|default_if_none:'' }}"
+                               placeholder="Valor de venda" inputmode="decimal">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i></button>
+                    </form>
+                    {% if custo.margem is not None %}
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr><td class="text-muted">Venda</td><td class="text-end num">{{ custo.valor_venda|moeda_simbolo }}</td></tr>
+                                <tr><td class="text-muted">Custo</td><td class="text-end num">{{ custo.custo_total|moeda_simbolo }}</td></tr>
+                                <tr><td class="fw-bold">Margem</td><td class="text-end num fw-bold">{{ custo.margem|moeda_simbolo }}</td></tr>
+                                <tr><td class="fw-bold">Margem %</td>
+                                    <td class="text-end"><span class="badge {{ custo.margem_classe }}">{{ custo.margem_percentual }}%</span></td></tr>
+                            </tbody>
+                        </table>
+                        {% if custo.prejuizo %}
+                            <div class="alert alert-danger mt-3 mb-0 small">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                Esta OP está vendida <strong>abaixo do custo</strong>.
+                            </div>
                         {% endif %}
-                    </span>
+                    {% else %}
+                        <p class="text-muted small mb-0">Informe o valor de venda para ver a margem.</p>
+                    {% endif %}
                 </div>
-                <div class="detail-item detail-full">
-                    <span class="detail-label">Descrição</span>
-                    <span class="detail-value">{{ custo.descricao|default:"-" }}</span>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados da OP</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><td class="text-muted">OP</td><td class="text-end">{{ obra_op.codigo_formatado }}</td></tr>
+                            <tr><td class="text-muted">Quantidade</td><td class="text-end">{{ obra_op.quantidade }}</td></tr>
+                            {% if obra_op.largura and obra_op.altura %}
+                            <tr><td class="text-muted">Medidas</td><td class="text-end">{{ obra_op.largura }}×{{ obra_op.altura }} mm</td></tr>
+                            {% endif %}
+                            {% if obra_op.vidro_descricao %}
+                            <tr><td class="text-muted">Vidro</td><td class="text-end small">{{ obra_op.vidro_descricao|truncatechars:24 }}</td></tr>
+                            {% endif %}
+                            <tr><td class="text-muted">Calculado em</td><td class="text-end small">{{ custo.calculado_em|date:"d/m/Y H:i" }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Recalcular</h6>
+                    <p class="text-muted small mb-2">
+                        Recalcula usando o custo/hora atual dos setores e o material
+                        lançado no estoque.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="recalcular">
+                        <input type="hidden" name="valor_venda" value="{{ custo.valor_venda|default_if_none:'' }}">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-rotate me-1"></i> Recalcular custo
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-    </div>
 </div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.margem-boa    { background: #dcfce7; color: #166534; }
+.margem-atencao{ background: #fef3c7; color: #92400e; }
+.margem-ruim   { background: #fee2e2; color: #991b1b; }
+.margem-neutra { background: #e2e8f0; color: #334155; }
+.barra { height: 26px; display: flex; border-radius: 6px; overflow: hidden; }
+.barra > div { display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; }
+.barra-mat { background: #3b82f6; }
+.barra-mo  { background: #10b981; }
+.barra-ind { background: #f59e0b; }
+</style>
 {% endblock %}

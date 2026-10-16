@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+{% load static %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imprimir QR Code / Código de Barras — OP {{ dados.NumeroDocumento }}</title>
+    <title>Etiqueta de Produção — OP {{ dados.NumeroDocumento }}</title>
     <style>
+        /* ==================================================================
+           ETIQUETA DE PRODUCAO - FOLHA A4 (retrato)
+
+           Dimensionamento: area util 190 x 277mm (A4 menos 10mm de margem de
+           cada lado). Todo o conteudo cabe nessa faixa, entao nada e cortado
+           e o tamanho e sempre o mesmo em qualquer impressora.
+
+           P&B de proposito: no galpao a impressora e laser preto e branco e a
+           etiqueta fica colada na peca, exposta a sol e poeira. Preto garante
+           o contraste maximo e a melhor leitura pelo leitor.
+           ================================================================== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         html, body {
             font-family: Arial, Helvetica, sans-serif;
             color: #000;
-            background: #f1f3f5;
+            background: #eef1f5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        /* Barra de ações (não sai na impressão) */
+        /* ---- Barra de acoes (nao sai na impressao) ---- */
         .barra-acoes {
             position: sticky;
             top: 0;
@@ -25,140 +40,199 @@
             z-index: 10;
         }
         .barra-acoes button {
-            padding: 8px 18px;
+            padding: 9px 20px;
             font-size: 14px;
             font-weight: 600;
+            font-family: inherit;
             border-radius: 6px;
             border: 1px solid #0b3882;
             background: #0b3882;
             color: #fff;
             cursor: pointer;
         }
-        .barra-acoes button.secundario {
-            background: #fff;
-            color: #0b3882;
-        }
+        .barra-acoes button.secundario { background: #fff; color: #0b3882; }
 
-        /* Folha A4 */
+        /* ---- Folha A4 ---- */
         .folha-a4 {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             margin: 16px auto;
             background: #fff;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-            padding: 15mm;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.16);
+            padding: 10mm;
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
 
-        /* Container dos códigos */
-        .barcode-container {
+        /* ---- Cabecalho ---- */
+        .cabecalho {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8mm;
-            justify-content: center;
-            align-items: flex-start;
-            width: 100%;
-            margin-bottom: 8mm;
-        }
-
-        /* Box individual do código */
-        .barcode-box {
-            width: 85mm;
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 6mm;
-            background: #fff;
+            justify-content: space-between;
+            gap: 6mm;
+            padding-bottom: 4mm;
+            border-bottom: 2.5pt solid #000;
         }
-
-        /* SVG do QR Code */
-        .barcode-box.qrcode svg {
-            width: 70mm;
-            height: 70mm;
-        }
-
-        /* SVG do Código de Barras */
-        .barcode-box.codigo-barras svg {
-            width: 75mm;
-            height: auto;
-            max-height: 35mm;
-        }
-
-        /* Label abaixo do código */
-        .barcode-label {
-            margin-top: 3mm;
-            font-size: 8pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #0b3882;
-        }
-
-        /* Número da OP */
-        .op-numero {
-            font-size: 22pt;
+        .empresa { display: flex; align-items: center; gap: 4mm; }
+        .empresa img { height: 13mm; width: auto; }
+        .empresa-texto .nome {
+            font-size: 13pt;
             font-weight: 800;
-            letter-spacing: 1px;
-            color: #0b3882;
-            margin-bottom: 3mm;
-            text-align: center;
+            letter-spacing: 0.4px;
+            line-height: 1.1;
+        }
+        .empresa-texto .doc {
+            font-size: 7.5pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #444;
+            margin-top: 1mm;
+        }
+        .selo {
+            text-align: right;
+            border: 2pt solid #000;
+            padding: 2.5mm 4mm;
+            min-width: 46mm;
+        }
+        .selo .rotulo {
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #444;
+        }
+        .selo .valor {
+            font-size: 19pt;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: 0.5px;
         }
 
-        /* Obra */
-        .obra {
-            font-size: 11pt;
+        /* ---- Identificacao da OP ---- */
+        .identificacao {
+            padding: 4mm 0 3.5mm;
+            text-align: center;
+            border-bottom: 1pt solid #000;
+        }
+        .identificacao .obra-codigo {
+            font-size: 20pt;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            line-height: 1.15;
+            word-break: break-word;
+        }
+        .identificacao .obra-nome {
+            font-size: 10pt;
             font-weight: 600;
-            max-width: 160mm;
             color: #333;
-            text-align: center;
-            margin-bottom: 4mm;
+            margin-top: 1.5mm;
+            line-height: 1.3;
+        }
+        .identificacao .tipologia {
+            font-size: 11.5pt;
+            font-weight: 700;
+            margin-top: 2.5mm;
+            line-height: 1.3;
         }
 
-        /* Detalhes */
-        .detalhes {
-            font-size: 9pt;
-            line-height: 1.6;
-            color: #555;
-            max-width: 160mm;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 3mm;
-            text-align: center;
+        /* ---- Codigos ---- */
+        .codigos {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5mm;
+            padding: 4mm 0;
+            min-height: 0;
         }
-        .detalhes strong {
-            color: #333;
+        /* Cada bloco CRESCE para dividir a altura disponivel: o espaco livre
+           deixa de ser faixa branca e passa a ser respiro interno do bloco.
+           Sem isto os blocos ficavam centrados com sobra em cima e embaixo. */
+        .bloco-codigo {
+            flex: 1;
+            min-height: 0;
+            border: 2pt solid #000;
+            padding: 4mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-
-        /* Instruções */
-        .instrucoes {
-            margin-top: 6mm;
+        .bloco-codigo .titulo {
+            flex-shrink: 0;
             font-size: 8pt;
-            color: #888;
-            text-align: center;
-            max-width: 160mm;
-            line-height: 1.4;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            margin-bottom: 3mm;
         }
 
-        /* Aviso de impressão */
-        .aviso-impressao {
-            display: none;
+        /* O codigo de barras ocupa toda a largura util: quanto maior a barra,
+           mais confiavel a leitura do laser no galpao. */
+        .bloco-codigo.barras svg {
+            width: 100%;
+            height: auto;
+            max-height: 46mm;
+            display: block;
+        }
+
+        /* O QR Code tem tamanho fixo - leitor de celular nao precisa de mais */
+        .bloco-codigo.qr svg { width: 70mm; height: 70mm; display: block; }
+        .bloco-codigo.qr .texto-qr {
+            margin-top: 2.5mm;
+            font-size: 9.5pt;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ---- Rodape: especificacoes ---- */
+        .especificacoes { border-top: 2.5pt solid #000; padding-top: 3.5mm; }
+        .grade {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3mm;
+        }
+        .campo .rotulo {
+            font-size: 6.5pt;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 0.8mm;
+        }
+        .campo .valor {
+            font-size: 11pt;
+            font-weight: 700;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        .campo .valor.grande { font-size: 13pt; }
+
+        .instrucoes {
+            margin-top: 4mm;
+            padding-top: 2.5mm;
+            border-top: 1pt dotted #999;
+            font-size: 8pt;
+            line-height: 1.45;
+            color: #333;
+            text-align: center;
         }
 
         @media print {
             html, body { background: #fff; }
             .barra-acoes { display: none !important; }
+            @page { size: A4 portrait; margin: 10mm; }
+            /* Com a margem definida no @page, a folha nao precisa de padding
+               proprio - senao a margem dobraria. */
             .folha-a4 {
                 margin: 0;
                 box-shadow: none;
-                width: 100%;
-                min-height: auto;
-                padding: 10mm;
+                padding: 0;
+                width: 190mm;
+                height: 277mm;
+                page-break-after: avoid;
             }
-            @page { size: A4 portrait; margin: 0; }
         }
     </style>
 </head>
@@ -179,38 +253,91 @@
         </div>
     {% else %}
     <div class="folha-a4">
-        <div class="barcode-container">
-            <div class="barcode-box qrcode">
-                {{ barcode_svg|safe }}
-                <div class="barcode-label">QR Code</div>
+
+        <!-- ============ CABECALHO ============ -->
+        <div class="cabecalho">
+            <div class="empresa">
+                <img src="{% static 'img/logo_semfundo.png' %}" alt="Casanova Esquadrias">
+                <div class="empresa-texto">
+                    <div class="nome">CASANOVA ESQUADRIAS</div>
+                    <div class="doc">Etiqueta de Produção</div>
+                </div>
             </div>
-            <div class="barcode-box codigo-barras">
+            <div class="selo">
+                <div class="rotulo">Ordem de Produção</div>
+                <div class="valor">OP {{ dados.NumeroDocumento }}</div>
+            </div>
+        </div>
+
+        <!-- ============ IDENTIFICACAO ============ -->
+        <div class="identificacao">
+            <div class="obra-codigo">{{ dados.ProjetoObra }}</div>
+            {% if dados.ObraNome %}
+                <div class="obra-nome">{{ dados.ObraNome }}</div>
+            {% endif %}
+            {% if dados.Produto and dados.Produto != '—' %}
+                <div class="tipologia">{{ dados.Produto }}</div>
+            {% endif %}
+        </div>
+
+        <!-- ============ CODIGOS ============ -->
+        <div class="codigos">
+
+            <div class="bloco-codigo barras">
+                <div class="titulo">Código de Barras &mdash; Leitor Laser</div>
                 {{ codigo_barras_svg|safe }}
-                <div class="barcode-label">Código de Barras</div>
+            </div>
+
+            <div class="bloco-codigo qr">
+                <div class="titulo">QR Code &mdash; Celular / Tablet</div>
+                {{ barcode_svg|safe }}
+                <div class="texto-qr">{{ codigo }}</div>
+            </div>
+
+        </div>
+
+        <!-- ============ ESPECIFICACOES ============ -->
+        <div class="especificacoes">
+            <div class="grade">
+                <div class="campo">
+                    <div class="rotulo">Quantidade</div>
+                    <div class="valor grande">{{ dados.QtdProduzir }}</div>
+                </div>
+                <div class="campo">
+                    <div class="rotulo">Variante / Tipologia</div>
+                    <div class="valor">{{ dados.Variante|default:"—" }}</div>
+                </div>
+                <div class="campo">
+                    <div class="rotulo">Largura</div>
+                    <div class="valor">{% if dados.Largura %}{{ dados.Largura }} mm{% else %}—{% endif %}</div>
+                </div>
+                <div class="campo">
+                    <div class="rotulo">Altura</div>
+                    <div class="valor">{% if dados.Altura %}{{ dados.Altura }} mm{% else %}—{% endif %}</div>
+                </div>
+            </div>
+
+            {% if dados.VidroDescricao %}
+            <div class="grade" style="margin-top: 3mm;">
+                <div class="campo" style="grid-column: span 4;">
+                    <div class="rotulo">Vidro</div>
+                    <div class="valor">{{ dados.VidroDescricao }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="instrucoes">
+                Bipe o <strong>código de barras</strong> com o leitor laser ou leia o
+                <strong>QR Code</strong> com o celular.<br>
+                Se o leitor não conseguir, digite o código impresso sob as barras.
             </div>
         </div>
 
-        <div class="op-numero">OP {{ dados.NumeroDocumento }}</div>
-        <div class="obra">{{ dados.ProjetoObra }}</div>
-
-        <div class="detalhes">
-            <div><strong>Produto:</strong> {{ dados.Produto|default:"—" }}</div>
-            <div><strong>Variante:</strong> {{ dados.Variante|default:"—" }}</div>
-            <div><strong>Necessidade:</strong> {{ dados.DataNecessidade }}</div>
-            <div><strong>Qtd. Produzir:</strong> {{ dados.QtdProduzir|floatformat:2 }}</div>
-        </div>
-
-        <div class="instrucoes">
-            <i class="fa-solid fa-circle-info"></i>
-            Escaneie o QR Code com smartphone/tablet ou o Código de Barras com leitor laser.
-            <br>
-            Ambos contêm o ID da OP para rastreio da produção.
-        </div>
     </div>
     {% endif %}
 
     <script>
-        // Abre o diálogo de impressão automaticamente
+        // Abre o dialogo de impressao automaticamente
         window.addEventListener('load', function () {
             setTimeout(function () { window.print(); }, 400);
         });

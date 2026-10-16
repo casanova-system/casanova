@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">{{ produto.codigo }}</h1>
+            <p class="page-subtitle mb-0">{{ produto.descricao }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'movimentar_estoque' %}?produto={{ produto.pk }}" class="btn-action btn-action-primary">
+                <i class="fa-solid fa-right-left"></i> Movimentar
+            </a>
+            <a href="{% url 'lista_estoque' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Saldo total</div>
+                    <div class="kpi-value">{{ produto.saldo_total|moeda }} <small style="font-size:.9rem;">{{ produto.unidade_efetiva }}</small></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card {% if produto.abaixo_minimo %}alerta{% endif %}">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Estoque mínimo</div>
+                    <div class="kpi-value {% if produto.abaixo_minimo %}alerta{% endif %}">{{ produto.estoque_minimo|quantidade }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Custo médio</div>
+                    <div class="kpi-value">{{ produto.custo_medio|moeda_simbolo }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card">
+                <div class="card-body py-3">
+                    <div class="kpi-label">Valor em estoque</div>
+                    <div class="kpi-value">{{ produto.valor_total|moeda_simbolo }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados do produto</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><td class="text-muted">Grupo</td><td class="text-end fw-semibold">{{ produto.grupo.nome }}</td></tr>
+                            <tr><td class="text-muted">Unidade</td><td class="text-end">{{ produto.unidade_efetiva }}</td></tr>
+                            <tr><td class="text-muted">Medidas</td><td class="text-end">{{ produto.medidas_texto }}</td></tr>
+                            {% if produto.cor %}<tr><td class="text-muted">Cor</td><td class="text-end">{{ produto.cor }}</td></tr>{% endif %}
+                            <tr><td class="text-muted">Ponto de pedido</td><td class="text-end">{{ produto.ponto_pedido|quantidade }}</td></tr>
+                            {% if produto.codigo_ean %}<tr><td class="text-muted">Cód. barras</td><td class="text-end">{{ produto.codigo_ean }}</td></tr>{% endif %}
+                            {% if produto.codigo_faktory %}<tr><td class="text-muted">Cód. Faktory</td><td class="text-end">{{ produto.codigo_faktory }}</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Saldo por local</h6>
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Local</th><th class="text-end">Quantidade</th><th class="text-end">Reservado</th><th class="text-end">Disponível</th></tr></thead>
+                        <tbody>
+                        {% for s in saldos %}
+                            <tr>
+                                <td class="small">{{ s.local.nome }}</td>
+                                <td class="text-end num">{{ s.quantidade|quantidade }}</td>
+                                <td class="text-end small text-muted">{{ s.reservado|quantidade }}</td>
+                                <td class="text-end num">{{ s.disponivel|quantidade }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">Sem saldo em nenhum local.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mt-3">
+        <div class="card-body">
+            <h6 class="fw-bold text-uppercase small text-muted mb-3">Últimos movimentos</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>Data</th><th>Tipo</th><th>Local</th><th>Origem</th><th>Documento</th><th class="text-end">Qtd</th><th>Usuário</th></tr></thead>
+                    <tbody>
+                    {% for m in movimentos %}
+                        <tr>
+                            <td class="small text-nowrap">{{ m.data|date:"d/m/Y H:i" }}</td>
+                            <td><span class="est-badge {{ m.tipo_classe }}">{{ m.tipo_nome }}</span></td>
+                            <td class="small">{{ m.local.nome|truncatechars:18 }}</td>
+                            <td class="small">{{ m.origem_nome }}</td>
+                            <td class="small text-muted">{{ m.documento|default:"—" }}</td>
+                            <td class="text-end num">{{ m.quantidade|quantidade }}</td>
+                            <td class="small text-muted">{{ m.usuario.username|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-3">Nenhum movimento ainda.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-card.alerta { border-left-color: #dc2626; }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; }
+.kpi-value.alerta { color: #dc2626; }
+.est-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.mov-entrada { background: #dcfce7; color: #166534; }
+.mov-saida   { background: #fee2e2; color: #991b1b; }
+.mov-ajuste  { background: #fef3c7; color: #92400e; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.zerado { color: #dc2626; }
+</style>
+{% endblock %}

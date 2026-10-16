@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import connections, models
 from django.http import HttpResponse
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -446,10 +447,32 @@ def detalhe_obra_op(request, obra_op_id):
 @requer_rotina('lista_ordem_producao')
 @require_POST
 def excluir_op(request, obra_op_id):
-    """Exclui uma OP/Tipologia importada (exclusão sempre via POST)."""
+    """Exclui uma OP/Tipologia importada (exclusão sempre via POST).
+
+    Remove TAMBÉM o rastreio dessa OP. RastreioOP.op_id é um inteiro solto (não
+    é ForeignKey), então apagar a ObraOP deixava o rastreio vivo apontando para
+    uma OP inexistente. Depois disso o operador bipava o código e recebia
+    "código não reconhecido", enquanto a OP continuava aparecendo na tela de
+    Rastreio — mensagem enganosa, porque a OP existia na tela.
+
+    Excluir a OP é intenção explícita de removê-la do fluxo, então o rastreio
+    vai junto (com as movimentações, que caem por CASCADE).
+    """
+    from core.models import RastreioOP
+
     obra_op = get_object_or_404(ObraOP, pk=obra_op_id)
     identificacao = obra_op.identificacao
-    obra_op.delete()
+
+    with transaction.atomic():
+        rastreios = RastreioOP.objects.filter(op_id=obra_op_id)
+        if rastreios.exists():
+            rastreios.delete()
+            messages.info(
+                request,
+                f'O rastreio da OP {identificacao} também foi removido.',
+            )
+        obra_op.delete()
+
     messages.success(request, f'OP {identificacao} excluída com sucesso.')
     return redirect('lista_ordem_producao')
 
@@ -541,77 +564,122 @@ def _gerar_barcode_svg(conteudo):
     return svg_string
 
 
-def _gerar_codigo_barras_svg(conteudo):
-    """Gera um código de barras Code 128 como SVG.
+def _conteudo_codigo_barras(obra_op_id):
+    """Conteúdo do código de barras (Code 128): 'OBRA|DOCUMENTO'.
 
-    O código de barras contém apenas o ID numérico da OP (ex: "31449"),
-    enquanto o QR Code contém o JSON completo. Ambos levam ao mesmo
-    resultado: o leitor retorna o ID que o sistema usa no rastreio.
+    Ex.: '26-0053-02_PROD-J01'
+
+    Antes o código levava só o ID numérico ('14'), o que dava dois problemas:
+
+      1. TAMANHO — 2 dígitos geram 57 módulos (~17mm). O leitor laser não
+         encontra início e fim do código com folga e a leitura falha.
+      2. INFORMAÇÃO — '14' não diz nada a quem está com a peça na mão; se o
+         scan falhar, não há como conferir ou digitar o código à mão.
+
+    O par obra+documento identifica a OP sem ambiguidade — só o documento não
+    basta, porque 'J01' se repete em obras diferentes. E é legível por uma
+    pessoa.
+    """
+    from core.models import ObraOP
+
+    obra_op = ObraOP.objects.filter(pk=obra_op_id).first()
+    if not obra_op:
+        return str(obra_op_id)
+
+    obra = (obra_op.obra.codigo if obra_op.obra else '') or ''
+    doc = obra_op.codigo_documento or obra_op.codigo_esquadria or ''
+
+    if obra and doc:
+        # Separador '-' e NAO '|': o leitor laser emula teclado, e o pipe
+        # depende do layout (no ABNT2 e Shift+\). Com o leitor em layout
+        # diferente do Windows, '|' chega como '}' e o sistema nao acha a OP.
+        # Letras, digitos, '-' e '_' passam intactos em qualquer layout.
+        return f'{obra}-{doc}'
+    return doc or obra or str(obra_op_id)
+
+
+def _gerar_codigo_barras_svg(conteudo):
+    """Gera um código de barras Code 128 como SVG, dimensionado para leitura.
+
+    Dimensões pensadas para leitor laser em chão de fábrica:
+
+      module_width  0.30mm — acima do mínimo de 0.25mm. Barra mais grossa
+                             tolera impressão comum e iluminação ruim, que é
+                             a realidade do galpão.
+      module_height 12mm   — altura confortável para mira manual, sem exigir
+                             que o operador acerte o ângulo.
+      quiet_zone    4mm    — zona de silêncio nas laterais. O leitor precisa
+                             dela para achar o começo e o fim do código; sem
+                             isso ele não sincroniza.
+      font_size     9      — número legível abaixo das barras, para digitar
+                             à mão quando o scan falhar.
+
+    O SVG é vetorial: o template o estica para a largura da etiqueta, então o
+    tamanho impresso fica maior que o nativo e a leitura melhora ainda mais.
     """
     import io
-    import json
     import re
+
     import barcode
     from barcode.writer import SVGWriter
 
-    # Extrai apenas o ID numérico do conteúdo (JSON ou string)
-    data = str(conteudo).strip()
-    try:
-        dados = json.loads(data)
-        if isinstance(dados, dict) and 'id' in dados:
-            data = str(dados['id'])
-        elif isinstance(dados, dict) and 'op' in dados:
-            numeros = ''.join(ch for ch in str(dados['op']) if ch.isdigit())
-            if numeros:
-                data = numeros
-    except (json.JSONDecodeError, ValueError, TypeError):
-        pass
+    data = str(conteudo or '').strip() or '0'
 
-    # Fallback: extrai números do código
-    if not data.isdigit():
-        numeros = ''.join(ch for ch in data if ch.isdigit())
-        if numeros:
-            data = numeros
-        else:
-            data = str(conteudo).strip()
-
-    # Gera o código de barras Code 128 como SVG
-    # Usa dimensões físicas (mm) para impressão adequada
     code128 = barcode.get_barcode_class('code128')
-    writer = SVGWriter()
-    barcode_obj = code128(data, writer=writer)
+    barcode_obj = code128(data, writer=SVGWriter())
 
     buffer = io.BytesIO()
     barcode_obj.write(buffer, options={
-        'module_width': 0.25,     # Largura da barra fina (mm) - mais fino para melhor leitura
-        'module_height': 12.0,    # Altura das barras (mm)
-        'quiet_zone': 3.0,        # Zona de silêncio lateral (mm) - maior para leitores laser
-        'font_size': 8,           # Tamanho do texto abaixo
-        'text_distance': 1.5,     # Distância entre barras e texto (mm)
+        'module_width': 0.30,
+        'module_height': 12.0,
+        'quiet_zone': 4.0,
+        'font_size': 9,
+        'text_distance': 2.0,
         'background': 'white',
         'foreground': 'black',
-        'write_text': True,       # Mostra o número abaixo do código
+        'write_text': True,
     })
-    svg_bytes = buffer.getvalue()
-    svg_string = svg_bytes.decode('utf-8')
+    svg_string = buffer.getvalue().decode('utf-8')
 
-    # Remove o DOCTYPE para evitar problemas de renderização no navegador
+    # Remove XML/DOCTYPE para o navegador renderizar o SVG inline sem reclamar
     svg_string = re.sub(r'<\?xml[^?]*\?>', '', svg_string)
     svg_string = re.sub(r'<!DOCTYPE[^>]*>', '', svg_string)
 
-    # O SVG gerado pelo python-barcode já tem dimensões em mm.
-    # Apenas garantimos que o formato está correto para impressão.
-    # Exemplo: width="17.500mm" height="12.000mm"
+    # Normaliza as dimensões em mm com 2 casas
     svg_string = re.sub(
         r'width="([\d.]+)mm"',
         lambda m: f'width="{float(m.group(1)):.2f}mm"',
-        svg_string
+        svg_string,
     )
     svg_string = re.sub(
         r'height="([\d.]+)mm"',
         lambda m: f'height="{float(m.group(1)):.2f}mm"',
-        svg_string
+        svg_string,
     )
+
+    # O SVG do python-barcode sai com width/height em mm mas SEM viewBox.
+    # Sem viewBox o navegador NÃO escala o desenho quando o CSS muda a largura:
+    # `width: 100%` só aumentaria a área do SVG e as barras continuariam no
+    # tamanho nativo (~81mm), deixando a etiqueta cheia de espaço vazio.
+    #
+    # ATENÇÃO À CONVERSÃO (erro que já quebrou a etiqueta em produção):
+    # o python-barcode posiciona as barras em MILÍMETROS
+    # (x="4.000mm" width="0.60mm"), mas o viewBox trabalha em UNIDADES DE
+    # USUÁRIO, onde 1mm = 96/25.4 = 3.7795 uu. Declarar o viewBox com o número
+    # em mm (ex.: "0 0 81.20 17.59") faz o conteúdo de ~307uu ser espremido em
+    # 81.20uu: o desenho sai cortado e NENHUM leitor consegue ler.
+    # O viewBox tem de ser a medida em mm CONVERTIDA para unidades de usuário.
+    m_larg = re.search(r'width="([\d.]+)mm"', svg_string)
+    m_alt = re.search(r'height="([\d.]+)mm"', svg_string)
+    if m_larg and m_alt and 'viewBox' not in svg_string:
+        uu_por_mm = 96.0 / 25.4
+        larg_uu = float(m_larg.group(1)) * uu_por_mm
+        alt_uu = float(m_alt.group(1)) * uu_por_mm
+        svg_string = svg_string.replace(
+            '<svg ',
+            f'<svg viewBox="0 0 {larg_uu:.2f} {alt_uu:.2f}" ',
+            1,
+        )
 
     return svg_string
 
@@ -640,8 +708,12 @@ def imprimir_barcode_ordem_producao(request, op_id):
         dados = {
             'NumeroDocumento': obra_op.codigo_formatado,
             'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '—',
+            'ObraNome': (obra_op.obra.nome if obra_op.obra else '') or '',
             'Produto': obra_op.descricao or '—',
             'Variante': obra_op.codigo_esquadria or '—',
+            'Largura': obra_op.largura,
+            'Altura': obra_op.altura,
+            'VidroDescricao': obra_op.vidro_descricao or '',
             'DataNecessidade': '—',
             'QtdProduzir': str(obra_op.quantidade),
         }
@@ -649,8 +721,12 @@ def imprimir_barcode_ordem_producao(request, op_id):
         dados = {
             'NumeroDocumento': str(op_id),
             'ProjetoObra': '—',
+            'ObraNome': '',
             'Produto': '—',
             'Variante': '—',
+            'Largura': None,
+            'Altura': None,
+            'VidroDescricao': '',
             'DataNecessidade': '—',
             'QtdProduzir': '—',
         }
@@ -660,7 +736,9 @@ def imprimir_barcode_ordem_producao(request, op_id):
     context = {
         'dados': dados,
         'barcode_svg': _gerar_barcode_svg(conteudo),
-        'codigo_barras_svg': _gerar_codigo_barras_svg(conteudo),
-        'codigo': conteudo,
+        'codigo_barras_svg': _gerar_codigo_barras_svg(
+            _conteudo_codigo_barras(op_id)
+        ),
+        'codigo': _conteudo_codigo_barras(op_id),
     }
     return render(request, 'core/industria/imprimir_barcode_op.html', context)

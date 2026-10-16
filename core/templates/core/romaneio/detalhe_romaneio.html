@@ -1,0 +1,278 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">
+                Romaneio {{ romaneio.numero }}
+                <span class="rom-badge {{ romaneio.status_classe }} ms-2">{{ romaneio.status_nome }}</span>
+            </h1>
+            <p class="page-subtitle mb-0">
+                {{ romaneio.obra.codigo }} — {{ romaneio.obra.nome }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'imprimir_romaneio' romaneio.pk %}" target="_blank" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-print"></i> Imprimir
+            </a>
+            <a href="{% url 'lista_romaneios' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Dados da carga -->
+        <div class="col-12 col-lg-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados da carga</h6>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="editar">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small fw-semibold">Veículo</label>
+                                <select name="veiculo" class="form-select" {% if not romaneio.pode_editar %}disabled{% endif %}>
+                                    <option value="">—</option>
+                                    {% for v in veiculos %}
+                                        <option value="{{ v.pk }}" {% if romaneio.veiculo_id == v.pk %}selected{% endif %}>
+                                            {{ v.placa }}{% if v.marca_modelo %} — {{ v.marca_modelo }}{% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small fw-semibold">Motorista</label>
+                                <input type="text" name="motorista" class="form-control"
+                                       value="{{ romaneio.motorista }}" {% if not romaneio.pode_editar %}disabled{% endif %}>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Endereço de entrega</label>
+                                <input type="text" name="endereco_entrega" class="form-control"
+                                       value="{{ romaneio.endereco_entrega }}" {% if not romaneio.pode_editar %}disabled{% endif %}>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-semibold">Distância (km)</label>
+                                <input type="text" name="distancia_km" class="form-control"
+                                       value="{{ romaneio.distancia_km|default_if_none:'' }}" {% if not romaneio.pode_editar %}disabled{% endif %}>
+                            </div>
+                            <div class="col-12 col-md-8">
+                                <label class="form-label small fw-semibold">Observação</label>
+                                <input type="text" name="observacao" class="form-control"
+                                       value="{{ romaneio.observacao }}" {% if not romaneio.pode_editar %}disabled{% endif %}>
+                            </div>
+                        </div>
+                        {% if romaneio.pode_editar %}
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Salvar
+                        </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo e status -->
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Resumo</h6>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">OPs na carga</span><strong>{{ romaneio.total_ops }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Total de peças</span><strong>{{ romaneio.total_pecas }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Peso total</span>
+                        <strong>{% if romaneio.peso_total %}{{ romaneio.peso_total }} kg{% else %}—{% endif %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Distância</span>
+                        <strong>{% if romaneio.distancia_km %}{{ romaneio.distancia_km }} km{% else %}—{% endif %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Criado por</span>
+                        <strong>{{ romaneio.criado_por.username|default:"—" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Criado em</span>
+                        <strong>{{ romaneio.criado_em|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                    {% if romaneio.data_saida %}
+                    <div class="d-flex justify-content-between py-2 border-top">
+                        <span class="text-muted">Saída</span><strong>{{ romaneio.data_saida|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                    {% endif %}
+                    {% if romaneio.data_entrega %}
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Entrega</span><strong>{{ romaneio.data_entrega|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Mudar status -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Situação</h6>
+                    <form method="post" class="d-flex flex-column gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="status">
+                        <select name="status" class="form-select">
+                            {% for valor, nome in status_opcoes %}
+                                <option value="{{ valor }}" {% if romaneio.status == valor %}selected{% endif %}>{{ nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="recebido_por" class="form-control"
+                               placeholder="Quem recebeu (ao marcar Entregue)">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i> Atualizar situação
+                        </button>
+                    </form>
+                    {% if romaneio.pode_editar %}
+                    <form method="post" class="mt-2"
+                          onsubmit="return confirm('Excluir o romaneio {{ romaneio.numero }}?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="excluir_marker">
+                        <a href="#" class="btn btn-outline-danger w-100"
+                           onclick="if(confirm('Excluir o romaneio {{ romaneio.numero }}?')){document.getElementById('formExc').submit();}return false;">
+                            <i class="fa-solid fa-trash me-1"></i> Excluir romaneio
+                        </a>
+                    </form>
+                    <form method="post" action="{% url 'excluir_romaneio' romaneio.pk %}" id="formExc" class="d-none">
+                        {% csrf_token %}
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-uppercase small text-muted mb-0">
+                    OPs nesta carga ({{ romaneio.total_ops }})
+                </h6>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>OP</th>
+                            <th>Tipologia</th>
+                            <th>Descrição</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-center">Medidas</th>
+                            <th class="text-center">Conferido</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr {% if item.conferido %}class="table-success"{% endif %}>
+                            <td><strong>{{ item.obra_op.codigo_formatado }}</strong></td>
+                            <td class="small">{{ item.tipologia|default:"—" }}</td>
+                            <td class="small text-muted">{{ item.descricao|truncatechars:46 }}</td>
+                            <td class="text-center">{{ item.quantidade }}</td>
+                            <td class="text-center small">{{ item.medidas }}</td>
+                            <td class="text-center">
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="conferir">
+                                    <input type="hidden" name="item_id" value="{{ item.pk }}">
+                                    <button type="submit" class="btn btn-sm {% if item.conferido %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                            title="{% if item.conferido %}Desmarcar{% else %}Marcar como conferido{% endif %}">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                {% if romaneio.pode_editar %}
+                                <form method="post" class="d-inline"
+                                      onsubmit="return confirm('Remover esta OP do romaneio?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="remover">
+                                    <input type="hidden" name="item_id" value="{{ item.pk }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                Nenhuma OP neste romaneio.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Adicionar OPs -->
+            {% if romaneio.pode_editar and disponiveis %}
+            <hr class="my-4">
+            <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                Adicionar OPs que chegaram na Expedição ({{ disponiveis|length }})
+            </h6>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="adicionar">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead class="sticky-top bg-body">
+                            <tr>
+                                <th style="width:40px;"></th>
+                                <th>OP</th>
+                                <th>Obra</th>
+                                <th>Descrição</th>
+                                <th class="text-center">Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for op in disponiveis %}
+                            <tr>
+                                <td><input type="checkbox" name="ops" value="{{ op.pk }}" class="form-check-input"></td>
+                                <td><strong>{{ op.codigo_formatado }}</strong></td>
+                                <td class="small">{{ op.obra.codigo }}</td>
+                                <td class="small text-muted">{{ op.descricao|truncatechars:40 }}</td>
+                                <td class="text-center">{{ op.quantidade }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">
+                    <i class="fa-solid fa-plus me-1"></i> Adicionar selecionadas
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<style>
+.rom-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    vertical-align: middle;
+}
+.rom-aberto   { background: #e2e8f0; color: #334155; }
+.rom-carga    { background: #fef3c7; color: #92400e; }
+.rom-saiu     { background: #dbeafe; color: #1e40af; }
+.rom-entregue { background: #dcfce7; color: #166534; }
+.rom-cancelado{ background: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}
