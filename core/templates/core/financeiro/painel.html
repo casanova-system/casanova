@@ -1,0 +1,136 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Painel Financeiro</h1>
+            <p class="page-subtitle mb-0">O retrato do dinheiro da fábrica — {{ hoje|date:"d/m/Y" }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'lista_contas_pagar' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-up"></i> A pagar
+            </a>
+            <a href="{% url 'lista_contas_receber' %}" class="btn-action btn-action-secondary">
+                <i class="fa-solid fa-arrow-down"></i> A receber
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card kpi-verde"><div class="card-body py-3">
+                <div class="kpi-label">A receber (em aberto)</div>
+                <div class="kpi-value">{{ receber.aberto|moeda_curta }}</div>
+                <div class="kpi-sub">{{ receber.n|numero }} títulos · {{ receber.aberto|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card kpi-vermelho"><div class="card-body py-3">
+                <div class="kpi-label">A pagar (em aberto)</div>
+                <div class="kpi-value">{{ pagar.aberto|moeda_curta }}</div>
+                <div class="kpi-sub">{{ pagar.n|numero }} títulos · {{ pagar.aberto|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card {% if saldo >= 0 %}kpi-verde{% else %}kpi-vermelho{% endif %}"><div class="card-body py-3">
+                <div class="kpi-label">Saldo projetado</div>
+                <div class="kpi-value">{{ saldo|moeda_curta }}</div>
+                <div class="kpi-sub">receber − pagar</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                        <i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> Vencido — precisa de ação
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="kpi-label">A pagar vencido</div>
+                            <div class="kpi-value text-danger">{{ pagar.vencido|moeda_simbolo }}</div>
+                            <div class="kpi-sub">{{ pagar.vencido_n|numero }} títulos</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="kpi-label">A receber vencido</div>
+                            <div class="kpi-value text-danger">{{ receber.vencido|moeda_simbolo }}</div>
+                            <div class="kpi-sub">{{ receber.vencido_n|numero }} títulos</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="kpi-label">Vence em 7 dias (pagar)</div>
+                            <div class="kpi-value" style="font-size:1.1rem;">{{ pagar.semana|moeda_simbolo }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="kpi-label">Vence em 7 dias (receber)</div>
+                            <div class="kpi-value" style="font-size:1.1rem;">{{ receber.semana|moeda_simbolo }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Atraso — A PAGAR</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                        {% for f in aging_pagar %}
+                            <tr>
+                                <td class="small">{{ f.nome }}</td>
+                                <td class="text-end small text-muted">{{ f.n|numero }}</td>
+                                <td class="text-end num">{{ f.total|moeda_simbolo }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h6 class="fw-bold text-uppercase small text-muted mb-3">Atraso — A RECEBER</h6>
+            <table class="table table-sm mb-0">
+                <tbody>
+                {% for f in aging_receber %}
+                    <tr>
+                        <td class="small">{{ f.nome }}</td>
+                        <td class="text-end small text-muted">{{ f.n|numero }}</td>
+                        <td class="text-end num">{{ f.total|moeda_simbolo }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.kpi-vermelho { border-left-color: #dc2626; }
+.kpi-vermelho .kpi-value { color: #dc2626; }
+.kpi-verde { border-left-color: #16a34a; }
+.kpi-verde .kpi-value { color: #16a34a; }
+.vencido { color: #dc2626; font-weight: 700; }
+tr.linha-vencida { background: #fef2f2; }
+.barra-aging { height: 10px; border-radius: 4px; background: #3b82f6; }
+</style>
+{% endblock %}

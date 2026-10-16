@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Nota {{ nota.numero }}
+                <span class="bdg {% if nota.tipo == 'SAIDA' %}bdg-saida{% else %}bdg-entrada{% endif %} ms-2">{{ nota.get_tipo_display }}</span>
+            </h1>
+            <p class="page-subtitle mb-0">{{ nota.participante_nome|default:"—" }}
+                {% if nota.data_emissao %} · {{ nota.data_emissao|date:"d/m/Y" }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_notas' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Produtos</div>
+                <div class="kpi-value">{{ nota.valor_produtos|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Frete</div>
+                <div class="kpi-value">{{ nota.valor_frete|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Total da nota</div>
+                <div class="kpi-value">{{ nota.valor_total|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Itens</div>
+                <div class="kpi-value">{{ total_itens|numero }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="px-3 pt-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">Itens da nota</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr>
+                        <th>Código</th><th>Descrição</th><th class="text-end">Qtd</th>
+                        <th class="text-end">Unitário</th><th class="text-end">Total</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for i in itens %}
+                        <tr>
+                            <td><strong class="small">{{ i.produto_codigo }}</strong></td>
+                            <td class="small text-muted">{{ i.descricao|truncatechars:44 }}</td>
+                            <td class="text-end small">{{ i.quantidade|quantidade_curta }}</td>
+                            <td class="text-end small">{{ i.valor_unitario|moeda_4 }}</td>
+                            <td class="text-end num">{{ i.valor_total|moeda_simbolo }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Nenhum item.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.bdg-saida   { background: #dbeafe; color: #1e40af; }
+.bdg-entrada { background: #dcfce7; color: #166534; }
+.bdg-neutro  { background: #e2e8f0; color: #334155; }
+</style>
+{% endblock %}

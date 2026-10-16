@@ -50,6 +50,14 @@ from core.views.custo_producao import (
     lista_custos,
     recalcular_todos,
 )
+from core.views.estrutura import detalhe_estrutura, lista_estruturas
+from core.views.financeiro import (painel_financeiro, lista_contas_pagar,
+                                   lista_contas_receber)
+from core.views.fiscal import detalhe_nota, lista_notas
+from core.views.pessoas import (editar_funcionario, funcionarios_por_setor,
+                                lista_funcionarios)
+from core.views.venda import (detalhe_proposta, detalhe_venda,
+                              lista_propostas, lista_vendas)
 from core.views.compra import (
     detalhe_pedido,
     detalhe_requisicao,
@@ -61,6 +69,7 @@ from core.views.compra import (
 )
 from core.views.estoque import (
     lista_estoque,
+    lista_movimentos_hist,
     lista_produtos,
     movimentar,
     movimentos,
@@ -179,6 +188,37 @@ urlpatterns = [
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
     # PRODUÇÃO (consulta rápida da OP na indústria)
     path('industria/producao/', producao, name='producao'),
+
+    # VENDA
+    path('vendas/', lista_vendas, name='lista_vendas'),
+    path('vendas/<int:venda_id>/', detalhe_venda, name='detalhe_venda'),
+    path('vendas/propostas/', lista_propostas, name='lista_propostas'),
+    path('vendas/propostas/<int:proposta_id>/', detalhe_proposta,
+         name='detalhe_proposta'),
+
+    # FINANCEIRO
+    path('financeiro/', painel_financeiro, name='painel_financeiro'),
+    path('financeiro/pagar/', lista_contas_pagar, name='lista_contas_pagar'),
+    path('financeiro/receber/', lista_contas_receber, name='lista_contas_receber'),
+
+    # FISCAL
+    path('fiscal/notas/', lista_notas, name='lista_notas'),
+    path('fiscal/notas/<int:nota_id>/', detalhe_nota, name='detalhe_nota'),
+
+    # ESTRUTURA DE PRODUTOS
+    path('industria/estruturas/', lista_estruturas, name='lista_estruturas'),
+    path('industria/estruturas/<int:estrutura_id>/', detalhe_estrutura,
+         name='detalhe_estrutura'),
+
+    # FUNCIONARIOS
+    path('pessoas/funcionarios/', lista_funcionarios, name='lista_funcionarios'),
+    path('pessoas/funcionarios/<int:func_id>/', editar_funcionario,
+         name='editar_funcionario'),
+    path('pessoas/setores/', funcionarios_por_setor, name='funcionarios_por_setor'),
+
+    # MOVIMENTOS DE ESTOQUE (historico importado do ERP)
+    path('industria/estoque/movimentos-historico/', lista_movimentos_hist,
+         name='lista_movimentos_hist'),
 
     # Custo de Produção
     path('industria/custos/', lista_custos, name='lista_custos'),

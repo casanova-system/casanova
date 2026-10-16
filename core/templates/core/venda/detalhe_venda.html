@@ -1,0 +1,133 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Pedido {{ pedido.numero }}
+                <span class="bdg {{ pedido.status_classe }} ms-2">{{ pedido.status_nome }}</span>
+            </h1>
+            <p class="page-subtitle mb-0">{{ pedido.cliente_nome|default:"Sem cliente" }}
+                {% if pedido.data_cadastro %} · {{ pedido.data_cadastro|date:"d/m/Y" }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_vendas' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Valor do pedido</div>
+                <div class="kpi-value">{{ pedido.valor_total|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Itens</div>
+                <div class="kpi-value">{{ total_itens|numero }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Soma dos itens</div>
+                <div class="kpi-value">{{ valor_itens|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Contas a receber</div>
+                <div class="kpi-value">{{ contas|length }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="px-3 pt-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">Itens do pedido</h6></div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr>
+                                <th>Código</th><th>Descrição</th><th class="text-end">Qtd</th>
+                                <th class="text-end">Unitário</th><th class="text-end">Total</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for i in itens %}
+                                <tr>
+                                    <td><strong class="small">{{ i.produto_codigo }}</strong></td>
+                                    <td class="small text-muted">{{ i.descricao|truncatechars:44 }}</td>
+                                    <td class="text-end small">{{ i.quantidade|quantidade_curta }}</td>
+                                    <td class="text-end small">{{ i.valor_unitario|moeda_4 }}</td>
+                                    <td class="text-end num">{{ i.valor_total|moeda_simbolo }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" class="text-center py-4 text-muted">Nenhum item.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><td class="text-muted">Número</td><td class="text-end">{{ pedido.numero }}</td></tr>
+                            <tr><td class="text-muted">Cliente</td><td class="text-end small">{{ pedido.cliente_nome|truncatechars:28|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Cód. cliente</td><td class="text-end small">{{ pedido.participante_codigo|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Data</td><td class="text-end">{{ pedido.data_cadastro|date:"d/m/Y"|default:"—" }}</td></tr>
+                            <tr><td class="text-muted">Finalização</td><td class="text-end">{{ pedido.data_finalizacao|date:"d/m/Y"|default:"—" }}</td></tr>
+                        </tbody>
+                    </table>
+                    {% if pedido.observacao %}
+                        <div class="mt-2 p-2 bg-body-tertiary rounded small">{{ pedido.observacao|truncatechars:300 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if contas %}
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">Contas a receber</h6>
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                        {% for c in contas %}
+                            <tr>
+                                <td class="small">{{ c.numero }}{% if c.parcela %}/{{ c.parcela }}{% endif %}</td>
+                                <td class="text-end small">{{ c.data_vencimento|date:"d/m/Y"|default:"—" }}</td>
+                                <td class="text-end num">{{ c.valor|moeda_simbolo }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.vencido { color: #dc2626; font-weight: 700; }
+tr.linha-vencida { background: #fef2f2; }
+</style>
+{% endblock %}

@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q, Sum
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 
 from core.models import (GrupoEstoque, LocalEstoque, MovimentoEstoque,
@@ -296,3 +297,56 @@ def saldo_produto(request, produto_id):
         'locais': LocalEstoque.objects.filter(ativo=True),
     }
     return render(request, 'core/estoque/saldo_produto.html', context)
+
+@login_required(login_url='login')
+@requer_rotina('lista_movimentos_hist')
+def lista_movimentos_hist(request):
+    """Movimentos de estoque importados do ERP (histórico).
+
+    São 307.933 movimentos que vieram do Faktory. Ficam SEPARADOS dos
+    movimentos vivos (MovimentoEstoque) porque não mexem no saldo atual —
+    o saldo já veio correto na importação. Aqui é consulta e
+    rastreabilidade.
+    """
+    from core.models import MovimentoEstoqueHistorico
+
+    query = request.GET.get('q', '').strip()
+    tipo = request.GET.get('tipo', '').strip()
+    dias = request.GET.get('dias', '').strip()
+
+    qs = MovimentoEstoqueHistorico.objects.all()
+    if query:
+        qs = qs.filter(
+            Q(produto_codigo__icontains=query)
+            | Q(produto_descricao__icontains=query)
+            | Q(documento__icontains=query))
+    if tipo:
+        qs = qs.filter(tipo=tipo)
+
+    from datetime import timedelta
+    hoje = timezone.localdate()
+    if dias and dias.isdigit():
+        qs = qs.filter(data_movimento__gte=hoje - timedelta(days=int(dias)))
+
+    qs = qs.order_by('-data_movimento', '-id')
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    params = request.GET.copy()
+    params.pop('page', None)
+
+    context = {
+        'movimentos': page_obj,
+        'page_obj': page_obj,
+        'querystring': params.urlencode(),
+        'query': query,
+        'tipo_atual': tipo,
+        'dias': dias,
+        'kpi': {
+            'total': MovimentoEstoqueHistorico.objects.count(),
+            'entradas': MovimentoEstoqueHistorico.objects.filter(
+                tipo='ENTRADA').count(),
+            'saidas': MovimentoEstoqueHistorico.objects.filter(
+                tipo='SAIDA').count(),
+        },
+    }
+    return render(request, 'core/estoque/movimentos_hist.html', context)

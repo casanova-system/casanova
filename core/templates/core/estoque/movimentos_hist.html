@@ -1,0 +1,130 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Movimentos de Estoque (histórico)</h1>
+            <p class="page-subtitle mb-0">Importado do ERP — consulta. Não altera o saldo atual.</p>
+        </div>
+        <a href="{% url 'lista_estoque' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-boxes-stacked"></i> Saldo atual
+        </a>
+    </div>
+
+    <div class="alert alert-info small">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        Estes são os <strong>movimentos históricos do ERP</strong>. Ficam separados dos
+        movimentos vivos porque não mexem no saldo — o saldo já veio correto na
+        importação. Aqui é consulta e rastreabilidade.
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Total de movimentos</div>
+                <div class="kpi-value">{{ kpi.total|numero }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Entradas</div>
+                <div class="kpi-value">{{ kpi.entradas|numero }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Saídas</div>
+                <div class="kpi-value">{{ kpi.saidas|numero }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">No filtro</div>
+                <div class="kpi-value">{{ page_obj.paginator.count|numero }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label small fw-semibold mb-1">Buscar</label>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Código, descrição ou documento...">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Tipo</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="ENTRADA" {% if tipo_atual == 'ENTRADA' %}selected{% endif %}>Entrada</option>
+                        <option value="SAIDA" {% if tipo_atual == 'SAIDA' %}selected{% endif %}>Saída</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Período</label>
+                    <select name="dias" class="form-select">
+                        <option value="">Tudo</option>
+                        <option value="30" {% if dias == '30' %}selected{% endif %}>30 dias</option>
+                        <option value="90" {% if dias == '90' %}selected{% endif %}>90 dias</option>
+                        <option value="365" {% if dias == '365' %}selected{% endif %}>1 ano</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i></button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr>
+                        <th>Data</th><th>Código</th><th>Descrição</th><th>Local</th>
+                        <th class="text-center">Tipo</th><th class="text-end">Qtd</th>
+                        <th class="text-end">Valor un.</th><th>Documento</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for m in movimentos %}
+                        <tr>
+                            <td class="small">{{ m.data_movimento|date:"d/m/Y H:i"|default:"—" }}</td>
+                            <td><strong class="small">{{ m.produto_codigo }}</strong></td>
+                            <td class="small text-muted">{{ m.produto_descricao|truncatechars:32 }}</td>
+                            <td class="small text-muted">{{ m.local_nome|truncatechars:22|default:"—" }}</td>
+                            <td class="text-center"><span class="bdg {% if m.tipo == 'ENTRADA' %}bdg-entrada{% else %}bdg-saida{% endif %}">{{ m.tipo }}</span></td>
+                            <td class="text-end num">{{ m.quantidade|quantidade }}</td>
+                            <td class="text-end small">{{ m.valor_unitario|moeda_4 }}</td>
+                            <td class="small text-muted">{{ m.documento|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-right-left fs-1 d-block mb-2 opacity-50"></i>
+                            Nenhum movimento encontrado.
+                        </td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3"><ul class="pagination justify-content-center mb-0">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&laquo;</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&raquo;</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.bdg-saida   { background: #dbeafe; color: #1e40af; }
+.bdg-entrada { background: #dcfce7; color: #166534; }
+.bdg-neutro  { background: #e2e8f0; color: #334155; }
+</style>
+{% endblock %}

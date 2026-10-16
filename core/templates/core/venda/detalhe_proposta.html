@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">Proposta {{ proposta.numero }}</h1>
+            <p class="page-subtitle mb-0">{{ proposta.cliente_nome|default:"Sem cliente" }}
+                {% if proposta.data_cadastro %} · {{ proposta.data_cadastro|date:"d/m/Y" }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'lista_propostas' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Valor</div>
+                <div class="kpi-value">{{ proposta.valor_total|moeda_simbolo }}</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Itens</div>
+                <div class="kpi-value">{{ total_itens|numero }}</div>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Situação</div>
+                <div class="kpi-value" style="font-size:1.1rem;">{{ proposta.status_nome }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="px-3 pt-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">Itens da proposta</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr>
+                        <th>Código</th><th>Descrição</th><th class="text-end">Qtd</th>
+                        <th class="text-end">Unitário</th><th class="text-end">Total</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for i in itens %}
+                        <tr>
+                            <td><strong class="small">{{ i.produto_codigo }}</strong></td>
+                            <td class="small text-muted">{{ i.descricao|truncatechars:44 }}</td>
+                            <td class="text-end small">{{ i.quantidade|quantidade_curta }}</td>
+                            <td class="text-end small">{{ i.valor_unitario|moeda_4 }}</td>
+                            <td class="text-end num">{{ i.valor_total|moeda_simbolo }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Nenhum item.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.req-aberta   { background: #e2e8f0; color: #334155; }
+.req-aprovada { background: #dbeafe; color: #1e40af; }
+.req-cotacao  { background: #fef3c7; color: #92400e; }
+.req-pedido   { background: #e0e7ff; color: #3730a3; }
+.req-atendida { background: #dcfce7; color: #166534; }
+.req-cancelada{ background: #fee2e2; color: #991b1b; }
+.vencido { color: #dc2626; font-weight: 700; }
+tr.linha-vencida { background: #fef2f2; }
+</style>
+{% endblock %}

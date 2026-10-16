@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width: 720px;">
+    {% include 'core/partials/messages.html' %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title mb-1">{{ funcionario.nome }}</h1>
+            <p class="page-subtitle mb-0">{{ funcionario.setor|default:"Sem setor" }}</p>
+        </div>
+        <a href="{% url 'lista_funcionarios' %}" class="btn-action btn-action-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Dados</h6>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Nome</label>
+                        <input type="text" name="nome" class="form-control" value="{{ funcionario.nome }}">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Setor</label>
+                        <input type="text" name="setor" class="form-control" value="{{ funcionario.setor }}">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Cargo</label>
+                        <input type="text" name="cargo" class="form-control" value="{{ funcionario.cargo }}">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Telefone</label>
+                        <input type="text" name="telefone" class="form-control" value="{{ funcionario.telefone }}">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">CPF</label>
+                        <input type="text" class="form-control" value="{{ funcionario.cpf|default:'—' }}" disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold text-uppercase small text-muted mb-3">Custo</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold">Valor/hora (R$)</label>
+                        <input type="text" name="valor_hora" class="form-control"
+                               value="{{ funcionario.valor_hora|moeda }}" inputmode="decimal">
+                        <div class="form-text">Usado no cálculo de custo da OP.</div>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                                   {% if funcionario.ativo %}checked{% endif %}>
+                            <label class="form-check-label small" for="ativo">Ativo</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lista_funcionarios' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+        </div>
+    </form>
+</div>
+<style>
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.45rem; font-weight: 800; color: var(--cv-text); line-height: 1.15; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.bdg-saida   { background: #dbeafe; color: #1e40af; }
+.bdg-entrada { background: #dcfce7; color: #166534; }
+.bdg-neutro  { background: #e2e8f0; color: #334155; }
+</style>
+{% endblock %}

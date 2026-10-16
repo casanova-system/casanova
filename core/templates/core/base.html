@@ -787,6 +787,11 @@
                                         </a>
                                         {% endif %}
                                     </div>
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estruturas or request.user.perfil.tem_rotina.020 %}
+                                        <a href="{% url 'lista_estruturas' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'estrutura' in request.resolver_match.url_name %}active{% endif %}" data-id="20" data-nome="estrutura" title="Estrutura de Produtos">
+                                            <span class="hide-on-collapse">Estrutura de Produtos</span>
+                                        </a>
+                                        {% endif %}
                                 {% endif %}
                                 </div>
                                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estoque or request.user.perfil.tem_rotina.012 %}
@@ -804,6 +809,11 @@
                                         </a>
                                         {% endif %}
                                     </div>
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_movimentos_hist or request.user.perfil.tem_rotina.022 %}
+                                        <a href="{% url 'lista_movimentos_hist' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'movimentos_hist' in request.resolver_match.url_name %}active{% endif %}" data-id="22" data-nome="movimentos historico" title="Movimentos (histórico)">
+                                            <span class="hide-on-collapse">Movimentos (histórico)</span>
+                                        </a>
+                                        {% endif %}
                                 {% endif %}
                                 </div>
                                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_compras or request.user.perfil.tem_rotina.013 %}
@@ -855,6 +865,78 @@
                                         </a>
                                         {% endif %}
                                     </div>
+
+                                <!-- GRUPO: COMERCIAL -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_vendas or request.user.perfil.tem_rotina.015 or request.user.perfil.tem_rotina.lista_propostas or request.user.perfil.tem_rotina.016 %}
+                                <div class="setor-grupo">
+                                    <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#modComercial" role="button"
+                                       aria-expanded="false" aria-controls="modComercial" title="Comercial">
+                                        <span>Comercial</span>
+                                        <i class="fa-solid fa-chevron-down setor-chevron"></i>
+                                    </a>
+                                    <div class="collapse" id="modComercial">
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_vendas or request.user.perfil.tem_rotina.015 %}
+                                        <a href="{% url 'lista_vendas' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'venda' in request.resolver_match.url_name %}active{% endif %}" data-id="15" data-nome="pedidos de venda" title="Pedidos de Venda">
+                                            <span class="hide-on-collapse">Pedidos de Venda</span>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_propostas or request.user.perfil.tem_rotina.016 %}
+                                        <a href="{% url 'lista_propostas' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'proposta' in request.resolver_match.url_name %}active{% endif %}" data-id="16" data-nome="propostas" title="Propostas">
+                                            <span class="hide-on-collapse">Propostas</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <!-- GRUPO: FINANCEIRO -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_contas_pagar or request.user.perfil.tem_rotina.017 or request.user.perfil.tem_rotina.lista_contas_receber or request.user.perfil.tem_rotina.018 or request.user.perfil.tem_rotina.lista_notas or request.user.perfil.tem_rotina.019 %}
+                                <div class="setor-grupo">
+                                    <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#modFinanceiro" role="button"
+                                       aria-expanded="false" aria-controls="modFinanceiro" title="Financeiro">
+                                        <span>Financeiro</span>
+                                        <i class="fa-solid fa-chevron-down setor-chevron"></i>
+                                    </a>
+                                    <div class="collapse" id="modFinanceiro">
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.painel_financeiro or request.user.perfil.tem_rotina.017 %}
+                                        <a href="{% url 'painel_financeiro' %}" class="sidebar-link sidebar-link-sub rotina-item {% if request.resolver_match.url_name == 'painel_financeiro' %}active{% endif %}" data-id="17" data-nome="painel financeiro" title="Painel Financeiro">
+                                            <span class="hide-on-collapse">Painel Financeiro</span>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_contas_pagar or request.user.perfil.tem_rotina.017 %}
+                                        <a href="{% url 'lista_contas_pagar' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'contas_pagar' in request.resolver_match.url_name %}active{% endif %}" data-id="17" data-nome="contas a pagar" title="Contas a Pagar">
+                                            <span class="hide-on-collapse">Contas a Pagar</span>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_contas_receber or request.user.perfil.tem_rotina.018 %}
+                                        <a href="{% url 'lista_contas_receber' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'contas_receber' in request.resolver_match.url_name %}active{% endif %}" data-id="18" data-nome="contas a receber" title="Contas a Receber">
+                                            <span class="hide-on-collapse">Contas a Receber</span>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_notas or request.user.perfil.tem_rotina.019 %}
+                                        <a href="{% url 'lista_notas' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'nota' in request.resolver_match.url_name %}active{% endif %}" data-id="19" data-nome="notas fiscais" title="Notas Fiscais">
+                                            <span class="hide-on-collapse">Notas Fiscais</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <!-- GRUPO: PESSOAS -->
+                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 %}
+                                <div class="setor-grupo">
+                                    <a class="setor-toggle hide-on-collapse" data-bs-toggle="collapse" href="#modPessoas" role="button"
+                                       aria-expanded="false" aria-controls="modPessoas" title="Pessoas">
+                                        <span>Pessoas</span>
+                                        <i class="fa-solid fa-chevron-down setor-chevron"></i>
+                                    </a>
+                                    <div class="collapse" id="modPessoas">
+                                        {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 %}
+                                        <a href="{% url 'lista_funcionarios' %}" class="sidebar-link sidebar-link-sub rotina-item {% if 'funcionario' in request.resolver_match.url_name or 'setores' in request.resolver_match.url_name %}active{% endif %}" data-id="21" data-nome="funcionarios" title="Funcionários">
+                                            <span class="hide-on-collapse">Funcionários</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
                                 {% endif %}
                                 </div>
 
