@@ -39,6 +39,8 @@ def lista_notas(request):
     query = request.GET.get('q', '').strip()
     tipo = request.GET.get('tipo', '').strip()
     dias = request.GET.get('dias', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
 
     qs = NotaFiscal.objects.all()
     if query:
@@ -48,6 +50,10 @@ def lista_notas(request):
             | Q(chave_acesso__icontains=query))
     if tipo:
         qs = qs.filter(tipo=tipo)
+    if participante:
+        qs = qs.filter(participante_nome__icontains=participante)
+    if projeto:
+        qs = qs.filter(projeto__icontains=projeto)
 
     hoje = timezone.localdate()
     de = _parse(request.GET.get('de', ''))
@@ -80,6 +86,8 @@ def lista_notas(request):
         'querystring': params.urlencode(),
         'query': query,
         'tipo_atual': tipo,
+        'participante': participante,
+        'projeto': projeto,
         'de': de, 'ate': ate,
         'dias': dias,
         'kpi': {

@@ -32,6 +32,22 @@
                         {% for v, n in status_opcoes %}<option value="{{ v }}" {% if status_atual == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
                     </select>
                 </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Fornecedor</label>
+                    <input type="text" name="participante" value="{{ participante }}" class="form-control" placeholder="Nome...">
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Projeto</label>
+                    <input type="text" name="projeto" value="{{ projeto }}" class="form-control" placeholder="Código...">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Emissão de</label>
+                    <input type="date" name="data_de" value="{{ data_de }}" class="form-control">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Até</label>
+                    <input type="date" name="data_ate" value="{{ data_ate }}" class="form-control">
+                </div>
                 <div class="col-4 col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i></button></div>
             </form>
         </div>
@@ -40,7 +56,13 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                
+<div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
+        <i class="fa-solid fa-expand"></i> Largura automática
+    </button>
+</div>
+<table data-tabela-auto class="table table-hover align-middle mb-0">
                     <thead><tr>
                         <th>Número</th><th>Fornecedor</th><th>Requisição</th>
                         <th class="text-center">Itens</th><th class="text-end">Valor</th>
@@ -101,5 +123,46 @@
 .pri-urgente  { background: #fee2e2; color: #991b1b; }
 .num { font-variant-numeric: tabular-nums; font-weight: 700; }
 .sugestao { border-left: 4px solid #dc2626; background: #fef2f2; }
+
+/* Tabela: largura automática sem cortar conteúdo */
+[data-tabela-auto] {
+    table-layout: auto;
+    width: 100%;
+}
+[data-tabela-auto] td,
+[data-tabela-auto] th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+[data-tabela-auto].largura-fixa {
+    table-layout: fixed;
+}
+[data-tabela-auto].largura-fixa td,
+[data-tabela-auto].largura-fixa th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
 </style>
 {% endblock %}
+
+
+<script>
+function alternarLargura(btn) {
+    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
+    if (!tabela) return;
+    tabela.classList.toggle('largura-fixa');
+    const icone = btn.querySelector('i');
+    const texto = btn.querySelector('span') || btn;
+    if (tabela.classList.contains('largura-fixa')) {
+        icone.className = 'fa-solid fa-compress';
+        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
+    } else {
+        icone.className = 'fa-solid fa-expand';
+        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
+    }
+}
+</script>
+

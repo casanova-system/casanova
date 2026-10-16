@@ -63,6 +63,8 @@ def lista_vendas(request):
     """Lista de pedidos de venda."""
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
 
     qs = VendaPedido.objects.all()
     if query:
@@ -72,6 +74,10 @@ def lista_vendas(request):
             | Q(observacao__icontains=query))
     if status:
         qs = qs.filter(status=status)
+    if participante:
+        qs = qs.filter(cliente_nome__icontains=participante)
+    if projeto:
+        qs = qs.filter(projeto__icontains=projeto)
 
     qs, de, ate = _filtra_periodo(qs, 'data_cadastro', request)
     qs = qs.order_by('-data_cadastro', '-id')
@@ -96,6 +102,8 @@ def lista_vendas(request):
         'querystring': params.urlencode(),
         'query': query,
         'status_atual': status,
+        'participante': participante,
+        'projeto': projeto,
         'status_opcoes': VendaPedido._meta.get_field('status').choices,
         'de': de, 'ate': ate,
         'dias': request.GET.get('dias', ''),
@@ -143,6 +151,8 @@ def lista_propostas(request):
     """Lista de propostas comerciais."""
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
 
     qs = VendaProposta.objects.all()
     if query:
@@ -150,6 +160,10 @@ def lista_propostas(request):
             Q(numero__icontains=query) | Q(cliente_nome__icontains=query))
     if status:
         qs = qs.filter(status=status)
+    if participante:
+        qs = qs.filter(cliente_nome__icontains=participante)
+    if projeto:
+        qs = qs.filter(projeto__icontains=projeto)
 
     qs, de, ate = _filtra_periodo(qs, 'data_cadastro', request)
     qs = qs.order_by('-data_cadastro', '-id')
@@ -169,6 +183,8 @@ def lista_propostas(request):
         'querystring': params.urlencode(),
         'query': query,
         'status_atual': status,
+        'participante': participante,
+        'projeto': projeto,
         'status_opcoes': VendaProposta._meta.get_field('status').choices,
         'de': de, 'ate': ate,
         'dias': request.GET.get('dias', ''),

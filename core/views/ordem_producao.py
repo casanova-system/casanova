@@ -275,6 +275,26 @@ def _filtrar_ops_locais(request):
     if documento:
         consulta = consulta.filter(codigo_documento__icontains=documento)
 
+    participante = request.GET.get('participante', '').strip()
+    if participante:
+        consulta = consulta.filter(obra__cliente__icontains=participante)
+
+    data_de = request.GET.get('data_de', '').strip()
+    if data_de:
+        try:
+            from datetime import datetime
+            consulta = consulta.filter(data_importacao__date__gte=datetime.strptime(data_de, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+
+    data_ate = request.GET.get('data_ate', '').strip()
+    if data_ate:
+        try:
+            from datetime import datetime
+            consulta = consulta.filter(data_importacao__date__lte=datetime.strptime(data_ate, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+
     ordenar = request.GET.get('ordenar', '')
     ordenacoes = {
         'op_asc': ('codigo_documento', 'codigo_esquadria'),
@@ -374,6 +394,11 @@ def lista_ordem_producao(request):
         'filtros': request.GET,
         'total': paginator.count,
         'query': request.GET.get('q', '').strip(),
+        'participante': request.GET.get('participante', '').strip(),
+        'projeto': request.GET.get('projeto', '').strip(),
+        'produto': request.GET.get('produto', '').strip(),
+        'data_de': request.GET.get('data_de', '').strip(),
+        'data_ate': request.GET.get('data_ate', '').strip(),
         'tipos_op': TIPOS_OP,
         'status_atendimento': STATUS_ATENDIMENTO,
     }

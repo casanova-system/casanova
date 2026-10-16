@@ -71,6 +71,10 @@ def lista_romaneios(request):
     """Lista os romaneios com filtro por status e busca."""
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
+    data_de = request.GET.get('data_de', '').strip()
+    data_ate = request.GET.get('data_ate', '').strip()
 
     romaneios = Romaneio.objects.select_related('obra', 'veiculo', 'criado_por')
 
@@ -84,6 +88,22 @@ def lista_romaneios(request):
         )
     if status:
         romaneios = romaneios.filter(status=status)
+    if participante:
+        romaneios = romaneios.filter(obra__cliente__icontains=participante)
+    if projeto:
+        romaneios = romaneios.filter(obra__codigo__icontains=projeto)
+    if data_de:
+        try:
+            from datetime import datetime
+            romaneios = romaneios.filter(data_saida__date__gte=datetime.strptime(data_de, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if data_ate:
+        try:
+            from datetime import datetime
+            romaneios = romaneios.filter(data_saida__date__lte=datetime.strptime(data_ate, '%Y-%m-%d').date())
+        except ValueError:
+            pass
 
     paginator = Paginator(romaneios, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -105,6 +125,10 @@ def lista_romaneios(request):
         'querystring': params.urlencode(),
         'query': query,
         'status_atual': status,
+        'participante': participante,
+        'projeto': projeto,
+        'data_de': data_de,
+        'data_ate': data_ate,
         'status_opcoes': Romaneio._meta.get_field('status').choices,
         'contagem': contagem,
         'disponiveis': _ops_disponiveis().count(),

@@ -30,6 +30,11 @@ def _filtro_comum(request, qs, campo_data):
     status = request.GET.get('status', '').strip()
     situacao = request.GET.get('situacao', '').strip()
     dias = request.GET.get('dias', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    documento = request.GET.get('documento', '').strip()
+    data_de = request.GET.get('data_de', '').strip()
+    data_ate = request.GET.get('data_ate', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
 
     hoje = timezone.localdate()
     if query:
@@ -39,6 +44,12 @@ def _filtro_comum(request, qs, campo_data):
             | Q(observacao__icontains=query))
     if status:
         qs = qs.filter(status=status)
+    if participante:
+        qs = qs.filter(fornecedor__razao_social__icontains=participante)
+    if documento:
+        qs = qs.filter(numero__icontains=documento)
+    if projeto:
+        qs = qs.filter(projeto__icontains=projeto)
 
     # situacao e o filtro que o financeiro usa de verdade
     if situacao == 'vencido':
@@ -59,7 +70,23 @@ def _filtro_comum(request, qs, campo_data):
     if dias and dias.isdigit():
         qs = qs.filter(**{f'{campo_data}__gte': hoje - timedelta(days=int(dias))})
 
-    return qs, query, status, situacao
+    # filtro por periodo personalizado (data_de/data_ate)
+    if data_de:
+        try:
+            from datetime import datetime
+            dt_de = datetime.strptime(data_de, '%Y-%m-%d').date()
+            qs = qs.filter(**{f'{campo_data}__gte': dt_de})
+        except ValueError:
+            pass
+    if data_ate:
+        try:
+            from datetime import datetime
+            dt_ate = datetime.strptime(data_ate, '%Y-%m-%d').date()
+            qs = qs.filter(**{f'{campo_data}__lte': dt_ate})
+        except ValueError:
+            pass
+
+    return qs, query, status, situacao, participante, documento, data_de, data_ate, projeto
 
 
 @login_required(login_url='login')
@@ -68,7 +95,7 @@ def lista_contas_pagar(request):
     """Contas a pagar com foco no que esta vencido."""
     hoje = timezone.localdate()
     qs = ContaPagar.objects.select_related('fornecedor')
-    qs, query, status, situacao = _filtro_comum(request, qs, 'data_vencimento')
+    qs, query, status, situacao, participante, documento, data_de, data_ate, projeto = _filtro_comum(request, qs, 'data_vencimento')
     qs = qs.order_by('data_vencimento', 'id')
 
     paginator = Paginator(qs, ITENS_POR_PAGINA)
@@ -121,7 +148,7 @@ def lista_contas_receber(request):
     """Contas a receber."""
     hoje = timezone.localdate()
     qs = ContaReceber.objects.all()
-    qs, query, status, situacao = _filtro_comum(request, qs, 'data_vencimento')
+    qs, query, status, situacao, participante, documento, data_de, data_ate, projeto = _filtro_comum(request, qs, 'data_vencimento')
     qs = qs.order_by('data_vencimento', 'id')
 
     paginator = Paginator(qs, ITENS_POR_PAGINA)

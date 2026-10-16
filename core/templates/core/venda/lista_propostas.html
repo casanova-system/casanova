@@ -58,6 +58,14 @@
                         <option value="365" {% if dias == '365' %}selected{% endif %}>1 ano</option>
                     </select>
                 </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Cliente</label>
+                    <input type="text" name="participante" value="{{ participante }}" class="form-control" placeholder="Nome...">
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Projeto</label>
+                    <input type="text" name="projeto" value="{{ projeto }}" class="form-control" placeholder="Código...">
+                </div>
                 <div class="col-12 col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i></button></div>
             </form>
         </div>
@@ -66,7 +74,13 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                
+<div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
+        <i class="fa-solid fa-expand"></i> Largura automática
+    </button>
+</div>
+<table data-tabela-auto class="table table-hover align-middle mb-0">
                     <thead><tr>
                         <th>Número</th><th>Data</th><th>Cliente</th>
                         <th class="text-end">Valor</th><th>Situação</th><th class="text-end">Ações</th>
@@ -76,7 +90,7 @@
                         <tr>
                             <td><strong>{{ p.numero }}</strong></td>
                             <td class="small">{{ p.data_cadastro|date:"d/m/Y"|default:"—" }}</td>
-                            <td class="small">{{ p.cliente_nome|truncatechars:44|default:"—" }}</td>
+                            <td class="small">{{ p.cliente_nome|default:"—" }}</td>
                             <td class="text-end num">{{ p.valor_total|moeda_simbolo }}</td>
                             <td><span class="bdg req-aberta">{{ p.status_nome }}</span></td>
                             <td class="text-end">
@@ -117,5 +131,46 @@
 .req-cancelada{ background: #fee2e2; color: #991b1b; }
 .vencido { color: #dc2626; font-weight: 700; }
 tr.linha-vencida { background: #fef2f2; }
+
+/* Tabela: largura automática sem cortar conteúdo */
+[data-tabela-auto] {
+    table-layout: auto;
+    width: 100%;
+}
+[data-tabela-auto] td,
+[data-tabela-auto] th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+[data-tabela-auto].largura-fixa {
+    table-layout: fixed;
+}
+[data-tabela-auto].largura-fixa td,
+[data-tabela-auto].largura-fixa th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
 </style>
 {% endblock %}
+
+
+<script>
+function alternarLargura(btn) {
+    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
+    if (!tabela) return;
+    tabela.classList.toggle('largura-fixa');
+    const icone = btn.querySelector('i');
+    const texto = btn.querySelector('span') || btn;
+    if (tabela.classList.contains('largura-fixa')) {
+        icone.className = 'fa-solid fa-compress';
+        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
+    } else {
+        icone.className = 'fa-solid fa-expand';
+        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
+    }
+}
+</script>
+

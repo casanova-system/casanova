@@ -70,6 +70,11 @@ def lista_requisicoes(request):
     """Lista de requisições com filtros e sugestões de compra."""
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    data_de = request.GET.get('data_de', '').strip()
+    data_ate = request.GET.get('data_ate', '').strip()
+    produto = request.GET.get('produto', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
 
     qs = RequisicaoCompra.objects.select_related(
         'solicitante', 'obra_op', 'aprovado_por')
@@ -81,6 +86,24 @@ def lista_requisicoes(request):
             | Q(obra_op__codigo_documento__icontains=query))
     if status:
         qs = qs.filter(status=status)
+    if participante:
+        qs = qs.filter(obra_op__obra__cliente__icontains=participante)
+    if produto:
+        qs = qs.filter(itens__produto__descricao__icontains=produto).distinct()
+    if projeto:
+        qs = qs.filter(obra_op__obra__codigo__icontains=projeto)
+    if data_de:
+        try:
+            from datetime import datetime
+            qs = qs.filter(criado_em__date__gte=datetime.strptime(data_de, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if data_ate:
+        try:
+            from datetime import datetime
+            qs = qs.filter(criado_em__date__lte=datetime.strptime(data_ate, '%Y-%m-%d').date())
+        except ValueError:
+            pass
 
     paginator = Paginator(qs, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -95,6 +118,11 @@ def lista_requisicoes(request):
         'querystring': params.urlencode(),
         'query': query,
         'status_atual': status,
+        'participante': participante,
+        'data_de': data_de,
+        'data_ate': data_ate,
+        'produto': produto,
+        'projeto': projeto,
         'status_opcoes': RequisicaoCompra._meta.get_field('status').choices,
         'sugestoes': sugestoes,
         'total_sugestoes': len(sugestoes),
@@ -301,6 +329,10 @@ def lista_pedidos(request):
     """Lista de pedidos de compra."""
     query = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
+    participante = request.GET.get('participante', '').strip()
+    projeto = request.GET.get('projeto', '').strip()
+    data_de = request.GET.get('data_de', '').strip()
+    data_ate = request.GET.get('data_ate', '').strip()
 
     qs = PedidoCompra.objects.select_related('fornecedor', 'comprador', 'requisicao')
 
@@ -311,6 +343,22 @@ def lista_pedidos(request):
             | Q(fornecedor__nome_fantasia__icontains=query))
     if status:
         qs = qs.filter(status=status)
+    if participante:
+        qs = qs.filter(fornecedor__razao_social__icontains=participante)
+    if projeto:
+        qs = qs.filter(requisicao__obra_op__obra__codigo__icontains=projeto)
+    if data_de:
+        try:
+            from datetime import datetime
+            qs = qs.filter(criado_em__date__gte=datetime.strptime(data_de, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if data_ate:
+        try:
+            from datetime import datetime
+            qs = qs.filter(criado_em__date__lte=datetime.strptime(data_ate, '%Y-%m-%d').date())
+        except ValueError:
+            pass
 
     paginator = Paginator(qs, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -323,6 +371,10 @@ def lista_pedidos(request):
         'querystring': params.urlencode(),
         'query': query,
         'status_atual': status,
+        'participante': participante,
+        'projeto': projeto,
+        'data_de': data_de,
+        'data_ate': data_ate,
         'status_opcoes': PedidoCompra._meta.get_field('status').choices,
     }
     return render(request, 'core/compra/lista_pedidos.html', context)

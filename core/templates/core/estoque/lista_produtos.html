@@ -40,7 +40,13 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                
+<div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
+        <i class="fa-solid fa-expand"></i> Largura automática
+    </button>
+</div>
+<table data-tabela-auto class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Código</th><th>Descrição</th><th>Grupo</th>
@@ -53,7 +59,7 @@
                         {% for p in produtos %}
                         <tr>
                             <td><a href="{% url 'saldo_produto' p.pk %}" class="fw-semibold text-decoration-none">{{ p.codigo }}</a></td>
-                            <td class="small">{{ p.descricao|truncatechars:52 }}
+                            <td class="small">{{ p.descricao }}
                                 {% if p.cor %}<div class="text-muted" style="font-size:.72rem;">{{ p.cor }}</div>{% endif %}
                             </td>
                             <td class="small">{{ p.grupo.nome }}</td>
@@ -96,5 +102,46 @@
 .mov-ajuste  { background: #fef3c7; color: #92400e; }
 .num { font-variant-numeric: tabular-nums; font-weight: 700; }
 .zerado { color: #dc2626; }
+
+/* Tabela: largura automática sem cortar conteúdo */
+[data-tabela-auto] {
+    table-layout: auto;
+    width: 100%;
+}
+[data-tabela-auto] td,
+[data-tabela-auto] th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+[data-tabela-auto].largura-fixa {
+    table-layout: fixed;
+}
+[data-tabela-auto].largura-fixa td,
+[data-tabela-auto].largura-fixa th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
 </style>
 {% endblock %}
+
+
+<script>
+function alternarLargura(btn) {
+    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
+    if (!tabela) return;
+    tabela.classList.toggle('largura-fixa');
+    const icone = btn.querySelector('i');
+    const texto = btn.querySelector('span') || btn;
+    if (tabela.classList.contains('largura-fixa')) {
+        icone.className = 'fa-solid fa-compress';
+        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
+    } else {
+        icone.className = 'fa-solid fa-expand';
+        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
+    }
+}
+</script>
+

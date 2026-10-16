@@ -72,7 +72,13 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                
+<div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
+        <i class="fa-solid fa-expand"></i> Largura automática
+    </button>
+</div>
+<table data-tabela-auto class="table table-hover align-middle mb-0">
                     <thead><tr>
                         <th>OP</th><th>Item</th>
                         <th class="text-end">Material</th><th class="text-end">Mão de obra</th>
@@ -86,7 +92,7 @@
                         <tr>
                             <td><strong>{{ c.obra_op.codigo_formatado }}</strong>
                                 <div class="text-muted" style="font-size:.72rem;">{{ c.calculado_em|date:"d/m/Y H:i" }}</div></td>
-                            <td class="small">{{ c.obra_op.descricao|truncatechars:30 }}</td>
+                            <td class="small">{{ c.obra_op.descricao }}</td>
                             <td class="text-end small">{{ c.custo_material|moeda_simbolo }}</td>
                             <td class="text-end small">{{ c.custo_mao_obra|moeda_simbolo }}
                                 <div class="text-muted" style="font-size:.7rem;">{{ c.horas_totais|quantidade_curta }}h</div></td>
@@ -134,10 +140,51 @@
 .margem-atencao{ background: #fef3c7; color: #92400e; }
 .margem-ruim   { background: #fee2e2; color: #991b1b; }
 .margem-neutra { background: #e2e8f0; color: #334155; }
-.barra { height: 26px; display: flex; border-radius: 6px; overflow: hidden; }
+.barra { height: 26px; display: flex; border-radius: 6px; overflow: visible; }
 .barra > div { display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; }
 .barra-mat { background: #3b82f6; }
 .barra-mo  { background: #10b981; }
 .barra-ind { background: #f59e0b; }
+
+/* Tabela: largura automática sem cortar conteúdo */
+[data-tabela-auto] {
+    table-layout: auto;
+    width: 100%;
+}
+[data-tabela-auto] td,
+[data-tabela-auto] th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+[data-tabela-auto].largura-fixa {
+    table-layout: fixed;
+}
+[data-tabela-auto].largura-fixa td,
+[data-tabela-auto].largura-fixa th {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
 </style>
 {% endblock %}
+
+
+<script>
+function alternarLargura(btn) {
+    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
+    if (!tabela) return;
+    tabela.classList.toggle('largura-fixa');
+    const icone = btn.querySelector('i');
+    const texto = btn.querySelector('span') || btn;
+    if (tabela.classList.contains('largura-fixa')) {
+        icone.className = 'fa-solid fa-compress';
+        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
+    } else {
+        icone.className = 'fa-solid fa-expand';
+        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
+    }
+}
+</script>
+
