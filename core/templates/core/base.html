@@ -176,7 +176,74 @@
             font-weight: 300;
         }
 
+
+        /* ==================================================================
+           SIDEBAR — altura fixa, rodape do usuario sempre visivel
+           ==================================================================
+           A sidebar e flex column. Sem height definida ela cresce com o
+           conteudo, empurra o bloco do usuario para fora da tela e o menu
+           fica espremido. Com height 100vh + overflow hidden, a lista de
+           rotinas rola SOZINHA e o rodape fica ancorado embaixo.
+           (a regra .sidebar-casanova abaixo ja carrega essas 3 linhas)
+           ================================================================== */
+
+        /* a area de rotinas rola, o resto fica fixo */
+        .sidebar-nav-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+        }
+        .sidebar-nav-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar-nav-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-nav-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(148, 163, 184, 0.45);
+            border-radius: 3px;
+        }
+        .sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(148, 163, 184, 0.7);
+        }
+
+        /* rodape do usuario: nunca encolhe, nunca sai da tela */
+        .sidebar-bottom-container {
+            flex: 0 0 auto;
+            position: sticky;
+            bottom: 0;
+            background-color: #ffffff;
+            z-index: 5;
+        }
+        [data-bs-theme="dark"] .sidebar-bottom-container {
+            background-color: #161b22;
+        }
+
+        /* mais respiro entre grupos e itens (o usuario pediu) */
+        .menu-grupo {
+            margin-top: 16px;
+        }
+        .menu-item {
+            padding: 9px 11px;
+            font-size: 0.815rem;
+        }
+        .menu-grupo-itens {
+            gap: 3px;
+            margin-top: 5px;
+        }
+        .rotinas-menu {
+            padding-bottom: 18px;
+        }
+
         .sidebar-casanova {
+            /* altura fixa: sem isso ela cresce com o conteudo, empurra o
+               bloco do usuario para fora da tela e o menu fica espremido */
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
             width: 270px;
             background-color: #ffffff;
             border-right: 1px solid #e2e8f0;
@@ -891,41 +958,41 @@
                     </a>
                     
                     <div class="mt-3">
-                        <a class="sidebar-section-toggle" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'custos_setores' in request.resolver_match.url_name or 'detalhe_custo_producao' in request.resolver_match.url_name or 'detalhe_estoque' in request.resolver_match.url_name or 'detalhe_estrutura' in request.resolver_match.url_name or 'detalhe_nota' in request.resolver_match.url_name or 'detalhe_pedido' in request.resolver_match.url_name or 'detalhe_proposta' in request.resolver_match.url_name or 'detalhe_requisicao' in request.resolver_match.url_name or 'detalhe_romaneio' in request.resolver_match.url_name or 'detalhe_venda' in request.resolver_match.url_name or 'editar_funcionario' in request.resolver_match.url_name or 'funcionarios_por_setor' in request.resolver_match.url_name or 'lista_compras' in request.resolver_match.url_name or 'lista_contas_pagar' in request.resolver_match.url_name or 'lista_contas_receber' in request.resolver_match.url_name or 'lista_custos' in request.resolver_match.url_name or 'lista_estoque' in request.resolver_match.url_name or 'lista_estruturas' in request.resolver_match.url_name or 'lista_fornecedores' in request.resolver_match.url_name or 'lista_funcionarios' in request.resolver_match.url_name or 'lista_movimentos_hist' in request.resolver_match.url_name or 'lista_notas' in request.resolver_match.url_name or 'lista_ordem_producao' in request.resolver_match.url_name or 'lista_pedidos' in request.resolver_match.url_name or 'lista_produtos' in request.resolver_match.url_name or 'lista_propostas' in request.resolver_match.url_name or 'lista_romaneios' in request.resolver_match.url_name or 'lista_vendas' in request.resolver_match.url_name or 'movimentar' in request.resolver_match.url_name or 'movimentos' in request.resolver_match.url_name or 'nova_requisicao' in request.resolver_match.url_name or 'novo_fornecedor' in request.resolver_match.url_name or 'novo_produto' in request.resolver_match.url_name or 'novo_romaneio' in request.resolver_match.url_name or 'painel_financeiro' in request.resolver_match.url_name or 'producao' in request.resolver_match.url_name or 'rastreio_producao' in request.resolver_match.url_name or 'saldo_produto' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuRotinas" title="Rotinas">
+                        <a class="sidebar-section-toggle" data-bs-toggle="collapse" href="#menuRotinas" role="button" aria-expanded="{% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'custos_setores' or 'detalhe_custo_producao' in request.resolver_match.url_name or 'detalhe_estoque' in request.resolver_match.url_name or 'detalhe_estrutura' in request.resolver_match.url_name or 'detalhe_nota' in request.resolver_match.url_name or 'detalhe_pedido' in request.resolver_match.url_name or 'detalhe_proposta' in request.resolver_match.url_name or 'detalhe_requisicao' in request.resolver_match.url_name or 'detalhe_romaneio' in request.resolver_match.url_name or 'detalhe_venda' in request.resolver_match.url_name or 'editar_funcionario' in request.resolver_match.url_name or 'funcionarios_por_setor' in request.resolver_match.url_name or 'lista_compras' in request.resolver_match.url_name or 'lista_contas_pagar' in request.resolver_match.url_name or 'lista_contas_receber' in request.resolver_match.url_name or 'lista_custos' in request.resolver_match.url_name or 'lista_estoque' in request.resolver_match.url_name or 'lista_estruturas' in request.resolver_match.url_name or 'lista_fornecedores' in request.resolver_match.url_name or 'lista_funcionarios' in request.resolver_match.url_name or 'lista_movimentos_hist' in request.resolver_match.url_name or 'lista_notas' in request.resolver_match.url_name or 'lista_ordem_producao' in request.resolver_match.url_name or 'lista_pedidos' in request.resolver_match.url_name or 'lista_produtos' in request.resolver_match.url_name or 'lista_propostas' in request.resolver_match.url_name or 'lista_romaneios' in request.resolver_match.url_name or 'lista_vendas' in request.resolver_match.url_name or 'movimentar' in request.resolver_match.url_name or 'movimentos' in request.resolver_match.url_name or 'nova_requisicao' in request.resolver_match.url_name or 'novo_fornecedor' in request.resolver_match.url_name or 'novo_produto' in request.resolver_match.url_name or 'novo_romaneio' in request.resolver_match.url_name or request.resolver_match.url_name == 'painel_financeiro' or request.resolver_match.url_name == 'producao' or 'rastreio_producao' in request.resolver_match.url_name or 'saldo_produto' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="menuRotinas" title="Rotinas">
                             <span class="hide-on-collapse">Rotinas</span>
                             <i class="fa-solid fa-chevron-down sidebar-section-chevron hide-on-collapse"></i>
                         </a>
                 
-                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name or 'producao' in request.resolver_match.url_name or 'estoque' in request.resolver_match.url_name or 'compra' in request.resolver_match.url_name or 'requisic' in request.resolver_match.url_name or 'pedido' in request.resolver_match.url_name or 'fornecedor' in request.resolver_match.url_name or 'romaneio' in request.resolver_match.url_name or 'custo' in request.resolver_match.url_name %}show{% endif %}" id="menuRotinas">
+                        <div class="collapse {% if 'obra' in request.resolver_match.url_name or 'usuario' in request.resolver_match.url_name or 'veiculos' in request.resolver_match.url_name or 'permissao' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' or request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' or request.resolver_match.url_name == 'producao' or request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' or 'requisic' in request.resolver_match.url_name or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' or request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' or request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' or request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' %}show{% endif %}" id="menuRotinas">
                             <div class="rotinas-collapse-body d-flex flex-column gap-1 pt-1" id="listaRotinas">
                                 <div class="rotinas-menu">
 
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 or request.user.perfil.tem_rotina.rastreio_producao or request.user.perfil.tem_rotina.009 or request.user.perfil.tem_rotina.producao or request.user.perfil.tem_rotina.010 or request.user.perfil.tem_rotina.lista_estruturas or request.user.perfil.tem_rotina.020 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modProducao" role="button"
-                                           aria-expanded="{% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name or 'producao' in request.resolver_match.url_name or 'estrutura' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modProducao">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' or request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' or request.resolver_match.url_name == 'producao' or request.resolver_match.url_name == 'lista_estruturas' or request.resolver_match.url_name == 'detalhe_estrutura' %}true{% else %}false{% endif %}" aria-controls="modProducao">
                                             <span>PRODUÇÃO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'ordem_producao' in request.resolver_match.url_name or 'rastreio' in request.resolver_match.url_name or 'producao' in request.resolver_match.url_name or 'estrutura' in request.resolver_match.url_name %}show{% endif %}" id="modProducao">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' or request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' or request.resolver_match.url_name == 'producao' or request.resolver_match.url_name == 'lista_estruturas' or request.resolver_match.url_name == 'detalhe_estrutura' %}show{% endif %}" id="modProducao">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao or request.user.perfil.tem_rotina.008 %}
-                                                <a href="{% url 'lista_ordem_producao' %}" class="menu-item {% if 'ordem_producao' in request.resolver_match.url_name %}active{% endif %}" title="Ordem de Produção">
+                                                <a href="{% url 'lista_ordem_producao' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_ordem_producao' or request.resolver_match.url_name == 'detalhe_obra_op' or request.resolver_match.url_name == 'importar_op_excel' or request.resolver_match.url_name == 'barcode_ordem_producao' or request.resolver_match.url_name == 'imprimir_barcode_ordem_producao' %}active{% endif %}" title="Ordem de Produção">
                                                     <span class="hide-on-collapse">Ordem de Produção</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.rastreio_producao or request.user.perfil.tem_rotina.009 %}
-                                                <a href="{% url 'rastreio_producao' %}" class="menu-item {% if 'rastreio' in request.resolver_match.url_name %}active{% endif %}" title="Rastreio de Produção">
+                                                <a href="{% url 'rastreio_producao' %}" class="menu-item {% if request.resolver_match.url_name == 'rastreio_producao' or request.resolver_match.url_name == 'escanear' or request.resolver_match.url_name == 'rastreio_op' or request.resolver_match.url_name == 'registrar_movimentacao' %}active{% endif %}" title="Rastreio de Produção">
                                                     <span class="hide-on-collapse">Rastreio de Produção</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.producao or request.user.perfil.tem_rotina.010 %}
-                                                <a href="{% url 'producao' %}" class="menu-item {% if 'producao' in request.resolver_match.url_name %}active{% endif %}" title="Produção">
+                                                <a href="{% url 'producao' %}" class="menu-item {% if request.resolver_match.url_name == 'producao' %}active{% endif %}" title="Produção">
                                                     <span class="hide-on-collapse">Produção</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estruturas or request.user.perfil.tem_rotina.020 %}
-                                                <a href="{% url 'lista_estruturas' %}" class="menu-item {% if 'estrutura' in request.resolver_match.url_name %}active{% endif %}" title="Estrutura de Produtos">
+                                                <a href="{% url 'lista_estruturas' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_estruturas' or request.resolver_match.url_name == 'detalhe_estrutura' %}active{% endif %}" title="Estrutura de Produtos">
                                                     <span class="hide-on-collapse">Estrutura de Produtos</span>
                                                 </a>
                                                 {% endif %}
@@ -937,19 +1004,19 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estoque or request.user.perfil.tem_rotina.012 or request.user.perfil.tem_rotina.lista_movimentos_hist or request.user.perfil.tem_rotina.022 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modEstoque" role="button"
-                                           aria-expanded="{% if 'estoque' in request.resolver_match.url_name or 'movimentos_hist' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modEstoque">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'lista_movimentos_hist' %}true{% else %}false{% endif %}" aria-controls="modEstoque">
                                             <span>ESTOQUE</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'estoque' in request.resolver_match.url_name or 'movimentos_hist' in request.resolver_match.url_name %}show{% endif %}" id="modEstoque">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' or request.resolver_match.url_name == 'lista_movimentos_hist' %}show{% endif %}" id="modEstoque">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_estoque or request.user.perfil.tem_rotina.012 %}
-                                                <a href="{% url 'lista_estoque' %}" class="menu-item {% if 'estoque' in request.resolver_match.url_name %}active{% endif %}" title="Saldo e Movimentação">
+                                                <a href="{% url 'lista_estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_estoque' or request.resolver_match.url_name == 'saldo_produto' or request.resolver_match.url_name == 'movimentar' or request.resolver_match.url_name == 'movimentos' or request.resolver_match.url_name == 'lista_produtos' or request.resolver_match.url_name == 'novo_produto' %}active{% endif %}" title="Saldo e Movimentação">
                                                     <span class="hide-on-collapse">Saldo e Movimentação</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_movimentos_hist or request.user.perfil.tem_rotina.022 %}
-                                                <a href="{% url 'lista_movimentos_hist' %}" class="menu-item {% if 'movimentos_hist' in request.resolver_match.url_name %}active{% endif %}" title="Movimentos (histórico)">
+                                                <a href="{% url 'lista_movimentos_hist' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_movimentos_hist' %}active{% endif %}" title="Movimentos (histórico)">
                                                     <span class="hide-on-collapse">Movimentos (histórico)</span>
                                                 </a>
                                                 {% endif %}
@@ -961,24 +1028,24 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_compras or request.user.perfil.tem_rotina.013 or request.user.perfil.tem_rotina.lista_pedidos or request.user.perfil.tem_rotina.013 or request.user.perfil.tem_rotina.lista_fornecedores or request.user.perfil.tem_rotina.013 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modCompras" role="button"
-                                           aria-expanded="{% if 'compra' in request.resolver_match.url_name or 'pedido' in request.resolver_match.url_name or 'fornecedor' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modCompras">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' or request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' %}true{% else %}false{% endif %}" aria-controls="modCompras">
                                             <span>COMPRAS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'compra' in request.resolver_match.url_name or 'pedido' in request.resolver_match.url_name or 'fornecedor' in request.resolver_match.url_name %}show{% endif %}" id="modCompras">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' or request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' %}show{% endif %}" id="modCompras">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_compras or request.user.perfil.tem_rotina.013 %}
-                                                <a href="{% url 'lista_compras' %}" class="menu-item {% if 'compra' in request.resolver_match.url_name %}active{% endif %}" title="Requisições e Pedidos">
+                                                <a href="{% url 'lista_compras' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_compras' or request.resolver_match.url_name == 'lista_requisicoes' or request.resolver_match.url_name == 'nova_requisicao' or request.resolver_match.url_name == 'detalhe_requisicao' %}active{% endif %}" title="Requisições e Pedidos">
                                                     <span class="hide-on-collapse">Requisições e Pedidos</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_pedidos or request.user.perfil.tem_rotina.013 %}
-                                                <a href="{% url 'lista_pedidos' %}" class="menu-item {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}" title="Pedidos ao Fornecedor">
+                                                <a href="{% url 'lista_pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'detalhe_pedido' %}active{% endif %}" title="Pedidos ao Fornecedor">
                                                     <span class="hide-on-collapse">Pedidos ao Fornecedor</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_fornecedores or request.user.perfil.tem_rotina.013 %}
-                                                <a href="{% url 'lista_fornecedores' %}" class="menu-item {% if 'fornecedor' in request.resolver_match.url_name %}active{% endif %}" title="Fornecedores">
+                                                <a href="{% url 'lista_fornecedores' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_fornecedores' or request.resolver_match.url_name == 'novo_fornecedor' %}active{% endif %}" title="Fornecedores">
                                                     <span class="hide-on-collapse">Fornecedores</span>
                                                 </a>
                                                 {% endif %}
@@ -990,14 +1057,14 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_romaneios or request.user.perfil.tem_rotina.011 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modExpedicao" role="button"
-                                           aria-expanded="{% if 'romaneio' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modExpedicao">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %}true{% else %}false{% endif %}" aria-controls="modExpedicao">
                                             <span>EXPEDIÇÃO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'romaneio' in request.resolver_match.url_name %}show{% endif %}" id="modExpedicao">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %}show{% endif %}" id="modExpedicao">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_romaneios or request.user.perfil.tem_rotina.011 %}
-                                                <a href="{% url 'lista_romaneios' %}" class="menu-item {% if 'romaneio' in request.resolver_match.url_name %}active{% endif %}" title="Romaneio de Carga">
+                                                <a href="{% url 'lista_romaneios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_romaneios' or request.resolver_match.url_name == 'detalhe_romaneio' or request.resolver_match.url_name == 'novo_romaneio' or request.resolver_match.url_name == 'imprimir_romaneio' %}active{% endif %}" title="Romaneio de Carga">
                                                     <span class="hide-on-collapse">Romaneio de Carga</span>
                                                 </a>
                                                 {% endif %}
@@ -1009,19 +1076,19 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custos or request.user.perfil.tem_rotina.014 or request.user.perfil.tem_rotina.custos_setores or request.user.perfil.tem_rotina.014 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modCustos" role="button"
-                                           aria-expanded="{% if 'custo' in request.resolver_match.url_name or 'custos_setores' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modCustos">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' or request.resolver_match.url_name == 'custos_setores' %}true{% else %}false{% endif %}" aria-controls="modCustos">
                                             <span>CUSTOS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'custo' in request.resolver_match.url_name or 'custos_setores' in request.resolver_match.url_name %}show{% endif %}" id="modCustos">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' or request.resolver_match.url_name == 'custos_setores' %}show{% endif %}" id="modCustos">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custos or request.user.perfil.tem_rotina.014 %}
-                                                <a href="{% url 'lista_custos' %}" class="menu-item {% if 'custo' in request.resolver_match.url_name %}active{% endif %}" title="Custo por OP">
+                                                <a href="{% url 'lista_custos' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_custos' or request.resolver_match.url_name == 'detalhe_custo_producao' or request.resolver_match.url_name == 'calcular_op' %}active{% endif %}" title="Custo por OP">
                                                     <span class="hide-on-collapse">Custo por OP</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.custos_setores or request.user.perfil.tem_rotina.014 %}
-                                                <a href="{% url 'custos_setores' %}" class="menu-item {% if 'custos_setores' in request.resolver_match.url_name %}active{% endif %}" title="Custo por Setor">
+                                                <a href="{% url 'custos_setores' %}" class="menu-item {% if request.resolver_match.url_name == 'custos_setores' %}active{% endif %}" title="Custo por Setor">
                                                     <span class="hide-on-collapse">Custo por Setor</span>
                                                 </a>
                                                 {% endif %}
@@ -1033,19 +1100,19 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_vendas or request.user.perfil.tem_rotina.015 or request.user.perfil.tem_rotina.lista_propostas or request.user.perfil.tem_rotina.016 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modComercial" role="button"
-                                           aria-expanded="{% if 'venda' in request.resolver_match.url_name or 'proposta' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modComercial">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' or request.resolver_match.url_name == 'lista_propostas' or request.resolver_match.url_name == 'detalhe_proposta' %}true{% else %}false{% endif %}" aria-controls="modComercial">
                                             <span>COMERCIAL</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'venda' in request.resolver_match.url_name or 'proposta' in request.resolver_match.url_name %}show{% endif %}" id="modComercial">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' or request.resolver_match.url_name == 'lista_propostas' or request.resolver_match.url_name == 'detalhe_proposta' %}show{% endif %}" id="modComercial">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_vendas or request.user.perfil.tem_rotina.015 %}
-                                                <a href="{% url 'lista_vendas' %}" class="menu-item {% if 'venda' in request.resolver_match.url_name %}active{% endif %}" title="Pedidos de Venda">
+                                                <a href="{% url 'lista_vendas' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_vendas' or request.resolver_match.url_name == 'detalhe_venda' %}active{% endif %}" title="Pedidos de Venda">
                                                     <span class="hide-on-collapse">Pedidos de Venda</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_propostas or request.user.perfil.tem_rotina.016 %}
-                                                <a href="{% url 'lista_propostas' %}" class="menu-item {% if 'proposta' in request.resolver_match.url_name %}active{% endif %}" title="Propostas">
+                                                <a href="{% url 'lista_propostas' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_propostas' or request.resolver_match.url_name == 'detalhe_proposta' %}active{% endif %}" title="Propostas">
                                                     <span class="hide-on-collapse">Propostas</span>
                                                 </a>
                                                 {% endif %}
@@ -1057,29 +1124,29 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.painel_financeiro or request.user.perfil.tem_rotina.017 or request.user.perfil.tem_rotina.lista_contas_pagar or request.user.perfil.tem_rotina.017 or request.user.perfil.tem_rotina.lista_contas_receber or request.user.perfil.tem_rotina.018 or request.user.perfil.tem_rotina.lista_notas or request.user.perfil.tem_rotina.019 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modFinanceiro" role="button"
-                                           aria-expanded="{% if 'painel_financeiro' in request.resolver_match.url_name or 'contas_pagar' in request.resolver_match.url_name or 'contas_receber' in request.resolver_match.url_name or 'nota' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modFinanceiro">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'painel_financeiro' or request.resolver_match.url_name == 'lista_contas_pagar' or request.resolver_match.url_name == 'lista_contas_receber' or request.resolver_match.url_name == 'lista_notas' or request.resolver_match.url_name == 'detalhe_nota' %}true{% else %}false{% endif %}" aria-controls="modFinanceiro">
                                             <span>FINANCEIRO</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'painel_financeiro' in request.resolver_match.url_name or 'contas_pagar' in request.resolver_match.url_name or 'contas_receber' in request.resolver_match.url_name or 'nota' in request.resolver_match.url_name %}show{% endif %}" id="modFinanceiro">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'painel_financeiro' or request.resolver_match.url_name == 'lista_contas_pagar' or request.resolver_match.url_name == 'lista_contas_receber' or request.resolver_match.url_name == 'lista_notas' or request.resolver_match.url_name == 'detalhe_nota' %}show{% endif %}" id="modFinanceiro">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.painel_financeiro or request.user.perfil.tem_rotina.017 %}
-                                                <a href="{% url 'painel_financeiro' %}" class="menu-item {% if 'painel_financeiro' in request.resolver_match.url_name %}active{% endif %}" title="Painel Financeiro">
+                                                <a href="{% url 'painel_financeiro' %}" class="menu-item {% if request.resolver_match.url_name == 'painel_financeiro' %}active{% endif %}" title="Painel Financeiro">
                                                     <span class="hide-on-collapse">Painel Financeiro</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_contas_pagar or request.user.perfil.tem_rotina.017 %}
-                                                <a href="{% url 'lista_contas_pagar' %}" class="menu-item {% if 'contas_pagar' in request.resolver_match.url_name %}active{% endif %}" title="Contas a Pagar">
+                                                <a href="{% url 'lista_contas_pagar' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_contas_pagar' %}active{% endif %}" title="Contas a Pagar">
                                                     <span class="hide-on-collapse">Contas a Pagar</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_contas_receber or request.user.perfil.tem_rotina.018 %}
-                                                <a href="{% url 'lista_contas_receber' %}" class="menu-item {% if 'contas_receber' in request.resolver_match.url_name %}active{% endif %}" title="Contas a Receber">
+                                                <a href="{% url 'lista_contas_receber' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_contas_receber' %}active{% endif %}" title="Contas a Receber">
                                                     <span class="hide-on-collapse">Contas a Receber</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_notas or request.user.perfil.tem_rotina.019 %}
-                                                <a href="{% url 'lista_notas' %}" class="menu-item {% if 'nota' in request.resolver_match.url_name %}active{% endif %}" title="Notas Fiscais">
+                                                <a href="{% url 'lista_notas' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_notas' or request.resolver_match.url_name == 'detalhe_nota' %}active{% endif %}" title="Notas Fiscais">
                                                     <span class="hide-on-collapse">Notas Fiscais</span>
                                                 </a>
                                                 {% endif %}
@@ -1091,19 +1158,19 @@
                                     {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 or request.user.perfil.tem_rotina.funcionarios_por_setor or request.user.perfil.tem_rotina.021 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modPessoas" role="button"
-                                           aria-expanded="{% if 'funcionario' in request.resolver_match.url_name or 'setores' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="modPessoas">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' %}true{% else %}false{% endif %}" aria-controls="modPessoas">
                                             <span>PESSOAS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse {% if 'funcionario' in request.resolver_match.url_name or 'setores' in request.resolver_match.url_name %}show{% endif %}" id="modPessoas">
+                                        <div class="collapse {% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' %}show{% endif %}" id="modPessoas">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 %}
-                                                <a href="{% url 'lista_funcionarios' %}" class="menu-item {% if 'funcionario' in request.resolver_match.url_name %}active{% endif %}" title="Funcionários">
+                                                <a href="{% url 'lista_funcionarios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' %}active{% endif %}" title="Funcionários">
                                                     <span class="hide-on-collapse">Funcionários</span>
                                                 </a>
                                                 {% endif %}
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.funcionarios_por_setor or request.user.perfil.tem_rotina.021 %}
-                                                <a href="{% url 'funcionarios_por_setor' %}" class="menu-item {% if 'setores' in request.resolver_match.url_name %}active{% endif %}" title="Por Setor">
+                                                <a href="{% url 'funcionarios_por_setor' %}" class="menu-item {% if request.resolver_match.url_name == 'funcionarios_por_setor' %}active{% endif %}" title="Por Setor">
                                                     <span class="hide-on-collapse">Por Setor</span>
                                                 </a>
                                                 {% endif %}

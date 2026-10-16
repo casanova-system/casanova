@@ -62,8 +62,15 @@
         </div>
     </div>
 
-    <p class="text-muted small mt-3">
-        {{ cadastrados }} de {{ total_setores }} setores com valor cadastrado.
+    <p class="text-muted small mt-3 mb-0">
+        {% if cadastrados %}
+            <strong>{{ cadastrados }}</strong> de {{ total_setores }} setores com valor próprio cadastrado.
+        {% else %}
+            Nenhum setor tem valor próprio ainda — todos usam o <strong>valor padrão de fábrica</strong>.
+        {% endif %}
+        <br>
+        Enquanto o valor é padrão, o custo da OP funciona, mas com número aproximado.
+        Cadastre o valor real clicando no lápis.
     </p>
 
     {% for s in setores %}
