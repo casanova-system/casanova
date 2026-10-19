@@ -91,6 +91,12 @@ ROTINAS_PADRAO = [
     ('012', 'Estoque', 'lista_estoque', 'ROTINA', 'INDUSTRIA'),
     ('013', 'Compras', 'lista_compras', 'ROTINA', 'INDUSTRIA'),
     ('014', 'Custo de Produção', 'lista_custos', 'ROTINA', 'INDUSTRIA'),
+    # Administração: usuários e permissões de acesso.
+    # Estas rotinas NÃO podem ficar em ROTINAS_REMOVIDAS: aquela lista é
+    # apagada do banco a cada garantir_rotinas_padrao(), o que removia a
+    # própria tela de gerenciar permissões e travava o administrador fora.
+    ('001', 'Usuários do Sistema', 'lista_usuarios', 'ROTINA', 'ADMINISTRADOR'),
+    ('002', 'Permissões de Acesso', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
 ]
 
 # Rotinas descontinuadas — removidas do menu e da tela de permissões.
@@ -100,11 +106,8 @@ ROTINAS_REMOVIDAS = [
     ('006', 'grafico_custo_frete'),   # Gráficos
     ('007', 'relatorio_fretes_mes'),  # Relatórios
     # Modulos anteriores ao Casanova System — sairam do menu.
-    ('001', 'lista_obras'),           # Custo de Frete
-    ('002', 'lista_usuarios'),        # Cadastro de Usuário
     ('003', 'lista_veiculos'),        # Cadastro de Veículo
     ('004', 'lista_custo'),           # Cadastro de Custo
-    ('005', 'lista_permissao'),       # Gerenciar Permissões
 ]
 
 
