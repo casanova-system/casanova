@@ -10,7 +10,7 @@
     {% url 'menu_principal' as url_inicio %}
     {% include 'core/partials/page_header.html' with titulo="Usuários do Sistema" subtitulo="Cadastro e dados de acesso. As permissões de rotina ficam em PESSOAS → Permissões de Acesso." acao_url=url_novo acao_texto="Novo Usuário" acao_icone="fa-plus" voltar_url=url_inicio %}
 
-    {# ===== KPIs ===== %}
+    {# ===== KPIs ===== #}
     <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
             <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    {# ===== FILTROS ===== %}
+    {# ===== FILTROS ===== #}
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body py-3">
             <form method="GET" action="" class="row g-2 align-items-end">
@@ -74,7 +74,7 @@
         </div>
     </div>
 
-    {# ===== TABELA ===== %}
+    {# ===== TABELA ===== #}
     <div class="card shadow-sm border-0">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span class="fw-bold"><i class="fa-solid fa-users text-primary me-2"></i>Usuários Cadastrados</span>
@@ -89,6 +89,7 @@
                         <tr>
                             <th class="ps-3">Usuário</th>
                             <th>Contato</th>
+                            <th>Senha</th>
                             <th>Setor</th>
                             <th>Nível</th>
                             <th class="text-center">Rotinas</th>
@@ -130,6 +131,29 @@
                                 {% endif %}
                             </td>
 
+                            <td>
+                                {% with senha=senhas|dictkey:u.id %}
+                                {% if senha %}
+                                    <div class="usr-senha-linha">
+                                        <span class="usr-senha-txt" data-senha="{{ senha|escapejs }}"
+                                              id="senha_{{ u.id }}">••••••••</span>
+                                        <button type="button" class="usr-senha-olho"
+                                                onclick="verSenha({{ u.id }}, this)"
+                                                title="Mostrar/ocultar senha">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="usr-senha-olho"
+                                                onclick="copiarSenhaLista('{{ senha|escapejs }}', this)"
+                                                title="Copiar senha">
+                                            <i class="fa-solid fa-copy"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small" title="Senha nao registrada (usuario antigo)">—</span>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+
                             <td class="small">{{ u.perfil.get_setor_display|default:"—" }}</td>
 
                             <td>
@@ -169,7 +193,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-users fs-1 d-block mb-2 opacity-50"></i>
                                 Nenhum usuário encontrado com esse filtro.
                                 {% if not query and not setor_atual %}
@@ -246,9 +270,55 @@
 .usr-status { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; }
 .usr-status-ok  { color: #16a34a; }
 .usr-status-off { color: #94a3b8; }
+
+/* senha na lista */
+.usr-senha-linha { display: flex; align-items: center; gap: 3px; }
+.usr-senha-txt {
+    font-family: ui-monospace, "Cascadia Code", monospace;
+    font-size: .76rem; font-weight: 600;
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-line); border-radius: 6px;
+    padding: 3px 8px; min-width: 92px; display: inline-block;
+    letter-spacing: 1px;
+}
+.usr-senha-olho {
+    border: 0; background: transparent; color: var(--cv-text-muted);
+    cursor: pointer; padding: 3px 5px; border-radius: 5px;
+    font-size: .76rem; line-height: 1;
+    transition: color .15s, background-color .15s;
+}
+.usr-senha-olho:hover { color: var(--cv-blue); background: rgba(11, 56, 130, .08); }
 </style>
 
 <script>
+
+// ===================== SENHA NA LISTA =====================
+function verSenha(id, btn) {
+    const el = document.getElementById('senha_' + id);
+    const icone = btn.querySelector('i');
+    if (!el) return;
+    if (el.dataset.visivel === '1') {
+        el.textContent = '••••••••';
+        el.style.letterSpacing = '1px';
+        el.dataset.visivel = '0';
+        icone.className = 'fa-solid fa-eye';
+    } else {
+        el.textContent = el.dataset.senha;
+        el.style.letterSpacing = 'normal';
+        el.dataset.visivel = '1';
+        icone.className = 'fa-solid fa-eye-slash';
+    }
+}
+
+function copiarSenhaLista(senha, btn) {
+    navigator.clipboard.writeText(senha).then(function () {
+        const icone = btn.querySelector('i');
+        const original = icone.className;
+        icone.className = 'fa-solid fa-check';
+        setTimeout(function () { icone.className = original; }, 1400);
+    });
+}
+
 function abrirModalExclusao(id, nome) {
     document.getElementById('modalExcluirConfirmar').href = "{% url 'excluir_usuario' 0 %}".replace('0', id);
     new bootstrap.Modal(document.getElementById('modalExcluir')).show();

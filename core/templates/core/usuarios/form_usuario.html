@@ -4,53 +4,95 @@
 {% block content %}
 <div class="container-fluid px-4 py-3">
     <div class="form-page">
+        {% include 'core/partials/messages.html' %}
+
         {% url 'lista_usuarios' as url_lista %}
-        {% include 'core/partials/page_header.html' with titulo=acao|add:" Usuário" subtitulo="Preencha os dados de acesso e o perfil do usuário." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
+        {% include 'core/partials/page_header.html' with titulo=acao|add:" Usuário" subtitulo="Dados de acesso e perfil. As permissões de rotina ficam em PESSOAS → Permissões de Acesso." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
 
-        <div class="card form-card">
-            <div class="card-header">
-                <i class="fas fa-user-edit text-primary"></i> Dados do Usuário
-            </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
+        <form method="POST" enctype="multipart/form-data" id="formUsuario">
+            {% csrf_token %}
 
+            {# ===================== IDENTIFICAÇÃO ===================== #}
+            <div class="card form-card mb-3">
+                <div class="card-header">
+                    <i class="fa-solid fa-id-card text-primary"></i> Identificação
+                </div>
+                <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Nome de Usuário <span class="text-danger">*</span></label>
-                            <input type="text" name="username" class="form-control" value="{{ usuario.username|default:'' }}" required>
+                            <label class="form-label">Nome de Usuário (login) <span class="text-danger">*</span></label>
+                            <input type="text" name="username" class="form-control" value="{{ usuario.username|default:'' }}"
+                                   placeholder="ex.: joao.silva" required autocomplete="off">
+                            <div class="form-text">É o que a pessoa digita para entrar. Sem espaços.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nome Completo <span class="text-danger">*</span></label>
-                            <input type="text" name="first_name" class="form-control" value="{{ usuario.first_name|default:'' }}" placeholder="Digite o nome completo" required>
+                            <input type="text" name="first_name" class="form-control" value="{{ usuario.first_name|default:'' }}"
+                                   placeholder="ex.: João da Silva" required>
                         </div>
-
                         <div class="col-md-6">
                             <label class="form-label">E-mail <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" value="{{ usuario.email|default:'' }}" required>
+                            <input type="email" name="email" class="form-control" value="{{ usuario.email|default:'' }}"
+                                   placeholder="nome@casanova.ind.br" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Senha {% if usuario %}(deixe em branco para não alterar){% endif %}</label>
-                            <input type="password" name="password" class="form-control" {% if not usuario %}required{% endif %}>
+                            <label class="form-label">CPF <span class="text-danger">*</span></label>
+                            <input type="text" id="cpf" name="cpf" class="form-control"
+                                   value="{{ perfil.cpf|default:'' }}"
+                                   placeholder="000.000.000-00" maxlength="14" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ===================== ACESSO ===================== #}
+            <div class="card form-card mb-3">
+                <div class="card-header">
+                    <i class="fa-solid fa-key text-primary"></i> Acesso ao Sistema
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Senha {% if usuario %}<span class="text-muted small">(deixe em branco para manter)</span>{% else %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            <div class="usr-senha-wrap">
+                                <input type="password" name="password" id="campoSenha" class="form-control"
+                                       value="{{ senha_atual|default:'' }}"
+                                       {% if not usuario %}required{% endif %} autocomplete="new-password">
+                                <button type="button" class="usr-olho" onclick="alternarSenha()" title="Mostrar/ocultar senha">
+                                    <i class="fa-solid fa-eye" id="iconeOlho"></i>
+                                </button>
+                            </div>
+                            <div class="usr-senha-acoes">
+                                <button type="button" class="usr-senha-btn" onclick="gerarSenha()">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar senha
+                                </button>
+                                <button type="button" class="usr-senha-btn" onclick="copiarSenha()">
+                                    <i class="fa-solid fa-copy"></i> Copiar
+                                </button>
+                            </div>
+                            <div class="form-text" id="forcaSenha"></div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Nível de Acesso <span class="text-danger">*</span></label>
                             <select name="nivel_acesso" class="form-select" required>
-                                <option value="USUARIO" {% if usuario.perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário</option>
-                                <option value="GERENCIA" {% if usuario.perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
-                                <option value="DIRETORIA" {% if usuario.perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
+                                <option value="USUARIO" {% if perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário</option>
+                                <option value="GERENCIA" {% if perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
+                                <option value="DIRETORIA" {% if perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
                             </select>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Setor <span class="text-danger">*</span></label>
                             <select name="setor" class="form-select" required>
-                                <option value="" disabled {% if not usuario.perfil.setor %}selected{% endif %}>Selecione o setor...</option>
-                                <option value="COMERCIAL" {% if usuario.perfil.setor == 'COMERCIAL' %}selected{% endif %}>Comercial</option>
-                                <option value="FINANCEIRO" {% if usuario.perfil.setor == 'FINANCEIRO' %}selected{% endif %}>Financeiro</option>
-                                <option value="OPERACAO" {% if usuario.perfil.setor == 'OPERACAO' %}selected{% endif %}>Operação</option>
-                                <option value="INDUSTRIA" {% if usuario.perfil.setor == 'INDUSTRIA' %}selected{% endif %}>Indústria</option>
-                                <option value="ADMINISTRACAO" {% if usuario.perfil.setor == 'ADMINISTRACAO' %}selected{% endif %}>Administração</option>
+                                <option value="" disabled {% if not perfil.setor %}selected{% endif %}>Selecione o setor...</option>
+                                <option value="COMERCIAL" {% if perfil.setor == 'COMERCIAL' %}selected{% endif %}>Comercial</option>
+                                <option value="FINANCEIRO" {% if perfil.setor == 'FINANCEIRO' %}selected{% endif %}>Financeiro</option>
+                                <option value="OPERACAO" {% if perfil.setor == 'OPERACAO' %}selected{% endif %}>Operação</option>
+                                <option value="INDUSTRIA" {% if perfil.setor == 'INDUSTRIA' %}selected{% endif %}>Indústria</option>
+                                <option value="ADMINISTRACAO" {% if perfil.setor == 'ADMINISTRACAO' %}selected{% endif %}>Administração</option>
                             </select>
                         </div>
 
@@ -59,69 +101,211 @@
                             <select name="setor_producao" class="form-select">
                                 <option value="">— Não se aplica —</option>
                                 {% for s in setores_producao %}
-                                    <option value="{{ s.id }}" {% if usuario.perfil.setor_producao_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                                    <option value="{{ s.id }}" {% if perfil.setor_producao_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text text-muted">Define qual etapa da OP este usuário pode registrar ao escanear o QR Code.</div>
+                            <div class="form-text">Qual etapa da OP este usuário registra ao escanear o QR Code.</div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <div class="col-12">
-                            <label class="form-label">Foto de Perfil</label>
-                            <input type="file" name="foto" class="form-control" accept="image/*">
-                            {% if usuario.perfil.foto %}
-                                <div class="form-text text-muted mt-1">Já existe uma foto cadastrada. Envie um arquivo novo apenas se desejar alterá-la.</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">CPF <span class="text-danger">*</span></label>
-                            <input type="text" id="cpf" name="cpf" class="form-control" value="{{ usuario.perfil.cpf|default:'' }}" placeholder="000.000.000-00" maxlength="14" required>
-                        </div>
+            {# ===================== PERFIL ===================== #}
+            <div class="card form-card mb-3">
+                <div class="card-header">
+                    <i class="fa-solid fa-address-book text-primary"></i> Perfil e Contato
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
-                            <input type="date" name="data_nascimento" class="form-control" value="{{ usuario.perfil.data_nascimento|date:'Y-m-d' }}" required>
+                            <input type="date" name="data_nascimento" class="form-control"
+                                   value="{{ perfil.data_nascimento|date:'Y-m-d'}}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">CEP</label>
-                            <input type="text" id="cep" name="cep" class="form-control" value="{{ usuario.perfil.cep|default:'' }}" placeholder="00000-000" maxlength="9">
+                            <input type="text" id="cep" name="cep" class="form-control"
+                                   value="{{ perfil.cep|default:'' }}"
+                                   placeholder="00000-000" maxlength="9">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Foto de Perfil</label>
+                            <input type="file" name="foto" class="form-control" accept="image/*">
                         </div>
 
                         <div class="col-12">
                             <label class="form-label">Endereço</label>
-                            <input type="text" name="endereco" class="form-control" value="{{ usuario.perfil.endereco|default:'' }}" placeholder="Rua, Número, Bairro, Cidade">
+                            <input type="text" name="endereco" class="form-control"
+                                   value="{{ perfil.endereco|default:'' }}"
+                                   placeholder="Rua, número, bairro, cidade">
                         </div>
-                    </div>
 
-                    <div class="form-actions">
-                        <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary fw-semibold px-3">
-                            <i class="fas fa-arrow-left me-1"></i> Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary fw-semibold px-3">
-                            <i class="fas fa-floppy-disk me-1"></i> Salvar
-                        </button>
+                        {% if perfil.foto %}
+                        <div class="col-12">
+                            <div class="usr-foto-atual">
+                                <img src="{{ perfil.foto.url }}" alt="Foto atual">
+                                <div>
+                                    <div class="fw-semibold small">Foto cadastrada</div>
+                                    <div class="text-muted" style="font-size:.75rem;">Envie um arquivo novo apenas para trocá-la.</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <div class="form-actions">
+                <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-floppy-disk me-1"></i> {{ acao }}
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Script para Máscaras de CPF e CEP -->
-<script>
-    document.getElementById('cpf').addEventListener('input', function (e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 11) value = value.slice(0, 11);
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        e.target.value = value;
-    });
+<style>
+/* ===================== SENHA ===================== */
+.usr-senha-wrap { position: relative; }
+.usr-senha-wrap input { padding-right: 44px; font-family: ui-monospace, "Cascadia Code", monospace; }
+.usr-olho {
+    position: absolute; right: 1px; top: 1px; bottom: 1px; width: 42px;
+    border: 0; background: transparent; color: var(--cv-text-muted);
+    cursor: pointer; border-radius: 0 7px 7px 0;
+    transition: color .15s, background-color .15s;
+}
+.usr-olho:hover { color: var(--cv-blue); background: rgba(11, 56, 130, .06); }
 
-    document.getElementById('cep').addEventListener('input', function (e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 8) value = value.slice(0, 8);
-        value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = value;
+.usr-senha-acoes { display: flex; gap: 6px; margin-top: 7px; }
+.usr-senha-btn {
+    font-size: .74rem; font-weight: 600;
+    padding: 4px 10px; border-radius: 7px;
+    border: 1px solid var(--cv-line); background: var(--cv-surface);
+    color: var(--cv-text-muted); cursor: pointer;
+    transition: border-color .15s, color .15s;
+}
+.usr-senha-btn:hover { border-color: var(--cv-blue); color: var(--cv-blue); }
+
+.usr-forca { font-weight: 700; }
+.usr-forca-fraca  { color: #dc2626; }
+.usr-forca-media  { color: #d97706; }
+.usr-forca-forte  { color: #16a34a; }
+
+.usr-foto-atual {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 13px; border-radius: 9px;
+    background: var(--cv-surface); border: 1px solid var(--cv-line);
+}
+.usr-foto-atual img {
+    width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+}
+</style>
+
+<script>
+// ===================== VER / OCULTAR SENHA =====================
+function alternarSenha() {
+    const campo = document.getElementById('campoSenha');
+    const icone = document.getElementById('iconeOlho');
+    if (campo.type === 'password') {
+        campo.type = 'text';
+        icone.className = 'fa-solid fa-eye-slash';
+    } else {
+        campo.type = 'password';
+        icone.className = 'fa-solid fa-eye';
+    }
+}
+
+// ===================== GERAR SENHA =====================
+function gerarSenha() {
+    // Sem caracteres ambíguos (0/O, 1/l/I) — o funcionário vai digitar isso
+    // no chão de fábrica, possivelmente de um papel.
+    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+    const numeros = '23456789';
+    const simbolos = '@#$%';
+    const todos = letras + numeros + simbolos;
+
+    let senha = '';
+    const sortear = (s) => s[Math.floor(Math.random() * s.length)];
+    // Garante ao menos um de cada tipo
+    senha += sortear(letras.toUpperCase());
+    senha += sortear(numeros);
+    senha += sortear(simbolos);
+    for (let i = 0; i < 7; i++) senha += sortear(todos);
+
+    // Embaralha (Fisher-Yates) para os fixos não ficarem sempre na frente
+    senha = senha.split('').sort(() => Math.random() - 0.5).join('');
+
+    const campo = document.getElementById('campoSenha');
+    campo.value = senha;
+    campo.type = 'text';
+    document.getElementById('iconeOlho').className = 'fa-solid fa-eye-slash';
+    avaliarForca();
+}
+
+// ===================== COPIAR =====================
+function copiarSenha() {
+    const campo = document.getElementById('campoSenha');
+    if (!campo.value) return;
+    navigator.clipboard.writeText(campo.value).then(function () {
+        const btn = event.target.closest('.usr-senha-btn');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiada!';
+        setTimeout(() => { btn.innerHTML = original; }, 1600);
     });
+}
+
+// ===================== FORÇA =====================
+function avaliarForca() {
+    const campo = document.getElementById('campoSenha');
+    const el = document.getElementById('forcaSenha');
+    const v = campo.value || '';
+    if (!v) { el.innerHTML = ''; return; }
+
+    let pontos = 0;
+    if (v.length >= 8) pontos++;
+    if (v.length >= 12) pontos++;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) pontos++;
+    if (/[0-9]/.test(v)) pontos++;
+    if (/[^A-Za-z0-9]/.test(v)) pontos++;
+
+    let classe, texto;
+    if (pontos <= 2) { classe = 'usr-forca-fraca'; texto = 'Fraca'; }
+    else if (pontos <= 3) { classe = 'usr-forca-media'; texto = 'Média'; }
+    else { classe = 'usr-forca-forte'; texto = 'Forte'; }
+
+    el.innerHTML = 'Força: <span class="usr-forca ' + classe + '">' + texto + '</span>';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const campo = document.getElementById('campoSenha');
+    if (campo) {
+        campo.addEventListener('input', avaliarForca);
+        avaliarForca();
+    }
+});
+
+// ===================== MÁSCARAS =====================
+const elCpf = document.getElementById('cpf');
+if (elCpf) {
+    elCpf.addEventListener('input', function (e) {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = v;
+    });
+}
+
+const elCep = document.getElementById('cep');
+if (elCep) {
+    elCep.addEventListener('input', function (e) {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+        v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = v;
+    });
+}
 </script>
 {% endblock %}

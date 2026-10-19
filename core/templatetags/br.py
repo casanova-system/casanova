@@ -147,3 +147,22 @@ def casas(valor, n):
     except (TypeError, ValueError):
         n = 2
     return _formata(valor, n)
+
+
+@register.filter
+def dictkey(dicionario, chave):
+    """Acessa dicionario[chave] no template.
+
+    O Django nao permite fazer dicionario[variavel] direto no template, e o
+    filtro `dictsort` nao serve para isso. Sem este filtro, mostrar a senha
+    por id exigiria uma query por linha.
+    """
+    if not dicionario:
+        return ''
+    try:
+        return dicionario.get(chave, '')
+    except AttributeError:
+        try:
+            return dicionario[chave]
+        except (KeyError, IndexError, TypeError):
+            return ''

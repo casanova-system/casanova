@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from core.models import PerfilUsuario, SetorProducao
+from core.seguranca import cifrar, decifrar
 from core.views.permissao import requer_rotina
 
 ITENS_POR_PAGINA = 12
@@ -68,6 +69,13 @@ def lista_usuarios(request):
         rotinas_permitidas__isnull=True).exclude(
         user__is_superuser=True).count()
 
+    # Senha decifrada por usuario, para o admin poder consultar na lista.
+    # Fica num dict id->senha para nao fazer uma query por linha no template.
+    senhas = {
+        p.user_id: decifrar(p.senha_visivel)
+        for p in PerfilUsuario.objects.exclude(senha_visivel='')
+    }
+
     context = {
         'usuarios': page_obj,
         'page_obj': page_obj,
@@ -76,6 +84,7 @@ def lista_usuarios(request):
         'ordenacao_atual': ordenacao,
         'setor_atual': setor_atual,
         'situacao': situacao,
+        'senhas': senhas,
         'setores': PerfilUsuario.SETOR_CHOICES,
         'kpi': {
             'total': User.objects.count(),
@@ -129,6 +138,7 @@ def criar_usuario(request):
                 'nivel_acesso': nivel_acesso,
                 'setor': setor,
                 'setor_producao_id': setor_producao_id,
+                'senha_visivel': cifrar(password),
             }
         )
         
@@ -140,13 +150,27 @@ def criar_usuario(request):
         messages.success(request, "Usuário cadastrado com sucesso!")
         return redirect('lista_usuarios')
         
-    return render(request, "core/usuarios/form_usuario.html", {"acao": "Cadastrar", "setores_producao": _setores_producao()})
+    # Contexto completo: o template usa `usuario` e `perfil` nos dois modos.
+    # Sem passar `usuario` vazio no cadastro, o {% if usuario.perfil.foto %}
+    # estoura VariableDoesNotExist ao montar a pagina de Novo Usuario.
+    return render(request, "core/usuarios/form_usuario.html", {
+        "usuario": None,
+        "perfil": None,
+        "senha_atual": "",
+        "acao": "Cadastrar",
+        "setores_producao": _setores_producao(),
+    })
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
 def detalhe_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
-    return render(request, "core/usuarios/detalhe_usuario.html", {"usuario": usuario})
+    perfil, _ = PerfilUsuario.objects.get_or_create(user=usuario)
+    return render(request, "core/usuarios/detalhe_usuario.html", {
+        "usuario": usuario,
+        "perfil": perfil,
+        "senha_atual": decifrar(perfil.senha_visivel),
+    })
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
@@ -188,6 +212,11 @@ def editar_usuario(request, pk):
         perfil.nivel_acesso = request.POST.get('nivel_acesso')
         perfil.setor = setor
         perfil.setor_producao_id = setor_producao_id
+
+        # So sobrescreve a senha visivel quando o admin digita uma nova.
+        # Sem isso, editar o cadastro sem mexer na senha apagaria o registro.
+        if nova_senha:
+            perfil.senha_visivel = cifrar(nova_senha)
         
         # Atualiza a foto apenas se o usuário enviou uma nova
         if foto:
@@ -198,7 +227,14 @@ def editar_usuario(request, pk):
         messages.success(request, "Usuário atualizado com sucesso!")
         return redirect('lista_usuarios')
         
-    return render(request, "core/usuarios/form_usuario.html", {"usuario": usuario, "acao": "Editar", "setores_producao": _setores_producao()})
+    perfil_obj, _ = PerfilUsuario.objects.get_or_create(user=usuario)
+    return render(request, "core/usuarios/form_usuario.html", {
+        "usuario": usuario,
+        "perfil": perfil_obj,
+        "senha_atual": decifrar(perfil_obj.senha_visivel),
+        "acao": "Editar",
+        "setores_producao": _setores_producao(),
+    })
 
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')

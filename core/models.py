@@ -287,6 +287,15 @@ class PerfilUsuario(models.Model):
 
     foto = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True)
 
+    # Senha cifrada (AES via Fernet) para o administrador poder consultar.
+    # O login continua usando o hash do Django — este campo e so conveniencia
+    # do gestor, que precisa repassar a senha ao funcionario. Ver core/seguranca.py.
+    senha_visivel = models.CharField(
+        max_length=255, blank=True, default='',
+        verbose_name='Senha (visível ao administrador)',
+        help_text='Cifrada com a SECRET_KEY do projeto.',
+    )
+
     @property
     def tem_rotina(self):
         """Uso no template: perfil.tem_rotina.lista_obras / perfil.tem_rotina.001

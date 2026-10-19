@@ -1166,14 +1166,14 @@
                                     </div>
                                     {% endif %}
 
-                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 or request.user.perfil.tem_rotina.funcionarios_por_setor or request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.001 or request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.002 %}
+                                    {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 or request.user.perfil.tem_rotina.funcionarios_por_setor or request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.001 %}
                                     <div class="menu-grupo">
                                         <a class="menu-grupo-titulo" data-bs-toggle="collapse" href="#modPessoas" role="button"
-                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' or request.resolver_match.url_name == 'lista_usuarios' or request.resolver_match.url_name == 'criar_usuario' or request.resolver_match.url_name == 'editar_usuario' or request.resolver_match.url_name == 'detalhe_usuario' or request.resolver_match.url_name == 'lista_permissao' or request.resolver_match.url_name == 'form_permissao' %}true{% else %}false{% endif %}" aria-controls="modPessoas">
+                                           aria-expanded="{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' or request.resolver_match.url_name == 'lista_usuarios' or request.resolver_match.url_name == 'criar_usuario' or request.resolver_match.url_name == 'editar_usuario' or request.resolver_match.url_name == 'detalhe_usuario' %}true{% else %}false{% endif %}" aria-controls="modPessoas">
                                             <span>PESSOAS</span>
                                             <i class="fa-solid fa-chevron-down menu-grupo-seta"></i>
                                         </a>
-                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' or request.resolver_match.url_name == 'lista_usuarios' or request.resolver_match.url_name == 'criar_usuario' or request.resolver_match.url_name == 'editar_usuario' or request.resolver_match.url_name == 'detalhe_usuario' or request.resolver_match.url_name == 'lista_permissao' or request.resolver_match.url_name == 'form_permissao' %} show menu-grupo-atual{% endif %}" id="modPessoas">
+                                        <div class="collapse{% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' or request.resolver_match.url_name == 'funcionarios_por_setor' or request.resolver_match.url_name == 'lista_usuarios' or request.resolver_match.url_name == 'criar_usuario' or request.resolver_match.url_name == 'editar_usuario' or request.resolver_match.url_name == 'detalhe_usuario' %} show menu-grupo-atual{% endif %}" id="modPessoas">
                                             <div class="menu-grupo-itens">
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_funcionarios or request.user.perfil.tem_rotina.021 %}
                                                 <a href="{% url 'lista_funcionarios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_funcionarios' or request.resolver_match.url_name == 'editar_funcionario' %}active{% endif %}" title="Funcionários">
@@ -1188,11 +1188,6 @@
                                                 {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios or request.user.perfil.tem_rotina.001 %}
                                                 <a href="{% url 'lista_usuarios' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_usuarios' or request.resolver_match.url_name == 'criar_usuario' or request.resolver_match.url_name == 'editar_usuario' or request.resolver_match.url_name == 'detalhe_usuario' %}active{% endif %}" title="Usuários do Sistema">
                                                     <span class="hide-on-collapse">Usuários do Sistema</span>
-                                                </a>
-                                                {% endif %}
-                                                {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao or request.user.perfil.tem_rotina.002 %}
-                                                <a href="{% url 'lista_permissao' %}" class="menu-item {% if request.resolver_match.url_name == 'lista_permissao' or request.resolver_match.url_name == 'form_permissao' %}active{% endif %}" title="Permissões de Acesso">
-                                                    <span class="hide-on-collapse">Permissões de Acesso</span>
                                                 </a>
                                                 {% endif %}
                                             </div>
