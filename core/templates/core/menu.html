@@ -7,7 +7,7 @@
     {# ===================== HERO ===================== #}
     <div class="card hero-card border-0 shadow-lg position-relative overflow-hidden w-100">
         <div class="hero-glow"></div>
-        <div class="card-body p-4 position-relative z-1 text-white">
+        <div class="card-body p-4 position-relative z-1">
             <div class="row align-items-center justify-content-between g-3">
 
                 <div class="col-lg-7">
@@ -60,34 +60,35 @@
 <style>
 /* ===================== HERO (compacto) ===================== */
 .hero-card {
-    background: linear-gradient(135deg, #092c6b 0%, #031330 100%);
+    background: linear-gradient(135deg, var(--cv-blue) 0%, #031330 100%);
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, .12) !important;
+    border: 1px solid var(--cv-line) !important;
+    color: #fff;
 }
 .hero-eyebrow {
     font-size: .68rem; letter-spacing: 1.4px; text-transform: uppercase;
-    color: rgba(255, 255, 255, .5); margin-bottom: 4px;
+    color: rgba(255, 255, 255, .7); margin-bottom: 4px;
 }
-.hero-eyebrow i { color: #60a5fa; margin-right: 4px; }
+.hero-eyebrow i { color: #93c5fd; margin-right: 4px; }
 .hero-titulo {
     font-size: 1.5rem; font-weight: 800; letter-spacing: 1.2px;
-    margin: 0 0 5px; text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+    margin: 0 0 5px; color: #fff;
 }
-.hero-titulo span { color: #60a5fa; font-weight: 300; }
+.hero-titulo span { color: #93c5fd; font-weight: 300; }
 .hero-texto {
     font-size: .8rem; line-height: 1.45; max-width: 620px;
-    color: rgba(255, 255, 255, .6); margin: 0;
+    color: rgba(255, 255, 255, .85); margin: 0;
 }
 .hero-data { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .hero-data-item {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(255, 255, 255, .07);
-    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .15);
+    border: 1px solid rgba(255, 255, 255, .2);
     border-radius: 10px; padding: 6px 12px;
 }
-.hero-data-item > i { color: #60a5fa; font-size: .85rem; }
-.hero-data-valor { font-size: .8rem; font-weight: 700; line-height: 1.1; }
-.hero-data-label { font-size: .56rem; text-transform: uppercase; letter-spacing: .5px; color: rgba(255, 255, 255, .45); }
+.hero-data-item > i { color: #93c5fd; font-size: .85rem; }
+.hero-data-valor { font-size: .8rem; font-weight: 700; line-height: 1.1; color: #fff; }
+.hero-data-label { font-size: .56rem; text-transform: uppercase; letter-spacing: .5px; color: rgba(255, 255, 255, .7); }
 .hero-portal {
     display: inline-flex; align-items: center; gap: 7px;
     background: #fff; color: #0b3882;
