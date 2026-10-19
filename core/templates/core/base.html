@@ -1090,7 +1090,7 @@
     <link rel="stylesheet" href="{% static_v 'css/glass.css' %}">
 </head>
 <body>
-    {# Wallpaper fixo que acompanha todas as telas — estilo Apple Liquid Glass #}
+    {% comment %}Wallpaper fixo que acompanha todas as telas — estilo Apple Liquid Glass{% endcomment %}
     <div style="position: fixed; inset: 0; z-index: -1; background-image: url('{% static 'img/wallpaper.png' %}'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat;"></div>
 
     <div class="app-container">

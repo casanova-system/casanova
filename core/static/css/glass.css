@@ -1,65 +1,33 @@
 /* ==========================================================================
-   LIQUID GLASS — Apple iOS 26 (CSS puro, sem filtro SVG)
+   LIQUID GLASS — Funciona nos temas CLARO e ESCURO
    ==========================================================================
-   Efeito de vidro líquido usando apenas CSS:
-   - backdrop-filter: blur() para desfocar o fundo
-   - border com gradiente para simular refração na borda
-   - border-radius: 9999px (pill shape)
-   - box-shadow suave e difusa
-   - Animações spring (cubic-bezier overshoot)
-   
+   Usa as variáveis --cv-* do casanova.css para se adaptar ao tema.
    Carregado DEPOIS do casanova.css.
    ========================================================================== */
 
+/* --------------------------------------------------------------------------
+   1. VIDRO — adapta ao tema via variáveis --cv-*
+   -------------------------------------------------------------------------- */
 :root {
-    --glass-blur: 40px;
-    --glass-blur-strong: 60px;
-    --glass-sat: 180%;
-    --glass-radius: 9999px;
-    --glass-radius-md: 24px;
-    --glass-radius-lg: 28px;
-    --glass-radius-xl: 36px;
+    --glass-blur: 30px;
+    --glass-blur-strong: 50px;
+    --glass-sat: 160%;
     --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --glass-dur: 0.3s;
 }
 
 /* --------------------------------------------------------------------------
-   1. FUNDO — gradiente fixo (wallpaper abstrato)
-   -------------------------------------------------------------------------- */
-html {
-    background: linear-gradient(135deg, #0a0e1a 0%, #141b2d 25%, #1a2035 50%, #0f1525 75%, #0a0e1a 100%);
-    min-height: 100%;
-}
-
-body {
-    min-height: 100vh;
-    position: relative;
-    -webkit-font-smoothing: antialiased;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-        radial-gradient(ellipse 800px 600px at 15% 10%, rgba(99, 102, 241, 0.15), transparent 50%),
-        radial-gradient(ellipse 700px 500px at 85% 20%, rgba(168, 85, 247, 0.12), transparent 50%),
-        radial-gradient(ellipse 900px 700px at 50% 90%, rgba(59, 130, 246, 0.10), transparent 55%),
-        radial-gradient(ellipse 600px 400px at 30% 70%, rgba(236, 72, 153, 0.08), transparent 45%);
-}
-
-/* --------------------------------------------------------------------------
-   2. SIDEBAR — vidro líquido com blur forte
+   2. SIDEBAR — vidro transparente
    -------------------------------------------------------------------------- */
 .sidebar-casanova {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: color-mix(in srgb, var(--cv-surface) 70%, transparent) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 0 var(--glass-radius-xl) var(--glass-radius-xl) 0 !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    border-right: 1px solid var(--cv-line) !important;
+    border-radius: 0 36px 36px 0 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    transition: background-color var(--glass-dur) var(--glass-spring),
+                box-shadow var(--glass-dur) var(--glass-spring);
 }
 .sidebar-header-box,
 .sidebar-bottom-container {
@@ -67,104 +35,97 @@ body::before {
     backdrop-filter: none;
 }
 .sidebar-bottom-container {
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: 1px solid var(--cv-line) !important;
     box-shadow: none !important;
 }
 
 /* --------------------------------------------------------------------------
-   3. CARDS — vidro transparente com bordas brilhantes
+   3. CARDS — vidro que se adapta ao tema
    -------------------------------------------------------------------------- */
 .card {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: color-mix(in srgb, var(--cv-surface) 75%, transparent) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: var(--glass-radius-lg) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    border: 1px solid var(--cv-line) !important;
+    border-radius: var(--cv-radius, 24px) !important;
+    box-shadow: var(--cv-shadow-sm, 0 4px 16px rgba(0, 0, 0, 0.08)) !important;
     transition: transform var(--glass-dur) var(--glass-spring),
                 box-shadow var(--glass-dur) var(--glass-spring),
                 border-color 0.15s ease;
 }
 .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
-    border-color: rgba(255, 255, 255, 0.20) !important;
+    box-shadow: var(--cv-shadow-md, 0 8px 24px rgba(0, 0, 0, 0.12)) !important;
+    border-color: var(--cv-blue) !important;
 }
 .card:has(.table-responsive) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(20, 25, 40, 0.70) !important;
+    background: var(--cv-surface) !important;
 }
 .card:has(.table-responsive):hover { transform: none; }
 
 /* --------------------------------------------------------------------------
-   4. BOTÕES — pill shape com spring
-   -------------------------------------------------------------------------- */
-.btn {
-    border-radius: var(--glass-radius) !important;
-    transition: transform var(--glass-dur) var(--glass-spring),
-                background-color 0.15s ease,
-                border-color 0.15s ease,
-                box-shadow var(--glass-dur) var(--glass-spring);
-}
-.btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.btn:active {
-    transform: scale(0.96);
-    transition-duration: 0.08s;
-}
-
-.btn-action,
-.btn-acao {
-    border-radius: var(--glass-radius) !important;
-    transition: transform var(--glass-dur) var(--glass-spring),
-                background-color 0.15s ease,
-                border-color 0.15s ease,
-                box-shadow var(--glass-dur) var(--glass-spring);
-}
-.btn-action:hover,
-.btn-acao:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.btn-action:active,
-.btn-acao:active {
-    transform: scale(0.96);
-    transition-duration: 0.08s;
-}
-
-.btn-row {
-    border-radius: var(--glass-radius) !important;
-    transition: transform var(--glass-dur) var(--glass-spring);
-}
-.btn-row:hover { transform: scale(1.12); }
-.btn-row:active { transform: scale(0.90); }
-
-/* --------------------------------------------------------------------------
-   5. TABELAS
+   4. TABELAS — vidro com linhas visíveis mas nao camufladas
    -------------------------------------------------------------------------- */
 .table-responsive {
-    background: rgba(255, 255, 255, 0.04) !important;
+    background: color-mix(in srgb, var(--cv-surface) 60%, transparent) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--glass-radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--cv-radius, 20px);
+    border: 1px solid var(--cv-line);
 }
 .table thead th {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 5%, var(--cv-surface)) !important;
+    border-bottom: 2px solid var(--cv-line) !important;
+    color: var(--cv-text) !important;
 }
 .table tbody tr {
     background: transparent !important;
     transition: background-color 0.15s ease;
 }
 .table-hover > tbody > tr:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 6%, var(--cv-surface)) !important;
 }
 .table tbody td {
-    border-color: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--cv-line) !important;
+    color: var(--cv-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. BOTÕES — pill shape com spring
+   -------------------------------------------------------------------------- */
+.btn {
+    border-radius: 9999px !important;
+    transition: transform var(--glass-dur) var(--glass-spring),
+                background-color 0.15s ease,
+                border-color 0.15s ease,
+                box-shadow var(--glass-dur) var(--glass-spring);
+}
+.btn:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+.btn:active {
+    transform: scale(0.97);
+    transition-duration: 0.08s;
+}
+
+.btn-action,
+.btn-acao {
+    border-radius: 9999px !important;
+    transition: transform var(--glass-dur) var(--glass-spring),
+                background-color 0.15s ease,
+                border-color 0.15s ease;
+}
+.btn-action:hover,
+.btn-acao:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+.btn-action:active,
+.btn-acao:active {
+    transform: scale(0.97);
 }
 
 /* --------------------------------------------------------------------------
@@ -172,19 +133,16 @@ body::before {
    -------------------------------------------------------------------------- */
 .form-control,
 .form-select {
-    background: rgba(255, 255, 255, 0.06) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    background: var(--cv-surface) !important;
+    border: 1px solid var(--cv-line) !important;
     border-radius: 14px !important;
     transition: border-color 0.15s ease,
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .form-control:focus,
 .form-select:focus {
-    background: rgba(255, 255, 255, 0.10) !important;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
-    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(var(--cv-brand-rgb), 0.15) !important;
+    border-color: var(--cv-blue) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -192,72 +150,67 @@ body::before {
    -------------------------------------------------------------------------- */
 .dropdown-menu,
 .perfil-menu {
-    background: rgba(20, 25, 40, 0.85) !important;
+    background: var(--cv-surface) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.30) !important;
-    border-radius: var(--glass-radius-lg) !important;
+    border: 1px solid var(--cv-line) !important;
+    box-shadow: var(--cv-shadow-lg, 0 16px 48px rgba(0, 0, 0, 0.15)) !important;
+    border-radius: var(--cv-radius, 20px) !important;
     padding: 8px !important;
 }
 .modal-content {
-    background: rgba(20, 25, 40, 0.90) !important;
+    background: var(--cv-surface) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.40) !important;
-    border-radius: var(--glass-radius-xl) !important;
+    border: 1px solid var(--cv-line) !important;
+    border-radius: 28px !important;
     overflow: hidden;
 }
-.modal-backdrop.show { opacity: 0.40; }
+.modal-backdrop.show { opacity: 0.30; }
 .alert {
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
-    border-radius: var(--glass-radius-md) !important;
+    background: var(--cv-surface) !important;
+    border: 1px solid var(--cv-line) !important;
+    border-radius: 18px !important;
 }
 
 /* --------------------------------------------------------------------------
-   8. PAGINAÇÃO
+   8. KPI CARDS
+   -------------------------------------------------------------------------- */
+.kpi-card {
+    background: color-mix(in srgb, var(--cv-surface) 75%, transparent) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border: 1px solid var(--cv-line) !important;
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+    border-radius: 20px !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. PAGINAÇÃO
    -------------------------------------------------------------------------- */
 .pgn {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: var(--cv-surface) !important;
+    border-top: 1px solid var(--cv-line) !important;
 }
 .page-link {
     background: transparent !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    border-radius: var(--glass-radius) !important;
+    border-color: var(--cv-line) !important;
+    border-radius: 9999px !important;
     transition: background-color 0.15s ease,
                 transform var(--glass-dur) var(--glass-spring);
 }
 .page-link:hover {
-    background: rgba(255, 255, 255, 0.10) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 8%, var(--cv-surface)) !important;
     transform: translateY(-1px);
 }
 .page-item.active .page-link {
-    background: #6366f1 !important;
-    border-color: #6366f1 !important;
+    background: var(--cv-blue) !important;
+    border-color: var(--cv-blue) !important;
 }
 
 /* --------------------------------------------------------------------------
-   9. KPI CARDS
-   -------------------------------------------------------------------------- */
-.kpi-card {
-    background: rgba(255, 255, 255, 0.06) !important;
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
-    border-left-width: 4px !important;
-    border-left-style: solid !important;
-    border-radius: var(--glass-radius-md) !important;
-}
-
-/* --------------------------------------------------------------------------
-   10. MENU DO PERFIL
+   10. MENU DO PERFIL — animação spring
    -------------------------------------------------------------------------- */
 .sidebar-bottom-container .dropdown {
     position: relative;
@@ -274,9 +227,9 @@ body::before {
     max-width: none;
     margin: 0 0 10px 0 !important;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: var(--glass-radius-lg) !important;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.30) !important;
+    border: 1px solid var(--cv-line) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15) !important;
     max-height: min(560px, calc(100vh - 90px));
     overflow-y: auto;
     overflow-x: hidden;
@@ -290,14 +243,14 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   11. ANIMAÇÕES SPRING
+   11. ANIMAÇÕES
    -------------------------------------------------------------------------- */
 .perfil-menu {
     transform-origin: bottom left;
-    animation: glassMenuIn 0.5s var(--glass-spring) both;
+    animation: glassMenuIn 0.4s var(--glass-spring) both;
 }
 @keyframes glassMenuIn {
-    from { opacity: 0; transform: translateY(16px) scale(0.94); }
+    from { opacity: 0; transform: translateY(12px) scale(0.95); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .sidebar-casanova.sidebar-collapsed .perfil-menu {
@@ -305,17 +258,17 @@ body::before {
 }
 
 .perfil-menu > li {
-    animation: glassItemIn 0.3s var(--glass-spring) both;
+    animation: glassItemIn 0.25s var(--glass-spring) both;
 }
 .perfil-menu > li:nth-child(1) { animation-delay: 0.02s; }
-.perfil-menu > li:nth-child(2) { animation-delay: 0.05s; }
-.perfil-menu > li:nth-child(3) { animation-delay: 0.08s; }
-.perfil-menu > li:nth-child(4) { animation-delay: 0.11s; }
-.perfil-menu > li:nth-child(5) { animation-delay: 0.14s; }
-.perfil-menu > li:nth-child(6) { animation-delay: 0.17s; }
-.perfil-menu > li:nth-child(7) { animation-delay: 0.20s; }
+.perfil-menu > li:nth-child(2) { animation-delay: 0.04s; }
+.perfil-menu > li:nth-child(3) { animation-delay: 0.06s; }
+.perfil-menu > li:nth-child(4) { animation-delay: 0.08s; }
+.perfil-menu > li:nth-child(5) { animation-delay: 0.10s; }
+.perfil-menu > li:nth-child(6) { animation-delay: 0.12s; }
+.perfil-menu > li:nth-child(7) { animation-delay: 0.14s; }
 @keyframes glassItemIn {
-    from { opacity: 0; transform: translateX(-8px); }
+    from { opacity: 0; transform: translateX(-6px); }
     to   { opacity: 1; transform: translateX(0); }
 }
 
@@ -343,27 +296,20 @@ body::before {
                 transform var(--glass-dur) var(--glass-spring) !important;
 }
 .palette-swatch:hover {
-    transform: translateY(-3px) scale(1.08);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
+    transform: translateY(-2px) scale(1.06);
 }
 .palette-swatch:active { transform: translateY(0) scale(0.94); }
 .palette-dot {
     transition: transform var(--glass-dur) var(--glass-spring);
 }
-.palette-swatch.active .palette-dot { transform: scale(1.10); }
+.palette-swatch.active .palette-dot { transform: scale(1.08); }
 
 .home-card {
     transition: transform var(--glass-dur) var(--glass-spring),
-                border-color 0.15s ease,
-                box-shadow var(--glass-dur) var(--glass-spring);
+                border-color 0.15s ease;
 }
 .home-card:hover {
     transform: translateX(4px) scale(1.01);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
-}
-
-.home-grupo-seta {
-    transition: transform var(--glass-dur) var(--glass-spring);
 }
 
 .table-hover > tbody > tr {
@@ -377,7 +323,7 @@ body::before {
     animation: glassPageIn 0.3s var(--glass-spring) both;
 }
 @keyframes glassPageIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -395,7 +341,7 @@ body::before {
     .pgn,
     .kpi-card,
     .table-responsive {
-        background: rgba(20, 25, 40, 0.95) !important;
+        background: var(--cv-surface) !important;
     }
 }
 
@@ -407,16 +353,7 @@ body::before {
     }
     .card:hover, .btn:hover, .btn:active, .btn-action:hover,
     .btn-acao:hover, .menu-item:hover, .perfil-item:hover,
-    .palette-swatch:hover, .btn-row:hover, .home-card:hover {
+    .palette-swatch:hover, .home-card:hover {
         transform: none !important;
-    }
-}
-
-@media (max-width: 767px) {
-    :root { --glass-blur: 20px; --glass-blur-strong: 30px; }
-    .card {
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        background: rgba(20, 25, 40, 0.85) !important;
     }
 }
