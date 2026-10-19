@@ -1,45 +1,34 @@
 /* ==========================================================================
    LIQUID GLASS — Apple iOS 26
    ==========================================================================
-   Animações iOS 2026 (spring physics), textura Liquid Glass,
-   cores pastéis confortáveis e tudo super arredondado.
+   Wallpaper fixo abstrato (azul/violeta/rosa) + vidro transparente
+   com blur forte, bordas brilhantes, pill shape e animações spring.
 
    Carregado DEPOIS do casanova.css para sobrescrever.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. TOKENS — VIDRO PASTEL E ACONCHEGANTE
+   1. TOKENS — VIDRO LÍQUIDO
    -------------------------------------------------------------------------- */
 :root {
-    /* vidro transparente — deixa o conteúdo aparecer através */
-    --glass-bg: rgba(255, 255, 255, 0.45);
-    --glass-bg-strong: rgba(255, 255, 255, 0.65);
-    --glass-bg-weak: rgba(255, 255, 255, 0.30);
-
-    /* borda de luz — simula luz refratando na aresta do vidro */
-    --glass-edge: rgba(255, 255, 255, 0.95);
-    --glass-edge-dark: rgba(100, 120, 150, 0.08);
-    --glass-edge-highlight: rgba(255, 255, 255, 0.70);
-
-    /* blur e saturação */
-    --glass-blur: 50px;
-    --glass-blur-strong: 80px;
-    --glass-sat: 220%;
-
-    /* sombras suaves e difusas (estilo Apple) */
-    --glass-shadow-sm: 0 1px 2px rgba(100, 120, 150, 0.04), 0 4px 16px rgba(100, 120, 150, 0.06);
-    --glass-shadow-md: 0 2px 8px rgba(100, 120, 150, 0.06), 0 12px 32px rgba(100, 120, 150, 0.08);
-    --glass-shadow-lg: 0 4px 16px rgba(100, 120, 150, 0.08), 0 20px 48px rgba(100, 120, 150, 0.12);
-    --glass-shadow-xl: 0 8px 24px rgba(100, 120, 150, 0.10), 0 40px 80px rgba(100, 120, 150, 0.16);
-
-    /* spring physics — iOS 2026 */
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-bg-strong: rgba(255, 255, 255, 0.15);
+    --glass-bg-weak: rgba(255, 255, 255, 0.05);
+    --glass-edge: rgba(255, 255, 255, 0.25);
+    --glass-edge-dark: rgba(255, 255, 255, 0.08);
+    --glass-edge-highlight: rgba(255, 255, 255, 0.40);
+    --glass-blur: 60px;
+    --glass-blur-strong: 100px;
+    --glass-sat: 200%;
+    --glass-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.08);
+    --glass-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.10);
+    --glass-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.14), 0 20px 48px rgba(0, 0, 0, 0.12);
+    --glass-shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.16), 0 40px 80px rgba(0, 0, 0, 0.20);
     --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --glass-spring-soft: cubic-bezier(0.22, 1.40, 0.50, 1);
     --glass-dur-fast: 0.15s;
     --glass-dur: 0.30s;
     --glass-dur-slow: 0.55s;
-
-    /* raios super arredondados — tudo pill */
     --glass-radius-sm: 16px;
     --glass-radius-md: 22px;
     --glass-radius-lg: 28px;
@@ -47,28 +36,12 @@
     --glass-radius-full: 9999px;
 }
 
-[data-bs-theme="dark"] {
-    --glass-bg: rgba(35, 40, 55, 0.45);
-    --glass-bg-strong: rgba(35, 40, 55, 0.65);
-    --glass-bg-weak: rgba(35, 40, 55, 0.30);
-    --glass-edge: rgba(255, 255, 255, 0.15);
-    --glass-edge-dark: rgba(0, 0, 0, 0.20);
-    --glass-edge-highlight: rgba(255, 255, 255, 0.25);
-    --glass-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.08);
-    --glass-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.10);
-    --glass-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.14), 0 20px 48px rgba(0, 0, 0, 0.12);
-    --glass-shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.16), 0 40px 80px rgba(0, 0, 0, 0.20);
-}
-
 /* --------------------------------------------------------------------------
-   2. FUNDO — PASTEL E ACONCHEGANTE
+   2. FUNDO FIXO — WALLPAPER ABSTRATO FLUIDO
    -------------------------------------------------------------------------- */
 html {
-    background: linear-gradient(160deg, #e8ecf5 0%, #dde4f0 25%, #d0daea 50%, #e2e8f2 75%, #eaeff7 100%);
+    background: #0d1b2a;
     min-height: 100%;
-}
-[data-bs-theme="dark"] html {
-    background: linear-gradient(160deg, #1a2030 0%, #202840 25%, #1c2438 50%, #242c44 75%, #1e2638 100%);
 }
 
 body {
@@ -78,41 +51,26 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Manchas de cor pastéis sutis que dão profundidade ao vidro */
+/* Overlay escuro para melhor legibilidade do vidro */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background:
-        radial-gradient(ellipse 1000px 800px at 5% -5%,
-            rgba(var(--cv-brand-rgb), 0.06), transparent 55%),
-        radial-gradient(ellipse 900px 700px at 95% 5%,
-            rgba(var(--cv-brand-light-rgb), 0.05), transparent 50%),
-        radial-gradient(ellipse 1100px 900px at 50% 108%,
-            rgba(var(--cv-brand-rgb), 0.04), transparent 60%);
-}
-[data-bs-theme="dark"] body::before {
-    background:
-        radial-gradient(ellipse 1000px 800px at 5% -5%,
-            rgba(var(--cv-brand-light-rgb), 0.04), transparent 55%),
-        radial-gradient(ellipse 900px 700px at 95% 5%,
-            rgba(var(--cv-brand-rgb), 0.08), transparent 50%),
-        radial-gradient(ellipse 1100px 900px at 50% 108%,
-            rgba(var(--cv-brand-light-rgb), 0.03), transparent 60%);
+    background: rgba(10, 15, 30, 0.30);
 }
 
 /* --------------------------------------------------------------------------
-   3. SIDEBAR — VIDRO LÍQUIDO SUPER ARRENDONADO
+   3. SIDEBAR — VIDRO ESCURO TRANSPARENTE
    -------------------------------------------------------------------------- */
 .sidebar-casanova {
-    background: var(--glass-bg-strong) !important;
+    background: rgba(15, 20, 35, 0.60) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     border-right: 1px solid var(--glass-edge) !important;
     border-radius: 0 var(--glass-radius-xl) var(--glass-radius-xl) 0 !important;
-    box-shadow: var(--glass-shadow-md);
+    box-shadow: var(--glass-shadow-lg);
 }
 .sidebar-header-box,
 .sidebar-bottom-container {
@@ -128,17 +86,17 @@ body::before {
    4. TOPBAR MOBILE
    -------------------------------------------------------------------------- */
 .mobile-topbar {
-    background: var(--glass-bg) !important;
+    background: rgba(15, 20, 35, 0.50) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     border-bottom: 1px solid var(--glass-edge) !important;
 }
 
 /* --------------------------------------------------------------------------
-   5. CARDS — VIDRO COM REFLEXO E SUPER ARRENDONADO
+   5. CARDS — VIDRO COM REFLEXO
    -------------------------------------------------------------------------- */
 .card {
-    background: var(--glass-bg) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     border: 1px solid var(--glass-edge) !important;
@@ -153,11 +111,10 @@ body::before {
     box-shadow: var(--glass-shadow-lg) !important;
     border-color: var(--glass-edge-highlight) !important;
 }
-/* card com tabela: sem blur (performance) */
 .card:has(.table-responsive) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: var(--glass-bg-strong) !important;
+    background: rgba(15, 20, 35, 0.70) !important;
 }
 .card:has(.table-responsive):hover { transform: none; }
 
@@ -165,7 +122,7 @@ body::before {
    6. KPI CARDS
    -------------------------------------------------------------------------- */
 .kpi-card {
-    background: var(--glass-bg) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     border: 1px solid var(--glass-edge) !important;
@@ -178,14 +135,14 @@ body::before {
    7. TABELAS
    -------------------------------------------------------------------------- */
 .table-responsive {
-    background: var(--glass-bg-weak) !important;
-    backdrop-filter: blur(25px) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(25px) saturate(var(--glass-sat));
+    background: rgba(255, 255, 255, 0.04) !important;
+    backdrop-filter: blur(30px) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(30px) saturate(var(--glass-sat));
     border-radius: var(--glass-radius-md);
     border: 1px solid var(--glass-edge-dark);
 }
 .table thead th {
-    background: rgba(var(--cv-brand-rgb), 0.04) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
     border-bottom: 1px solid var(--glass-edge) !important;
 }
 .table tbody tr {
@@ -193,14 +150,14 @@ body::before {
     transition: background-color var(--glass-dur-fast) ease;
 }
 .table-hover > tbody > tr:hover {
-    background: rgba(var(--cv-brand-rgb), 0.04) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
 }
 .table tbody td {
     border-color: var(--glass-edge-dark) !important;
 }
 
 /* --------------------------------------------------------------------------
-   8. BOTÕES — PILL SHAPE COM SPRING iOS
+   8. BOTÕES — PILL SHAPE COM SPRING
    -------------------------------------------------------------------------- */
 .btn {
     border-radius: var(--glass-radius-full) !important;
@@ -265,11 +222,11 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   9. FORMULÁRIOS — VIDRO COM FOCO SUAVE
+   9. FORMULÁRIOS
    -------------------------------------------------------------------------- */
 .form-control,
 .form-select {
-    background: var(--glass-bg-weak) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid var(--glass-edge-dark) !important;
@@ -280,8 +237,8 @@ body::before {
 }
 .form-control:focus,
 .form-select:focus {
-    background: var(--glass-bg) !important;
-    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.10) !important;
+    background: rgba(255, 255, 255, 0.10) !important;
+    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.15) !important;
     border-color: var(--cv-blue) !important;
 }
 
@@ -290,7 +247,7 @@ body::before {
    -------------------------------------------------------------------------- */
 .dropdown-menu,
 .perfil-menu {
-    background: var(--glass-bg-strong) !important;
+    background: rgba(20, 25, 40, 0.85) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     border: 1px solid var(--glass-edge) !important;
@@ -299,7 +256,7 @@ body::before {
     padding: 10px !important;
 }
 .modal-content {
-    background: var(--glass-bg-strong) !important;
+    background: rgba(20, 25, 40, 0.90) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     border: 1px solid var(--glass-edge) !important;
@@ -307,9 +264,9 @@ body::before {
     border-radius: var(--glass-radius-xl) !important;
     overflow: hidden;
 }
-.modal-backdrop.show { opacity: 0.30; }
+.modal-backdrop.show { opacity: 0.40; }
 .alert {
-    background: var(--glass-bg) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-edge) !important;
@@ -320,7 +277,7 @@ body::before {
    11. PAGINAÇÃO
    -------------------------------------------------------------------------- */
 .pgn {
-    background: var(--glass-bg-weak) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--glass-edge) !important;
@@ -333,7 +290,7 @@ body::before {
                 transform var(--glass-dur-fast) var(--glass-spring);
 }
 .page-link:hover {
-    background: rgba(var(--cv-brand-rgb), 0.06) !important;
+    background: rgba(255, 255, 255, 0.10) !important;
     transform: translateY(-1px);
 }
 .page-item.active .page-link {
@@ -342,7 +299,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   12. MENU DO PERFIL — VIDRO COM ENTRADA SPRING iOS
+   12. MENU DO PERFIL
    -------------------------------------------------------------------------- */
 .sidebar-bottom-container .dropdown {
     position: relative;
@@ -430,7 +387,7 @@ body::before {
 }
 .palette-swatch:hover {
     transform: translateY(-4px) scale(1.10);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.20);
 }
 .palette-swatch:active { transform: translateY(0) scale(0.94); }
 .palette-dot {
@@ -457,7 +414,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   14. ENTRADA DAS PÁGINAS — FADE SUAVE iOS
+   14. ENTRADA DAS PÁGINAS
    -------------------------------------------------------------------------- */
 .main-content-area > div {
     animation: glassPageIn var(--glass-dur) var(--glass-spring-soft) both;
@@ -481,7 +438,7 @@ body::before {
     .pgn,
     .kpi-card,
     .table-responsive {
-        background: var(--cv-surface) !important;
+        background: rgba(15, 20, 35, 0.95) !important;
     }
 }
 
@@ -499,10 +456,10 @@ body::before {
 }
 
 @media (max-width: 767px) {
-    :root { --glass-blur: 25px; --glass-blur-strong: 40px; }
+    :root { --glass-blur: 30px; --glass-blur-strong: 50px; }
     .card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-        background: var(--glass-bg-strong) !important;
+        background: rgba(15, 20, 35, 0.85) !important;
     }
 }
