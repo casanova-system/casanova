@@ -331,7 +331,9 @@
         }
 
         .sidebar-bottom-container {
-            padding: 12px 16px;
+            /* 10px em vez de 16px: sobra largura para o menu do perfil,
+               que antes era cortado justamente por falta de espaco. */
+            padding: 10px 10px;
             background-color: inherit;
             border-top: 1px solid rgba(0,0,0,0.06);
         }
@@ -752,15 +754,39 @@
         /* ==========================================================
            MENU DO PERFIL (dropdown do usuario)
            ========================================================== */
+
+        /* O wrapper do dropdown e a ancora. Sem position:relative aqui,
+           o menu se posiciona pela janela e sai da sidebar. */
+        .sidebar-bottom-container .dropdown {
+            position: relative;
+        }
+
+        /* Abre para CIMA e para a DIREITA, dentro da largura da sidebar.
+           - bottom:100% + margin-bottom -> sobe a partir do botao
+           - left:0 -> alinha a esquerda, sem vazar e cortar a 1a coluna
+           - max-height + overflow-y -> caibem telas baixas */
         .perfil-menu {
-            min-width: 288px;
-            max-width: 320px;
+            position: absolute !important;
+            bottom: 100% !important;
+            top: auto !important;
+            left: 0 !important;
+            right: auto !important;
+            transform: none !important;
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            margin: 0 0 8px 0 !important;
             padding: 0;
             border: 1px solid var(--cv-line);
             border-radius: 14px;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
-            overflow: hidden;
+            box-shadow: 0 -8px 28px rgba(15, 23, 42, .16);
+            max-height: min(560px, calc(100vh - 90px));
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1080;
         }
+
+           ========================================================== */
 
         /* ---- cabecalho: quem esta logado ---- */
         .perfil-cabecalho {
@@ -862,10 +888,13 @@
         .perfil-paleta { padding: 8px 14px 12px; }
         .perfil-paleta-topo { display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
 
+        /* 5 colunas em ~210px de largura util: cada swatch fica com ~38px.
+           Com o nome embaixo, aperta. Reduzi o gap e a fonte do nome para
+           caber sem cortar. */
         .palette-picker {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
+            gap: 3px;
         }
         .palette-swatch {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -878,14 +907,15 @@
         }
         .palette-swatch:hover { background: rgba(var(--cv-brand-rgb), .06); }
         .palette-dot {
-            width: 22px; height: 22px; border-radius: 50%;
+            width: 20px; height: 20px; border-radius: 50%;
             display: block;
             box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14);
         }
         .palette-nome {
-            font-size: .58rem; font-weight: 700;
+            font-size: .52rem; font-weight: 700;
             color: var(--cv-text-muted);
-            text-transform: uppercase; letter-spacing: .3px;
+            text-transform: uppercase; letter-spacing: 0;
+            white-space: nowrap;
         }
         .palette-swatch.active {
             border-color: var(--cv-blue);
@@ -922,7 +952,16 @@
         .perfil-sair:hover { background: rgba(220, 38, 38, .13); color: #dc2626; }
 
         /* no menu recolhido o dropdown abre para a direita, sem o cabecalho */
-        .sidebar-casanova.sidebar-collapsed .perfil-menu { min-width: 240px; }
+        /* Recolhido: a sidebar tem 72px, entao o menu precisa ser mais
+           largo que ela. Abre para a DIREITA (left:100%) em vez de para
+           dentro, senao ficaria ilegivel. */
+        .sidebar-casanova.sidebar-collapsed .perfil-menu {
+            left: 100% !important;
+            bottom: 0 !important;
+            width: 280px;
+            margin: 0 0 0 8px !important;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, .18);
+        }
 
         .sidebar-casanova.sidebar-collapsed .sidebar-link {
             justify-content: center;
@@ -1392,7 +1431,12 @@
                         <i class="fa-solid fa-chevron-up text-muted small hide-on-collapse" style="font-size: 0.7rem;"></i>
                     </div>
 
-                    <ul class="dropdown-menu dropdown-menu-end perfil-menu" aria-labelledby="userDropdown">
+                    {# data-bs-display="static" desliga o Popper neste dropdown.
+                       Sem isso o Bootstrap aplica style INLINE de posicao e
+                       ignora o CSS que ancora o menu dentro da sidebar —
+                       era o que fazia o menu vazar e cortar a coluna azul. #}
+                    <ul class="dropdown-menu perfil-menu" aria-labelledby="userDropdown"
+                        data-bs-display="static">
 
                         {# ---------- quem esta logado ---------- #}
                         <li class="perfil-cabecalho">
