@@ -1,79 +1,74 @@
 /* ==========================================================================
-   LIQUID GLASS — Apple Design (iOS 26)
+   LIQUID GLASS — Apple iOS 26
    ==========================================================================
-   Sistema visual inspirado no "Liquid Glass" da Apple:
-   - Vidro transparente que reflete e refrata o conteúdo em tempo real
-   - Bordas com brilho sutil simulando luz refratando no vidro
-   - Elementos pill-shaped (super arredondados)
-   - Sombras suaves e difusas
-   - Animações com spring physics (fluidas, nao lineares)
-   - Fundos com gradientes sutis que se adaptam ao conteúdo
+   Animações iOS 2026 (spring physics), textura Liquid Glass,
+   cores pastéis confortáveis e tudo super arredondado.
 
    Carregado DEPOIS do casanova.css para sobrescrever.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. TOKENS DE VIDRO LÍQUIDO
+   1. TOKENS — VIDRO PASTEL E ACONCHEGANTE
    -------------------------------------------------------------------------- */
 :root {
     /* vidro transparente — deixa o conteúdo aparecer através */
-    --glass-bg: rgba(255, 255, 255, 0.35);
-    --glass-bg-strong: rgba(255, 255, 255, 0.55);
-    --glass-bg-weak: rgba(255, 255, 255, 0.22);
+    --glass-bg: rgba(255, 255, 255, 0.45);
+    --glass-bg-strong: rgba(255, 255, 255, 0.65);
+    --glass-bg-weak: rgba(255, 255, 255, 0.30);
 
     /* borda de luz — simula luz refratando na aresta do vidro */
-    --glass-edge: rgba(255, 255, 255, 0.9);
-    --glass-edge-dark: rgba(15, 23, 42, 0.06);
-    --glass-edge-highlight: rgba(255, 255, 255, 0.6);
+    --glass-edge: rgba(255, 255, 255, 0.95);
+    --glass-edge-dark: rgba(100, 120, 150, 0.08);
+    --glass-edge-highlight: rgba(255, 255, 255, 0.70);
 
     /* blur e saturação */
-    --glass-blur: 40px;
-    --glass-blur-strong: 60px;
-    --glass-sat: 200%;
+    --glass-blur: 50px;
+    --glass-blur-strong: 80px;
+    --glass-sat: 220%;
 
-    /* sombras suaves e difusas */
-    --glass-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04), 0 2px 8px rgba(15, 23, 42, 0.03);
-    --glass-shadow-md: 0 2px 6px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
-    --glass-shadow-lg: 0 4px 12px rgba(15, 23, 42, 0.06), 0 16px 40px rgba(15, 23, 42, 0.08);
-    --glass-shadow-xl: 0 8px 24px rgba(15, 23, 42, 0.08), 0 32px 64px rgba(15, 23, 42, 0.12);
+    /* sombras suaves e difusas (estilo Apple) */
+    --glass-shadow-sm: 0 1px 2px rgba(100, 120, 150, 0.04), 0 4px 16px rgba(100, 120, 150, 0.06);
+    --glass-shadow-md: 0 2px 8px rgba(100, 120, 150, 0.06), 0 12px 32px rgba(100, 120, 150, 0.08);
+    --glass-shadow-lg: 0 4px 16px rgba(100, 120, 150, 0.08), 0 20px 48px rgba(100, 120, 150, 0.12);
+    --glass-shadow-xl: 0 8px 24px rgba(100, 120, 150, 0.10), 0 40px 80px rgba(100, 120, 150, 0.16);
 
-    /* spring physics */
+    /* spring physics — iOS 2026 */
     --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --glass-spring-soft: cubic-bezier(0.22, 1.35, 0.52, 1);
+    --glass-spring-soft: cubic-bezier(0.22, 1.40, 0.50, 1);
     --glass-dur-fast: 0.15s;
-    --glass-dur: 0.28s;
-    --glass-dur-slow: 0.5s;
+    --glass-dur: 0.30s;
+    --glass-dur-slow: 0.55s;
 
-    /* raios arredondados */
-    --glass-radius-sm: 12px;
-    --glass-radius-md: 16px;
-    --glass-radius-lg: 22px;
-    --glass-radius-xl: 28px;
+    /* raios super arredondados — tudo pill */
+    --glass-radius-sm: 16px;
+    --glass-radius-md: 22px;
+    --glass-radius-lg: 28px;
+    --glass-radius-xl: 36px;
     --glass-radius-full: 9999px;
 }
 
 [data-bs-theme="dark"] {
-    --glass-bg: rgba(30, 35, 45, 0.35);
-    --glass-bg-strong: rgba(30, 35, 45, 0.55);
-    --glass-bg-weak: rgba(30, 35, 45, 0.22);
-    --glass-edge: rgba(255, 255, 255, 0.12);
-    --glass-edge-dark: rgba(0, 0, 0, 0.25);
-    --glass-edge-highlight: rgba(255, 255, 255, 0.18);
-    --glass-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.10);
-    --glass-shadow-md: 0 2px 6px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.14);
-    --glass-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.22), 0 16px 40px rgba(0, 0, 0, 0.18);
-    --glass-shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.25), 0 32px 64px rgba(0, 0, 0, 0.30);
+    --glass-bg: rgba(35, 40, 55, 0.45);
+    --glass-bg-strong: rgba(35, 40, 55, 0.65);
+    --glass-bg-weak: rgba(35, 40, 55, 0.30);
+    --glass-edge: rgba(255, 255, 255, 0.15);
+    --glass-edge-dark: rgba(0, 0, 0, 0.20);
+    --glass-edge-highlight: rgba(255, 255, 255, 0.25);
+    --glass-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.08);
+    --glass-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.10);
+    --glass-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.14), 0 20px 48px rgba(0, 0, 0, 0.12);
+    --glass-shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.16), 0 40px 80px rgba(0, 0, 0, 0.20);
 }
 
 /* --------------------------------------------------------------------------
-   2. FUNDO — gradiente adaptativo
+   2. FUNDO — PASTEL E ACONCHEGANTE
    -------------------------------------------------------------------------- */
 html {
-    background: linear-gradient(160deg, #e8edf5 0%, #d4dde8 30%, #c8d4e2 60%, #dde5ef 100%);
+    background: linear-gradient(160deg, #e8ecf5 0%, #dde4f0 25%, #d0daea 50%, #e2e8f2 75%, #eaeff7 100%);
     min-height: 100%;
 }
 [data-bs-theme="dark"] html {
-    background: linear-gradient(160deg, #0c1220 0%, #141c2e 30%, #0f1725 60%, #182035 100%);
+    background: linear-gradient(160deg, #1a2030 0%, #202840 25%, #1c2438 50%, #242c44 75%, #1e2638 100%);
 }
 
 body {
@@ -83,7 +78,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Manchas de cor sutis que dão profundidade ao vidro */
+/* Manchas de cor pastéis sutis que dão profundidade ao vidro */
 body::before {
     content: '';
     position: fixed;
@@ -91,31 +86,32 @@ body::before {
     pointer-events: none;
     z-index: 0;
     background:
-        radial-gradient(ellipse 900px 700px at 8% -5%,
-            rgba(var(--cv-brand-rgb), 0.08), transparent 55%),
-        radial-gradient(ellipse 800px 600px at 95% 5%,
-            rgba(var(--cv-brand-light-rgb), 0.06), transparent 50%),
-        radial-gradient(ellipse 1000px 800px at 50% 108%,
-            rgba(var(--cv-brand-rgb), 0.05), transparent 60%);
+        radial-gradient(ellipse 1000px 800px at 5% -5%,
+            rgba(var(--cv-brand-rgb), 0.06), transparent 55%),
+        radial-gradient(ellipse 900px 700px at 95% 5%,
+            rgba(var(--cv-brand-light-rgb), 0.05), transparent 50%),
+        radial-gradient(ellipse 1100px 900px at 50% 108%,
+            rgba(var(--cv-brand-rgb), 0.04), transparent 60%);
 }
 [data-bs-theme="dark"] body::before {
     background:
-        radial-gradient(ellipse 900px 700px at 8% -5%,
-            rgba(var(--cv-brand-light-rgb), 0.06), transparent 55%),
-        radial-gradient(ellipse 800px 600px at 95% 5%,
-            rgba(var(--cv-brand-rgb), 0.12), transparent 50%),
-        radial-gradient(ellipse 1000px 800px at 50% 108%,
-            rgba(var(--cv-brand-light-rgb), 0.04), transparent 60%);
+        radial-gradient(ellipse 1000px 800px at 5% -5%,
+            rgba(var(--cv-brand-light-rgb), 0.04), transparent 55%),
+        radial-gradient(ellipse 900px 700px at 95% 5%,
+            rgba(var(--cv-brand-rgb), 0.08), transparent 50%),
+        radial-gradient(ellipse 1100px 900px at 50% 108%,
+            rgba(var(--cv-brand-light-rgb), 0.03), transparent 60%);
 }
 
 /* --------------------------------------------------------------------------
-   3. SIDEBAR — vidro líquido
+   3. SIDEBAR — VIDRO LÍQUIDO SUPER ARRENDONADO
    -------------------------------------------------------------------------- */
 .sidebar-casanova {
     background: var(--glass-bg-strong) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     border-right: 1px solid var(--glass-edge) !important;
+    border-radius: 0 var(--glass-radius-xl) var(--glass-radius-xl) 0 !important;
     box-shadow: var(--glass-shadow-md);
 }
 .sidebar-header-box,
@@ -139,7 +135,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   5. CARDS — vidro com reflexo
+   5. CARDS — VIDRO COM REFLEXO E SUPER ARRENDONADO
    -------------------------------------------------------------------------- */
 .card {
     background: var(--glass-bg) !important;
@@ -153,7 +149,7 @@ body::before {
                 border-color var(--glass-dur-fast) ease;
 }
 .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--glass-shadow-lg) !important;
     border-color: var(--glass-edge-highlight) !important;
 }
@@ -173,7 +169,7 @@ body::before {
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     border: 1px solid var(--glass-edge) !important;
-    border-left-width: 4px !important;
+    border-left-width: 5px !important;
     border-left-style: solid !important;
     border-radius: var(--glass-radius-md) !important;
 }
@@ -183,8 +179,8 @@ body::before {
    -------------------------------------------------------------------------- */
 .table-responsive {
     background: var(--glass-bg-weak) !important;
-    backdrop-filter: blur(20px) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(20px) saturate(var(--glass-sat));
+    backdrop-filter: blur(25px) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(25px) saturate(var(--glass-sat));
     border-radius: var(--glass-radius-md);
     border: 1px solid var(--glass-edge-dark);
 }
@@ -204,7 +200,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   8. BOTÕES — pill shape com spring
+   8. BOTÕES — PILL SHAPE COM SPRING iOS
    -------------------------------------------------------------------------- */
 .btn {
     border-radius: var(--glass-radius-full) !important;
@@ -215,11 +211,11 @@ body::before {
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .btn:hover {
-    transform: translateY(-1px) scale(1.01);
+    transform: translateY(-2px) scale(1.02);
     box-shadow: var(--glass-shadow-sm);
 }
 .btn:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
     transition-duration: 0.08s;
 }
 
@@ -231,11 +227,11 @@ body::before {
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .btn-action:hover {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-2px) scale(1.02);
     box-shadow: var(--glass-shadow-md);
 }
 .btn-action:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
     transition-duration: 0.08s;
 }
 
@@ -247,11 +243,11 @@ body::before {
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .btn-acao:hover {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-2px) scale(1.02);
     box-shadow: var(--glass-shadow-md);
 }
 .btn-acao:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
     transition-duration: 0.08s;
 }
 
@@ -262,20 +258,20 @@ body::before {
                 color var(--glass-dur-fast) ease;
 }
 .btn-row:hover {
-    transform: scale(1.1);
+    transform: scale(1.12);
 }
 .btn-row:active {
-    transform: scale(0.92);
+    transform: scale(0.90);
 }
 
 /* --------------------------------------------------------------------------
-   9. FORMULÁRIOS — vidro com foco suave
+   9. FORMULÁRIOS — VIDRO COM FOCO SUAVE
    -------------------------------------------------------------------------- */
 .form-control,
 .form-select {
     background: var(--glass-bg-weak) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border: 1px solid var(--glass-edge-dark) !important;
     border-radius: var(--glass-radius-sm) !important;
     transition: border-color var(--glass-dur-fast) ease,
@@ -285,7 +281,7 @@ body::before {
 .form-control:focus,
 .form-select:focus {
     background: var(--glass-bg) !important;
-    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.12) !important;
+    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.10) !important;
     border-color: var(--cv-blue) !important;
 }
 
@@ -300,7 +296,7 @@ body::before {
     border: 1px solid var(--glass-edge) !important;
     box-shadow: var(--glass-shadow-xl) !important;
     border-radius: var(--glass-radius-lg) !important;
-    padding: 8px !important;
+    padding: 10px !important;
 }
 .modal-content {
     background: var(--glass-bg-strong) !important;
@@ -311,11 +307,11 @@ body::before {
     border-radius: var(--glass-radius-xl) !important;
     overflow: hidden;
 }
-.modal-backdrop.show { opacity: 0.35; }
+.modal-backdrop.show { opacity: 0.30; }
 .alert {
     background: var(--glass-bg) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-edge) !important;
     border-radius: var(--glass-radius-md) !important;
 }
@@ -325,8 +321,8 @@ body::before {
    -------------------------------------------------------------------------- */
 .pgn {
     background: var(--glass-bg-weak) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--glass-edge) !important;
 }
 .page-link {
@@ -346,7 +342,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   12. MENU DO PERFIL — vidro com entrada spring
+   12. MENU DO PERFIL — VIDRO COM ENTRADA SPRING iOS
    -------------------------------------------------------------------------- */
 .sidebar-bottom-container .dropdown {
     position: relative;
@@ -361,7 +357,7 @@ body::before {
     width: 100%;
     min-width: 0;
     max-width: none;
-    margin: 0 0 8px 0 !important;
+    margin: 0 0 10px 0 !important;
     padding: 0;
     border: 1px solid var(--glass-edge) !important;
     border-radius: var(--glass-radius-lg) !important;
@@ -375,18 +371,18 @@ body::before {
     left: 100% !important;
     bottom: 0 !important;
     width: 280px;
-    margin: 0 0 0 8px !important;
+    margin: 0 0 0 10px !important;
 }
 
 /* --------------------------------------------------------------------------
-   13. ANIMAÇÕES — spring physics
+   13. ANIMAÇÕES — SPRING PHYSICS iOS 2026
    -------------------------------------------------------------------------- */
 .perfil-menu {
     transform-origin: bottom left;
     animation: glassMenuIn var(--glass-dur-slow) var(--glass-spring) both;
 }
 @keyframes glassMenuIn {
-    from { opacity: 0; transform: translateY(16px) scale(0.92); }
+    from { opacity: 0; transform: translateY(20px) scale(0.90); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .sidebar-casanova.sidebar-collapsed .perfil-menu {
@@ -404,7 +400,7 @@ body::before {
 .perfil-menu > li:nth-child(6) { animation-delay: 0.17s; }
 .perfil-menu > li:nth-child(7) { animation-delay: 0.20s; }
 @keyframes glassItemIn {
-    from { opacity: 0; transform: translateX(-8px); }
+    from { opacity: 0; transform: translateX(-10px); }
     to   { opacity: 1; transform: translateX(0); }
 }
 
@@ -413,7 +409,7 @@ body::before {
                 transform var(--glass-dur-fast) var(--glass-spring),
                 color var(--glass-dur-fast) ease;
 }
-.menu-item:hover { transform: translateX(3px); }
+.menu-item:hover { transform: translateX(4px); }
 
 .perfil-item,
 .perfil-tema,
@@ -421,7 +417,7 @@ body::before {
     transition: background-color var(--glass-dur-fast) ease,
                 transform var(--glass-dur-fast) var(--glass-spring);
 }
-.perfil-item:hover { transform: translateX(2px); }
+.perfil-item:hover { transform: translateX(3px); }
 
 .perfil-switch-bolinha {
     transition: transform var(--glass-dur) var(--glass-spring) !important;
@@ -433,14 +429,14 @@ body::before {
                 transform var(--glass-dur-fast) var(--glass-spring) !important;
 }
 .palette-swatch:hover {
-    transform: translateY(-3px) scale(1.08);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px) scale(1.10);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
-.palette-swatch:active { transform: translateY(0) scale(0.95); }
+.palette-swatch:active { transform: translateY(0) scale(0.94); }
 .palette-dot {
     transition: transform var(--glass-dur) var(--glass-spring);
 }
-.palette-swatch.active .palette-dot { transform: scale(1.1); }
+.palette-swatch.active .palette-dot { transform: scale(1.12); }
 
 .home-card {
     transition: transform var(--glass-dur) var(--glass-spring),
@@ -448,7 +444,7 @@ body::before {
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .home-card:hover {
-    transform: translateX(4px) scale(1.01);
+    transform: translateX(5px) scale(1.015);
     box-shadow: var(--glass-shadow-md);
 }
 
@@ -461,13 +457,13 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   14. ENTRADA DAS PÁGINAS — fade suave
+   14. ENTRADA DAS PÁGINAS — FADE SUAVE iOS
    -------------------------------------------------------------------------- */
 .main-content-area > div {
     animation: glassPageIn var(--glass-dur) var(--glass-spring-soft) both;
 }
 @keyframes glassPageIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -503,7 +499,7 @@ body::before {
 }
 
 @media (max-width: 767px) {
-    :root { --glass-blur: 20px; --glass-blur-strong: 30px; }
+    :root { --glass-blur: 25px; --glass-blur-strong: 40px; }
     .card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
