@@ -1,21 +1,20 @@
 /* ==========================================================================
-   LIQUID GLASS — iOS 26 (baseado no arquivo de referência)
+   LIQUID GLASS — iOS 26 (funciona nos temas CLARO e ESCURO)
    ==========================================================================
-   Princípios do arquivo ios_liquid_glass_web_ui.html:
+   Princípios do arquivo ios_liquid_glass_web_ui.html do usuário:
    1. blur(24px) saturate(190%) — desfoque forte
    2. border: 1px solid rgba(255,255,255,0.28) — borda com brilho
    3. box-shadow com inset — profundidade e reflexo
-   4. ::before com radial-gradient — reflexo do mouse nos cards
-   5. transition spring cubic-bezier(0.34, 1.56, 0.64, 1)
-   6. Tema dark/light adaptativo
+   4. transition spring cubic-bezier(0.34, 1.56, 0.64, 1)
    
-   Adaptado para usar variáveis --cv-* do sistema Casanova.
+   Correções:
+   - Removido body::before (estava cobrindo o wallpaper)
+   - Usa color-mix() com var(--cv-surface) para adaptar ao tema
+   - Texto sempre legível em ambos os temas
    ========================================================================== */
 
 :root {
     --glass-blur: 24px;
-    --glass-opacity: 0.18;
-    --glass-border: 0.28;
     --glass-saturate: 190%;
     --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --glass-dur: 0.4s;
@@ -25,24 +24,16 @@
    1. SIDEBAR — painel de vidro
    -------------------------------------------------------------------------- */
 .sidebar-casanova {
-    background: rgba(255, 255, 255, var(--glass-opacity)) !important;
+    background: color-mix(in srgb, var(--cv-surface) 82%, transparent) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 1px solid rgba(255, 255, 255, var(--glass-border)) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.2),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.1);
+        0 8px 32px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
+        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05);
     border-radius: 0 36px 36px 0 !important;
     transition: all var(--glass-dur) var(--glass-spring);
-}
-[data-bs-theme="dark"] .sidebar-casanova {
-    background: rgba(15, 23, 42, var(--glass-opacity)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.45),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5);
 }
 .sidebar-header-box,
 .sidebar-bottom-container {
@@ -50,7 +41,7 @@
     backdrop-filter: none;
 }
 .sidebar-bottom-container {
-    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-top: 1px solid color-mix(in srgb, var(--cv-text) 8%, transparent) !important;
     box-shadow: none !important;
 }
 
@@ -60,24 +51,16 @@
 .card {
     position: relative;
     overflow: hidden;
-    background: rgba(255, 255, 255, var(--glass-opacity)) !important;
+    background: color-mix(in srgb, var(--cv-surface) 85%, transparent) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 1px solid rgba(255, 255, 255, var(--glass-border)) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 10%, transparent) !important;
     border-radius: var(--cv-radius, 24px) !important;
     box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.2),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.1);
+        0 8px 32px 0 rgba(0, 0, 0, 0.12),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.30),
+        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.04);
     transition: all var(--glass-dur) var(--glass-spring);
-}
-[data-bs-theme="dark"] .card {
-    background: rgba(15, 23, 42, var(--glass-opacity)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.45),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Reflexo do mouse nos cards (::before) */
@@ -90,7 +73,7 @@
     height: 200%;
     background: radial-gradient(
         circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(255, 255, 255, 0.25) 0%,
+        rgba(255, 255, 255, 0.20) 0%,
         transparent 50%
     );
     opacity: 0;
@@ -116,42 +99,28 @@
    3. TABELAS — vidro com linhas visíveis
    -------------------------------------------------------------------------- */
 .table-responsive {
-    background: rgba(255, 255, 255, 0.10) !important;
+    background: color-mix(in srgb, var(--cv-surface) 88%, transparent) !important;
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-[data-bs-theme="dark"] .table-responsive {
-    background: rgba(15, 23, 42, 0.40) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid color-mix(in srgb, var(--cv-text) 10%, transparent);
 }
 .table thead th {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.20) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 6%, var(--cv-surface)) !important;
+    border-bottom: 2px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     color: var(--cv-text) !important;
     font-weight: 600;
-}
-[data-bs-theme="dark"] .table thead th {
-    background: rgba(15, 23, 42, 0.50) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
 }
 .table tbody tr {
     background: transparent !important;
     transition: background-color 0.2s ease;
 }
 .table-hover > tbody > tr:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-}
-[data-bs-theme="dark"] .table-hover > tbody > tr:hover {
-    background: rgba(15, 23, 42, 0.60) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 8%, var(--cv-surface)) !important;
 }
 .table tbody td {
-    border-color: rgba(255, 255, 255, 0.10) !important;
+    border-color: color-mix(in srgb, var(--cv-text) 8%, transparent) !important;
     color: var(--cv-text) !important;
-}
-[data-bs-theme="dark"] .table tbody td {
-    border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -165,7 +134,7 @@
 }
 .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 .btn:active {
     transform: scale(0.92);
@@ -181,7 +150,7 @@
 .btn-action:hover,
 .btn-acao:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 .btn-action:active,
 .btn-acao:active {
@@ -200,19 +169,14 @@
    -------------------------------------------------------------------------- */
 .form-control,
 .form-select {
-    background: rgba(255, 255, 255, 0.10) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: color-mix(in srgb, var(--cv-surface) 90%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     border-radius: 14px !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-[data-bs-theme="dark"] .form-control,
-[data-bs-theme="dark"] .form-select {
-    background: rgba(15, 23, 42, 0.40) !important;
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
-}
 .form-control:focus,
 .form-select:focus {
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.20) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
     border-color: #6366f1 !important;
 }
 
@@ -221,96 +185,69 @@
    -------------------------------------------------------------------------- */
 .dropdown-menu,
 .perfil-menu {
-    background: rgba(255, 255, 255, 0.18) !important;
+    background: var(--cv-surface) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.30),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.30);
+        0 12px 40px 0 rgba(0, 0, 0, 0.18),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
     border-radius: 20px !important;
     padding: 8px !important;
 }
-[data-bs-theme="dark"] .dropdown-menu,
-[data-bs-theme="dark"] .perfil-menu {
-    background: rgba(15, 23, 42, 0.85) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 
-        0 16px 48px 0 rgba(0, 0, 0, 0.50),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
-}
 .modal-content {
-    background: rgba(255, 255, 255, 0.18) !important;
+    background: var(--cv-surface) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     box-shadow: 
-        0 16px 48px 0 rgba(0, 0, 0, 0.30),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.30);
+        0 16px 48px 0 rgba(0, 0, 0, 0.20),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
     border-radius: 28px !important;
     overflow: hidden;
 }
-[data-bs-theme="dark"] .modal-content {
-    background: rgba(15, 23, 42, 0.90) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-.modal-backdrop.show { opacity: 0.30; }
+.modal-backdrop.show { opacity: 0.25; }
 .alert {
-    background: rgba(255, 255, 255, 0.18) !important;
+    background: var(--cv-surface) !important;
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     border-radius: 18px !important;
-}
-[data-bs-theme="dark"] .alert {
-    background: rgba(15, 23, 42, 0.85) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 /* --------------------------------------------------------------------------
    7. KPI CARDS
    -------------------------------------------------------------------------- */
 .kpi-card {
-    background: rgba(255, 255, 255, var(--glass-opacity)) !important;
+    background: color-mix(in srgb, var(--cv-surface) 85%, transparent) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 1px solid rgba(255, 255, 255, var(--glass-border)) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 10%, transparent) !important;
     border-left-width: 4px !important;
     border-left-style: solid !important;
     border-radius: 20px !important;
     box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.2),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
-}
-[data-bs-theme="dark"] .kpi-card {
-    background: rgba(15, 23, 42, var(--glass-opacity)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.45),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+        0 8px 32px 0 rgba(0, 0, 0, 0.12),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.30);
 }
 
 /* --------------------------------------------------------------------------
    8. PAGINAÇÃO
    -------------------------------------------------------------------------- */
 .pgn {
-    background: rgba(255, 255, 255, 0.10) !important;
+    background: color-mix(in srgb, var(--cv-surface) 88%, transparent) !important;
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-[data-bs-theme="dark"] .pgn {
-    background: rgba(15, 23, 42, 0.40) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: 1px solid color-mix(in srgb, var(--cv-text) 10%, transparent) !important;
 }
 .page-link {
     background: transparent !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: color-mix(in srgb, var(--cv-text) 10%, transparent) !important;
     border-radius: 9999px !important;
     transition: background-color 0.2s ease, transform 0.2s var(--glass-spring);
 }
 .page-link:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
+    background: color-mix(in srgb, var(--cv-brand-rgb) 8%, var(--cv-surface)) !important;
     transform: translateY(-1px);
 }
 .page-item.active .page-link {
@@ -336,9 +273,9 @@
     max-width: none;
     margin: 0 0 10px 0 !important;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     border-radius: 20px !important;
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.30) !important;
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.18) !important;
     max-height: min(560px, calc(100vh - 90px));
     overflow-y: auto;
     overflow-x: hidden;
@@ -432,13 +369,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   12. REFLEXO DO MOUSE (JavaScript necessário)
-   -------------------------------------------------------------------------- */
-/* O efeito de reflexo do mouse nos cards requer JavaScript para atualizar
-   --mouse-x e --mouse-y. Adicionado no base.html. */
-
-/* --------------------------------------------------------------------------
-   13. FALLBACK + ACESSIBILIDADE
+   12. FALLBACK + ACESSIBILIDADE
    -------------------------------------------------------------------------- */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .sidebar-casanova,
