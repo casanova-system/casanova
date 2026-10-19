@@ -1,14 +1,12 @@
 /* ==========================================================================
-   LIQUID GLASS — Apple iOS 26 (implementação CSS pura)
+   LIQUID GLASS — Apple iOS 26 (CSS puro, sem filtro SVG)
    ==========================================================================
-   Baseado em https://github.com/rdev/liquid-glass-react
-   
-   O efeito Liquid Glass real usa:
-   1. backdrop-filter blur (desfoca o fundo)
-   2. border-image com gradiente (brilho na borda simulando refração)
-   3. box-shadow suave (sombra difusa)
-   4. border-radius: 9999px (pill shape)
-   5. Animações spring (cubic-bezier overshoot)
+   Efeito de vidro líquido usando apenas CSS:
+   - backdrop-filter: blur() para desfocar o fundo
+   - border com gradiente para simular refração na borda
+   - border-radius: 9999px (pill shape)
+   - box-shadow suave e difusa
+   - Animações spring (cubic-bezier overshoot)
    
    Carregado DEPOIS do casanova.css.
    ========================================================================== */
