@@ -1835,5 +1835,20 @@
 
     {% comment %} Paginacao: salto direto e navegacao por teclado {% endcomment %}
     <script src="{% static_v 'js/paginacao.js' %}"></script>
+    
+    {# Reflexo do mouse nos cards de vidro (arquivo de referência: ios_liquid_glass_web_ui.html) #}
+    <script>
+        (function() {
+            document.querySelectorAll('.card').forEach(function(card) {
+                card.addEventListener('mousemove', function(e) {
+                    var rect = card.getBoundingClientRect();
+                    var x = ((e.clientX - rect.left) / rect.width) * 100;
+                    var y = ((e.clientY - rect.top) / rect.height) * 100;
+                    card.style.setProperty('--mouse-x', x + '%');
+                    card.style.setProperty('--mouse-y', y + '%');
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
