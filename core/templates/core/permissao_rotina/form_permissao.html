@@ -6,173 +6,304 @@
         {% include 'core/partials/messages.html' %}
 
         {% url 'lista_permissao' as url_lista %}
-        {% include 'core/partials/page_header.html' with titulo="Configurar Permissões" subtitulo="Defina o nível de acesso e as rotinas liberadas para o usuário." voltar_url=url_lista voltar_texto="Voltar" %}
+        {% include 'core/partials/page_header.html' with titulo="Permissões de Acesso" subtitulo="Escolha quais rotinas este usuário pode acessar. Nada é liberado por padrão." voltar_url=url_lista voltar_texto="Voltar" %}
 
-        <div class="card form-card mb-4">
-            <div class="card-body">
-            <form method="POST">
-                {% csrf_token %}
+        <form method="POST" id="formPermissao">
+            {% csrf_token %}
 
-                <div class="row g-3 mb-4">
-                    <!-- Nível de Acesso -->
-                    <div class="col-md-6">
-                        <label class="form-label">Nível de Acesso <span class="text-danger">*</span></label>
-                        <select name="nivel_acesso" class="form-select">
-                            <option value="DIRETORIA" {% if perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
-                            <option value="GERENCIA" {% if perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
-                            <option value="USUARIO" {% if perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário</option>
-                        </select>
+            {# ===== CABEÇALHO DO USUÁRIO ===== #}
+            <div class="card perm-user-card mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="perm-avatar">
+                            {% if usuario_obj.perfil.foto %}
+                                <img src="{{ usuario_obj.perfil.foto.url }}" alt="{{ usuario_obj.username }}">
+                            {% else %}
+                                <i class="fa-solid fa-user"></i>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="perm-user-nome">
+                                {{ usuario_obj.get_full_name|default:usuario_obj.username }}
+                            </div>
+                            <div class="perm-user-meta">
+                                <span><i class="fa-solid fa-at"></i>{{ usuario_obj.username }}</span>
+                                {% if usuario_obj.email %}<span><i class="fa-solid fa-envelope"></i>{{ usuario_obj.email }}</span>{% endif %}
+                                {% if perfil.setor %}<span><i class="fa-solid fa-building"></i>{{ perfil.get_setor_display }}</span>{% endif %}
+                                {% if usuario_obj.is_superuser %}
+                                    <span class="perm-tag-admin"><i class="fa-solid fa-shield-halved"></i> Superusuário</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="perm-contador">
+                            <div class="perm-contador-num" id="numSelecionadas">0</div>
+                            <div class="perm-contador-lbl">rotinas<br>liberadas</div>
+                        </div>
                     </div>
 
-                    <!-- Setor (somente leitura — alterado no cadastro de usuário) -->
-                    <div class="col-md-6">
-                        <label class="form-label">Setor</label>
-                        <input type="text" class="form-control" value="{{ perfil.get_setor_display|default:'—' }}" disabled>
-                        <div class="form-text">
-                            O setor é definido na rotina de <strong>Cadastro de Usuário</strong>.
+                    {% if usuario_obj.is_superuser %}
+                    <div class="perm-aviso mt-3">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div>
+                            <strong>Este usuário é superusuário.</strong>
+                            Superusuários acessam <strong>todas as rotinas</strong> independente do que
+                            estiver marcado aqui. Para que as permissões abaixo valham de verdade,
+                            desmarque "Superusuário" no cadastro dele.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ===== NÍVEL DE ACESSO ===== #}
+            <div class="card form-card mb-3">
+                <div class="card-header">
+                    <i class="fa-solid fa-layer-group text-primary"></i> Nível de Acesso
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nível</label>
+                            <select name="nivel_acesso" class="form-select">
+                                <option value="USUARIO" {% if perfil.nivel_acesso == 'USUARIO' %}selected{% endif %}>Usuário — acesso às rotinas marcadas</option>
+                                <option value="GERENCIA" {% if perfil.nivel_acesso == 'GERENCIA' %}selected{% endif %}>Gerência</option>
+                                <option value="DIRETORIA" {% if perfil.nivel_acesso == 'DIRETORIA' %}selected{% endif %}>Diretoria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Setor</label>
+                            <input type="text" class="form-control" value="{{ perfil.get_setor_display|default:'—' }}" disabled>
+                            <div class="form-text">Alterado no cadastro do usuário.</div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Permissões -->
-                <div class="mb-4">
-                    <h6 class="fw-bold mb-1">
-                        <i class="fas fa-check-square text-primary me-2"></i> Permissões do Usuário
-                    </h6>
-                    <p class="text-muted small mb-3">
-                        Marque as rotinas, gráficos e relatórios que este usuário poderá acessar.
-                        Usuários novos começam <strong>sem nenhuma permissão</strong>.
+            {# ===== ROTINAS ===== #}
+            <div class="card form-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><i class="fa-solid fa-list-check text-primary"></i> Rotinas Liberadas</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="marcarTodas(true)">
+                            <i class="fa-solid fa-check-double"></i> Marcar todas
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="marcarTodas(false)">
+                            <i class="fa-solid fa-eraser"></i> Limpar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="perm-busca mb-3">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="buscaRotina" class="form-control"
+                               placeholder="Filtrar rotinas pelo nome ou código..."
+                               oninput="filtrarRotinas(this.value)">
+                    </div>
+
+                    {% for grupo in rotinas_por_setor %}
+                        <div class="perm-setor-bloco">
+                            <div class="perm-setor-cabecalho">
+                                <span class="perm-setor-nome" style="--ps: {{ grupo.cor }};">
+                                    <i class="fa-solid {{ grupo.icone }}"></i> {{ grupo.nome }}
+                                </span>
+                                <span class="perm-setor-conta">{{ grupo.rotinas|length }} rotina{{ grupo.rotinas|length|pluralize }}</span>
+                            </div>
+
+                            <div class="perm-grid">
+                                {% for rotina in grupo.rotinas %}
+                                <label class="perm-item" for="rotina_{{ rotina.id }}"
+                                       data-busca="{{ rotina.nome|lower }} {{ rotina.codigo|lower }}">
+                                    <input class="form-check-input" type="checkbox" name="rotinas"
+                                           value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
+                                           {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
+                                    <span class="perm-item-texto">
+                                        <span class="perm-item-codigo">{{ rotina.codigo }}</span>
+                                        <span class="perm-item-nome">{{ rotina.nome }}</span>
+                                    </span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">Nenhuma rotina cadastrada no sistema.</p>
+                    {% endfor %}
+
+                    <p class="perm-vazio" id="permVazio" style="display:none;">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                        Nenhuma rotina corresponde ao filtro.
                     </p>
-
-                    <!-- Seção: Rotinas (agrupadas por setor) -->
-                    <div class="perm-section mb-3">
-                        <h6 class="perm-section-title text-primary">
-                            <i class="fas fa-gears me-2"></i> Rotinas
-                        </h6>
-
-                        <!-- Comercial -->
-                        <div class="perm-setor">
-                            <span class="perm-setor-badge" style="--ps: #0b3882;">
-                                <i class="fas fa-briefcase me-1"></i> Comercial
-                            </span>
-                            <div class="row">
-                                {% for rotina in rotinas_por_categoria.ROTINA.COMERCIAL %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Financeiro -->
-                        <div class="perm-setor">
-                            <span class="perm-setor-badge" style="--ps: #059669;">
-                                <i class="fas fa-coins me-1"></i> Financeiro
-                            </span>
-                            <div class="row">
-                                {% for rotina in rotinas_por_categoria.ROTINA.FINANCEIRO %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Frotas -->
-                        <div class="perm-setor">
-                            <span class="perm-setor-badge" style="--ps: #d97706;">
-                                <i class="fas fa-truck me-1"></i> Frotas
-                            </span>
-                            <div class="row">
-                                {% for rotina in rotinas_por_categoria.ROTINA.FROTAS %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Indústria -->
-                        <div class="perm-setor">
-                            <span class="perm-setor-badge" style="--ps: #7c3aed;">
-                                <i class="fas fa-industry me-1"></i> Indústria
-                            </span>
-                            <div class="row">
-                                {% for rotina in rotinas_por_categoria.ROTINA.INDUSTRIA %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Administrador -->
-                        <div class="perm-setor">
-                            <span class="perm-setor-badge" style="--ps: #dc2626;">
-                                <i class="fas fa-user-shield me-1"></i> Administrador
-                            </span>
-                            <div class="row">
-                                {% for rotina in rotinas_por_categoria.ROTINA.ADMINISTRADOR %}
-                                    <div class="col-md-4 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="rotinas" value="{{ rotina.id }}" id="rotina_{{ rotina.id }}"
-                                                {% if rotina in perfil.rotinas_permitidas.all %}checked{% endif %}>
-                                            <label class="form-check-label" for="rotina_{{ rotina.id }}">
-                                                <span class="text-primary fw-bold">{{ rotina.codigo }}</span> {{ rotina.nome }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted small mb-0 ps-2">Nenhuma rotina neste setor.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <div class="form-actions">
-                    <a href="{% url 'lista_permissao' %}" class="btn btn-outline-secondary px-4">
+                <div class="card-footer perm-footer">
+                    <a href="{% url 'lista_permissao' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Cancelar
                     </a>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save me-1"></i> Salvar Permissões
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-floppy-disk me-1"></i> Salvar Permissões
                     </button>
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
+        </form>
     </div>
 </div>
+
+<style>
+/* ===================== CABEÇALHO DO USUÁRIO ===================== */
+.perm-user-card { border-left: 4px solid var(--cv-blue); }
+.perm-avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    background: rgba(11, 56, 130, .10); color: var(--cv-blue);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; overflow: hidden; flex: 0 0 auto;
+}
+.perm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.perm-user-nome { font-size: 1.15rem; font-weight: 800; line-height: 1.2; }
+.perm-user-meta {
+    display: flex; flex-wrap: wrap; gap: 4px 16px;
+    font-size: .8rem; color: var(--cv-text-muted); margin-top: 4px;
+}
+.perm-user-meta i { opacity: .7; margin-right: 5px; }
+.perm-tag-admin {
+    background: rgba(220, 38, 38, .10); color: #dc2626;
+    font-weight: 700; padding: 1px 9px; border-radius: 999px;
+}
+.min-w-0 { min-width: 0; }
+
+.perm-aviso {
+    display: flex; align-items: flex-start; gap: 9px;
+    background: rgba(217, 119, 6, .08); color: #92400e;
+    border: 1px solid rgba(217, 119, 6, .25);
+    border-radius: 9px; padding: 10px 13px; font-size: .82rem;
+}
+.perm-aviso i { margin-top: 2px; }
+
+.perm-contador {
+    text-align: center; padding: 6px 18px;
+    border-left: 1px solid var(--cv-line); flex: 0 0 auto;
+}
+.perm-contador-num {
+    font-size: 1.8rem; font-weight: 800; color: var(--cv-blue);
+    line-height: 1; font-variant-numeric: tabular-nums;
+}
+.perm-contador-lbl {
+    font-size: .62rem; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--cv-text-muted); font-weight: 700; line-height: 1.25;
+}
+
+/* ===================== BUSCA ===================== */
+.perm-busca { position: relative; max-width: 420px; }
+.perm-busca i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--cv-text-muted); font-size: .85rem; pointer-events: none;
+}
+.perm-busca input { padding-left: 34px; }
+
+/* ===================== SETORES ===================== */
+.perm-setor-bloco { margin-bottom: 20px; }
+.perm-setor-bloco:last-of-type { margin-bottom: 0; }
+.perm-setor-cabecalho {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 6px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--cv-line);
+}
+.perm-setor-nome {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .74rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .7px;
+    color: var(--ps, var(--cv-blue));
+}
+.perm-setor-conta { font-size: .7rem; color: var(--cv-text-muted); font-weight: 600; }
+
+.perm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 6px;
+}
+
+/* ===================== ITEM DE ROTINA ===================== */
+.perm-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 9px;
+    border: 1px solid var(--cv-line);
+    background: var(--cv-surface);
+    cursor: pointer; margin: 0;
+    transition: border-color .15s, background-color .15s;
+}
+.perm-item:hover { border-color: var(--cv-blue); }
+.perm-item:has(input:checked) {
+    border-color: var(--cv-blue);
+    background: rgba(11, 56, 130, .06);
+}
+.perm-item input { flex: 0 0 auto; margin: 0; cursor: pointer; }
+.perm-item-texto { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.perm-item-codigo {
+    font-size: .6rem; font-weight: 800; letter-spacing: .5px;
+    color: var(--cv-text-muted);
+}
+.perm-item-nome {
+    font-size: .82rem; font-weight: 600;
+    white-space: normal; word-break: break-word;
+}
+
+.perm-vazio {
+    text-align: center; color: var(--cv-text-muted);
+    padding: 26px 0; margin: 0; font-size: .88rem;
+}
+.perm-vazio i { display: block; font-size: 1.8rem; opacity: .4; margin-bottom: 7px; }
+
+.perm-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    background: var(--cv-surface); border-top: 1px solid var(--cv-line);
+}
+</style>
+
+<script>
+// Contador de rotinas marcadas
+function atualizarContador() {
+    const n = document.querySelectorAll('input[name="rotinas"]:checked').length;
+    const el = document.getElementById('numSelecionadas');
+    if (el) el.textContent = n;
+}
+
+// Marcar / limpar todas (respeita o filtro ativo)
+function marcarTodas(valor) {
+    document.querySelectorAll('input[name="rotinas"]').forEach(function (cb) {
+        const item = cb.closest('.perm-item');
+        if (!item || item.style.display === 'none') return;
+        cb.checked = valor;
+    });
+    atualizarContador();
+}
+
+// Filtro de rotinas
+function filtrarRotinas(termo) {
+    termo = (termo || '').trim().toLowerCase();
+    let totalVisivel = 0;
+
+    document.querySelectorAll('.perm-setor-bloco').forEach(function (bloco) {
+        let visiveisNoBloco = 0;
+        bloco.querySelectorAll('.perm-item').forEach(function (item) {
+            const alvo = item.getAttribute('data-busca') || '';
+            const mostra = !termo || alvo.indexOf(termo) !== -1;
+            item.style.display = mostra ? '' : 'none';
+            if (mostra) visiveisNoBloco++;
+        });
+        bloco.style.display = visiveisNoBloco > 0 ? '' : 'none';
+        totalVisivel += visiveisNoBloco;
+    });
+
+    const vazio = document.getElementById('permVazio');
+    if (vazio) vazio.style.display = totalVisivel === 0 ? '' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('input[name="rotinas"]').forEach(function (cb) {
+        cb.addEventListener('change', atualizarContador);
+    });
+    atualizarContador();
+});
+</script>
 {% endblock %}

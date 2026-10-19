@@ -20,33 +20,41 @@ def _setores_producao():
 @login_required(login_url='login')
 @requer_rotina('lista_usuarios')
 def lista_usuarios(request):
-    query = request.GET.get('q', '')
-    ordenacao = request.GET.get('ordenar', 'recentes')
-    
-    # Como o acesso agora é exclusivo para administração, tratamos a listagem global por padrão
-    usuarios = User.objects.all()
-    
-    # Aplica o filtro de busca textual se houver termo digitado
+    """Lista os usuários do sistema com filtros e KPIs."""
+    query = request.GET.get('q', '').strip()
+    ordenacao = request.GET.get('ordenar', 'recentes').strip()
+    setor_atual = request.GET.get('setor', '').strip()
+    situacao = request.GET.get('situacao', '').strip()
+
+    usuarios = User.objects.select_related('perfil').prefetch_related(
+        'perfil__rotinas_permitidas').all()
+
     if query:
         usuarios = usuarios.filter(
-            Q(username__icontains=query) | 
-            Q(email__icontains=query) |
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query)
+            Q(username__icontains=query)
+            | Q(email__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(perfil__cpf__icontains=query)
         )
-        
-    # Mapeamento das opções de ordenação para a listagem
+
+    if setor_atual:
+        usuarios = usuarios.filter(perfil__setor=setor_atual)
+
+    if situacao == 'ativos':
+        usuarios = usuarios.filter(is_active=True)
+    elif situacao == 'inativos':
+        usuarios = usuarios.filter(is_active=False)
+
     opcoes_ordenacao = {
         'recentes': '-date_joined',
         'antigos': 'date_joined',
-        'nome_asc': 'username',
-        'nome_desc': '-username',
+        'nome_asc': 'first_name',
+        'nome_desc': '-first_name',
         'id_asc': 'id',
         'id_desc': '-id',
     }
-    
-    campo_ordenacao = opcoes_ordenacao.get(ordenacao, '-date_joined')
-    usuarios = usuarios.order_by(campo_ordenacao)
+    usuarios = usuarios.order_by(opcoes_ordenacao.get(ordenacao, 'first_name'))
 
     paginator = Paginator(usuarios, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -54,13 +62,27 @@ def lista_usuarios(request):
     params = request.GET.copy()
     params.pop('page', None)
     querystring = params.urlencode()
-        
+
+    # KPIs do sistema inteiro (nao do filtro): sao o retrato geral
+    sem_permissao = PerfilUsuario.objects.filter(
+        rotinas_permitidas__isnull=True).exclude(
+        user__is_superuser=True).count()
+
     context = {
-        "usuarios": page_obj,
-        "page_obj": page_obj,
-        "querystring": querystring,
-        "query": query,
-        "ordenacao_atual": ordenacao,
+        'usuarios': page_obj,
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'query': query,
+        'ordenacao_atual': ordenacao,
+        'setor_atual': setor_atual,
+        'situacao': situacao,
+        'setores': PerfilUsuario.SETOR_CHOICES,
+        'kpi': {
+            'total': User.objects.count(),
+            'ativos': User.objects.filter(is_active=True).count(),
+            'inativos': User.objects.filter(is_active=False).count(),
+            'sem_permissao': sem_permissao,
+        },
     }
     return render(request, "core/usuarios/lista_usuarios.html", context)
 

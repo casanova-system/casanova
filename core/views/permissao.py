@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from core.models import PerfilUsuario, Rotina, garantir_rotinas_padrao
@@ -47,8 +47,10 @@ def requer_rotina(url_name):
 def lista_permissao(request):
     """Lista todos os usuários para gerenciamento de permissões."""
     garantir_rotinas_padrao()
-    query = request.GET.get('q', '')
-    ordenar = request.GET.get('ordenar', '')
+    query = request.GET.get('q', '').strip()
+    ordenar = request.GET.get('ordenar', '').strip()
+    acesso = request.GET.get('acesso', '').strip()
+    setor_atual = request.GET.get('setor', '').strip()
 
     usuarios = User.objects.select_related('perfil').prefetch_related(
         'perfil__rotinas_permitidas'
@@ -59,8 +61,22 @@ def lista_permissao(request):
             Q(username__icontains=query)
             | Q(first_name__icontains=query)
             | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
             | Q(perfil__setor__icontains=query)
         )
+
+    # Filtro de acesso: quem esta sem rotina e o que mais importa ver.
+    if acesso == 'sem':
+        usuarios = usuarios.filter(is_superuser=False).annotate(
+            n_rotinas=Count('perfil__rotinas_permitidas')).filter(n_rotinas=0)
+    elif acesso == 'com':
+        usuarios = usuarios.filter(is_superuser=False).annotate(
+            n_rotinas=Count('perfil__rotinas_permitidas')).filter(n_rotinas__gt=0)
+    elif acesso == 'super':
+        usuarios = usuarios.filter(is_superuser=True)
+
+    if setor_atual:
+        usuarios = usuarios.filter(perfil__setor=setor_atual)
 
     mapa_ordenacao = {
         'recentes': '-date_joined',
@@ -70,7 +86,7 @@ def lista_permissao(request):
         'id_asc': 'id',
         'id_desc': '-id',
     }
-    usuarios = usuarios.order_by(mapa_ordenacao.get(ordenar, '-date_joined'))
+    usuarios = usuarios.order_by(mapa_ordenacao.get(ordenar, 'first_name'))
 
     paginator = Paginator(usuarios, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -79,12 +95,30 @@ def lista_permissao(request):
     params.pop('page', None)
     querystring = params.urlencode()
 
+    # KPIs sobre o conjunto INTEIRO (nao o filtrado): sao o retrato do sistema
+    from core.models import PerfilUsuario as _PU
+    total = User.objects.count()
+    superusers = User.objects.filter(is_superuser=True).count()
+    com_rotina = _PU.objects.filter(
+        rotinas_permitidas__isnull=False).distinct().count()
+
     context = {
         'usuarios': page_obj,
         'page_obj': page_obj,
         'querystring': querystring,
         'query': query,
         'ordenacao_atual': ordenar,
+        'acesso': acesso,
+        'setor_atual': setor_atual,
+        'setores': PerfilUsuario.SETOR_CHOICES,
+        'kpi': {
+            'total': total,
+            'comuns': total - superusers,
+            'superusers': superusers,
+            'sem_rotina': total - com_rotina,
+            'com_rotina': com_rotina,
+            'total_rotinas': Rotina.objects.count(),
+        },
     }
     return render(request, 'core/permissao_rotina/lista_permissao.html', context)
 
@@ -114,24 +148,31 @@ def form_permissao(request, user_id):
         )
         return redirect('lista_permissao')
 
-    # Agrupa as rotinas por categoria e, dentro de cada uma, por setor
-    def agrupar_por_setor(queryset):
-        return {
-            'COMERCIAL': queryset.filter(setor='COMERCIAL'),
-            'FINANCEIRO': queryset.filter(setor='FINANCEIRO'),
-            'FROTAS': queryset.filter(setor='FROTAS'),
-            'INDUSTRIA': queryset.filter(setor='INDUSTRIA'),
-            'ADMINISTRADOR': queryset.filter(setor='ADMINISTRADOR'),
-        }
+    # Cada setor vira um bloco com cor e icone proprios. A ordem e fixa
+    # (nao alfabetica) para as areas mais usadas aparecerem primeiro.
+    SETORES = [
+        ('INDUSTRIA', 'Indústria', 'fa-industry', '#7c3aed'),
+        ('COMERCIAL', 'Comercial', 'fa-briefcase', '#0b3882'),
+        ('FINANCEIRO', 'Financeiro', 'fa-coins', '#059669'),
+        ('FROTAS', 'Frotas', 'fa-truck', '#d97706'),
+        ('ADMINISTRADOR', 'Administrador', 'fa-user-shield', '#dc2626'),
+    ]
 
-    rotinas_por_categoria = {
-        'ROTINA': agrupar_por_setor(todas_rotinas.filter(categoria='ROTINA')),
-    }
+    rotinas_por_setor = []
+    for codigo, nome, icone, cor in SETORES:
+        do_setor = list(todas_rotinas.filter(setor=codigo))
+        if do_setor:
+            rotinas_por_setor.append({
+                'nome': nome,
+                'icone': icone,
+                'cor': cor,
+                'rotinas': do_setor,
+            })
 
     context = {
         'usuario_obj': usuario_obj,
         'perfil': perfil,
         'todas_rotinas': todas_rotinas,
-        'rotinas_por_categoria': rotinas_por_categoria,
+        'rotinas_por_setor': rotinas_por_setor,
     }
     return render(request, 'core/permissao_rotina/form_permissao.html', context)

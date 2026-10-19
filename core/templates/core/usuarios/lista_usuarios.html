@@ -2,176 +2,256 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: visible;">
+<div class="container-fluid px-4 py-3">
 
     {% include 'core/partials/messages.html' %}
 
     {% url 'criar_usuario' as url_novo %}
     {% url 'menu_principal' as url_inicio %}
-    {% include 'core/partials/page_header.html' with titulo="Gerenciamento de Usuários" subtitulo="Cadastre e gerencie os usuários com acesso ao sistema." acao_url=url_novo acao_texto="Novo Usuário" acao_icone="fa-plus" voltar_url=url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Usuários do Sistema" subtitulo="Cadastro e dados de acesso. As permissões de rotina ficam em PESSOAS → Permissões de Acesso." acao_url=url_novo acao_texto="Novo Usuário" acao_icone="fa-plus" voltar_url=url_inicio %}
 
-    <!-- Tabela de Usuários com a Barra de Busca e Menu de Ordenação Integrados -->
-    <!-- Filtros -->
-    <div class="filtros-bar">
-        <form method="GET" action="" class="filtros-bar-form">
-            {% if ordenacao_atual %}
-                <input type="hidden" name="ordenar" value="{{ ordenacao_atual }}">
-            {% endif %}
-            <div class="filtros-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" name="q" value="{{ query }}" placeholder="Buscar por usuário ou e-mail...">
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-magnifying-glass"></i> Localizar
-            </button>
-            <a href="{% url 'lista_usuarios' %}" class="btn btn-limpar">
-                <i class="fa-solid fa-rotate-left"></i> Limpar
-            </a>
-        </form>
+    {# ===== KPIs ===== %}
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Total</div>
+                <div class="kpi-value">{{ kpi.total }}</div>
+                <div class="kpi-sub">usuários cadastrados</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card kpi-verde"><div class="card-body py-3">
+                <div class="kpi-label">Ativos</div>
+                <div class="kpi-value">{{ kpi.ativos }}</div>
+                <div class="kpi-sub">podem fazer login</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card kpi-vermelho"><div class="card-body py-3">
+                <div class="kpi-label">Inativos</div>
+                <div class="kpi-value">{{ kpi.inativos }}</div>
+                <div class="kpi-sub">login bloqueado</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm border-0 kpi-card"><div class="card-body py-3">
+                <div class="kpi-label">Sem permissão</div>
+                <div class="kpi-value">{{ kpi.sem_permissao }}</div>
+                <div class="kpi-sub">nenhuma rotina liberada</div>
+            </div></div>
+        </div>
     </div>
 
-    <div class="card shadow-lg list-card">
-        <div class="card-header list-card-header">
-            <h5 class="list-card-title"><i class="fas fa-users me-2 text-primary"></i> Usuários Cadastrados</h5>
+    {# ===== FILTROS ===== %}
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-3">
+            <form method="GET" action="" class="row g-2 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label small fw-semibold mb-1">Buscar</label>
+                    <input type="text" name="q" value="{{ query }}" class="form-control"
+                           placeholder="Usuário, nome, e-mail ou CPF...">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Setor</label>
+                    <select name="setor" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, nome in setores %}<option value="{{ valor }}" {% if setor_atual == valor %}selected{% endif %}>{{ nome }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Situação</label>
+                    <select name="situacao" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="ativos" {% if situacao == 'ativos' %}selected{% endif %}>Ativos</option>
+                        <option value="inativos" {% if situacao == 'inativos' %}selected{% endif %}>Inativos</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary flex-fill" title="Limpar"><i class="fa-solid fa-rotate-left"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 px-3 py-1.5 text-nowrap fw-semibold" type="button" id="dropdownOrdenacao" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
-                    <i class="fas fa-sort me-1"></i> Ordenar
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark shadow py-2" aria-labelledby="dropdownOrdenacao" style="width: 230px;">
-                    <li><h6 class="dropdown-header text-muted fs-7 fw-bold">ORDENAR POR</h6></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'recentes' %}active{% endif %}" href="?ordenar=recentes&q={{ query }}"><i class="fas fa-history me-2"></i> Mais Recentes</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'antigos' %}active{% endif %}" href="?ordenar=antigos&q={{ query }}"><i class="fas fa-clock me-2"></i> Mais Antigos</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'nome_asc' %}active{% endif %}" href="?ordenar=nome_asc&q={{ query }}"><i class="fas fa-sort-alpha-down me-2"></i> Nome de Usuário (A-Z)</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'nome_desc' %}active{% endif %}" href="?ordenar=nome_desc&q={{ query }}"><i class="fas fa-sort-alpha-up me-2"></i> Nome de Usuário (Z-A)</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'id_asc' %}active{% endif %}" href="?ordenar=id_asc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Crescente)</a></li>
-                    <li><a class="dropdown-item {% if ordenacao_atual == 'id_desc' %}active{% endif %}" href="?ordenar=id_desc&q={{ query }}"><i class="fas fa-hashtag me-2"></i> Código (Decrescente)</a></li>
-                </ul>
-            </div>
+    {# ===== TABELA ===== %}
+    <div class="card shadow-sm border-0">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="fw-bold"><i class="fa-solid fa-users text-primary me-2"></i>Usuários Cadastrados</span>
+            <span class="text-muted small">{{ page_obj.paginator.count }} usuário{{ page_obj.paginator.count|pluralize }}</span>
         </div>
 
-        <div class="card-body list-card-body">
-            <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
-                
-<div class="d-flex justify-content-end mb-2">
-    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
-        <i class="fa-solid fa-expand"></i> Largura automática
-    </button>
-</div>
-<table data-tabela-auto class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaUsuarios">
-                    <colgroup>
-                        <col style="width: 70px;">
-                        <col style="width: 160px;">
-                        <col style="width: 220px;">
-                        <col style="width: 240px;">
-                        <col style="width: 140px;">
-                        <col style="width: 140px;">
-                        <col style="width: 130px;">
-                        <col style="width: 160px;">
-                        <col style="width: 150px;">
-                    </colgroup>
-                    <thead class="table-light sticky-top">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                {% include 'core/partials/tabela_largura.html' %}
+                <table data-tabela-auto class="table table-hover align-middle mb-0">
+                    <thead>
                         <tr>
-                            <th class="ps-3">ID<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Nome de Usuário<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Nome Completo<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>E-mail<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Setor<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Nível de Acesso<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Nascimento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Data de Cadastro<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="ps-3">Usuário</th>
+                            <th>Contato</th>
+                            <th>Setor</th>
+                            <th>Nível</th>
+                            <th class="text-center">Rotinas</th>
+                            <th>Situação</th>
                             <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for u in usuarios %}
+                    {% for u in usuarios %}
                         <tr>
-                            <td class="ps-3 fw-bold text-muted">#{{ u.id }}</td>
-                            <td class="fw-semibold">{{ u.username }}</td>
-                            <td>{{ u.get_full_name|default:"Não informado" }}</td>
-                            <td>{{ u.email|default:"Não informado" }}</td>
-                            <td>{{ u.perfil.setor|default:"Não informado" }}</td>
-                            <td>{{ u.perfil.nivel_acesso|default:"Não informado" }}</td>
-                            <td>{{ u.perfil.data_nascimento|date:"d/m/Y"|default:"Não informada" }}</td>
-                            <td>{{ u.date_joined|date:"d/m/Y H:i" }}</td>
-                            
+                            <td class="ps-3">
+                                <div class="usr-linha">
+                                    <div class="usr-avatar">
+                                        {% if u.perfil.foto %}
+                                            <img src="{{ u.perfil.foto.url }}" alt="">
+                                        {% else %}
+                                            <i class="fa-solid fa-user"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="fw-semibold">
+                                            {{ u.get_full_name|default:u.username }}
+                                            {% if u.is_superuser %}
+                                                <span class="usr-tag-super" title="Acessa todas as rotinas, ignora as permissões"><i class="fa-solid fa-shield-halved"></i> Super</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted small">
+                                            {{ u.username }}
+                                            {% if u.perfil.cpf %}<span class="ms-2">CPF {{ u.perfil.cpf }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="small">
+                                {% if u.email %}<div>{{ u.email }}</div>{% else %}<span class="text-muted">—</span>{% endif %}
+                                {% if u.perfil.data_nascimento %}
+                                    <div class="text-muted" style="font-size:.72rem;">Nasc. {{ u.perfil.data_nascimento|date:"d/m/Y" }}</div>
+                                {% endif %}
+                            </td>
+
+                            <td class="small">{{ u.perfil.get_setor_display|default:"—" }}</td>
+
+                            <td>
+                                <span class="usr-nivel usr-nivel-{{ u.perfil.nivel_acesso|lower|default:'usuario' }}">
+                                    {{ u.perfil.get_nivel_acesso_display|default:"Usuário" }}
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                {% with n=u.perfil.rotinas_permitidas.count %}
+                                {% if u.is_superuser %}
+                                    <span class="usr-conta usr-conta-tudo" title="Superusuário acessa todas as rotinas">todas</span>
+                                {% elif n %}
+                                    <span class="usr-conta usr-conta-ok" title="{{ n }} rotina(s) liberada(s)">{{ n }}</span>
+                                {% else %}
+                                    <span class="usr-conta usr-conta-zero" title="Nenhuma rotina liberada">0</span>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="usr-status usr-status-ok"><i class="fa-solid fa-circle-check"></i> Ativo</span>
+                                {% else %}
+                                    <span class="usr-status usr-status-off"><i class="fa-solid fa-circle-xmark"></i> Inativo</span>
+                                {% endif %}
+                            </td>
+
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <a href="{% url 'detalhe_usuario' u.id %}" class="btn-row btn-row-view" title="Visualizar"><i class="fas fa-eye"></i></a>
+                                    <a href="{% url 'form_permissao' u.id %}" class="btn-row btn-row-view" title="Permissões"><i class="fas fa-key"></i></a>
                                     <a href="{% url 'editar_usuario' u.id %}" class="btn-row btn-row-edit" title="Editar"><i class="fas fa-pen-to-square"></i></a>
-                                    <button type="button" class="btn-row btn-row-delete" title="Excluir" onclick="abrirModalExclusao('{{ u.id }}', '{{ u.username }}')"><i class="fas fa-trash-alt"></i></button>
+                                    <button type="button" class="btn-row btn-row-delete" title="Excluir"
+                                            onclick="abrirModalExclusao('{{ u.id }}', '{{ u.username|escapejs }}')"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </td>
                         </tr>
-                        {% empty %}
+                    {% empty %}
                         <tr>
-                            <td colspan="9" class="p-0">
-                                {% url 'criar_usuario' as url_novo %}
-                                {% url 'lista_usuarios' as url_lista %}
-                                {% include 'core/partials/empty_state.html' with icone="fa-users" busca=query titulo_vazio="Nenhum usuário cadastrado" texto_vazio="Cadastre o primeiro usuário para liberar o acesso ao sistema." acao_url=url_novo acao_texto="Novo Usuário" limpar_url=url_lista %}
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-users fs-1 d-block mb-2 opacity-50"></i>
+                                Nenhum usuário encontrado com esse filtro.
+                                {% if not query and not setor_atual %}
+                                    <br><a href="{% url 'criar_usuario' %}" class="btn-action btn-action-primary mt-3">
+                                        <i class="fa-solid fa-plus"></i> Cadastrar o primeiro usuário
+                                    </a>
+                                {% endif %}
                             </td>
                         </tr>
-                        {% endfor %}
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
-            {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-transparent">
+            <nav><ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&laquo;</a></li>{% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&raquo;</a></li>{% endif %}
+            </ul></nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- MODAL DE EXCLUSÃO PADRONIZADO -->
 {% include 'core/partials/modal_confirm.html' with modal_id="modalExcluir" titulo="Confirmar Exclusão" mensagem="Tem certeza que deseja excluir este usuário? Esta ação não poderá ser desfeita." %}
 
-{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaUsuarios" storage_key="casanova_usuarios_larguras" %}
-
-<script>
-    function abrirModalExclusao(id, nome) {
-        document.getElementById('modalExcluirConfirmar').href = "{% url 'excluir_usuario' 0 %}".replace('0', id);
-        new bootstrap.Modal(document.getElementById('modalExcluir')).show();
-    }
-</script>
-{% endblock %}
 <style>
-/* Tabela: largura automática sem cortar conteúdo */
-[data-tabela-auto] {
-    table-layout: auto;
-    width: 100%;
+.kpi-card { border-left: 4px solid var(--cv-blue); }
+.kpi-card.kpi-verde { border-left-color: #16a34a; }
+.kpi-card.kpi-vermelho { border-left-color: #dc2626; }
+.kpi-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--cv-text-muted); }
+.kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--cv-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-sub { font-size: .72rem; color: var(--cv-text-muted); margin-top: 2px; }
+
+.min-w-0 { min-width: 0; }
+
+.usr-linha { display: flex; align-items: center; gap: 10px; }
+.usr-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(11, 56, 130, .10); color: var(--cv-blue);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; overflow: hidden; flex: 0 0 auto;
 }
-[data-tabela-auto] td,
-[data-tabela-auto] th {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+.usr-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.usr-tag-super {
+    background: rgba(220, 38, 38, .10); color: #dc2626;
+    font-size: .6rem; font-weight: 800; letter-spacing: .3px;
+    padding: 1px 7px; border-radius: 999px; margin-left: 5px;
+    text-transform: uppercase; vertical-align: middle;
 }
-[data-tabela-auto].largura-fixa {
-    table-layout: fixed;
+
+.usr-nivel {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
 }
-[data-tabela-auto].largura-fixa td,
-[data-tabela-auto].largura-fixa th {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
+.usr-nivel-diretoria { background: rgba(124, 58, 237, .12); color: #7c3aed; }
+.usr-nivel-gerencia  { background: rgba(2, 132, 199, .12); color: #0284c7; }
+.usr-nivel-usuario   { background: rgba(148, 163, 184, .18); color: #475569; }
+
+.usr-conta {
+    display: inline-block; min-width: 34px;
+    font-size: .8rem; font-weight: 800;
+    padding: 3px 9px; border-radius: 999px;
+    font-variant-numeric: tabular-nums;
 }
+.usr-conta-zero { background: rgba(220, 38, 38, .12); color: #dc2626; }
+.usr-conta-ok   { background: rgba(22, 163, 74, .12); color: #16a34a; }
+.usr-conta-tudo { background: rgba(220, 38, 38, .12); color: #dc2626; font-size: .66rem; text-transform: uppercase; letter-spacing: .3px; }
+
+.usr-status { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; }
+.usr-status-ok  { color: #16a34a; }
+.usr-status-off { color: #94a3b8; }
 </style>
 
-
 <script>
-function alternarLargura(btn) {
-    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
-    if (!tabela) return;
-    tabela.classList.toggle('largura-fixa');
-    const icone = btn.querySelector('i');
-    const texto = btn.querySelector('span') || btn;
-    if (tabela.classList.contains('largura-fixa')) {
-        icone.className = 'fa-solid fa-compress';
-        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
-    } else {
-        icone.className = 'fa-solid fa-expand';
-        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
-    }
+function abrirModalExclusao(id, nome) {
+    document.getElementById('modalExcluirConfirmar').href = "{% url 'excluir_usuario' 0 %}".replace('0', id);
+    new bootstrap.Modal(document.getElementById('modalExcluir')).show();
 }
 </script>
-
+{% endblock %}

@@ -58,11 +58,7 @@
         <div class="card-body list-card-body">
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
                 
-<div class="d-flex justify-content-end mb-2">
-    <button class="btn btn-sm btn-outline-secondary" onclick="alternarLargura(this)" title="Alternar largura da tabela">
-        <i class="fa-solid fa-expand"></i> Largura automática
-    </button>
-</div>
+{% include 'core/partials/tabela_largura.html' %}
 <table data-tabela-auto class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaFrete">
                     <colgroup>
                         <col style="width: 120px;">
@@ -161,44 +157,3 @@
 
 {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaFrete" storage_key="casanova_frete_larguras" %}
 {% endblock %}
-<style>
-/* Tabela: largura automática sem cortar conteúdo */
-[data-tabela-auto] {
-    table-layout: auto;
-    width: 100%;
-}
-[data-tabela-auto] td,
-[data-tabela-auto] th {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-}
-[data-tabela-auto].largura-fixa {
-    table-layout: fixed;
-}
-[data-tabela-auto].largura-fixa td,
-[data-tabela-auto].largura-fixa th {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-}
-</style>
-
-
-<script>
-function alternarLargura(btn) {
-    const tabela = btn.closest('div').nextElementSibling?.querySelector('table');
-    if (!tabela) return;
-    tabela.classList.toggle('largura-fixa');
-    const icone = btn.querySelector('i');
-    const texto = btn.querySelector('span') || btn;
-    if (tabela.classList.contains('largura-fixa')) {
-        icone.className = 'fa-solid fa-compress';
-        btn.innerHTML = '<i class="fa-solid fa-compress"></i> Largura fixa';
-    } else {
-        icone.className = 'fa-solid fa-expand';
-        btn.innerHTML = '<i class="fa-solid fa-expand"></i> Largura automática';
-    }
-}
-</script>
-
