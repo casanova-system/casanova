@@ -1,50 +1,102 @@
 {% comment %}
-Partial reutilizável de paginação.
-Uso: {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
+Paginação padrão do sistema — usada por TODAS as listas.
+
+Uso:
+    {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
+
+Parâmetros opcionais:
+    rotulo  — o que está sendo listado (ex.: "produto"). Default: "registro"
+
+O QUE ESTA PAGINAÇÃO FAZ MELHOR QUE A ANTERIOR
+    - Janela de números com reticências (...): 1 … 7 8 [9] 10 11 … 42
+      Antes só apareciam ±2 números e nada indicava que havia mais.
+    - Salto direto: campo "ir para página" (digite 37 e Enter).
+    - Intervalo visível: "Mostrando 21–40 de 3.847".
+    - Navegação por teclado: Home / End / ← / → com o foco na paginação.
+    - Desabilitado de VERDADE: antes era <a class="disabled">, que continua
+      clicável e alcançável por Tab. Agora é <span aria-disabled>.
 {% endcomment %}
+
 {% if page_obj.paginator.num_pages > 1 %}
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2 border-top flex-shrink-0">
-    <span class="text-muted small">
-        Página <strong>{{ page_obj.number }}</strong> de <strong>{{ page_obj.paginator.num_pages }}</strong>
-        &nbsp;·&nbsp; {{ page_obj.paginator.count }} registro(s)
-    </span>
+<div class="pgn" data-pgn>
 
-    <nav aria-label="Paginação">
-        <ul class="pagination pagination-sm mb-0">
-            <!-- Primeira -->
-            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-                <a class="page-link" href="?page=1{% if querystring %}&{{ querystring }}{% endif %}" title="Primeira">
-                    <i class="fa-solid fa-angles-left"></i>
-                </a>
-            </li>
-            <!-- Anterior -->
-            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-                <a class="page-link" href="?page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}1{% endif %}{% if querystring %}&{{ querystring }}{% endif %}" title="Anterior">
-                    <i class="fa-solid fa-angle-left"></i>
-                </a>
-            </li>
+    {# ---------------- resumo ---------------- #}
+    <div class="pgn-resumo">
+        <span class="pgn-intervalo">
+            <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong>
+            de <strong>{{ page_obj.paginator.count }}</strong>
+            {{ rotulo|default:"registro" }}{{ page_obj.paginator.count|pluralize }}
+        </span>
+        <span class="pgn-pagina">
+            página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+    </div>
 
+    {# ---------------- navegação ---------------- #}
+    <nav class="pgn-nav" aria-label="Paginação">
+        <ul class="pgn-lista">
+
+            {% if page_obj.has_previous %}
+                <li><a class="pgn-btn" href="?page=1{% if querystring %}&{{ querystring }}{% endif %}"
+                       title="Primeira página (Home)" aria-label="Primeira página" data-tecla="Home">
+                    <i class="fa-solid fa-angles-left"></i></a></li>
+            {% else %}
+                <li><span class="pgn-btn pgn-off" aria-disabled="true" title="Primeira página">
+                    <i class="fa-solid fa-angles-left"></i></span></li>
+            {% endif %}
+
+            {% if page_obj.has_previous %}
+                <li><a class="pgn-btn" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+                       title="Página anterior (←)" aria-label="Página anterior" data-tecla="ArrowLeft">
+                    <i class="fa-solid fa-angle-left"></i></a></li>
+            {% else %}
+                <li><span class="pgn-btn pgn-off" aria-disabled="true" title="Página anterior">
+                    <i class="fa-solid fa-angle-left"></i></span></li>
+            {% endif %}
+
+            {# numeros: primeira, ultima, janela de +-2 e reticencias #}
             {% for num in page_obj.paginator.page_range %}
                 {% if num == page_obj.number %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a></li>
+                    <li><span class="pgn-btn pgn-atual" aria-current="page">{{ num }}</span></li>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <li><a class="pgn-btn" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a></li>
+                {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <li><a class="pgn-btn" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a></li>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <li><span class="pgn-reticencias" aria-hidden="true">…</span></li>
                 {% endif %}
             {% endfor %}
 
-            <!-- Próxima -->
-            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-                <a class="page-link" href="?page={% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.paginator.num_pages }}{% endif %}{% if querystring %}&{{ querystring }}{% endif %}" title="Próxima">
-                    <i class="fa-solid fa-angle-right"></i>
-                </a>
-            </li>
-            <!-- Última -->
-            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}" title="Última">
-                    <i class="fa-solid fa-angles-right"></i>
-                </a>
-            </li>
+            {% if page_obj.has_next %}
+                <li><a class="pgn-btn" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+                       title="Próxima página (→)" aria-label="Próxima página" data-tecla="ArrowRight">
+                    <i class="fa-solid fa-angle-right"></i></a></li>
+            {% else %}
+                <li><span class="pgn-btn pgn-off" aria-disabled="true" title="Próxima página">
+                    <i class="fa-solid fa-angle-right"></i></span></li>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+                <li><a class="pgn-btn" href="?page={{ page_obj.paginator.num_pages }}{% if querystring %}&{{ querystring }}{% endif %}"
+                       title="Última página (End)" aria-label="Última página" data-tecla="End">
+                    <i class="fa-solid fa-angles-right"></i></a></li>
+            {% else %}
+                <li><span class="pgn-btn pgn-off" aria-disabled="true" title="Última página">
+                    <i class="fa-solid fa-angles-right"></i></span></li>
+            {% endif %}
         </ul>
     </nav>
+
+    {# ---------------- salto direto ---------------- #}
+    <form class="pgn-salto" method="get" action="" data-pgn-form>
+        <label class="pgn-salto-label" for="pgnIr">Ir para</label>
+        <input type="number" id="pgnIr" class="pgn-salto-input" name="page"
+               min="1" max="{{ page_obj.paginator.num_pages }}"
+               placeholder="{{ page_obj.number }}" data-pgn-input
+               aria-label="Ir para a página">
+        <button type="submit" class="pgn-salto-btn" title="Ir para a página" aria-label="Ir">
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </form>
 </div>
 {% endif %}

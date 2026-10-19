@@ -2351,3 +2351,180 @@ body.mobile-menu-open {
         animation: none !important;
     }
 }
+
+
+/* ==========================================================================
+   PAGINACAO (componente .pgn)
+   ==========================================================================
+   Substitui o uso de .pagination do Bootstrap. Motivos:
+     - os botoes desabilitados do Bootstrap sao <a class="disabled">, que
+       continuam clicaveis e alcancaveis por Tab;
+     - a janela de numeros e fixa em +-2, sem reticencias;
+     - o layout quebra em telas estreitas.
+   ========================================================================== */
+
+.pgn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--cv-line);
+    background: var(--cv-surface);
+}
+
+/* ---------------- resumo ---------------- */
+.pgn-resumo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: .76rem;
+    color: var(--cv-text-muted);
+    min-width: 0;
+}
+.pgn-intervalo strong { color: var(--cv-text); font-weight: 700; }
+.pgn-pagina { font-size: .7rem; opacity: .8; }
+
+/* ---------------- lista de botoes ---------------- */
+.pgn-nav { min-width: 0; }
+.pgn-lista {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+}
+
+.pgn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--cv-line);
+    border-radius: 8px;
+    background: var(--cv-surface);
+    color: var(--cv-text-muted);
+    font-size: .78rem;
+    font-weight: 600;
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+    /* so cor/borda: transform e box-shadow animados travam a lista */
+    transition: color .14s ease, border-color .14s ease, background-color .14s ease;
+}
+.pgn-btn:hover {
+    color: var(--cv-blue);
+    border-color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+}
+.pgn-btn:focus-visible {
+    outline: 2px solid var(--cv-blue);
+    outline-offset: 1px;
+}
+
+/* pagina atual: solida, sem ambiguidade */
+.pgn-atual {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    color: #fff;
+    cursor: default;
+}
+.pgn-atual:hover {
+    background: var(--cv-blue);
+    border-color: var(--cv-blue);
+    color: #fff;
+}
+
+/* desabilitado: <span>, nao <a> — nao clica e nao recebe foco */
+.pgn-off {
+    opacity: .38;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pgn-reticencias {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 32px;
+    color: var(--cv-text-faint, #94a3b8);
+    font-size: .8rem;
+    user-select: none;
+}
+
+/* ---------------- salto direto ---------------- */
+.pgn-salto {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+.pgn-salto-label {
+    font-size: .72rem;
+    color: var(--cv-text-muted);
+    white-space: nowrap;
+}
+.pgn-salto-input {
+    width: 62px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--cv-line);
+    border-radius: 8px;
+    background: var(--cv-surface);
+    color: var(--cv-text);
+    font-size: .78rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.pgn-salto-input:focus {
+    outline: none;
+    border-color: var(--cv-blue);
+}
+/* esconde as setinhas do input number: ocupam espaco e atrapalham */
+.pgn-salto-input::-webkit-outer-spin-button,
+.pgn-salto-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.pgn-salto-input { -moz-appearance: textfield; appearance: textfield; }
+
+.pgn-salto-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--cv-line);
+    border-radius: 8px;
+    background: var(--cv-surface);
+    color: var(--cv-text-muted);
+    font-size: .74rem;
+    cursor: pointer;
+    transition: color .14s ease, border-color .14s ease, background-color .14s ease;
+}
+.pgn-salto-btn:hover {
+    color: var(--cv-blue);
+    border-color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+}
+
+/* ---------------- telas estreitas ---------------- */
+@media (max-width: 767px) {
+    .pgn { justify-content: center; }
+    .pgn-resumo { flex-direction: row; gap: 8px; width: 100%; justify-content: center; }
+    .pgn-btn { min-width: 30px; height: 30px; }
+    .pgn-salto { width: 100%; justify-content: center; }
+}
+
+/* esconde os numeros intermediarios em telas muito estreitas:
+   ficam so as setas, que e o que da para tocar com o dedo */
+@media (max-width: 420px) {
+    .pgn-lista > li:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child) {
+        display: none;
+    }
+}
