@@ -5,8 +5,11 @@
     <div class="form-page">
         {% include 'core/partials/messages.html' %}
 
-        {% url 'lista_permissao' as url_lista %}
-        {% include 'core/partials/page_header.html' with titulo="Permissões de Acesso" subtitulo="Escolha quais rotinas este usuário pode acessar. Nada é liberado por padrão." voltar_url=url_lista voltar_texto="Voltar" %}
+        {# O gerenciamento de permissoes e alcancado pela lista de USUARIOS
+           (botao de chave). Voltar tem que ir para la, nao para uma lista
+           de permissoes separada que nao existe mais no menu. #}
+        {% url 'lista_usuarios' as url_voltar %}
+        {% include 'core/partials/page_header.html' with titulo="Permissões de Acesso" subtitulo="Escolha quais rotinas este usuário pode acessar. Nada é liberado por padrão." voltar_url=url_voltar voltar_texto="Voltar aos Usuários" %}
 
         <form method="POST" id="formPermissao">
             {% csrf_token %}
@@ -138,7 +141,7 @@
                 </div>
 
                 <div class="card-footer perm-footer">
-                    <a href="{% url 'lista_permissao' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary">

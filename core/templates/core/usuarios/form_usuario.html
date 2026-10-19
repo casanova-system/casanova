@@ -7,7 +7,7 @@
         {% include 'core/partials/messages.html' %}
 
         {% url 'lista_usuarios' as url_lista %}
-        {% include 'core/partials/page_header.html' with titulo=acao|add:" Usuário" subtitulo="Dados de acesso e perfil. As permissões de rotina ficam em PESSOAS → Permissões de Acesso." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
+        {% include 'core/partials/page_header.html' with titulo=acao|add:" Usuário" subtitulo="Dados de acesso e perfil. As permissões de rotina ficam no botão de chave da lista de usuários." voltar_url=url_lista voltar_texto="Voltar à Lista" %}
 
         <form method="POST" enctype="multipart/form-data" id="formUsuario">
             {% csrf_token %}

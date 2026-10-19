@@ -124,9 +124,15 @@ def lista_permissao(request):
 
 
 @login_required(login_url='login')
-@requer_rotina('lista_permissao')
+@requer_rotina('lista_usuarios')
 def form_permissao(request, user_id):
-    """Gerencia nível de acesso e as rotinas permitidas para o usuário."""
+    """Gerencia nível de acesso e as rotinas permitidas para o usuário.
+
+    A rotina exigida é `lista_usuarios`: o gerenciamento de permissões é
+    alcançado pelo botão de chave DENTRO da lista de usuários, não por uma
+    rotina própria no menu. Exigir `lista_permissao` aqui bloquearia quem
+    tem apenas a rotina de usuários — que é o fluxo normal.
+    """
     garantir_rotinas_padrao()
     usuario_obj = get_object_or_404(User, id=user_id)
     perfil, _created = PerfilUsuario.objects.get_or_create(user=usuario_obj)
@@ -146,7 +152,7 @@ def form_permissao(request, user_id):
             request,
             f'Permissões de {usuario_obj.username} atualizadas com sucesso.',
         )
-        return redirect('lista_permissao')
+        return redirect('lista_usuarios')
 
     # Cada setor vira um bloco com cor e icone proprios. A ordem e fixa
     # (nao alfabetica) para as areas mais usadas aparecerem primeiro.

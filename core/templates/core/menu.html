@@ -137,13 +137,13 @@
             </div>
             {% endif %}
 
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_permissao %}
+            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios %}
             <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_permissao' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #475569;"><i class="fa-solid fa-user-shield"></i></span>
+                <a href="{% url 'lista_usuarios' %}" class="quick-card">
+                    <span class="quick-icon" style="--qc: #475569;"><i class="fa-solid fa-users-gear"></i></span>
                     <span class="quick-body">
-                        <span class="quick-title">Permissões</span>
-                        <span class="quick-desc">Controle de rotinas por usuário</span>
+                        <span class="quick-title">Usuários e Permissões</span>
+                        <span class="quick-desc">Cadastro e controle de rotinas por usuário</span>
                     </span>
                     <i class="fa-solid fa-chevron-right quick-arrow"></i>
                 </a>
