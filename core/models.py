@@ -97,6 +97,22 @@ ROTINAS_PADRAO = [
     # própria tela de gerenciar permissões e travava o administrador fora.
     ('001', 'Usuários do Sistema', 'lista_usuarios', 'ROTINA', 'ADMINISTRADOR'),
     ('002', 'Permissões de Acesso', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
+    ('021', 'Funcionários', 'lista_funcionarios', 'ROTINA', 'ADMINISTRADOR'),
+    # Telas que o menu lateral ja mostrava mas NAO existiam na tabela Rotina.
+    # Sem cadastro aqui, elas apareciam no menu para todos e nao podiam ser
+    # liberadas nem bloqueadas por permissao — o oposto do controle pedido.
+    ('015', 'Pedidos de Venda', 'lista_vendas', 'ROTINA', 'COMERCIAL'),
+    ('016', 'Propostas', 'lista_propostas', 'ROTINA', 'COMERCIAL'),
+    ('017', 'Contas a Pagar', 'lista_contas_pagar', 'ROTINA', 'FINANCEIRO'),
+    ('018', 'Contas a Receber', 'lista_contas_receber', 'ROTINA', 'FINANCEIRO'),
+    ('019', 'Notas Fiscais', 'lista_notas', 'ROTINA', 'FINANCEIRO'),
+    ('020', 'Estrutura de Produtos', 'lista_estruturas', 'ROTINA', 'INDUSTRIA'),
+    ('022', 'Movimentos de Estoque', 'lista_movimentos_hist', 'ROTINA', 'INDUSTRIA'),
+    ('023', 'Pedidos ao Fornecedor', 'lista_pedidos', 'ROTINA', 'INDUSTRIA'),
+    ('024', 'Fornecedores', 'lista_fornecedores', 'ROTINA', 'INDUSTRIA'),
+    ('025', 'Custo por Setor', 'custos_setores', 'ROTINA', 'INDUSTRIA'),
+    ('026', 'Painel Financeiro', 'painel_financeiro', 'ROTINA', 'FINANCEIRO'),
+    ('027', 'Funcionários por Setor', 'funcionarios_por_setor', 'ROTINA', 'ADMINISTRADOR'),
 ]
 
 # Rotinas descontinuadas — removidas do menu e da tela de permissões.

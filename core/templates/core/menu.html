@@ -3,272 +3,325 @@
 
 {% block content %}
 <div class="container-fluid py-3 px-3">
-    
-    <!-- Card Principal de Boas-Vindas no Topo -->
-    <div class="card hero-card border-0 shadow-lg position-relative overflow-hidden w-100" style="background: linear-gradient(135deg, #092c6b 0%, #031330 100%); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
-        <div class="hero-glow"></div>
-        <div class="card-body p-4 p-xl-4 position-relative z-1 text-white">
-            <div class="row align-items-center justify-content-between">
-                
-                <!-- Informações e Título da Empresa -->
-                <div class="col-lg-8 mb-3 mb-lg-0">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="text-white-50" style="font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase;">
-                            <i class="fa-solid fa-house-chimney me-1 text-info"></i> Portal Oficial • Bem-vindo
-                        </span>
-                    </div>
-                    
-                    <!-- Nome da Empresa em Destaque Absoluto -->
-                    <div class="my-1">
-                        <h1 class="fw-bold text-white mb-2" style="font-size: 2rem; letter-spacing: 1.5px; font-family: var(--cv-font); text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
-                            CASANOVA <span style="color: #60a5fa; font-weight: 300;">ESQUADRIAS</span>
-                        </h1>
-                    </div>
 
-                    <p class="text-white-50 mb-0" style="font-size: 0.85rem; line-height: 1.4; max-width: 750px;">
-                        Excelência em engenharia de alumínio e PVC. Sistemas arquitetônicos sob medida com padrão internacional de sofisticação e tecnologia para projetos de alto padrão.
+    {# ===================== HERO ===================== #}
+    <div class="card hero-card border-0 shadow-lg position-relative overflow-hidden w-100">
+        <div class="hero-glow"></div>
+        <div class="card-body p-4 position-relative z-1 text-white">
+            <div class="row align-items-center justify-content-between g-3">
+
+                <div class="col-lg-7">
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-house-chimney"></i> Portal Oficial
+                    </div>
+                    <h1 class="hero-titulo">
+                        CASANOVA <span>ESQUADRIAS</span>
+                    </h1>
+                    <p class="hero-texto">
+                        Bem-vindo, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>.
+                        {% if rotinas_liberadas %}
+                            Você tem acesso a <strong>{{ rotinas_liberadas }}</strong> rotina{{ rotinas_liberadas|pluralize }} do sistema.
+                        {% else %}
+                            Você ainda não tem rotinas liberadas — fale com o administrador.
+                        {% endif %}
                     </p>
                 </div>
 
-                <!-- Botão de Acesso ao Portal -->
-                <div class="col-lg-4 text-lg-end">
-                    <a href="https://www.cn.ind.br" target="_blank" class="btn btn-light fw-bold px-4 py-2.5 rounded-pill shadow-lg d-inline-flex align-items-center gap-2 text-primary transition-all premium-btn" style="font-size: 0.85rem; background: #ffffff;">
-                        <span style="letter-spacing: 0.8px;">ACESSAR PORTAL</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-primary" style="font-size: 0.75rem;"></i>
+                <div class="col-lg-5">
+                    <div class="hero-data">
+                        <div class="hero-data-item">
+                            <i class="fa-solid fa-calendar-day"></i>
+                            <div>
+                                <div class="hero-data-valor" id="heroData"></div>
+                                <div class="hero-data-label">Hoje</div>
+                            </div>
+                        </div>
+                        <div class="hero-data-item">
+                            <i class="fa-solid fa-clock"></i>
+                            <div>
+                                <div class="hero-data-valor" id="heroHora"></div>
+                                <div class="hero-data-label">Agora</div>
+                            </div>
+                        </div>
+                        <a href="https://www.cn.ind.br" target="_blank" class="hero-portal">
+                            <span>Portal</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% include 'core/partials/messages.html' %}
+
+    {# ===================== ACESSO RAPIDO ===================== #}
+    {% if grupos_menu %}
+    <div class="mt-4">
+        <div class="home-secao-topo">
+            <h6 class="home-secao-titulo">
+                <i class="fa-solid fa-bolt"></i> Acesso Rápido
+            </h6>
+            <div class="home-busca">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="buscaHome" placeholder="Filtrar rotinas..." oninput="filtrarHome(this.value)">
+            </div>
+        </div>
+
+        {% for grupo in grupos_menu %}
+        <div class="home-grupo" data-grupo>
+            <div class="home-grupo-cabecalho">
+                <span class="home-grupo-nome" style="--gc: {{ grupo.cor }};">
+                    <i class="fa-solid {{ grupo.icone }}"></i> {{ grupo.nome }}
+                </span>
+                <span class="home-grupo-conta">{{ grupo.itens|length }}</span>
+            </div>
+
+            <div class="row g-3">
+                {% for item in grupo.itens %}
+                <div class="col-xxl-3 col-xl-4 col-md-6 home-item"
+                     data-busca="{{ item.titulo|lower }} {{ item.descricao|lower }}">
+                    <a href="{% url item.url %}" class="quick-card">
+                        <span class="quick-icon" style="--qc: {{ item.cor }};"><i class="fa-solid {{ item.icone }}"></i></span>
+                        <span class="quick-body">
+                            <span class="quick-title">{{ item.titulo }}</span>
+                            <span class="quick-desc">{{ item.descricao }}</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right quick-arrow"></i>
                     </a>
                 </div>
-
+                {% endfor %}
             </div>
         </div>
-    </div>
+        {% endfor %}
 
-    {% if messages %}
-        <div class="mt-3">
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show py-2 small" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+        <p class="home-vazio" id="homeVazio" style="display:none;">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            Nenhuma rotina corresponde ao filtro.
+        </p>
+    </div>
+    {% else %}
+    <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-lock fs-1 d-block mb-3 text-muted opacity-50"></i>
+            <h5 class="fw-bold mb-2">Nenhuma rotina liberada</h5>
+            <p class="text-muted mb-0">
+                Seu usuário ainda não tem acesso a nenhuma rotina do sistema.<br>
+                Peça ao administrador para liberar em <strong>PESSOAS → Usuários do Sistema</strong>.
+            </p>
         </div>
+    </div>
     {% endif %}
-
-    <!-- Acesso Rápido às Rotinas -->
-    <div class="mt-4">
-        <h6 class="text-uppercase fw-bold text-muted mb-3" style="font-size: 0.7rem; letter-spacing: 1px;">
-            <i class="fa-solid fa-bolt me-1 text-primary"></i> Acesso Rápido
-        </h6>
-        <div class="row g-3">
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_obras %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_obras' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #0b3882;"><i class="fa-solid fa-truck-fast"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Custo de Frete</span>
-                        <span class="quick-desc">Cálculo e gestão de fretes</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_usuarios' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #7c3aed;"><i class="fa-solid fa-users"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Usuários</span>
-                        <span class="quick-desc">Cadastro e gestão de acessos</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_veiculos %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_veiculos' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #0891b2;"><i class="fa-solid fa-truck"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Veículos</span>
-                        <span class="quick-desc">Frota e especificações</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_custo %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_custo' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #059669;"><i class="fa-solid fa-coins"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Custos</span>
-                        <span class="quick-desc">Parâmetros operacionais</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_ordem_producao %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_ordem_producao' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #7c3aed;"><i class="fa-solid fa-industry"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Ordem de Produção</span>
-                        <span class="quick-desc">Ordens de produção do ERP</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.rastreio_producao %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'rastreio_producao' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #0891b2;"><i class="fa-solid fa-route"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Rastreio de Produção</span>
-                        <span class="quick-desc">Acompanhe a OP pelos setores</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.lista_usuarios %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'lista_usuarios' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #475569;"><i class="fa-solid fa-users-gear"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Usuários e Permissões</span>
-                        <span class="quick-desc">Cadastro e controle de rotinas por usuário</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-
-            {% if request.user.is_superuser or request.user.perfil and request.user.perfil.tem_rotina.producao %}
-            <div class="col-xl-3 col-md-6">
-                <a href="{% url 'producao' %}" class="quick-card">
-                    <span class="quick-icon" style="--qc: #0b3882;"><i class="fa-solid fa-barcode"></i></span>
-                    <span class="quick-body">
-                        <span class="quick-title">Produção</span>
-                        <span class="quick-desc">Bipar OP no setor</span>
-                    </span>
-                    <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                </a>
-            </div>
-            {% endif %}
-        </div>
-    </div>
 </div>
 
 <style>
-    .premium-btn {
-        transition: all 0.3s ease;
-    }
-    .premium-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.25) !important;
-        background-color: #f8fafc !important;
-    }
+/* ===================== HERO ===================== */
+.hero-card {
+    background: linear-gradient(135deg, #092c6b 0%, #031330 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, .12) !important;
+}
+.hero-card .hero-glow {
+    position: absolute; top: -60%; right: -10%;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(96, 165, 250, .28) 0%, transparent 68%);
+    pointer-events: none;
+    animation: heroGlow 9s ease-in-out infinite alternate;
+}
+@keyframes heroGlow {
+    from { transform: translate(0, 0) scale(1); opacity: .75; }
+    to   { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
+}
+.hero-eyebrow {
+    font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255, 255, 255, .55); margin-bottom: 6px;
+}
+.hero-eyebrow i { color: #60a5fa; margin-right: 4px; }
+.hero-titulo {
+    font-size: 2rem; font-weight: 800; letter-spacing: 1.5px;
+    margin: 0 0 8px; text-shadow: 0 2px 12px rgba(0, 0, 0, .4);
+}
+.hero-titulo span { color: #60a5fa; font-weight: 300; }
+.hero-texto {
+    font-size: .85rem; line-height: 1.5; max-width: 640px;
+    color: rgba(255, 255, 255, .62); margin: 0;
+}
 
-    /* Brilho ambiente que percorre o hero lentamente */
-    .hero-card .hero-glow {
-        position: absolute;
-        top: -60%;
-        right: -10%;
-        width: 420px;
-        height: 420px;
-        background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, transparent 68%);
-        pointer-events: none;
-        animation: heroGlow 9s ease-in-out infinite alternate;
-    }
-    @keyframes heroGlow {
-        from { transform: translate(0, 0) scale(1); opacity: 0.75; }
-        to   { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
-    }
+/* dados do hero */
+.hero-data {
+    display: flex; align-items: center; gap: 10px;
+    justify-content: flex-end; flex-wrap: wrap;
+}
+.hero-data-item {
+    display: flex; align-items: center; gap: 9px;
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 11px; padding: 8px 13px;
+}
+.hero-data-item > i { color: #60a5fa; font-size: .95rem; }
+.hero-data-valor { font-size: .84rem; font-weight: 700; line-height: 1.1; }
+.hero-data-label {
+    font-size: .6rem; text-transform: uppercase; letter-spacing: .6px;
+    color: rgba(255, 255, 255, .5);
+}
+.hero-portal {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; color: #0b3882;
+    font-size: .8rem; font-weight: 700; letter-spacing: .5px;
+    padding: 11px 20px; border-radius: 999px;
+    text-decoration: none; white-space: nowrap;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.hero-portal:hover {
+    transform: translateY(-2px); color: #0b3882;
+    box-shadow: 0 10px 26px rgba(255, 255, 255, .25);
+}
+.hero-portal i { font-size: .7rem; }
 
-    /* Cards de acesso rápido */
-    .quick-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 16px 18px;
-        background: var(--cv-surface, #fff);
-        border: 1px solid var(--cv-line, #e6ebf2);
-        border-radius: 14px;
-        text-decoration: none;
-        color: inherit;
-        height: 100%;
-        box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15,23,42,.06));
-        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                    border-color 0.22s ease;
-    }
-    .quick-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--cv-shadow-lg, 0 12px 28px rgba(15,23,42,.10));
-        border-color: var(--cv-blue, #0b3882);
-        color: inherit;
-    }
-    .quick-icon {
-        width: 44px;
-        height: 44px;
-        flex-shrink: 0;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.05rem;
-        color: var(--qc, #0b3882);
-        background: color-mix(in srgb, var(--qc, #0b3882) 12%, transparent);
-        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .quick-card:hover .quick-icon {
-        transform: scale(1.08) rotate(-4deg);
-    }
-    .quick-body {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        flex: 1;
-    }
-    .quick-title {
-        font-weight: 700;
-        font-size: 0.9rem;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .quick-desc {
-        font-size: 0.75rem;
-        color: var(--cv-text-muted, #64748b);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .quick-arrow {
-        font-size: 0.7rem;
-        color: var(--cv-text-faint, #94a3b8);
-        opacity: 0;
-        transform: translateX(-6px);
-        transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .quick-card:hover .quick-arrow {
-        opacity: 1;
-        transform: translateX(0);
-    }
+/* ===================== SECAO ===================== */
+.home-secao-topo {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.home-secao-titulo {
+    font-size: .72rem; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--cv-text-muted);
+    margin: 0;
+}
+.home-secao-titulo i { color: var(--cv-blue); margin-right: 5px; }
+.home-busca { position: relative; max-width: 280px; width: 100%; }
+.home-busca i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--cv-text-muted); font-size: .8rem; pointer-events: none;
+}
+.home-busca input {
+    width: 100%; padding: 7px 12px 7px 33px;
+    border: 1px solid var(--cv-line); border-radius: 9px;
+    background: var(--cv-surface); color: var(--cv-text); font-size: .82rem;
+}
+.home-busca input:focus {
+    outline: none; border-color: var(--cv-blue);
+    box-shadow: 0 0 0 3px rgba(11, 56, 130, .1);
+}
 
-    @media (prefers-reduced-motion: reduce) {
-        .hero-card .hero-glow { animation: none; }
-        .quick-card:hover,
-        .quick-card:hover .quick-icon,
-        .quick-card:hover .quick-arrow { transform: none; }
-    }
+/* ===================== GRUPOS ===================== */
+.home-grupo { margin-bottom: 22px; }
+.home-grupo-cabecalho {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--cv-line);
+}
+.home-grupo-nome {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .7px;
+    color: var(--gc, var(--cv-blue));
+}
+.home-grupo-conta {
+    font-size: .64rem; font-weight: 800;
+    background: var(--cv-line); color: var(--cv-text-muted);
+    padding: 1px 8px; border-radius: 999px;
+}
+
+/* ===================== CARD ===================== */
+.quick-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 17px; height: 100%;
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-line);
+    border-radius: 14px;
+    text-decoration: none; color: inherit;
+    box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15, 23, 42, .06));
+    transition: transform .22s cubic-bezier(.16, 1, .3, 1),
+                box-shadow .22s cubic-bezier(.16, 1, .3, 1),
+                border-color .22s ease;
+}
+.quick-card:hover {
+    transform: translateY(-4px); color: inherit;
+    box-shadow: var(--cv-shadow-lg, 0 12px 28px rgba(15, 23, 42, .1));
+    border-color: var(--cv-blue);
+}
+.quick-icon {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem;
+    color: var(--qc, #0b3882);
+    background: color-mix(in srgb, var(--qc, #0b3882) 12%, transparent);
+    transition: transform .22s cubic-bezier(.16, 1, .3, 1);
+}
+.quick-card:hover .quick-icon { transform: scale(1.08) rotate(-4deg); }
+.quick-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.quick-title {
+    font-weight: 700; font-size: .9rem; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.quick-desc {
+    font-size: .75rem; color: var(--cv-text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.quick-arrow {
+    font-size: .7rem; color: var(--cv-text-faint, #94a3b8);
+    opacity: 0; transform: translateX(-6px);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.16, 1, .3, 1);
+}
+.quick-card:hover .quick-arrow { opacity: 1; transform: translateX(0); }
+
+.home-vazio {
+    text-align: center; color: var(--cv-text-muted);
+    padding: 30px 0; margin: 0; font-size: .88rem;
+}
+.home-vazio i { display: block; font-size: 1.8rem; opacity: .4; margin-bottom: 7px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-card .hero-glow { animation: none; }
+    .quick-card:hover,
+    .quick-card:hover .quick-icon,
+    .quick-card:hover .quick-arrow { transform: none; }
+}
 </style>
+
+<script>
+// Data e hora ao vivo (evita a pagina mostrar data congelada)
+function atualizarRelogio() {
+    const agora = new Date();
+    const data = agora.toLocaleDateString('pt-BR', {
+        weekday: 'short', day: '2-digit', month: 'short'
+    });
+    const hora = agora.toLocaleTimeString('pt-BR', {
+        hour: '2-digit', minute: '2-digit'
+    });
+    const elData = document.getElementById('heroData');
+    const elHora = document.getElementById('heroHora');
+    if (elData) elData.textContent = data.replace('.', '');
+    if (elHora) elHora.textContent = hora;
+}
+
+// Filtro de rotinas do inicio
+function filtrarHome(termo) {
+    termo = (termo || '').trim().toLowerCase();
+    let total = 0;
+
+    document.querySelectorAll('[data-grupo]').forEach(function (grupo) {
+        let visiveis = 0;
+        grupo.querySelectorAll('.home-item').forEach(function (item) {
+            const alvo = item.getAttribute('data-busca') || '';
+            const mostra = !termo || alvo.indexOf(termo) !== -1;
+            item.style.display = mostra ? '' : 'none';
+            if (mostra) visiveis++;
+        });
+        grupo.style.display = visiveis > 0 ? '' : 'none';
+        total += visiveis;
+    });
+
+    const vazio = document.getElementById('homeVazio');
+    if (vazio) vazio.style.display = total === 0 ? '' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    atualizarRelogio();
+    setInterval(atualizarRelogio, 30000);
+});
+</script>
 {% endblock %}
