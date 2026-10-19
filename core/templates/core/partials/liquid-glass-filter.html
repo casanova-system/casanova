@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+  <defs>
+    <!-- Filtro Liquid Glass: displacement map + chromatic aberration -->
+    <filter id="liquid-glass-filter" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+      <!-- Displacement map para refração do vidro -->
+      <feImage id="lg-displacement" x="0" y="0" width="100%" height="100%" 
+               result="DISPLACEMENT_MAP" preserveAspectRatio="xMidYMid slice"/>
+      
+      <!-- Edge mask: aplica o efeito apenas nas bordas -->
+      <feColorMatrix in="DISPLACEMENT_MAP" type="matrix" 
+                     values="0.3 0.3 0.3 0 0  0.3 0.3 0.3 0 0  0.3 0.3 0.3 0 0  0 0 0 1 0" 
+                     result="EDGE_INTENSITY"/>
+      <feComponentTransfer in="EDGE_INTENSITY" result="EDGE_MASK">
+        <feFuncA type="discrete" tableValues="0 0.1 1"/>
+      </feComponentTransfer>
+      
+      <!-- Original sem deslocamento para o centro -->
+      <feOffset in="SourceGraphic" dx="0" dy="0" result="CENTER_ORIGINAL"/>
+      
+      <!-- Red channel displacement -->
+      <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale="25" 
+                         xChannelSelector="R" yChannelSelector="B" result="RED_DISPLACED"/>
+      <feColorMatrix in="RED_DISPLACED" type="matrix" 
+                     values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" 
+                     result="RED_CHANNEL"/>
+      
+      <!-- Green channel displacement -->
+      <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale="24.5" 
+                         xChannelSelector="R" yChannelSelector="B" result="GREEN_DISPLACED"/>
+      <feColorMatrix in="GREEN_DISPLACED" type="matrix" 
+                     values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" 
+                     result="GREEN_CHANNEL"/>
+      
+      <!-- Blue channel displacement -->
+      <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale="24" 
+                         xChannelSelector="R" yChannelSelector="B" result="BLUE_DISPLACED"/>
+      <feColorMatrix in="BLUE_DISPLACED" type="matrix" 
+                     values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" 
+                     result="BLUE_CHANNEL"/>
+      
+      <!-- Combina canais com screen blend (chromatic aberration) -->
+      <feBlend in="GREEN_CHANNEL" in2="BLUE_CHANNEL" mode="screen" result="GB_COMBINED"/>
+      <feBlend in="RED_CHANNEL" in2="GB_COMBINED" mode="screen" result="RGB_COMBINED"/>
+      
+      <!-- Blur suave para suavizar a aberração -->
+      <feGaussianBlur in="RGB_COMBINED" stdDeviation="0.4" result="ABERRATED_BLURRED"/>
+      
+      <!-- Aplica edge mask -->
+      <feComposite in="ABERRATED_BLURRED" in2="EDGE_MASK" operator="in" result="EDGE_ABERRATION"/>
+      
+      <!-- Inverte mask para o centro -->
+      <feComponentTransfer in="EDGE_MASK" result="INVERTED_MASK">
+        <feFuncA type="table" tableValues="1 0"/>
+      </feComponentTransfer>
+      <feComposite in="CENTER_ORIGINAL" in2="INVERTED_MASK" operator="in" result="CENTER_CLEAN"/>
+      
+      <!-- Combina aberração nas bordas com centro limpo -->
+      <feComposite in="EDGE_ABERRATION" in2="CENTER_CLEAN" operator="over"/>
+    </filter>
+  </defs>
+</svg>

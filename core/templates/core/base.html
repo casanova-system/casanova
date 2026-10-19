@@ -1090,6 +1090,9 @@
     <link rel="stylesheet" href="{% static_v 'css/glass.css' %}">
 </head>
 <body>
+    {# Filtro SVG para efeito Liquid Glass (displacement map + chromatic aberration) #}
+    {% include 'core/partials/liquid-glass-filter.html' %}
+    
     {# Wallpaper fixo que acompanha todas as telas — estilo Apple Liquid Glass #}
     <div style="position: fixed; inset: 0; z-index: -1; background-image: url('{% static 'img/wallpaper.svg' %}'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat;"></div>
 
@@ -1860,5 +1863,7 @@
 
     {% comment %} Paginacao: salto direto e navegacao por teclado {% endcomment %}
     <script src="{% static_v 'js/paginacao.js' %}"></script>
+    {# Script do Liquid Glass — aplica o filtro SVG nos elementos de vidro #}
+    <script src="{% static 'js/liquid-glass.js' %}"></script>
 </body>
 </html>

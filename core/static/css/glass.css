@@ -1,46 +1,35 @@
 /* ==========================================================================
-   LIQUID GLASS — Apple iOS 26
+   LIQUID GLASS — Apple iOS 26 (implementação CSS pura)
    ==========================================================================
-   Wallpaper fixo abstrato (azul/violeta/rosa) + vidro transparente
-   com blur forte, bordas brilhantes, pill shape e animações spring.
-
-   Carregado DEPOIS do casanova.css para sobrescrever.
+   Baseado em https://github.com/rdev/liquid-glass-react
+   
+   O efeito Liquid Glass real usa:
+   1. backdrop-filter blur (desfoca o fundo)
+   2. border-image com gradiente (brilho na borda simulando refração)
+   3. box-shadow suave (sombra difusa)
+   4. border-radius: 9999px (pill shape)
+   5. Animações spring (cubic-bezier overshoot)
+   
+   Carregado DEPOIS do casanova.css.
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   1. TOKENS — VIDRO LÍQUIDO
-   -------------------------------------------------------------------------- */
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.08);
-    --glass-bg-strong: rgba(255, 255, 255, 0.15);
-    --glass-bg-weak: rgba(255, 255, 255, 0.05);
-    --glass-edge: rgba(255, 255, 255, 0.25);
-    --glass-edge-dark: rgba(255, 255, 255, 0.08);
-    --glass-edge-highlight: rgba(255, 255, 255, 0.40);
-    --glass-blur: 60px;
-    --glass-blur-strong: 100px;
-    --glass-sat: 200%;
-    --glass-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.08);
-    --glass-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.10);
-    --glass-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.14), 0 20px 48px rgba(0, 0, 0, 0.12);
-    --glass-shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.16), 0 40px 80px rgba(0, 0, 0, 0.20);
-    --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --glass-spring-soft: cubic-bezier(0.22, 1.40, 0.50, 1);
-    --glass-dur-fast: 0.15s;
-    --glass-dur: 0.30s;
-    --glass-dur-slow: 0.55s;
-    --glass-radius-sm: 16px;
-    --glass-radius-md: 22px;
+    --glass-blur: 40px;
+    --glass-blur-strong: 60px;
+    --glass-sat: 180%;
+    --glass-radius: 9999px;
+    --glass-radius-md: 24px;
     --glass-radius-lg: 28px;
     --glass-radius-xl: 36px;
-    --glass-radius-full: 9999px;
+    --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-dur: 0.3s;
 }
 
 /* --------------------------------------------------------------------------
-   2. FUNDO FIXO — WALLPAPER ABSTRATO FLUIDO
+   1. FUNDO — gradiente fixo (wallpaper abstrato)
    -------------------------------------------------------------------------- */
 html {
-    background: #0d1b2a;
+    background: linear-gradient(135deg, #0a0e1a 0%, #141b2d 25%, #1a2035 50%, #0f1525 75%, #0a0e1a 100%);
     min-height: 100%;
 }
 
@@ -48,29 +37,31 @@ body {
     min-height: 100vh;
     position: relative;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Overlay escuro para melhor legibilidade do vidro */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background: rgba(10, 15, 30, 0.30);
+    background:
+        radial-gradient(ellipse 800px 600px at 15% 10%, rgba(99, 102, 241, 0.15), transparent 50%),
+        radial-gradient(ellipse 700px 500px at 85% 20%, rgba(168, 85, 247, 0.12), transparent 50%),
+        radial-gradient(ellipse 900px 700px at 50% 90%, rgba(59, 130, 246, 0.10), transparent 55%),
+        radial-gradient(ellipse 600px 400px at 30% 70%, rgba(236, 72, 153, 0.08), transparent 45%);
 }
 
 /* --------------------------------------------------------------------------
-   3. SIDEBAR — VIDRO ESCURO TRANSPARENTE
+   2. SIDEBAR — vidro líquido com blur forte
    -------------------------------------------------------------------------- */
 .sidebar-casanova {
-    background: rgba(15, 20, 35, 0.60) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border-right: 1px solid var(--glass-edge) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 0 var(--glass-radius-xl) var(--glass-radius-xl) 0 !important;
-    box-shadow: var(--glass-shadow-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 .sidebar-header-box,
 .sidebar-bottom-container {
@@ -78,228 +69,197 @@ body::before {
     backdrop-filter: none;
 }
 .sidebar-bottom-container {
-    border-top: 1px solid var(--glass-edge-dark) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: none !important;
 }
 
 /* --------------------------------------------------------------------------
-   4. TOPBAR MOBILE
-   -------------------------------------------------------------------------- */
-.mobile-topbar {
-    background: rgba(15, 20, 35, 0.50) !important;
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    border-bottom: 1px solid var(--glass-edge) !important;
-}
-
-/* --------------------------------------------------------------------------
-   5. CARDS — VIDRO COM REFLEXO
+   3. CARDS — vidro transparente com bordas brilhantes
    -------------------------------------------------------------------------- */
 .card {
     background: rgba(255, 255, 255, 0.06) !important;
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    border: 1px solid var(--glass-edge) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--glass-radius-lg) !important;
-    box-shadow: var(--glass-shadow-md) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     transition: transform var(--glass-dur) var(--glass-spring),
                 box-shadow var(--glass-dur) var(--glass-spring),
-                border-color var(--glass-dur-fast) ease;
+                border-color 0.15s ease;
 }
 .card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--glass-shadow-lg) !important;
-    border-color: var(--glass-edge-highlight) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    border-color: rgba(255, 255, 255, 0.20) !important;
 }
 .card:has(.table-responsive) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(15, 20, 35, 0.70) !important;
+    background: rgba(20, 25, 40, 0.70) !important;
 }
 .card:has(.table-responsive):hover { transform: none; }
 
 /* --------------------------------------------------------------------------
-   6. KPI CARDS
-   -------------------------------------------------------------------------- */
-.kpi-card {
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-    border: 1px solid var(--glass-edge) !important;
-    border-left-width: 5px !important;
-    border-left-style: solid !important;
-    border-radius: var(--glass-radius-md) !important;
-}
-
-/* --------------------------------------------------------------------------
-   7. TABELAS
-   -------------------------------------------------------------------------- */
-.table-responsive {
-    background: rgba(255, 255, 255, 0.04) !important;
-    backdrop-filter: blur(30px) saturate(var(--glass-sat));
-    -webkit-backdrop-filter: blur(30px) saturate(var(--glass-sat));
-    border-radius: var(--glass-radius-md);
-    border: 1px solid var(--glass-edge-dark);
-}
-.table thead th {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-bottom: 1px solid var(--glass-edge) !important;
-}
-.table tbody tr {
-    background: transparent !important;
-    transition: background-color var(--glass-dur-fast) ease;
-}
-.table-hover > tbody > tr:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-}
-.table tbody td {
-    border-color: var(--glass-edge-dark) !important;
-}
-
-/* --------------------------------------------------------------------------
-   8. BOTÕES — PILL SHAPE COM SPRING
+   4. BOTÕES — pill shape com spring
    -------------------------------------------------------------------------- */
 .btn {
-    border-radius: var(--glass-radius-full) !important;
-    transition: transform var(--glass-dur-fast) var(--glass-spring),
-                background-color var(--glass-dur-fast) ease,
-                border-color var(--glass-dur-fast) ease,
-                color var(--glass-dur-fast) ease,
+    border-radius: var(--glass-radius) !important;
+    transition: transform var(--glass-dur) var(--glass-spring),
+                background-color 0.15s ease,
+                border-color 0.15s ease,
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .btn:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--glass-shadow-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .btn:active {
     transform: scale(0.96);
     transition-duration: 0.08s;
 }
 
-.btn-action {
-    border-radius: var(--glass-radius-full) !important;
-    transition: transform var(--glass-dur-fast) var(--glass-spring),
-                background-color var(--glass-dur-fast) ease,
-                border-color var(--glass-dur-fast) ease,
-                box-shadow var(--glass-dur) var(--glass-spring);
-}
-.btn-action:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--glass-shadow-md);
-}
-.btn-action:active {
-    transform: scale(0.96);
-    transition-duration: 0.08s;
-}
-
+.btn-action,
 .btn-acao {
-    border-radius: var(--glass-radius-full) !important;
-    transition: transform var(--glass-dur-fast) var(--glass-spring),
-                background-color var(--glass-dur-fast) ease,
-                border-color var(--glass-dur-fast) ease,
+    border-radius: var(--glass-radius) !important;
+    transition: transform var(--glass-dur) var(--glass-spring),
+                background-color 0.15s ease,
+                border-color 0.15s ease,
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
+.btn-action:hover,
 .btn-acao:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--glass-shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+.btn-action:active,
 .btn-acao:active {
     transform: scale(0.96);
     transition-duration: 0.08s;
 }
 
 .btn-row {
-    border-radius: var(--glass-radius-full) !important;
-    transition: transform var(--glass-dur-fast) var(--glass-spring),
-                background-color var(--glass-dur-fast) ease,
-                color var(--glass-dur-fast) ease;
+    border-radius: var(--glass-radius) !important;
+    transition: transform var(--glass-dur) var(--glass-spring);
 }
-.btn-row:hover {
-    transform: scale(1.12);
+.btn-row:hover { transform: scale(1.12); }
+.btn-row:active { transform: scale(0.90); }
+
+/* --------------------------------------------------------------------------
+   5. TABELAS
+   -------------------------------------------------------------------------- */
+.table-responsive {
+    background: rgba(255, 255, 255, 0.04) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--glass-radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.btn-row:active {
-    transform: scale(0.90);
+.table thead th {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+.table tbody tr {
+    background: transparent !important;
+    transition: background-color 0.15s ease;
+}
+.table-hover > tbody > tr:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+.table tbody td {
+    border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* --------------------------------------------------------------------------
-   9. FORMULÁRIOS
+   6. FORMULÁRIOS
    -------------------------------------------------------------------------- */
 .form-control,
 .form-select {
     background: rgba(255, 255, 255, 0.06) !important;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid var(--glass-edge-dark) !important;
-    border-radius: var(--glass-radius-sm) !important;
-    transition: border-color var(--glass-dur-fast) ease,
-                box-shadow var(--glass-dur) var(--glass-spring),
-                background-color var(--glass-dur-fast) ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 14px !important;
+    transition: border-color 0.15s ease,
+                box-shadow var(--glass-dur) var(--glass-spring);
 }
 .form-control:focus,
 .form-select:focus {
     background: rgba(255, 255, 255, 0.10) !important;
-    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.15) !important;
-    border-color: var(--cv-blue) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+    border-color: #6366f1 !important;
 }
 
 /* --------------------------------------------------------------------------
-   10. DROPDOWNS + MODAIS + ALERTS
+   7. DROPDOWNS + MODAIS + ALERTS
    -------------------------------------------------------------------------- */
 .dropdown-menu,
 .perfil-menu {
     background: rgba(20, 25, 40, 0.85) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border: 1px solid var(--glass-edge) !important;
-    box-shadow: var(--glass-shadow-xl) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.30) !important;
     border-radius: var(--glass-radius-lg) !important;
-    padding: 10px !important;
+    padding: 8px !important;
 }
 .modal-content {
     background: rgba(20, 25, 40, 0.90) !important;
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
     -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-sat));
-    border: 1px solid var(--glass-edge) !important;
-    box-shadow: var(--glass-shadow-xl) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.40) !important;
     border-radius: var(--glass-radius-xl) !important;
     overflow: hidden;
 }
 .modal-backdrop.show { opacity: 0.40; }
 .alert {
     background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-edge) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
     border-radius: var(--glass-radius-md) !important;
 }
 
 /* --------------------------------------------------------------------------
-   11. PAGINAÇÃO
+   8. PAGINAÇÃO
    -------------------------------------------------------------------------- */
 .pgn {
     background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--glass-edge) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 .page-link {
     background: transparent !important;
-    border-color: var(--glass-edge-dark) !important;
-    border-radius: var(--glass-radius-full) !important;
-    transition: background-color var(--glass-dur-fast) ease,
-                transform var(--glass-dur-fast) var(--glass-spring);
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: var(--glass-radius) !important;
+    transition: background-color 0.15s ease,
+                transform var(--glass-dur) var(--glass-spring);
 }
 .page-link:hover {
     background: rgba(255, 255, 255, 0.10) !important;
     transform: translateY(-1px);
 }
 .page-item.active .page-link {
-    background: var(--cv-blue) !important;
-    border-color: var(--cv-blue) !important;
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
 }
 
 /* --------------------------------------------------------------------------
-   12. MENU DO PERFIL
+   9. KPI CARDS
+   -------------------------------------------------------------------------- */
+.kpi-card {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+    border-radius: var(--glass-radius-md) !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. MENU DO PERFIL
    -------------------------------------------------------------------------- */
 .sidebar-bottom-container .dropdown {
     position: relative;
@@ -316,9 +276,9 @@ body::before {
     max-width: none;
     margin: 0 0 10px 0 !important;
     padding: 0;
-    border: 1px solid var(--glass-edge) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--glass-radius-lg) !important;
-    box-shadow: var(--glass-shadow-xl) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.30) !important;
     max-height: min(560px, calc(100vh - 90px));
     overflow-y: auto;
     overflow-x: hidden;
@@ -332,14 +292,14 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   13. ANIMAÇÕES — SPRING PHYSICS iOS 2026
+   11. ANIMAÇÕES SPRING
    -------------------------------------------------------------------------- */
 .perfil-menu {
     transform-origin: bottom left;
-    animation: glassMenuIn var(--glass-dur-slow) var(--glass-spring) both;
+    animation: glassMenuIn 0.5s var(--glass-spring) both;
 }
 @keyframes glassMenuIn {
-    from { opacity: 0; transform: translateY(20px) scale(0.90); }
+    from { opacity: 0; transform: translateY(16px) scale(0.94); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .sidebar-casanova.sidebar-collapsed .perfil-menu {
@@ -347,7 +307,7 @@ body::before {
 }
 
 .perfil-menu > li {
-    animation: glassItemIn var(--glass-dur) var(--glass-spring-soft) both;
+    animation: glassItemIn 0.3s var(--glass-spring) both;
 }
 .perfil-menu > li:nth-child(1) { animation-delay: 0.02s; }
 .perfil-menu > li:nth-child(2) { animation-delay: 0.05s; }
@@ -357,52 +317,51 @@ body::before {
 .perfil-menu > li:nth-child(6) { animation-delay: 0.17s; }
 .perfil-menu > li:nth-child(7) { animation-delay: 0.20s; }
 @keyframes glassItemIn {
-    from { opacity: 0; transform: translateX(-10px); }
+    from { opacity: 0; transform: translateX(-8px); }
     to   { opacity: 1; transform: translateX(0); }
 }
 
 .menu-item {
-    transition: background-color var(--glass-dur-fast) ease,
-                transform var(--glass-dur-fast) var(--glass-spring),
-                color var(--glass-dur-fast) ease;
+    transition: background-color 0.15s ease,
+                transform var(--glass-dur) var(--glass-spring);
 }
-.menu-item:hover { transform: translateX(4px); }
+.menu-item:hover { transform: translateX(3px); }
 
 .perfil-item,
 .perfil-tema,
 .perfil-paleta {
-    transition: background-color var(--glass-dur-fast) ease,
-                transform var(--glass-dur-fast) var(--glass-spring);
+    transition: background-color 0.15s ease,
+                transform var(--glass-dur) var(--glass-spring);
 }
-.perfil-item:hover { transform: translateX(3px); }
+.perfil-item:hover { transform: translateX(2px); }
 
 .perfil-switch-bolinha {
     transition: transform var(--glass-dur) var(--glass-spring) !important;
 }
 
 .palette-swatch {
-    transition: background-color var(--glass-dur-fast) ease,
-                border-color var(--glass-dur-fast) ease,
-                transform var(--glass-dur-fast) var(--glass-spring) !important;
+    transition: background-color 0.15s ease,
+                border-color 0.15s ease,
+                transform var(--glass-dur) var(--glass-spring) !important;
 }
 .palette-swatch:hover {
-    transform: translateY(-4px) scale(1.10);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.20);
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
 }
 .palette-swatch:active { transform: translateY(0) scale(0.94); }
 .palette-dot {
     transition: transform var(--glass-dur) var(--glass-spring);
 }
-.palette-swatch.active .palette-dot { transform: scale(1.12); }
+.palette-swatch.active .palette-dot { transform: scale(1.10); }
 
 .home-card {
     transition: transform var(--glass-dur) var(--glass-spring),
-                border-color var(--glass-dur-fast) ease,
+                border-color 0.15s ease,
                 box-shadow var(--glass-dur) var(--glass-spring);
 }
 .home-card:hover {
-    transform: translateX(5px) scale(1.015);
-    box-shadow: var(--glass-shadow-md);
+    transform: translateX(4px) scale(1.01);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
 }
 
 .home-grupo-seta {
@@ -410,22 +369,22 @@ body::before {
 }
 
 .table-hover > tbody > tr {
-    transition: background-color var(--glass-dur-fast) ease;
+    transition: background-color 0.15s ease;
 }
 
 /* --------------------------------------------------------------------------
-   14. ENTRADA DAS PÁGINAS
+   12. ENTRADA DAS PÁGINAS
    -------------------------------------------------------------------------- */
 .main-content-area > div {
-    animation: glassPageIn var(--glass-dur) var(--glass-spring-soft) both;
+    animation: glassPageIn 0.3s var(--glass-spring) both;
 }
 @keyframes glassPageIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 /* --------------------------------------------------------------------------
-   15. FALLBACK + ACESSIBILIDADE
+   13. FALLBACK + ACESSIBILIDADE
    -------------------------------------------------------------------------- */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .sidebar-casanova,
@@ -438,7 +397,7 @@ body::before {
     .pgn,
     .kpi-card,
     .table-responsive {
-        background: rgba(15, 20, 35, 0.95) !important;
+        background: rgba(20, 25, 40, 0.95) !important;
     }
 }
 
@@ -456,10 +415,10 @@ body::before {
 }
 
 @media (max-width: 767px) {
-    :root { --glass-blur: 30px; --glass-blur-strong: 50px; }
+    :root { --glass-blur: 20px; --glass-blur-strong: 30px; }
     .card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-        background: rgba(15, 20, 35, 0.85) !important;
+        background: rgba(20, 25, 40, 0.85) !important;
     }
 }
