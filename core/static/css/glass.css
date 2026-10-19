@@ -1,51 +1,19 @@
 /* ==========================================================================
-   GLASSMORPHISM + SPRING ANIMATIONS
-   ==========================================================================
-   Sistema visual inspirado no design da Apple (Materials / Vibrancy).
-
-   OS QUATRO PILARES
-     1. Vidro jateado  — fundo translucido + backdrop-filter blur
-     2. Sensacao de camadas — profundidade por sombra suave e escala
-     3. Borda sutil de luz  — 1px claro simulando reflexo na aresta
-     4. Movimento com fisica — spring, nao ease linear
-
-   CUIDADO COM PERFORMANCE
-     backdrop-filter e caro: recalcula a area atras do elemento. Por isso:
-       - so em elementos PEQUENOS e FIXOS (menus, modais, topbar)
-       - NUNCA em tabela, lista longa ou elemento que rola
-     Este arquivo respeita isso. Se for adicionar blur em algo novo,
-     pergunte antes: "isso rola ou e grande?". Se sim, nao use blur.
-
-   Carregado depois do casanova.css, entao pode sobrescrever.
+   GLASSMORPHISM + SPRING ANIMATIONS — SISTEMA COMPLETO
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   1. TOKENS DE VIDRO
-   -------------------------------------------------------------------------- */
 :root {
-    /* fundos translucidos — o alfa e o que cria o efeito */
     --gls-bg: rgba(255, 255, 255, 0.72);
     --gls-bg-strong: rgba(255, 255, 255, 0.86);
     --gls-bg-weak: rgba(255, 255, 255, 0.52);
-
-    /* borda de luz: branco no topo, escuro embaixo */
     --gls-edge: rgba(255, 255, 255, 0.85);
     --gls-edge-dark: rgba(15, 23, 42, 0.08);
-
-    /* blur */
     --gls-blur: 20px;
     --gls-blur-strong: 30px;
     --gls-sat: 180%;
-
-    /* sombras em camadas: uma curta (contato) e uma longa (profundidade) */
-    --gls-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06),
-                    0 4px 12px rgba(15, 23, 42, 0.06);
-    --gls-shadow-2: 0 2px 6px rgba(15, 23, 42, 0.07),
-                    0 12px 32px rgba(15, 23, 42, 0.12);
-    --gls-shadow-3: 0 4px 10px rgba(15, 23, 42, 0.08),
-                    0 24px 56px rgba(15, 23, 42, 0.16);
-
-    /* spring: overshoot leve, sem ser exagerado */
+    --gls-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
+    --gls-shadow-2: 0 2px 6px rgba(15, 23, 42, 0.07), 0 12px 32px rgba(15, 23, 42, 0.12);
+    --gls-shadow-3: 0 4px 10px rgba(15, 23, 42, 0.08), 0 24px 56px rgba(15, 23, 42, 0.16);
     --gls-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --gls-spring-soft: cubic-bezier(0.22, 1.28, 0.54, 1);
     --gls-dur-fast: 0.18s;
@@ -53,28 +21,31 @@
     --gls-dur-slow: 0.48s;
 }
 
-/* no tema escuro o vidro e escuro e a borda de luz e mais discreta */
 [data-bs-theme="dark"] {
     --gls-bg: rgba(22, 27, 34, 0.74);
     --gls-bg-strong: rgba(22, 27, 34, 0.88);
     --gls-bg-weak: rgba(22, 27, 34, 0.55);
     --gls-edge: rgba(255, 255, 255, 0.09);
     --gls-edge-dark: rgba(0, 0, 0, 0.35);
-    --gls-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28),
-                    0 4px 12px rgba(0, 0, 0, 0.22);
-    --gls-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.32),
-                    0 12px 32px rgba(0, 0, 0, 0.34);
-    --gls-shadow-3: 0 4px 10px rgba(0, 0, 0, 0.36),
-                    0 24px 56px rgba(0, 0, 0, 0.42);
+    --gls-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.22);
+    --gls-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.32), 0 12px 32px rgba(0, 0, 0, 0.34);
+    --gls-shadow-3: 0 4px 10px rgba(0, 0, 0, 0.36), 0 24px 56px rgba(0, 0, 0, 0.42);
 }
 
-/* --------------------------------------------------------------------------
-   2. FUNDO COM PROFUNDIDADE
-   --------------------------------------------------------------------------
-   O vidro so aparece se houver algo atras. Um fundo liso deixa o efeito
-   invisivel. Estas manchas suaves e fixas dao o que desfocar — e como sao
-   estaticas, custam uma pintura so (nao animam, nao recalculam).
-   -------------------------------------------------------------------------- */
+/* Fundo com gradiente e radiais — visível atrás de tudo */
+html {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+    min-height: 100%;
+}
+[data-bs-theme="dark"] html {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+body {
+    min-height: 100vh;
+    position: relative;
+}
+
 body::before {
     content: '';
     position: fixed;
@@ -98,13 +69,8 @@ body::before {
         radial-gradient(ellipse 900px 700px at 50% 105%,
             rgba(var(--cv-brand-light-rgb), 0.06), transparent 65%);
 }
-.app-container { position: relative; z-index: 1; }
 
-/* --------------------------------------------------------------------------
-   3. SUPERFICIES DE VIDRO
-   -------------------------------------------------------------------------- */
-
-/* --- sidebar --- */
+/* Sidebar com glass */
 .sidebar-casanova {
     background: var(--gls-bg-strong) !important;
     backdrop-filter: blur(var(--gls-blur-strong)) saturate(var(--gls-sat));
@@ -122,7 +88,7 @@ body::before {
     box-shadow: none !important;
 }
 
-/* --- barra superior mobile --- */
+/* Topbar mobile */
 .mobile-topbar {
     background: var(--gls-bg) !important;
     backdrop-filter: blur(var(--gls-blur)) saturate(var(--gls-sat));
@@ -130,7 +96,7 @@ body::before {
     border-bottom: 1px solid var(--gls-edge-dark) !important;
 }
 
-/* --- cards: vidro leve --- */
+/* Cards com glass */
 .card {
     background: var(--gls-bg-weak) !important;
     backdrop-filter: blur(10px) saturate(140%);
@@ -145,7 +111,6 @@ body::before {
     transform: translateY(-3px);
     box-shadow: var(--gls-shadow-2) !important;
 }
-/* card que contem tabela: sem blur (custo alto em lista longa) */
 .card:has(.table-responsive) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -153,7 +118,93 @@ body::before {
 }
 .card:has(.table-responsive):hover { transform: none; }
 
-/* --- dropdowns e menus flutuantes --- */
+/* KPI cards */
+.kpi-card {
+    background: var(--gls-bg) !important;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid var(--gls-edge-dark) !important;
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+}
+
+/* Tabelas */
+.table-responsive {
+    background: var(--gls-bg-weak) !important;
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    border-radius: var(--cv-radius, 12px);
+    border: 1px solid var(--gls-edge-dark);
+}
+.table thead th {
+    background: rgba(var(--cv-brand-rgb), 0.06) !important;
+    border-bottom: 2px solid var(--gls-edge-dark) !important;
+}
+.table tbody tr {
+    background: transparent !important;
+    transition: background-color var(--gls-dur-fast) ease;
+}
+.table-hover > tbody > tr:hover {
+    background: rgba(var(--cv-brand-rgb), 0.05) !important;
+}
+.table tbody td {
+    border-color: var(--gls-edge-dark) !important;
+}
+
+/* Botões com spring */
+.btn {
+    transition: transform var(--gls-dur-fast) var(--gls-spring),
+                background-color var(--gls-dur-fast) ease,
+                border-color var(--gls-dur-fast) ease,
+                color var(--gls-dur-fast) ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(0.97); }
+
+.btn-action {
+    transition: transform var(--gls-dur-fast) var(--gls-spring),
+                background-color var(--gls-dur-fast) ease,
+                border-color var(--gls-dur-fast) ease;
+}
+.btn-action:hover { transform: translateY(-2px); }
+.btn-action:active { transform: translateY(0) scale(0.98); }
+
+.btn-acao {
+    transition: transform var(--gls-dur-fast) var(--gls-spring),
+                background-color var(--gls-dur-fast) ease,
+                border-color var(--gls-dur-fast) ease,
+                box-shadow var(--gls-dur-fast) ease;
+}
+.btn-acao:hover { transform: translateY(-2px); box-shadow: var(--gls-shadow-1); }
+.btn-acao:active { transform: translateY(0) scale(0.98); }
+
+.btn-row {
+    transition: transform var(--gls-dur-fast) var(--gls-spring),
+                background-color var(--gls-dur-fast) ease,
+                color var(--gls-dur-fast) ease;
+}
+.btn-row:hover { transform: translateY(-2px) scale(1.06); }
+.btn-row:active { transform: scale(0.94); }
+
+/* Formulários */
+.form-control,
+.form-select {
+    background: var(--gls-bg-weak) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--gls-edge-dark) !important;
+    transition: border-color var(--gls-dur-fast) ease,
+                box-shadow var(--gls-dur) var(--gls-spring),
+                background-color var(--gls-dur-fast) ease;
+}
+.form-control:focus,
+.form-select:focus {
+    background: var(--gls-bg) !important;
+    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.14) !important;
+    border-color: var(--cv-blue) !important;
+}
+
+/* Dropdowns, modais, alerts */
 .dropdown-menu,
 .perfil-menu {
     background: var(--gls-bg-strong) !important;
@@ -163,8 +214,6 @@ body::before {
     box-shadow: var(--gls-shadow-3) !important;
     border-radius: 16px;
 }
-
-/* --- modais --- */
 .modal-content {
     background: var(--gls-bg-strong) !important;
     backdrop-filter: blur(var(--gls-blur-strong)) saturate(var(--gls-sat));
@@ -175,8 +224,6 @@ body::before {
     overflow: hidden;
 }
 .modal-backdrop.show { opacity: 0.42; }
-
-/* --- toasts, alerts e paginacao --- */
 .alert {
     background: var(--gls-bg) !important;
     backdrop-filter: blur(12px);
@@ -184,26 +231,62 @@ body::before {
     border: 1px solid var(--gls-edge-dark) !important;
     border-radius: 14px;
 }
+
+/* Paginação */
 .pgn {
     background: var(--gls-bg-weak) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--gls-edge-dark) !important;
 }
-
-/* --- KPI cards --- */
-.kpi-card {
-    background: var(--gls-bg) !important;
-    backdrop-filter: blur(14px) saturate(160%);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
-    border: 1px solid var(--gls-edge-dark) !important;
-    border-left-width: 4px !important;
-    border-left-style: solid !important;
+.page-link {
+    background: transparent !important;
+    border-color: var(--gls-edge-dark) !important;
+    transition: background-color var(--gls-dur-fast) ease,
+                transform var(--gls-dur-fast) var(--gls-spring);
+}
+.page-link:hover {
+    background: rgba(var(--cv-brand-rgb), 0.08) !important;
+    transform: translateY(-1px);
+}
+.page-item.active .page-link {
+    background: var(--cv-blue) !important;
+    border-color: var(--cv-blue) !important;
 }
 
-/* --------------------------------------------------------------------------
-   4. ENTRADA DO MENU DO PERFIL (spring)
-   -------------------------------------------------------------------------- */
+/* Menu do perfil */
+.sidebar-bottom-container .dropdown {
+    position: relative;
+}
+.perfil-menu {
+    position: absolute !important;
+    bottom: 100% !important;
+    top: auto !important;
+    left: 0 !important;
+    right: auto !important;
+    transform: none !important;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0 0 8px 0 !important;
+    padding: 0;
+    border: 1px solid var(--gls-edge) !important;
+    border-radius: 14px;
+    box-shadow: var(--gls-shadow-3) !important;
+    max-height: min(560px, calc(100vh - 90px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1080;
+}
+.sidebar-casanova.sidebar-collapsed .perfil-menu {
+    left: 100% !important;
+    bottom: 0 !important;
+    width: 280px;
+    margin: 0 0 0 8px !important;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+}
+
+/* Animações spring */
 .perfil-menu {
     transform-origin: bottom left;
     animation: glsMenuIn var(--gls-dur-slow) var(--gls-spring) both;
@@ -216,7 +299,6 @@ body::before {
     transform-origin: bottom right;
 }
 
-/* itens do menu entram em cascata */
 .perfil-menu > li {
     animation: glsItemIn var(--gls-dur) var(--gls-spring-soft) both;
 }
@@ -232,27 +314,6 @@ body::before {
     to   { opacity: 1; transform: translateX(0); }
 }
 
-/* --------------------------------------------------------------------------
-   5. INTERACOES COM FISICA
-   -------------------------------------------------------------------------- */
-
-/* botoes: afundam ao clicar, sobem ao passar */
-.btn {
-    transition: transform var(--gls-dur-fast) var(--gls-spring),
-                background-color var(--gls-dur-fast) ease,
-                border-color var(--gls-dur-fast) ease,
-                color var(--gls-dur-fast) ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn:active { transform: translateY(0) scale(0.97); }
-
-.btn-action { transition: transform var(--gls-dur-fast) var(--gls-spring),
-                          background-color var(--gls-dur-fast) ease,
-                          border-color var(--gls-dur-fast) ease; }
-.btn-action:hover { transform: translateY(-2px); }
-.btn-action:active { transform: translateY(0) scale(0.98); }
-
-/* itens de menu: deslizam ao passar */
 .menu-item {
     transition: background-color var(--gls-dur-fast) ease,
                 transform var(--gls-dur-fast) var(--gls-spring),
@@ -260,7 +321,6 @@ body::before {
 }
 .menu-item:hover { transform: translateX(3px); }
 
-/* itens do menu do perfil */
 .perfil-item,
 .perfil-tema,
 .perfil-paleta {
@@ -269,12 +329,10 @@ body::before {
 }
 .perfil-item:hover { transform: translateX(2px); }
 
-/* switch de tema: bolinha com spring */
 .perfil-switch-bolinha {
     transition: transform var(--gls-dur) var(--gls-spring) !important;
 }
 
-/* swatches da paleta: pulam ao passar */
 .palette-swatch {
     transition: background-color var(--gls-dur-fast) ease,
                 border-color var(--gls-dur-fast) ease,
@@ -287,16 +345,6 @@ body::before {
 }
 .palette-swatch.active .palette-dot { transform: scale(1.08); }
 
-/* links e icones de acao nas tabelas */
-.btn-row {
-    transition: transform var(--gls-dur-fast) var(--gls-spring),
-                background-color var(--gls-dur-fast) ease,
-                color var(--gls-dur-fast) ease;
-}
-.btn-row:hover { transform: translateY(-2px) scale(1.06); }
-.btn-row:active { transform: scale(0.94); }
-
-/* cards do dashboard */
 .home-card {
     transition: transform var(--gls-dur) var(--gls-spring),
                 border-color var(--gls-dur-fast) ease,
@@ -307,32 +355,15 @@ body::before {
     box-shadow: var(--gls-shadow-1);
 }
 
-/* cabecalho de grupo: chevron gira com spring */
 .home-grupo-seta {
     transition: transform var(--gls-dur) var(--gls-spring);
 }
 
-/* linhas de tabela: realce leve, sem transform (nao mexe no layout) */
 .table-hover > tbody > tr {
     transition: background-color var(--gls-dur-fast) ease;
 }
 
-/* campos de formulario: anel de foco com spring */
-.form-control,
-.form-select {
-    transition: border-color var(--gls-dur-fast) ease,
-                box-shadow var(--gls-dur) var(--gls-spring),
-                background-color var(--gls-dur-fast) ease;
-}
-.form-control:focus,
-.form-select:focus {
-    box-shadow: 0 0 0 4px rgba(var(--cv-brand-rgb), 0.14) !important;
-    border-color: var(--cv-blue) !important;
-}
-
-/* --------------------------------------------------------------------------
-   6. ENTRADA DAS PAGINAS
-   -------------------------------------------------------------------------- */
+/* Entrada das páginas */
 .main-content-area > div {
     animation: glsPageIn var(--gls-dur) var(--gls-spring-soft) both;
 }
@@ -341,11 +372,7 @@ body::before {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* --------------------------------------------------------------------------
-   7. ACESSIBILIDADE E FALLBACK
-   -------------------------------------------------------------------------- */
-
-/* navegador sem suporte a backdrop-filter: fundo solido legivel */
+/* Fallback sem backdrop-filter */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .sidebar-casanova,
     .mobile-topbar,
@@ -355,36 +382,32 @@ body::before {
     .card,
     .alert,
     .pgn,
-    .kpi-card {
+    .kpi-card,
+    .table-responsive {
         background: var(--cv-surface) !important;
     }
 }
 
-/* quem pediu menos movimento: sem animacao, sem deslocamento */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-    .card:hover,
-    .btn:hover,
-    .btn:active,
-    .btn-action:hover,
-    .menu-item:hover,
-    .perfil-item:hover,
-    .palette-swatch:hover,
-    .btn-row:hover,
-    .home-card:hover {
+    .card:hover, .btn:hover, .btn:active, .btn-action:hover,
+    .btn-acao:hover, .menu-item:hover, .perfil-item:hover,
+    .palette-swatch:hover, .btn-row:hover, .home-card:hover {
         transform: none !important;
     }
 }
 
-/* telas pequenas: blur e caro em celular antigo — reduz a intensidade */
+/* Mobile */
 @media (max-width: 767px) {
     :root { --gls-blur: 12px; --gls-blur-strong: 16px; }
-    .card { backdrop-filter: none; -webkit-backdrop-filter: none;
-            background: var(--gls-bg-strong) !important; }
+    .card {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: var(--gls-bg-strong) !important;
+    }
 }
