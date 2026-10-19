@@ -56,15 +56,11 @@
             --casanova-light-bg: #f4f6f9;
         }
 
-        body, .sidebar-casanova, .main-content-area, .card, .card-header, .table, th, td {
-            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-        }
-
-        #icone-tema {
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-        .spin-icon {
-            transform: rotate(360deg) scale(1.2);
+        /* Transicao de tema: so nos containers.
+           Antes incluia th/td, o que fazia a tabela INTEIRA transicionar
+           cor a cada troca de tema (em 144 linhas, travava visivelmente). */
+        body, .sidebar-casanova, .main-content-area, .card, .card-header, .table {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         html, body {
@@ -753,6 +749,181 @@
             border-color: var(--cv-accent, #58a6ff);
             box-shadow: 0 0 0 2px rgba(var(--cv-brand-rgb), 0.28);
         }
+        /* ==========================================================
+           MENU DO PERFIL (dropdown do usuario)
+           ========================================================== */
+        .perfil-menu {
+            min-width: 288px;
+            max-width: 320px;
+            padding: 0;
+            border: 1px solid var(--cv-line);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
+            overflow: hidden;
+        }
+
+        /* ---- cabecalho: quem esta logado ---- */
+        .perfil-cabecalho {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px;
+            background: linear-gradient(135deg,
+                        rgba(var(--cv-brand-rgb), .07) 0%,
+                        rgba(var(--cv-brand-rgb), .02) 100%);
+            border-bottom: 1px solid var(--cv-line);
+        }
+        .perfil-cabecalho-avatar {
+            width: 46px; height: 46px; flex-shrink: 0;
+            border-radius: 50%;
+            background: rgba(var(--cv-brand-rgb), .12);
+            color: var(--cv-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; overflow: hidden;
+        }
+        .perfil-cabecalho-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .perfil-cabecalho-texto { min-width: 0; flex: 1; }
+        .perfil-cabecalho-nome {
+            font-size: .86rem; font-weight: 700; line-height: 1.25;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .perfil-cabecalho-login {
+            font-size: .72rem; color: var(--cv-text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .perfil-cabecalho-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+        .perfil-tag {
+            font-size: .62rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 999px;
+            background: var(--cv-line); color: var(--cv-text-muted);
+        }
+        .perfil-tag-nivel { background: rgba(var(--cv-brand-rgb), .12); color: var(--cv-blue); }
+        .perfil-tag-admin { background: rgba(220, 38, 38, .12); color: #dc2626; }
+
+        /* ---- titulo de secao ---- */
+        .perfil-secao {
+            font-size: .6rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .7px;
+            color: var(--cv-text-muted);
+            padding: 10px 14px 4px;
+        }
+
+        /* ---- item generico ---- */
+        .perfil-item {
+            display: flex; align-items: center; gap: 11px;
+            width: 100%; padding: 8px 14px;
+            background: transparent; border: 0;
+            text-align: left; text-decoration: none;
+            color: var(--cv-text); cursor: pointer;
+            transition: background-color .13s ease;
+        }
+        .perfil-item:hover { background: rgba(var(--cv-brand-rgb), .06); color: var(--cv-text); }
+        .perfil-item-icone {
+            width: 30px; height: 30px; flex-shrink: 0;
+            border-radius: 8px;
+            background: var(--cv-line);
+            color: var(--cv-text-muted);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .78rem;
+            transition: color .13s ease, background-color .13s ease;
+        }
+        .perfil-item:hover .perfil-item-icone {
+            background: rgba(var(--cv-brand-rgb), .12);
+            color: var(--cv-blue);
+        }
+        .perfil-item-texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .perfil-item-titulo { font-size: .8rem; font-weight: 600; line-height: 1.25; }
+        .perfil-item-desc {
+            font-size: .68rem; color: var(--cv-text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* ---- alternador de tema ---- */
+        .perfil-tema {
+            display: flex; align-items: center; gap: 11px;
+            padding: 8px 14px;
+        }
+        .perfil-switch {
+            width: 40px; height: 22px; flex-shrink: 0;
+            border-radius: 999px; border: 0;
+            background: var(--cv-line);
+            position: relative; cursor: pointer; padding: 0;
+            transition: background-color .18s ease;
+        }
+        .perfil-switch-bolinha {
+            position: absolute; top: 3px; left: 3px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .22);
+            transition: transform .18s ease;
+        }
+        .perfil-switch[aria-checked="true"] { background: var(--cv-blue); }
+        .perfil-switch[aria-checked="true"] .perfil-switch-bolinha { transform: translateX(18px); }
+
+        /* ---- paleta de cores ---- */
+        .perfil-paleta { padding: 8px 14px 12px; }
+        .perfil-paleta-topo { display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
+
+        .palette-picker {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+        .palette-swatch {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 6px 2px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            background: transparent;
+            cursor: pointer;
+            transition: border-color .14s ease, background-color .14s ease;
+        }
+        .palette-swatch:hover { background: rgba(var(--cv-brand-rgb), .06); }
+        .palette-dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: block;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14);
+        }
+        .palette-nome {
+            font-size: .58rem; font-weight: 700;
+            color: var(--cv-text-muted);
+            text-transform: uppercase; letter-spacing: .3px;
+        }
+        .palette-swatch.active {
+            border-color: var(--cv-blue);
+            background: rgba(var(--cv-brand-rgb), .08);
+        }
+        .palette-swatch.active .palette-nome { color: var(--cv-blue); }
+        /* check na cor escolhida, para nao depender so da cor */
+        .palette-swatch.active .palette-dot::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: .6rem;
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+        }
+
+        /* ---- sair ---- */
+        .perfil-rodape {
+            padding: 8px;
+            border-top: 1px solid var(--cv-line);
+            margin-top: 6px;
+        }
+        .perfil-sair {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 9px 14px;
+            border-radius: 9px;
+            font-size: .8rem; font-weight: 700;
+            color: #dc2626; text-decoration: none;
+            background: rgba(220, 38, 38, .07);
+            transition: background-color .13s ease;
+        }
+        .perfil-sair:hover { background: rgba(220, 38, 38, .13); color: #dc2626; }
+
+        /* no menu recolhido o dropdown abre para a direita, sem o cabecalho */
+        .sidebar-casanova.sidebar-collapsed .perfil-menu { min-width: 240px; }
+
         .sidebar-casanova.sidebar-collapsed .sidebar-link {
             justify-content: center;
             padding-left: 0;
@@ -1221,46 +1392,123 @@
                         <i class="fa-solid fa-chevron-up text-muted small hide-on-collapse" style="font-size: 0.7rem;"></i>
                     </div>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 w-100" aria-labelledby="userDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end perfil-menu" aria-labelledby="userDropdown">
+
+                        {# ---------- quem esta logado ---------- #}
+                        <li class="perfil-cabecalho">
+                            <div class="perfil-cabecalho-avatar">
+                                {% if request.user.perfil.foto %}
+                                    <img src="{{ request.user.perfil.foto.url }}" alt="Perfil">
+                                {% else %}
+                                    <i class="fa-solid fa-user"></i>
+                                {% endif %}
+                            </div>
+                            <div class="perfil-cabecalho-texto">
+                                <div class="perfil-cabecalho-nome">
+                                    {{ request.user.get_full_name|default:request.user.username }}
+                                </div>
+                                <div class="perfil-cabecalho-login">@{{ request.user.username }}</div>
+                                {% if request.user.perfil %}
+                                <div class="perfil-cabecalho-tags">
+                                    {% if request.user.perfil.setor %}
+                                        <span class="perfil-tag">{{ request.user.perfil.get_setor_display }}</span>
+                                    {% endif %}
+                                    {% if request.user.perfil.nivel_acesso %}
+                                        <span class="perfil-tag perfil-tag-nivel">{{ request.user.perfil.get_nivel_acesso_display }}</span>
+                                    {% endif %}
+                                    {% if request.user.is_superuser %}
+                                        <span class="perfil-tag perfil-tag-admin">
+                                            <i class="fa-solid fa-shield-halved"></i> Super
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </li>
+
+                        {# ---------- conta ---------- #}
+                        <li class="perfil-secao">Conta</li>
+
                         <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" data-bs-toggle="modal" data-bs-target="#modalFotoPerfil">
-                                <i class="fa-solid fa-camera text-primary" style="width: 16px;"></i> Alterar Foto de Perfil
+                            <button class="perfil-item" type="button" data-bs-toggle="modal" data-bs-target="#modalFotoPerfil">
+                                <span class="perfil-item-icone"><i class="fa-solid fa-camera"></i></span>
+                                <span class="perfil-item-texto">
+                                    <span class="perfil-item-titulo">Alterar foto de perfil</span>
+                                    <span class="perfil-item-desc">Troque a imagem do seu avatar</span>
+                                </span>
                             </button>
                         </li>
+
                         <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 py-2" id="btn-tema" type="button">
-                                <i class="fa-solid fa-moon text-secondary" id="icone-tema" style="width: 16px;"></i> Alternar Tema
-                            </button>
+                            <a class="perfil-item" href="{% url 'editar_usuario' request.user.id %}">
+                                <span class="perfil-item-icone"><i class="fa-solid fa-id-card"></i></span>
+                                <span class="perfil-item-texto">
+                                    <span class="perfil-item-titulo">Meus dados</span>
+                                    <span class="perfil-item-desc">Nome, e-mail, CPF e endereço</span>
+                                </span>
+                            </a>
                         </li>
-                        <li><hr class="dropdown-divider my-1"></li>
+
+                        {# ---------- aparencia ---------- #}
+                        <li class="perfil-secao">Aparência</li>
+
                         <li>
-                            <div class="px-3 py-2">
-                                <div class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.62rem; letter-spacing: 0.6px;">
-                                    <i class="fa-solid fa-palette me-1"></i> Cor do Sistema
+                            <div class="perfil-tema">
+                                <span class="perfil-item-icone"><i class="fa-solid fa-circle-half-stroke"></i></span>
+                                <span class="perfil-item-texto">
+                                    <span class="perfil-item-titulo">Tema escuro</span>
+                                    <span class="perfil-item-desc" id="temaDescricao">Claro ativo</span>
+                                </span>
+                                <button type="button" class="perfil-switch" id="btn-tema"
+                                        role="switch" aria-checked="false" aria-label="Alternar tema escuro">
+                                    <span class="perfil-switch-bolinha"></span>
+                                </button>
+                            </div>
+                        </li>
+
+                        <li>
+                            <div class="perfil-paleta">
+                                <div class="perfil-paleta-topo">
+                                    <span class="perfil-item-icone"><i class="fa-solid fa-palette"></i></span>
+                                    <span class="perfil-item-texto">
+                                        <span class="perfil-item-titulo">Cor do sistema</span>
+                                        <span class="perfil-item-desc" id="paletaDescricao">Azul</span>
+                                    </span>
                                 </div>
                                 <div class="palette-picker" id="palettePicker">
-                                    <button type="button" class="palette-swatch" data-palette="azul" title="Azul (padrão)" aria-label="Paleta azul">
+                                    <button type="button" class="palette-swatch" data-palette="azul"
+                                            data-nome="Azul" title="Azul" aria-label="Cor azul">
                                         <span class="palette-dot" style="background: #0b3882;"></span>
+                                        <span class="palette-nome">Azul</span>
                                     </button>
-                                    <button type="button" class="palette-swatch" data-palette="roxo" title="Roxo" aria-label="Paleta roxa">
+                                    <button type="button" class="palette-swatch" data-palette="roxo"
+                                            data-nome="Roxo" title="Roxo" aria-label="Cor roxa">
                                         <span class="palette-dot" style="background: #6d28d9;"></span>
+                                        <span class="palette-nome">Roxo</span>
                                     </button>
-                                    <button type="button" class="palette-swatch" data-palette="rosa" title="Rosa" aria-label="Paleta rosa">
+                                    <button type="button" class="palette-swatch" data-palette="rosa"
+                                            data-nome="Rosa" title="Rosa" aria-label="Cor rosa">
                                         <span class="palette-dot" style="background: #db2777;"></span>
+                                        <span class="palette-nome">Rosa</span>
                                     </button>
-                                    <button type="button" class="palette-swatch" data-palette="verde" title="Verde" aria-label="Paleta verde">
+                                    <button type="button" class="palette-swatch" data-palette="verde"
+                                            data-nome="Verde" title="Verde" aria-label="Cor verde">
                                         <span class="palette-dot" style="background: #059669;"></span>
+                                        <span class="palette-nome">Verde</span>
                                     </button>
-                                    <button type="button" class="palette-swatch" data-palette="laranja" title="Laranja" aria-label="Paleta laranja">
+                                    <button type="button" class="palette-swatch" data-palette="laranja"
+                                            data-nome="Laranja" title="Laranja" aria-label="Cor laranja">
                                         <span class="palette-dot" style="background: #ea580c;"></span>
+                                        <span class="palette-nome">Laranja</span>
                                     </button>
                                 </div>
                             </div>
                         </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item text-danger d-flex align-items-center gap-2 py-2" href="{% url 'logout' %}">
-                                <i class="fa-solid fa-right-from-bracket" style="width: 16px;"></i> Sair do Sistema
+
+                        {# ---------- sair ---------- #}
+                        <li class="perfil-rodape">
+                            <a class="perfil-sair" href="{% url 'logout' %}">
+                                <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
                             </a>
                         </li>
                     </ul>
@@ -1347,33 +1595,26 @@
         const btnTema = document.getElementById('btn-tema');
         const htmlElement = document.documentElement;
 
-        const temaSalvo = localStorage.getItem('casanova_theme') || 'light';
-        atualizarIcone(temaSalvo, false);
+        // Aplica o tema salvo e sincroniza o switch do menu do perfil.
+        // O menu nao tem mais o icone "icone-tema" (virou switch), entao
+        // esta funcao so cuida do estado, nao de trocar classe de icone.
+        function aplicarTema(tema) {
+            htmlElement.setAttribute('data-bs-theme', tema);
+            localStorage.setItem('casanova_theme', tema);
+            const btn = document.getElementById('btn-tema');
+            const desc = document.getElementById('temaDescricao');
+            if (btn) btn.setAttribute('aria-checked', tema === 'dark' ? 'true' : 'false');
+            if (desc) desc.textContent = tema === 'dark' ? 'Escuro ativo' : 'Claro ativo';
+        }
 
-        btnTema.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const temaAtual = htmlElement.getAttribute('data-bs-theme');
-            const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
-            
-            const iconeTema = document.getElementById('icone-tema');
-            iconeTema.classList.add('spin-icon');
-            
-            setTimeout(() => {
-                htmlElement.setAttribute('data-bs-theme', novoTema);
-                localStorage.setItem('casanova_theme', novoTema);
-                atualizarIcone(novoTema, true);
-                
-                setTimeout(() => iconeTema.classList.remove('spin-icon'), 250);
-            }, 150);
-        });
+        aplicarTema(localStorage.getItem('casanova_theme') || 'light');
 
-        function atualizarIcone(tema, animar) {
-            const iconeTema = document.getElementById('icone-tema');
-            if (tema === 'dark') {
-                iconeTema.className = 'fa-solid fa-sun text-warning ' + (animar ? 'spin-icon' : '');
-            } else {
-                iconeTema.className = 'fa-solid fa-moon text-secondary ' + (animar ? 'spin-icon' : '');
-            }
+        if (btnTema) {
+            btnTema.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const atual = htmlElement.getAttribute('data-bs-theme');
+                aplicarTema(atual === 'dark' ? 'light' : 'dark');
+            });
         }
 
         // ===== BUSCA GLOBAL DO MENU =====
@@ -1464,7 +1705,26 @@
                 htmlEl.setAttribute('data-palette', nome);
                 localStorage.setItem('casanova_palette', nome);
 
-                document.querySelectorAll('.palette-swatch').forEach(function (sw) {
+                // Sincroniza o switch de tema com o estado real
+            function sincronizarSwitchTema() {
+                const escuro = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                const btn = document.getElementById('btn-tema');
+                const desc = document.getElementById('temaDescricao');
+                if (btn) btn.setAttribute('aria-checked', escuro ? 'true' : 'false');
+                if (desc) desc.textContent = escuro ? 'Escuro ativo' : 'Claro ativo';
+            }
+
+            // Sincroniza a descricao da paleta com a cor escolhida
+            function sincronizarDescricaoPaleta() {
+                const ativa = document.querySelector('.palette-swatch.active');
+                const desc = document.getElementById('paletaDescricao');
+                if (ativa && desc) desc.textContent = ativa.getAttribute('data-nome') || '';
+            }
+
+            sincronizarSwitchTema();
+            sincronizarDescricaoPaleta();
+
+            document.querySelectorAll('.palette-swatch').forEach(function (sw) {
                     sw.classList.toggle('active', sw.getAttribute('data-palette') === nome);
                 });
             }
@@ -1580,8 +1840,13 @@
                     document.documentElement.setAttribute('data-bs-theme', novo);
                     localStorage.setItem('casanova_theme', novo);
                     sincronizarIconeMobile();
-                    // Mantém o ícone do desktop em sincronia
-                    if (typeof atualizarIcone === 'function') atualizarIcone(novo, true);
+                    // Mantem o switch do menu do perfil em sincronia.
+                    // Sem isto, trocar o tema pelo botao mobile deixava o
+                    // switch do perfil mostrando o estado antigo.
+                    const btn = document.getElementById('btn-tema');
+                    const desc = document.getElementById('temaDescricao');
+                    if (btn) btn.setAttribute('aria-checked', novo === 'dark' ? 'true' : 'false');
+                    if (desc) desc.textContent = novo === 'dark' ? 'Escuro ativo' : 'Claro ativo';
                 });
             }
         })();
