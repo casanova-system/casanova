@@ -729,26 +729,7 @@
            - bottom:100% + margin-bottom -> sobe a partir do botao
            - left:0 -> alinha a esquerda, sem vazar e cortar a 1a coluna
            - max-height + overflow-y -> caibem telas baixas */
-        .perfil-menu {
-            position: absolute !important;
-            bottom: 100% !important;
-            top: auto !important;
-            left: 0 !important;
-            right: auto !important;
-            transform: none !important;
-            width: 100%;
-            min-width: 0;
-            max-width: none;
-            margin: 0 0 8px 0 !important;
-            padding: 0;
-            border: 1px solid var(--cv-line);
-            border-radius: 14px;
-            box-shadow: 0 -8px 28px rgba(15, 23, 42, .16);
-            max-height: min(560px, calc(100vh - 90px));
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 1080;
-        }
+        /* .perfil-menu: definido no glass.css (carregado depois) */
 
            ========================================================== */
 
@@ -923,13 +904,7 @@
         /* Recolhido: a sidebar tem 72px, entao o menu precisa ser mais
            largo que ela. Abre para a DIREITA (left:100%) em vez de para
            dentro, senao ficaria ilegivel. */
-        .sidebar-casanova.sidebar-collapsed .perfil-menu {
-            left: 100% !important;
-            bottom: 0 !important;
-            width: 280px;
-            margin: 0 0 0 8px !important;
-            box-shadow: 0 8px 28px rgba(15, 23, 42, .18);
-        }
+        /* .sidebar-collapsed .perfil-menu: definido no glass.css */
 
         .sidebar-casanova.sidebar-collapsed .sidebar-link {
             justify-content: center;
