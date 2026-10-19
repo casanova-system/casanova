@@ -62,39 +62,48 @@
         <div class="home-secao-topo">
             <h6 class="home-secao-titulo">
                 <i class="fa-solid fa-bolt"></i> Acesso Rápido
+                <span class="home-secao-conta">{{ rotinas_liberadas }}</span>
             </h6>
-            <div class="home-busca">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="buscaHome" placeholder="Filtrar rotinas..." oninput="filtrarHome(this.value)">
-            </div>
-        </div>
-
-        {% for grupo in grupos_menu %}
-        <div class="home-grupo" data-grupo>
-            <div class="home-grupo-cabecalho">
-                <span class="home-grupo-nome" style="--gc: {{ grupo.cor }};">
-                    <i class="fa-solid {{ grupo.icone }}"></i> {{ grupo.nome }}
-                </span>
-                <span class="home-grupo-conta">{{ grupo.itens|length }}</span>
-            </div>
-
-            <div class="row g-3">
-                {% for item in grupo.itens %}
-                <div class="col-xxl-3 col-xl-4 col-md-6 home-item"
-                     data-busca="{{ item.titulo|lower }} {{ item.descricao|lower }}">
-                    <a href="{% url item.url %}" class="quick-card">
-                        <span class="quick-icon" style="--qc: {{ item.cor }};"><i class="fa-solid {{ item.icone }}"></i></span>
-                        <span class="quick-body">
-                            <span class="quick-title">{{ item.titulo }}</span>
-                            <span class="quick-desc">{{ item.descricao }}</span>
-                        </span>
-                        <i class="fa-solid fa-chevron-right quick-arrow"></i>
-                    </a>
+            <div class="home-acoes">
+                <div class="home-busca">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="buscaHome" placeholder="Filtrar rotinas..."
+                           oninput="filtrarHome(this.value)">
                 </div>
-                {% endfor %}
+                <button type="button" class="home-btn-grupos" onclick="alternarTodosGrupos(this)">
+                    <i class="fa-solid fa-angles-down"></i> <span>Abrir todos</span>
+                </button>
             </div>
         </div>
-        {% endfor %}
+
+        <div class="home-grupos">
+            {% for grupo in grupos_menu %}
+            <div class="home-grupo" data-grupo>
+                <button type="button" class="home-grupo-cabecalho" onclick="alternarGrupo(this)">
+                    <span class="home-grupo-nome" style="--gc: {{ grupo.cor }};">
+                        <i class="fa-solid {{ grupo.icone }}"></i> {{ grupo.nome }}
+                    </span>
+                    <span class="home-grupo-conta">{{ grupo.itens|length }}</span>
+                    <i class="fa-solid fa-chevron-down home-grupo-seta"></i>
+                </button>
+
+                <div class="home-grupo-corpo">
+                    <div class="home-grid">
+                        {% for item in grupo.itens %}
+                        <a href="{% url item.url %}" class="home-card"
+                           title="{{ item.titulo }} — {{ item.descricao }}"
+                           data-busca="{{ item.titulo|lower }} {{ item.descricao|lower }}">
+                            <span class="home-card-icone" style="--qc: {{ item.cor }};">
+                                <i class="fa-solid {{ item.icone }}"></i>
+                            </span>
+                            <span class="home-card-titulo">{{ item.titulo }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
 
         <p class="home-vazio" id="homeVazio" style="display:none;">
             <i class="fa-solid fa-filter-circle-xmark"></i>
@@ -116,202 +125,228 @@
 </div>
 
 <style>
-/* ===================== HERO ===================== */
+/* ===================== HERO (compacto) ===================== */
 .hero-card {
     background: linear-gradient(135deg, #092c6b 0%, #031330 100%);
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, .12) !important;
 }
-.hero-card .hero-glow {
-    position: absolute; top: -60%; right: -10%;
-    width: 420px; height: 420px;
-    background: radial-gradient(circle, rgba(96, 165, 250, .28) 0%, transparent 68%);
-    pointer-events: none;
-    animation: heroGlow 9s ease-in-out infinite alternate;
-}
-@keyframes heroGlow {
-    from { transform: translate(0, 0) scale(1); opacity: .75; }
-    to   { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
-}
 .hero-eyebrow {
-    font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(255, 255, 255, .55); margin-bottom: 6px;
+    font-size: .68rem; letter-spacing: 1.4px; text-transform: uppercase;
+    color: rgba(255, 255, 255, .5); margin-bottom: 4px;
 }
 .hero-eyebrow i { color: #60a5fa; margin-right: 4px; }
 .hero-titulo {
-    font-size: 2rem; font-weight: 800; letter-spacing: 1.5px;
-    margin: 0 0 8px; text-shadow: 0 2px 12px rgba(0, 0, 0, .4);
+    font-size: 1.5rem; font-weight: 800; letter-spacing: 1.2px;
+    margin: 0 0 5px; text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
 .hero-titulo span { color: #60a5fa; font-weight: 300; }
 .hero-texto {
-    font-size: .85rem; line-height: 1.5; max-width: 640px;
-    color: rgba(255, 255, 255, .62); margin: 0;
+    font-size: .8rem; line-height: 1.45; max-width: 620px;
+    color: rgba(255, 255, 255, .6); margin: 0;
 }
-
-/* dados do hero */
-.hero-data {
-    display: flex; align-items: center; gap: 10px;
-    justify-content: flex-end; flex-wrap: wrap;
-}
+.hero-data { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .hero-data-item {
-    display: flex; align-items: center; gap: 9px;
+    display: flex; align-items: center; gap: 8px;
     background: rgba(255, 255, 255, .07);
     border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: 11px; padding: 8px 13px;
+    border-radius: 10px; padding: 6px 12px;
 }
-.hero-data-item > i { color: #60a5fa; font-size: .95rem; }
-.hero-data-valor { font-size: .84rem; font-weight: 700; line-height: 1.1; }
-.hero-data-label {
-    font-size: .6rem; text-transform: uppercase; letter-spacing: .6px;
-    color: rgba(255, 255, 255, .5);
-}
+.hero-data-item > i { color: #60a5fa; font-size: .85rem; }
+.hero-data-valor { font-size: .8rem; font-weight: 700; line-height: 1.1; }
+.hero-data-label { font-size: .56rem; text-transform: uppercase; letter-spacing: .5px; color: rgba(255, 255, 255, .45); }
 .hero-portal {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; gap: 7px;
     background: #fff; color: #0b3882;
-    font-size: .8rem; font-weight: 700; letter-spacing: .5px;
-    padding: 11px 20px; border-radius: 999px;
+    font-size: .76rem; font-weight: 700; letter-spacing: .4px;
+    padding: 9px 17px; border-radius: 999px;
     text-decoration: none; white-space: nowrap;
-    transition: transform .25s ease, box-shadow .25s ease;
+    transition: transform .2s ease;
 }
-.hero-portal:hover {
-    transform: translateY(-2px); color: #0b3882;
-    box-shadow: 0 10px 26px rgba(255, 255, 255, .25);
-}
-.hero-portal i { font-size: .7rem; }
+.hero-portal:hover { transform: translateY(-2px); color: #0b3882; }
+.hero-portal i { font-size: .66rem; }
 
-/* ===================== SECAO ===================== */
+/* ===================== TOPO DA SECAO ===================== */
 .home-secao-topo {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 14px; flex-wrap: wrap; margin-bottom: 14px;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
 }
 .home-secao-titulo {
-    font-size: .72rem; font-weight: 800; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--cv-text-muted);
-    margin: 0;
+    display: flex; align-items: center; gap: 7px;
+    font-size: .7rem; font-weight: 800; letter-spacing: .9px;
+    text-transform: uppercase; color: var(--cv-text-muted); margin: 0;
 }
-.home-secao-titulo i { color: var(--cv-blue); margin-right: 5px; }
-.home-busca { position: relative; max-width: 280px; width: 100%; }
+.home-secao-titulo i { color: var(--cv-blue); }
+.home-secao-conta {
+    font-size: .62rem; font-weight: 800;
+    background: var(--cv-blue-soft, rgba(11, 56, 130, .1));
+    color: var(--cv-blue);
+    padding: 1px 8px; border-radius: 999px;
+}
+.home-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.home-busca { position: relative; width: 240px; }
 .home-busca i {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: var(--cv-text-muted); font-size: .8rem; pointer-events: none;
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--cv-text-muted); font-size: .76rem; pointer-events: none;
 }
 .home-busca input {
-    width: 100%; padding: 7px 12px 7px 33px;
-    border: 1px solid var(--cv-line); border-radius: 9px;
-    background: var(--cv-surface); color: var(--cv-text); font-size: .82rem;
+    width: 100%; padding: 6px 11px 6px 31px;
+    border: 1px solid var(--cv-line); border-radius: 8px;
+    background: var(--cv-surface); color: var(--cv-text); font-size: .8rem;
 }
 .home-busca input:focus {
     outline: none; border-color: var(--cv-blue);
     box-shadow: 0 0 0 3px rgba(11, 56, 130, .1);
 }
-
-/* ===================== GRUPOS ===================== */
-.home-grupo { margin-bottom: 22px; }
-.home-grupo-cabecalho {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 10px; padding-bottom: 6px;
-    border-bottom: 1px solid var(--cv-line);
+.home-btn-grupos {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .74rem; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--cv-line); background: var(--cv-surface);
+    color: var(--cv-text-muted); cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
 }
+.home-btn-grupos:hover { border-color: var(--cv-blue); color: var(--cv-blue); }
+
+/* ===================== GRUPOS COLAPSAVEIS ===================== */
+.home-grupos { display: flex; flex-direction: column; gap: 8px; }
+.home-grupo {
+    border: 1px solid var(--cv-line);
+    border-radius: 12px;
+    background: var(--cv-surface);
+    overflow: hidden;
+}
+.home-grupo-cabecalho {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 10px 14px;
+    background: transparent; border: 0;
+    cursor: pointer; text-align: left;
+    transition: background-color .15s ease;
+}
+.home-grupo-cabecalho:hover { background: var(--cv-surface-2, rgba(0, 0, 0, .02)); }
 .home-grupo-nome {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: .72rem; font-weight: 800;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .74rem; font-weight: 800;
     text-transform: uppercase; letter-spacing: .7px;
-    color: var(--gc, var(--cv-blue));
+    color: var(--gc, var(--cv-blue)); flex: 1;
 }
 .home-grupo-conta {
-    font-size: .64rem; font-weight: 800;
+    font-size: .62rem; font-weight: 800;
     background: var(--cv-line); color: var(--cv-text-muted);
     padding: 1px 8px; border-radius: 999px;
 }
+.home-grupo-seta {
+    font-size: .7rem; color: var(--cv-text-faint, #94a3b8);
+    transition: transform .22s ease;
+}
+.home-grupo.aberto .home-grupo-seta { transform: rotate(180deg); }
 
-/* ===================== CARD ===================== */
-.quick-card {
-    display: flex; align-items: center; gap: 14px;
-    padding: 15px 17px; height: 100%;
-    background: var(--cv-surface);
+.home-grupo-corpo {
+    display: grid; grid-template-rows: 0fr;
+    transition: grid-template-rows .24s ease;
+}
+.home-grupo.aberto .home-grupo-corpo { grid-template-rows: 1fr; }
+.home-grupo-corpo > * { overflow: hidden; }
+
+/* ===================== CARD COMPACTO ===================== */
+.home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 7px;
+    padding: 0 12px 12px;
+}
+.home-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
     border: 1px solid var(--cv-line);
-    border-radius: 14px;
+    border-radius: 9px;
+    background: var(--cv-surface);
     text-decoration: none; color: inherit;
-    box-shadow: var(--cv-shadow-sm, 0 1px 3px rgba(15, 23, 42, .06));
-    transition: transform .22s cubic-bezier(.16, 1, .3, 1),
-                box-shadow .22s cubic-bezier(.16, 1, .3, 1),
-                border-color .22s ease;
+    /* so transform: GPU, sem repaint */
+    transition: transform .16s ease, border-color .16s ease;
 }
-.quick-card:hover {
-    transform: translateY(-4px); color: inherit;
-    box-shadow: var(--cv-shadow-lg, 0 12px 28px rgba(15, 23, 42, .1));
+.home-card:hover {
+    transform: translateX(3px);
     border-color: var(--cv-blue);
+    color: inherit;
 }
-.quick-icon {
-    width: 44px; height: 44px; flex-shrink: 0;
-    border-radius: 12px;
+.home-card-icone {
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.05rem;
+    font-size: .8rem;
     color: var(--qc, #0b3882);
     background: color-mix(in srgb, var(--qc, #0b3882) 12%, transparent);
-    transition: transform .22s cubic-bezier(.16, 1, .3, 1);
 }
-.quick-card:hover .quick-icon { transform: scale(1.08) rotate(-4deg); }
-.quick-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.quick-title {
-    font-weight: 700; font-size: .9rem; line-height: 1.2;
+.home-card-titulo {
+    font-size: .8rem; font-weight: 600;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
 }
-.quick-desc {
-    font-size: .75rem; color: var(--cv-text-muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.quick-arrow {
-    font-size: .7rem; color: var(--cv-text-faint, #94a3b8);
-    opacity: 0; transform: translateX(-6px);
-    transition: opacity .22s ease, transform .22s cubic-bezier(.16, 1, .3, 1);
-}
-.quick-card:hover .quick-arrow { opacity: 1; transform: translateX(0); }
 
 .home-vazio {
     text-align: center; color: var(--cv-text-muted);
-    padding: 30px 0; margin: 0; font-size: .88rem;
+    padding: 28px 0; margin: 0; font-size: .86rem;
 }
-.home-vazio i { display: block; font-size: 1.8rem; opacity: .4; margin-bottom: 7px; }
+.home-vazio i { display: block; font-size: 1.6rem; opacity: .4; margin-bottom: 6px; }
 
-@media (prefers-reduced-motion: reduce) {
-    .hero-card .hero-glow { animation: none; }
-    .quick-card:hover,
-    .quick-card:hover .quick-icon,
-    .quick-card:hover .quick-arrow { transform: none; }
+@media (max-width: 767px) {
+    .home-busca { width: 100%; }
+    .home-acoes { width: 100%; }
+    .hero-data { justify-content: flex-start; }
+    .home-grid { grid-template-columns: 1fr; }
 }
 </style>
 
 <script>
-// Data e hora ao vivo (evita a pagina mostrar data congelada)
+// ===================== RELOGIO =====================
 function atualizarRelogio() {
     const agora = new Date();
-    const data = agora.toLocaleDateString('pt-BR', {
-        weekday: 'short', day: '2-digit', month: 'short'
-    });
-    const hora = agora.toLocaleTimeString('pt-BR', {
-        hour: '2-digit', minute: '2-digit'
-    });
     const elData = document.getElementById('heroData');
     const elHora = document.getElementById('heroHora');
-    if (elData) elData.textContent = data.replace('.', '');
-    if (elHora) elHora.textContent = hora;
+    if (elData) {
+        elData.textContent = agora.toLocaleDateString('pt-BR', {
+            day: '2-digit', month: 'short'
+        }).replace('.', '');
+    }
+    if (elHora) {
+        elHora.textContent = agora.toLocaleTimeString('pt-BR', {
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
 }
 
-// Filtro de rotinas do inicio
+// ===================== GRUPOS =====================
+function alternarGrupo(btn) {
+    btn.closest('.home-grupo').classList.toggle('aberto');
+}
+
+function alternarTodosGrupos(btn) {
+    const grupos = document.querySelectorAll('.home-grupo');
+    // Se a maioria esta fechada, abre todas; senao fecha todas.
+    const abertos = document.querySelectorAll('.home-grupo.aberto').length;
+    const abrir = abertos < grupos.length;
+
+    grupos.forEach(function (g) { g.classList.toggle('aberto', abrir); });
+    btn.querySelector('span').textContent = abrir ? 'Fechar todos' : 'Abrir todos';
+}
+
+// ===================== FILTRO =====================
 function filtrarHome(termo) {
     termo = (termo || '').trim().toLowerCase();
     let total = 0;
 
     document.querySelectorAll('[data-grupo]').forEach(function (grupo) {
         let visiveis = 0;
-        grupo.querySelectorAll('.home-item').forEach(function (item) {
-            const alvo = item.getAttribute('data-busca') || '';
+        grupo.querySelectorAll('.home-card').forEach(function (card) {
+            const alvo = card.getAttribute('data-busca') || '';
             const mostra = !termo || alvo.indexOf(termo) !== -1;
-            item.style.display = mostra ? '' : 'none';
+            card.style.display = mostra ? '' : 'none';
             if (mostra) visiveis++;
         });
         grupo.style.display = visiveis > 0 ? '' : 'none';
+        // Com filtro ativo, abre os grupos com resultado
+        if (termo) grupo.classList.toggle('aberto', visiveis > 0);
         total += visiveis;
     });
 
@@ -321,7 +356,12 @@ function filtrarHome(termo) {
 
 document.addEventListener('DOMContentLoaded', function () {
     atualizarRelogio();
-    setInterval(atualizarRelogio, 30000);
+    setInterval(atualizarRelogio, 60000);
+
+    // Abre o primeiro grupo por padrao: o usuario ve que ha conteudo e
+    // tem um ponto de partida, sem a pagina vir toda aberta.
+    const primeiro = document.querySelector('.home-grupo');
+    if (primeiro) primeiro.classList.add('aberto');
 });
 </script>
 {% endblock %}

@@ -281,8 +281,11 @@ code, kbd, samp, pre,
     to   { opacity: 1; }
 }
 
+/* Entrada da pagina: so opacity (a GPU faz de graca) e mais curta.
+   Antes animava a arvore inteira por 0.42s com `backwards`, o que deixava
+   tabelas longas invisiveis enquanto renderizavam. */
 .main-content-area > div {
-    animation: cvPageIn 0.42s var(--cv-ease-out) backwards;
+    animation: cvPageIn 0.18s ease-out;
 }
 
 /* --------------------------------------------------------------------------
@@ -292,8 +295,9 @@ code, kbd, samp, pre,
     border: 1px solid var(--cv-line) !important;
     border-radius: var(--cv-radius) !important;
     box-shadow: var(--cv-shadow-sm) !important;
-    transition: box-shadow var(--cv-dur) var(--cv-ease),
-                transform var(--cv-dur) var(--cv-ease),
+    /* transform + cor apenas: box-shadow nao e acelerado por GPU e
+       forca repaint da area inteira a cada hover */
+    transition: transform var(--cv-dur) var(--cv-ease),
                 border-color var(--cv-dur) var(--cv-ease);
     overflow: hidden;
 }
@@ -377,9 +381,11 @@ code, kbd, samp, pre,
     background-color: var(--cv-blue-soft) !important;
 }
 
-/* Cabeçalho fixo com leve desfoque */
+/* Cabecalho fixo: cor SOLIDA em vez de backdrop-filter.
+   O blur recalcula a area atras do elemento a cada scroll — em tabela
+   longa era o maior ofensor de fluidez. Cor solida e instantanea. */
 .table thead.sticky-top {
-    backdrop-filter: saturate(180%) blur(6px);
+    background-color: var(--cv-surface) !important;
     z-index: 3;
 }
 
@@ -644,7 +650,9 @@ code, kbd, samp, pre,
     margin: 0 2px;
     border-color: var(--cv-line);
     color: var(--cv-text-muted);
-    transition: all 0.16s var(--cv-ease);
+    /* so cor/borda: animar "all" pega box-shadow e width, que sao caros */
+    transition: color 0.16s var(--cv-ease), border-color 0.16s var(--cv-ease),
+                background-color 0.16s var(--cv-ease);
 }
 .pagination .page-link:hover {
     background: var(--cv-blue-soft);
@@ -1703,7 +1711,7 @@ body.mobile-menu-open {
     border: 2px solid var(--cv-line);
     background: var(--cv-surface);
     text-align: center;
-    transition: all 0.25s var(--cv-ease);
+    transition: transform 0.25s var(--cv-ease), border-color 0.25s var(--cv-ease);
     height: 100%;
 }
 .fluxo-card:hover {
@@ -1721,7 +1729,7 @@ body.mobile-menu-open {
     background: var(--cv-surface-2);
     border: 2px solid var(--cv-line-strong);
     color: var(--cv-text-faint);
-    transition: all 0.25s var(--cv-ease);
+    transition: background-color 0.25s var(--cv-ease), border-color 0.25s var(--cv-ease), color 0.25s var(--cv-ease);
 }
 .fluxo-card-nome {
     font-size: 0.78rem;
@@ -1910,7 +1918,7 @@ body.mobile-menu-open {
     color: var(--cv-text-faint);
     position: relative;
     z-index: 1;
-    transition: all 0.25s var(--cv-ease);
+    transition: background-color 0.25s var(--cv-ease), border-color 0.25s var(--cv-ease), color 0.25s var(--cv-ease);
 }
 .fluxo-setor.concluido .fluxo-icone {
     background: rgba(22, 163, 74, 0.12);
@@ -2297,3 +2305,49 @@ body.mobile-menu-open {
     .rastreio-painel { padding: 1rem; }
 }
 
+
+
+/* ==========================================================================
+   PERFORMANCE DE ANIMACAO
+   ==========================================================================
+   Regras que mantem a interface fluida. Nao remover sem medir antes: cada
+   uma foi adicionada por um motivo concreto.
+   ========================================================================== */
+
+/* Nunca animar propriedades que forcam layout/paint.
+   `will-change` so nas duas que a GPU acelera. */
+.card:hover,
+.btn:hover,
+.nav-link:hover,
+.table-hover > tbody > tr {
+    will-change: auto;
+}
+
+/* Hover de card: so transform (GPU), sem box-shadow animado */
+.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cv-blue) !important;
+}
+
+/* Respeita quem pediu menos movimento no sistema operacional */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Em telas com muitos elementos, desliga pulso continuo: ele mantem a GPU
+   acordada o tempo todo e nao acrescenta informacao. */
+@media (max-width: 1400px) {
+    .fluxo-card,
+    .fluxo-card-icone,
+    .fluxo-setor,
+    .fluxo-icone {
+        animation: none !important;
+    }
+}
