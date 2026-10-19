@@ -5,9 +5,9 @@
     <div class="form-page">
         {% include 'core/partials/messages.html' %}
 
-        {# O gerenciamento de permissoes e alcancado pela lista de USUARIOS
-           (botao de chave). Voltar tem que ir para la, nao para uma lista
-           de permissoes separada que nao existe mais no menu. #}
+        {% comment %}O gerenciamento de permissoes e alcancado pela lista de
+           USUARIOS (botao de chave). Voltar tem que ir para la, nao para
+           uma lista de permissoes separada que nao existe mais no menu.{% endcomment %}
         {% url 'lista_usuarios' as url_voltar %}
         {% include 'core/partials/page_header.html' with titulo="Permissões de Acesso" subtitulo="Escolha quais rotinas este usuário pode acessar. Nada é liberado por padrão." voltar_url=url_voltar voltar_texto="Voltar aos Usuários" %}
 
