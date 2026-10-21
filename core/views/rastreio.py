@@ -1005,9 +1005,16 @@ def _explicar_codigo_nao_encontrado(codigo):
 
 
 def _achar_por_obra_e_doc(obra_cod, doc):
-    """Procura a OP casando obra + documento, com tolerancia de caixa."""
+    """Procura a OP casando obra + documento, com tolerancia de caixa.
+
+    O documento do Alumisoft nem sempre é 'J01': as listas de caixilhos usam
+    rótulos como 'P32_PROD', 'VF4 BD', 'BD P32'. O lookup é exato (sem LIKE)
+    e só precisa casar o documento inteiro — quem decide a divisória entre obra
+    e documento é quem chamou.
+    """
     from core.models import ObraOP
 
+    doc = (doc or '').strip()
     if not doc:
         return None
     return (
@@ -1017,6 +1024,22 @@ def _achar_por_obra_e_doc(obra_cod, doc):
         or ObraOP.objects.filter(
             obra__codigo__iexact=obra_cod, codigo_documento__iexact=doc
         ).first()
+    )
+
+
+def _achar_por_documento(doc):
+    """Procura a OP só pelo documento (etiquetas antigas sem a obra).
+
+    Desempata por obra quando o mesmo documento existe em mais de uma obra.
+    """
+    from core.models import ObraOP
+
+    doc = (doc or '').strip()
+    if not doc:
+        return None
+    return (
+        ObraOP.objects.filter(codigo_documento__iexact=doc).first()
+        or ObraOP.objects.filter(codigo_esquadria__iexact=doc).first()
     )
 
 
@@ -1063,40 +1086,35 @@ def _extrair_op_id_do_qr(codigo):
         pass
 
     # --- 2. OBRA + separador + DOCUMENTO ---
-    # Qualquer caractere que não seja letra/dígito/hífen/underscore conta como
-    # separador (pega '|', '}', '/', '!', espaço, etc).
-    m = re.match(r'^(.+?)[^A-Za-z0-9_]+([A-Za-z]\d+)$', codigo)
+    # O documento não é sempre 'J01': as listas de caixilhos usam rótulos como
+    # 'P32_PROD', 'VF4 BD', 'BD P32'. Por isso a divisória é definida por um
+    # padrão de OBRA (NN-NNNN-NN...) e o resto vira o documento.
+    #
+    # 2a. separador não-alfanumérico (o leitor pode trocar '|' por '}', '/'...)
+    m = re.match(r'^(.+?)[^A-Za-z0-9_]+(.+)$', codigo)
     if m:
         obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
         if obra_op:
             return obra_op.pk
 
-    # Sem separador (o leitor pode ter engolido o caractere): o documento é o
-    # bloco 'J01'/'P03' no fim. Pega o ÚLTIMO hífen como divisória.
-    m = re.match(r'^(.+)-([A-Za-z]\d+)$', codigo)
+    # 2b. o documento começa com hífen: '25-3673-03_PROD-VF4 BD'
+    m = re.match(r'^(\d{2}-\d{4}-\d{2}[A-Za-z_]*)[-](.+)$', codigo)
     if m:
         obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
         if obra_op:
             return obra_op.pk
 
-    # Separador totalmente engolido pelo leitor: '26-0053-02_PRODJ01'.
-    # O documento é sempre letra(s)+dígito(s) no fim; tenta achar a divisória
-    # que casa com uma OP existente, do fim para o começo.
+    # 2c. sem separador: tenta cada ponto de corte do fim para o começo.
     for i in range(len(codigo) - 2, 0, -1):
         prefixo, sufixo = codigo[:i], codigo[i:]
-        if re.match(r'^[A-Za-z]+\d+$', sufixo):
-            obra_op = _achar_por_obra_e_doc(prefixo.strip(), sufixo.strip())
-            if obra_op:
-                return obra_op.pk
-
-    # --- 3. Só o documento (ex.: J01) ---
-    if re.match(r'^[A-Za-z]+\d+$', codigo):
-        obra_op = (
-            ObraOP.objects.filter(codigo_documento__iexact=codigo).first()
-            or ObraOP.objects.filter(codigo_esquadria__iexact=codigo).first()
-        )
+        obra_op = _achar_por_obra_e_doc(prefixo.strip(), sufixo.strip())
         if obra_op:
             return obra_op.pk
+
+    # --- 3. Só o documento (ex.: J01, P32_PROD, VF4 BD) ---
+    obra_op = _achar_por_documento(codigo)
+    if obra_op:
+        return obra_op.pk
 
     # --- 4. Só o ID numérico ---
     if codigo.isdigit():

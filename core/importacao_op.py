@@ -17,13 +17,16 @@ from core.models import Obra, ObraOP, ObraOPComponente, ObraOPItem, ObraOPVidro
 
 ABA_PADRAO = 'Page 1'
 
-# Identificação da OP (ex.: J01, J02, P01, ...)
+# Identificação da OP (ex.: J01, J02, P01, ...).
 #
-# O Alumisoft gera o código com sufixo de revisão em alguns relatórios
-# (ex.: 'J01_2', 'P03_REV01'). O sufixo NÃO faz parte da identidade da OP —
-# a identidade é o documento (J01) dentro da obra. Sem tolerar o sufixo, a
-# detecção de formato falha e a importação inteira é abortada em silêncio.
-PADRAO_DOCUMENTO = re.compile(r'^([JP]\d+)(?:[_\-\s].*)?$')
+# HISTÓRICO: este padrão era `^([JP]\d+)(?:[_\-\s].*)?$` — aceitava só códigos
+# que começam com J ou P seguido de número (J01, P03, P32_PROD). Mas o Alumisoft
+# passou a gerar tipologias com outros prefixos (VF4 BD, VF6 PROD, BD P32,
+# GC13, ...) e a importação lia só as 4 primeiras OPs do arquivo, silenciosamente.
+# Agora aceitamos QUALQUER prefixo de letras (J, P, VF, BD, GC, ...) seguido de
+# número, tolerando espaço entre o prefixo e o número ("BD P32"). O sufixo de
+# revisão (_1, _REV01, _PROD) continua fora da identidade.
+PADRAO_DOCUMENTO = re.compile(r'^([A-Za-z]{1,6}\s*[A-Za-z]?\d+)(?:[_\-\s].*)?$')
 
 
 def documento_base(valor):
@@ -39,6 +42,17 @@ def documento_base(valor):
 
 # Seções (tabelas) que podem se repetir dentro da mesma OP
 SECOES = ('Perfis', 'Componentes', 'Vidros')
+
+# Rótulos que encerram um bloco de dados. Sem isto, a ÚLTIMA OP do arquivo
+# (cujo limite é ws.max_row + 1) nunca encontra o fechamento e o leitor de
+# perfis/componentes/vidros engole o rodapé do Alumisoft, a página seguinte e
+# as tabelas das OPs seguintes — uma OP saiu com 103 perfis, 159 componentes e
+# 257 vidros de contaminação.
+FIM_DE_BLOCO = (
+    'cems',              # 'CEM Pro - Alumisoft Sistemas' (rodapé de página)
+    'av.',               # endereço da fábrica (rodapé de página)
+    'caixilhoespecial',  # título da OP seguinte
+)
 
 # ---------------------------------------------------------------------------
 # Detecção de formato
@@ -269,11 +283,18 @@ def _localizar_marcadores(ws, formato):
 
 
 def _localizar_blocos(ws, linha_inicio, linha_fim):
-    """Faixas das tabelas dentro de uma OP."""
+    """Faixas das tabelas dentro de uma OP.
+
+    O limite de cada bloco é a PRÓXIMA seção/OP, nunca o fim da planilha: sem
+    isto, o último bloco da última OP corria até ws.max_row e engolia o rodapé
+    do Alumisoft e as tabelas das OPs seguintes.
+    """
     marcadores = []
     for linha in range(linha_inicio, linha_fim):
         marcador = _celula(ws, linha, COL_ROTULO)
         if marcador in SECOES:
+            marcadores.append((marcador, linha))
+        elif _normalizar(marcador) in FIM_DE_BLOCO:
             marcadores.append((marcador, linha))
 
     blocos = []
@@ -284,14 +305,20 @@ def _localizar_blocos(ws, linha_inicio, linha_fim):
 
 
 def _linha_de_dados(ws, linha):
-    """False para linhas de título ('Pos.') ou vazias."""
-    return _celula(ws, linha, COL_ROTULO) != 'Pos.'
+    """False para linhas de título ('Pos.'), rodapé e vazias."""
+    rotulo = _celula(ws, linha, COL_ROTULO)
+    if rotulo == 'Pos.':
+        return False
+    if _normalizar(rotulo) in FIM_DE_BLOCO:
+        return False
+    return True
 
 
 def _ler_cabecalho(ws, linha_inicio, linha_fim, formato):
     """Extrai o cabeçalho da OP casando os rótulos da coluna A."""
     dados = {
         'documento': documento_base(_celula(ws, linha_inicio, formato.col_op)),
+        'documento_completo': _celula(ws, linha_inicio, formato.col_op),
         'codigo_esquadria': '',
         'descricao': '',
         'tratamento': '',
@@ -569,7 +596,16 @@ def _obter_obra(codigo, cabecalho):
 def _gravar_op(obra, dados):
     """Cria/atualiza a OP e substitui perfis, componentes e vidros."""
     cabecalho = dados['cabecalho']
-    documento = _corta(cabecalho['documento'], 20)
+    # IDENTIDADE DA OP. `codigo_documento` não pode ser só o prefixo alfanumérico
+    # (ex.: "VF4"): na lista de caixilhos a MESMA esquadria aparece em várias
+    # unidades com medidas diferentes (VF4 1350x550, 802x550, 1167x550...), e
+    # unique_together = ['obra', 'codigo_documento'] faria todas colidirem —
+    # cada importação sobrescreveria a anterior e só a última sobraria.
+    #
+    # Usamos o rótulo de seção da coluna E (o documento impresso: "VF4 BD",
+    # "VF6_1 BD", "BD P32"), que é único por OP. Sem ele, caímos no documento
+    # base para não perder a OP (melhor um nome genérico do que descartar).
+    documento = _corta(cabecalho.get('documento_completo') or cabecalho['documento'], 20)
 
     op_obj, criada = ObraOP.objects.update_or_create(
         obra=obra,
