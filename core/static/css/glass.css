@@ -271,13 +271,13 @@
     transform: none !important;
     width: 100%;
     min-width: 0;
-    max-width: none;
+    max-width: 220px;
     margin: 0 0 10px 0 !important;
     padding: 0;
     border: 1px solid color-mix(in srgb, var(--cv-text) 12%, transparent) !important;
     border-radius: 20px !important;
     box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.18) !important;
-    max-height: min(560px, calc(100vh - 90px));
+    max-height: min(400px, calc(100vh - 90px));
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 1080;
