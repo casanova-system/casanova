@@ -1144,7 +1144,7 @@ code, kbd, samp, pre,
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    overflow: hidden;
+    overflow: auto;
     margin-bottom: 1rem;
     border: 1px solid var(--cv-line);
     border-radius: var(--cv-radius);
@@ -1176,7 +1176,7 @@ code, kbd, samp, pre,
 .list-card .list-card-body {
     padding: 0;
     flex-grow: 1;
-    overflow: hidden;
+    overflow: auto;
     display: flex;
     flex-direction: column;
 }

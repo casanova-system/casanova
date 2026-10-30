@@ -89,21 +89,22 @@
 .card:has(.table-responsive) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: var(--cv-surface) !important;
+    background: transparent !important;
 }
 .card:has(.table-responsive)::before {
     display: none;
+}
+.card::before {
+    display: none !important;
 }
 
 /* --------------------------------------------------------------------------
    3. TABELAS — vidro com linhas visíveis
    -------------------------------------------------------------------------- */
 .table-responsive {
-    background: color-mix(in srgb, var(--cv-surface) 88%, transparent) !important;
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--cv-text) 10%, transparent);
+    background: transparent !important;
+    border-radius: 0;
+    border: none;
 }
 .table thead th {
     background: color-mix(in srgb, var(--cv-brand-rgb) 6%, var(--cv-surface)) !important;
