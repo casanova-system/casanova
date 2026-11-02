@@ -240,7 +240,7 @@
 
     <div class="barra-acoes">
         <button type="button" onclick="window.print()">Imprimir</button>
-        <button type="button" class="secundario" onclick="window.close()">Fechar</button>
+        <button type="button" class="secundario" onclick="fecharImpressao()">Fechar</button>
     </div>
 
     {% if erro %}
@@ -341,6 +341,18 @@
         window.addEventListener('load', function () {
             setTimeout(function () { window.print(); }, 400);
         });
+
+        // Fecha a impressao sem fechar a tab original
+        function fecharImpressao() {
+            if (window.opener && !window.opener.closed) {
+                // O popup foi aberto de outra janela, fechar a original
+                window.opener.location.reload();
+                window.close();
+            } else {
+                // O popup foi aberto diretamente, fechar apenas o popup
+                window.close();
+            }
+        }
     </script>
 </body>
 </html>
