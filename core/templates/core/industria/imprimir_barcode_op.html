@@ -337,10 +337,17 @@
     {% endif %}
 
     <script>
-        // Abre o dialogo de impressao automaticamente
-        window.addEventListener('load', function () {
-            setTimeout(function () { window.print(); }, 400);
-        });
+        // Fecha a impressao sem fechar a tab original
+        function fecharImpressao() {
+            if (window.opener && !window.opener.closed) {
+                // O popup foi aberto de outra janela, fechar a original
+                window.opener.location.reload();
+                window.close();
+            } else {
+                // O popup foi aberto diretamente, fechar apenas o popup
+                window.close();
+            }
+        }
 
         // Fecha a impressao sem fechar a tab original
         function fecharImpressao() {
