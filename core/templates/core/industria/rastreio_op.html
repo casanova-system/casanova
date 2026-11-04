@@ -114,6 +114,35 @@
         </div>
     </div>
 
+    {% if obra_op %}
+    <!-- Dados da OP (lançamento manual) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="fa-solid fa-file-lines text-primary"></i>
+                <span class="text-muted small fw-semibold text-uppercase">Dados da OP</span>
+            </div>
+            <div class="row g-2 small">
+                <div class="col-md-3"><span class="text-muted">Item:</span> <strong>{{ obra_op.item|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Código:</span> <strong>{{ obra_op.codigo|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Cliente:</span> <strong>{{ obra_op.cliente|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Person/Autovolume:</span> <strong>{{ obra_op.person_autovolume|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Obra:</span> <strong>{{ obra_op.obra|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Qtd:</span> <strong>{{ obra_op.qtd|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">L (mm):</span> <strong>{{ obra_op.largura|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">H (mm):</span> <strong>{{ obra_op.altura|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Peso:</span> <strong>{{ obra_op.peso|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Área:</span> <strong>{{ obra_op.area|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Localização:</span> <strong>{{ obra_op.localizacao|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Tipologia:</span> <strong>{{ obra_op.tipologia|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Sistema:</span> <strong>{{ obra_op.sistema|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Linha:</span> <strong>{{ obra_op.linha|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Fabricante:</span> <strong>{{ obra_op.fabricante|default:"—" }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Data OP:</span> <strong>{{ obra_op.data_op|default:"—" }}</strong></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     <!-- Produto -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body py-3">

@@ -140,11 +140,20 @@
         }
         
         [data-bs-theme="dark"] .table-light,
-        [data-bs-theme="dark"] .table thead th {
-            background-color: #0d1117 !important;
-            color: #8b949e !important;
-            border-color: #30363d !important;
-        }
+                [data-bs-theme="dark"] .table thead th {
+                    background-color: #0d1117 !important;
+                    color: #8b949e !important;
+                    border-color: #30363d !important;
+                }
+
+                /* tfoot no tema escuro: garante que células do totalizador fiquem escuras */
+                [data-bs-theme="dark"] tfoot .table-light,
+                [data-bs-theme="dark"] tfoot .table-light td,
+                [data-bs-theme="dark"] tfoot .table-light th {
+                    background-color: #0d1117 !important;
+                    color: #e6edf3 !important;
+                    border-color: #30363d !important;
+                }
 
         /* Layout de Sidebar e Conteúdo */
         .app-container {
@@ -161,15 +170,18 @@
             white-space: nowrap;
         }
         .brand-casanova {
-            color: var(--casanova-blue);
+            color: #1a3a5c;
             font-weight: 900;
-        }   
+        }
         [data-bs-theme="dark"] .brand-casanova {
-            color: #ffffff;   
+            color: #ffffff;
         }
         .brand-esquadrias {
-            color: var(--cv-accent, #4da6ff);
+            color: #2b7de9;
             font-weight: 300;
+        }
+        [data-bs-theme="dark"] .brand-esquadrias {
+            color: var(--cv-accent, #4da6ff);
         }
 
 

@@ -70,21 +70,45 @@ class Formato:
 
 
 def detectar_formato(ws):
-    """Detecta o formato do arquivo baseado na posição do J01 na primeira linha."""
+    """Detecta o formato do arquivo.
+
+    Procura o codigo da OP (PADRAO_DOCUMENTO) nas primeiras 20 linhas,
+    em qualquer coluna. Suporta:
+      - consolidado: OP na coluna E, linha 1
+      - individual: OP na coluna F, linha 1
+      - individual por OP (BD P32_1): OP na coluna Q, apos 'Cod Esqd:'
+    """
+    # 1) Formatos conhecidos (linha 1)
     for col in range(3, 9):
         valor = _celula(ws, 1, col)
         if PADRAO_DOCUMENTO.match(valor):
-            if col == 5:  # Formato consolidado (01.xlsx)
+            if col == 5:
                 return Formato(5, 3, 5, 15, 13, 14)
-            elif col == 6:  # Formato individual (Documents/op/)
+            elif col == 6:
                 return Formato(6, 4, 6, 16, 14, 15)
+
+    # 2) Formato individual por OP: OP na coluna Q (17), rotulo 'Cod Esqd:' na col 3
+    for linha in range(1, 21):
+        if _normalizar(_celula(ws, linha, 3)) in ('cod esqd', 'cod. esqd', 'cod esq'):
+            valor = _celula(ws, linha, 17)
+            if PADRAO_DOCUMENTO.match(valor):
+                # col_op=17, largura=16, altura=16, data=15? usar fallback
+                return Formato(17, 16, 16, 9, 13, 18)
+
+    # 3) Busca generica: qualquer celula nas primeiras 20 linhas
+    for linha in range(1, 21):
+        for col in range(1, ws.max_column + 1):
+            valor = _celula(ws, linha, col)
+            if PADRAO_DOCUMENTO.match(valor):
+                # Assume layout individual por OP com OP na col encontrada
+                return Formato(col, col - 1, col, col - 2, 13, 14)
     return None
 
 
 # ---------------------------------------------------------------------------
 # Mapa de colunas (1 = A) - Fixo para todos os formatos
 # ---------------------------------------------------------------------------
-COL_ROTULO = 1                 # A  rótulo do cabeçalho
+COL_ROTULO = 3                 # C  rótulo do cabeçalho (formato individual por OP)
 COL_VALOR = 2                  # B  valor do cabeçalho
 
 # Posições base das tabelas (formato individual - OP na coluna F)
@@ -278,7 +302,8 @@ def _localizar_marcadores(ws, formato):
     return [
         linha
         for linha in range(1, ws.max_row + 1)
-        if PADRAO_DOCUMENTO.match(_celula(ws, linha, formato.col_op))
+        if (PADRAO_DOCUMENTO.match(_celula(ws, linha, formato.col_op))
+            and len(_celula(ws, linha, formato.col_op)) <= 20)
     ]
 
 
@@ -291,7 +316,7 @@ def _localizar_blocos(ws, linha_inicio, linha_fim):
     """
     marcadores = []
     for linha in range(linha_inicio, linha_fim):
-        marcador = _celula(ws, linha, COL_ROTULO)
+        marcador = _celula(ws, linha, 1) or _celula(ws, linha, COL_ROTULO)
         if marcador in SECOES:
             marcadores.append((marcador, linha))
         elif _normalizar(marcador) in FIM_DE_BLOCO:
@@ -306,7 +331,7 @@ def _localizar_blocos(ws, linha_inicio, linha_fim):
 
 def _linha_de_dados(ws, linha):
     """False para linhas de título ('Pos.'), rodapé e vazias."""
-    rotulo = _celula(ws, linha, COL_ROTULO)
+    rotulo = _celula(ws, linha, COL_ROTULO) or _celula(ws, linha, 1) or _celula(ws, linha, 2)
     if rotulo == 'Pos.':
         return False
     if _normalizar(rotulo) in FIM_DE_BLOCO:
@@ -341,55 +366,112 @@ def _ler_cabecalho(ws, linha_inicio, linha_fim, formato):
         if not chave:
             continue
 
-        valor = _celula(ws, linha, COL_VALOR)
+        # Valores podem estar em colunas diferentes conforme o formato
+        if chave == 'codigo_obra':
+            valor = _celula(ws, linha, formato.col_loc_valor)
+        elif chave == 'cliente':
+            valor = _celula(ws, linha, 13)
+        elif chave == 'nome_obra':
+            valor = _celula(ws, linha, 11)
+        elif chave == 'codigo_esquadria':
+            valor = _celula(ws, linha, formato.col_op)
+        elif chave == 'descricao':
+            valor = _celula(ws, linha, formato.col_op + (0 if formato.col_op == 17 else 0))
+            # descricao esta na col 17 (Q) neste formato
+            valor = _celula(ws, linha, 17) if formato.col_op == 17 else valor
+        elif chave == 'tratamento':
+            valor = _celula(ws, linha, 17) if formato.col_op == 17 else _celula(ws, linha, COL_VALOR)
+        elif chave == 'quantidade':
+            valor = _celula(ws, linha, 9)
+        elif chave == 'vidro_descricao':
+            valor = _celula(ws, linha, 13)
+        else:
+            valor = _celula(ws, linha, COL_VALOR)
+
         if chave == 'quantidade':
             dados['quantidade'] = _inteiro(valor, 1) or 1
             dados['largura'] = _inteiro(_celula(ws, linha, formato.col_largura), 0)
             dados['altura'] = _inteiro(_celula(ws, linha, formato.col_altura), 0)
         elif chave == 'vidro_descricao':
             dados['vidro_descricao'] = valor
-            if _normalizar(_celula(ws, linha, formato.col_loc_rotulo)) == 'localizacao':
-                dados['vidro_localizacao'] = _celula(ws, linha, formato.col_loc_valor)
-        elif chave == 'emitido_por':
-            dados['emitido_por'] = valor
-            dados['data_emissao'] = _celula(ws, linha, formato.col_data)
         else:
             dados[chave] = valor
 
     return dados
 
 
+def _mapa_colunas(ws, linha_header, mapeamento):
+    """Detecta dinamicamente as colunas de uma secao pelo header.
+
+    mapeamento: dict campo -> lista de rotulos aceitos (normalizados).
+    Retorna dict campo -> numero da coluna (ou None).
+    """
+    resultado = {campo: None for campo in mapeamento}
+    for col in range(1, ws.max_column + 1):
+        texto = _normalizar(_celula(ws, linha_header, col))
+        if not texto:
+            continue
+        for campo, rotulos in mapeamento.items():
+            if texto in rotulos:
+                resultado[campo] = col
+    return resultado
+
+
+MAPEAMENTO_PERFIL = {
+    'codigo': ['codigo'],
+    'tipo': ['tipo'],
+    'orientacao': ['orientacao'],
+    'corte': ['corte'],
+    'tamanho': ['tamanho'],
+    'quantidade': ['quantidade', 'qtde'],
+    'peso': ['peso'],
+    'observacao': ['observacao'],
+}
+
+
 def _ler_perfis(ws, linha_inicio, linha_fim, deslocamento=0):
     """Perfis de todos os blocos + o 'Peso Total:' impresso pelo Alumisoft."""
     perfis = []
     peso_total = None
-    C = {k: v + deslocamento for k, v in COLS_PERFIL_BASE.items()}
 
     for nome, linha_cabecalho, fim in _localizar_blocos(ws, linha_inicio, linha_fim):
         if nome != 'Perfis':
             continue
+        # Header esta na linha seguinte ao marcador 'Perfis'
+        colunas = _mapa_colunas(ws, linha_cabecalho + 1, MAPEAMENTO_PERFIL)
+        # Fallback para formato antigo (posicoes fixas) se header nao detectado
+        if colunas['codigo'] is None:
+            colunas = {k: (v + deslocamento) for k, v in COLS_PERFIL_BASE.items()}
         for linha in range(linha_cabecalho + 1, fim):
             if not _linha_de_dados(ws, linha):
                 continue
-
-            tamanho = _celula(ws, linha, C['tamanho'])
+            col_cod = colunas['codigo']
+            codigo = _celula(ws, linha, col_cod) if col_cod else ''
+            tamanho = _celula(ws, linha, colunas['tamanho']) if colunas['tamanho'] else ''
             if tamanho.lower().startswith('peso total'):
-                peso_total = _decimal(_celula(ws, linha, C['peso']), None)
+                col_peso = colunas['peso']
+                peso_total = _decimal(_celula(ws, linha, col_peso), None) if col_peso else None
                 continue
 
-            quantidade = _celula(ws, linha, C['quantidade'])
-            if not _eh_numero(tamanho) or not _eh_numero(quantidade):
+            quantidade = _celula(ws, linha, colunas['quantidade']) if colunas['quantidade'] else ''
+            # Se nao ha tamanho nem quantidade, tenta aceitar so pelo codigo
+            tem_dados = _eh_numero(tamanho) or _eh_numero(quantidade) or codigo
+            if not tem_dados:
                 continue
+            if tamanho and not _eh_numero(tamanho):
+                tamanho = ''
+            if quantidade and not _eh_numero(quantidade):
+                quantidade = ''
 
             perfis.append({
-                'codigo': _celula(ws, linha, C['codigo']),
-                'tipo': _celula(ws, linha, C['tipo']),
-                'orientacao': _celula(ws, linha, C['orientacao']),
-                'corte': _celula(ws, linha, C['corte']),
-                'tamanho': _inteiro(tamanho, 0),
-                'quantidade': _inteiro(quantidade, 1) or 1,
-                'peso': _decimal(_celula(ws, linha, C['peso'])) or Decimal('0'),
-                'observacao': _celula(ws, linha, C['observacao']),
+                'codigo': codigo,
+                'tipo': _celula(ws, linha, colunas['tipo']) if colunas['tipo'] else '',
+                'orientacao': _celula(ws, linha, colunas['orientacao']) if colunas['orientacao'] else '',
+                'corte': _celula(ws, linha, colunas['corte']) if colunas['corte'] else '',
+                'tamanho': _inteiro(tamanho, 0) if tamanho else 0,
+                'quantidade': (_inteiro(quantidade, 1) or 1) if quantidade else 1,
+                'peso': (_decimal(_celula(ws, linha, colunas['peso'])) or Decimal('0')) if colunas['peso'] else Decimal('0'),
+                'observacao': _celula(ws, linha, colunas['observacao']) if colunas['observacao'] else '',
             })
 
     return perfis, peso_total
@@ -400,6 +482,8 @@ def _ler_componentes(ws, linha_inicio, linha_fim, deslocamento=0):
     componentes = []
     aplicacao = ''
     C = {k: v + deslocamento for k, v in COLS_COMPONENTE_BASE.items()}
+    # Fallback para formato BD P32_1: codigo em col 15
+    C['codigo'] = 15
 
     for nome, linha_cabecalho, fim in _localizar_blocos(ws, linha_inicio, linha_fim):
         if nome != 'Componentes':
@@ -412,18 +496,22 @@ def _ler_componentes(ws, linha_inicio, linha_fim, deslocamento=0):
                 continue
 
             codigo = _celula(ws, linha, C['codigo'])
-            descricao = _celula(ws, linha, C['descricao'])
-            quantidade = _celula(ws, linha, C['quantidade'])
-            if not (codigo or descricao) or not _eh_numero(quantidade):
+            descricao = _celula(ws, linha, C['descricao']) if C['descricao'] else ''
+            quantidade = _celula(ws, linha, C['quantidade']) if C['quantidade'] else ''
+            if not (codigo or descricao):
                 continue
+            if 'cem pro' in codigo.lower() or codigo.lower().startswith('av.'):
+                continue
+            if quantidade and not _eh_numero(quantidade):
+                quantidade = ''
 
             componentes.append({
                 'codigo': codigo,
                 'descricao': descricao,
                 'aplicacao': aplicacao,
-                'quantidade': _inteiro(quantidade, 1) or 1,
-                'unidade': _celula(ws, linha, C['unidade']),
-                'observacao': _celula(ws, linha, C['observacao']),
+                'quantidade': (_inteiro(quantidade, 1) or 1) if quantidade else 1,
+                'unidade': _celula(ws, linha, C['unidade']) if C['unidade'] else '',
+                'observacao': _celula(ws, linha, C['observacao']) if C['observacao'] else '',
             })
 
     return componentes

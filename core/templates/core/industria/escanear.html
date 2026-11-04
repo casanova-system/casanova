@@ -111,6 +111,11 @@
                            max="{{ resultado.rastreio.quantidade_total|default:99999 }}"
                            autofocus required>
                 </div>
+                <div>
+                    <label class="form-label small fw-semibold mb-1">Observação / B.O. (opcional)</label>
+                    <input type="text" name="observacao"
+                           class="form-control" placeholder="Não conformidade (opcional)">
+                </div>
                 <button type="submit" class="btn btn-success fw-semibold">
                     <i class="fa-solid fa-flag-checkered me-1"></i> Finalizar e liberar
                 </button>

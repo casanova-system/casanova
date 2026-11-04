@@ -19,7 +19,7 @@ Parâmetros:
 - form_action (opcional) — se informado, renderiza um <form method="POST"> com CSRF
 - confirmar_texto (opcional; padrão "Sim, Excluir")
 {% endcomment %}
-<div class="modal fade modal-confirm" id="{{ modal_id }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade modal-confirm" id="{{ modal_id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">

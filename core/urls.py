@@ -35,6 +35,7 @@ from core.views.frete import (
     upload_pdf,
 )
 from core.views.grafico_frete import grafico_custo_frete
+from core.views.op_manual import nova_op_manual, editar_op_manual
 from core.views.ordem_producao import (
     barcode_ordem_producao,
     detalhe_obra_op,
@@ -177,6 +178,8 @@ urlpatterns = [
     # ROTINA DE ORDEM DE PRODUÇÃO (INDÚSTRIA - Faktory)
     path('industria/ordem-producao/', lista_ordem_producao, name='lista_ordem_producao'),
     path('industria/ordem-producao/importar/', importar_op_excel, name='importar_op_excel'),
+    path('industria/ordem-producao/nova-manual/', nova_op_manual, name='nova_op_manual'),
+    path('industria/ordem-producao/editar/<int:obra_op_id>/', editar_op_manual, name='editar_op_manual'),
     path('industria/ordem-producao/obra-op/<int:obra_op_id>/', detalhe_obra_op, name='detalhe_obra_op'),
     path('industria/ordem-producao/<int:obra_op_id>/excluir/', excluir_op, name='excluir_op'),
     path('industria/ordem-producao/<int:op_id>/barcode/', barcode_ordem_producao, name='barcode_ordem_producao'),

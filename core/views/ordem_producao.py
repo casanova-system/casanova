@@ -314,12 +314,24 @@ def _converter_op_local(obra_op):
         'obra_op_id': obra_op.pk,
         'Documento': obra_op.codigo_formatado,
         'CodigoFormatado': obra_op.codigo_formatado,
-        'CodEsquadria': obra_op.codigo_esquadria,
-        'Descricao': obra_op.descricao or obra_op.codigo_esquadria,
-        'ObraCodigo': obra_op.obra.codigo,
+        'CodEsquadria': obra_op.codigo,
+        'Descricao': obra_op.itens_texto,
+        'Itens': obra_op.itens_texto,
+        'ObraCodigo': obra_op.obra_nome or obra_op.obra.codigo,
         'ObraNome': obra_op.obra.nome,
-        'Cliente': obra_op.obra.cliente or '—',
+        'Cliente': obra_op.cliente or obra_op.obra.cliente or '—',
+        'PersonAutovolume': obra_op.person_autovolume,
+        'ObraNomeManual': obra_op.obra_nome,
+        'Peso': obra_op.peso,
+        'Area': obra_op.area,
+        'Localizacao': obra_op.localizacao or obra_op.vidro_localizacao,
+        'Tipologia': obra_op.tipologia or obra_op.descricao,
+        'Sistema': obra_op.sistema,
+        'Linha': obra_op.linha,
+        'Fabricante': obra_op.fabricante,
+        'DataOP': obra_op.data_op,
         'Quantidade': obra_op.quantidade,
+        'Pausada': obra_op.pausada_material,
         'Largura': obra_op.largura,
         'Altura': obra_op.altura,
         'Tratamento': obra_op.tratamento or '—',
@@ -346,6 +358,10 @@ def _ordenar_combinado(registros, ordenar):
         return sorted(
             registros, key=lambda r: (r.get('Documento') or ''), reverse=True
         )
+    if ordenar == 'itens_asc':
+        return sorted(registros, key=lambda r: int(r.get('Itens') or 0))
+    if ordenar == 'itens_desc':
+        return sorted(registros, key=lambda r: int(r.get('Itens') or 0), reverse=True)
 
     # Padrão: importadas primeiro (o queryset local já vem mais recente primeiro)
     return sorted(
@@ -377,6 +393,9 @@ def lista_ordem_producao(request):
 
     ordens = _ordenar_combinado(ordens, ordenar)
 
+    # Total de peso (kg) da lista filtrada (todas as OPs, não só a página)
+    total_peso = sum((op.get('Peso') or 0) for op in ordens)
+
     paginator = Paginator(ordens, ITENS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
 
@@ -393,6 +412,7 @@ def lista_ordem_producao(request):
         'limite_erp': LIMITE_ERP,
         'filtros': request.GET,
         'total': paginator.count,
+        'total_peso': total_peso,
         'query': request.GET.get('q', '').strip(),
         'participante': request.GET.get('participante', '').strip(),
         'projeto': request.GET.get('projeto', '').strip(),
@@ -729,6 +749,11 @@ def imprimir_barcode_ordem_producao(request, op_id):
     from core.models import ObraOP
 
     obra_op = ObraOP.objects.filter(pk=op_id).first()
+    if obra_op and obra_op.pausada_material:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, 'OP pausada por falta de material. Não é possível gerar QR Code.')
+        return redirect('detalhe_obra_op', obra_op_id=op_id)
     if obra_op:
         dados = {
             'NumeroDocumento': obra_op.codigo_formatado,

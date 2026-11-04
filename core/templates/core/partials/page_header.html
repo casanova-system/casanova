@@ -21,6 +21,11 @@ Parâmetros:
                 <i class="fa-solid {{ acao_icone|default:'fa-plus' }}"></i> {{ acao_texto }}
             </a>
         {% endif %}
+        {% if acao2_url %}
+            <a href="{{ acao2_url }}" class="btn-action btn-action-primary">
+                <i class="fa-solid {{ acao2_icone|default:'fa-plus' }}"></i> {{ acao2_texto }}
+            </a>
+        {% endif %}
         {% if voltar_url %}
             <a href="{{ voltar_url }}" class="btn-action btn-action-secondary">
                 <i class="fa-solid fa-arrow-left"></i> {{ voltar_texto|default:"Voltar ao Início" }}

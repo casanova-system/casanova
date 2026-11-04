@@ -543,7 +543,22 @@ class ObraOP(models.Model):
     tratamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Tratamento/Cor')
     vidro_descricao = models.CharField(max_length=255, blank=True, default='', verbose_name='Descrição do Vidro')
     vidro_localizacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Localização do Vidro')
-    data_importacao = models.DateTimeField(auto_now_add=True, verbose_name='Importado em')
+    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name='Importado em')
+    # Novos campos da planilha de lançamento manual
+    itens_texto = models.CharField(max_length=255, blank=True, default='', verbose_name='ITENS')
+    codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='CODIGO')
+    cliente = models.CharField(max_length=255, blank=True, default='', verbose_name='CLIENTE')
+    person_autovolume = models.CharField(max_length=255, blank=True, default='', verbose_name='PERSON/AUTOVOLUME')
+    obra_nome = models.CharField(max_length=255, blank=True, default='', verbose_name='OBRA')
+    peso = models.DecimalField(max_digits=10, decimal_places=3, default=0, verbose_name='PESO')
+    area = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='AREA')
+    localizacao = models.CharField(max_length=255, blank=True, default='', verbose_name='LOCALIZAÇÃO')
+    tipologia = models.CharField(max_length=255, blank=True, default='', verbose_name='TIPOLOGIA')
+    sistema = models.CharField(max_length=100, blank=True, default='', verbose_name='SISTEMA')
+    linha = models.CharField(max_length=100, blank=True, default='', verbose_name='LINHA')
+    fabricante = models.CharField(max_length=100, blank=True, default='', verbose_name='FABRICANTE')
+    data_op = models.DateField(null=True, blank=True, verbose_name='DATA OP')
+    pausada_material = models.BooleanField(default=False, verbose_name='Pausada por falta de material')
     
     class Meta:
         ordering = ['-data_importacao']

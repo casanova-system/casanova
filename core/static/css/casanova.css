@@ -1199,6 +1199,8 @@ code, kbd, samp, pre,
 .list-filters .filter-search .input-group { flex-grow: 1; }
 
 /* ---- 15f. Modal de confirmacao padronizado ---- */
+.modal-confirm { z-index: 1060 !important; }
+.modal-backdrop { z-index: 1055 !important; display: none !important; }
 .modal-confirm .modal-content {
     border: 1px solid var(--cv-line-strong);
     border-radius: var(--cv-radius);
@@ -2527,4 +2529,62 @@ body.mobile-menu-open {
     .pgn-lista > li:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child) {
         display: none;
     }
+}
+
+/* ---------------- Relatório OP ---------------- */
+.report-grid .detail-item {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: reportFadeIn 0.4s ease forwards;
+}
+.report-grid .detail-item:nth-child(1) { animation-delay: 0.05s; }
+.report-grid .detail-item:nth-child(2) { animation-delay: 0.10s; }
+.report-grid .detail-item:nth-child(3) { animation-delay: 0.15s; }
+.report-grid .detail-item:nth-child(4) { animation-delay: 0.20s; }
+.report-grid .detail-item:nth-child(5) { animation-delay: 0.25s; }
+.report-grid .detail-item:nth-child(6) { animation-delay: 0.30s; }
+.report-grid .detail-item:nth-child(7) { animation-delay: 0.35s; }
+.report-grid .detail-item:nth-child(8) { animation-delay: 0.40s; }
+.report-grid .detail-item:nth-child(9) { animation-delay: 0.45s; }
+.report-grid .detail-item:nth-child(10) { animation-delay: 0.50s; }
+.report-grid .detail-item:nth-child(11) { animation-delay: 0.55s; }
+.report-grid .detail-item:nth-child(12) { animation-delay: 0.60s; }
+.report-grid .detail-item:nth-child(13) { animation-delay: 0.65s; }
+.report-grid .detail-item:nth-child(14) { animation-delay: 0.70s; }
+.report-grid .detail-item:nth-child(15) { animation-delay: 0.75s; }
+.report-grid .detail-item:nth-child(16) { animation-delay: 0.80s; }
+
+@keyframes reportFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ---------------- Sort buttons ---------------- */
+.sort-btn {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.sort-btn:hover {
+    color: var(--cv-blue, #0b3882);
+    transform: translateY(-1px);
+}
+
+/* ---------------- Pausada row ---------------- */
+.pausada-row {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+.pausada-row:hover {
+    color: #dc3545 !important;
+}
+[data-bs-theme="dark"] .pausada-row {
+    color: #ff6b6b !important;
+    font-weight: 600;
+}
+[data-bs-theme="dark"] .pausada-row:hover {
+    color: #ff6b6b !important;
 }

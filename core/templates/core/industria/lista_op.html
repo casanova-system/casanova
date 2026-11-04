@@ -7,8 +7,9 @@
     {% include 'core/partials/messages.html' %}
 
     {% url 'importar_op_excel' as url_novo %}
+    {% url 'nova_op_manual' as url_manual %}
     {% url 'menu_principal' as url_inicio %}
-    {% include 'core/partials/page_header.html' with titulo="Ordens de Produção" subtitulo="OPs importadas do Excel do Alumisoft. Clique duas vezes na linha para abrir os detalhes." acao_url=url_novo acao_texto="Importar Excel" acao_icone="fa-file-excel" voltar_url=url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Ordens de Produção" subtitulo="OPs importadas do Excel do Alumisoft. Clique duas vezes na linha para abrir os detalhes." acao_url=url_novo acao_texto="Importar Excel" acao_icone="fa-file-excel" voltar_url=url_inicio acao2_url=url_manual acao2_texto="Nova OP Manual" acao2_icone="fa-plus" %}
 
     {% if erro_conexao %}
     <div class="alert alert-warning d-flex align-items-center gap-2 flex-shrink-0 py-2 small" role="alert">
@@ -38,26 +39,6 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" name="q" value="{{ query }}" placeholder="Buscar por OP, esquadria, descrição, obra ou cliente...">
             </div>
-            <div class="filtros-search">
-                <i class="fa-solid fa-user"></i>
-                <input type="text" name="participante" value="{{ participante }}" placeholder="Cliente...">
-            </div>
-            <div class="filtros-search">
-                <i class="fa-solid fa-folder"></i>
-                <input type="text" name="projeto" value="{{ projeto }}" placeholder="Projeto...">
-            </div>
-            <div class="filtros-search">
-                <i class="fa-solid fa-box"></i>
-                <input type="text" name="produto" value="{{ produto }}" placeholder="Produto...">
-            </div>
-            <div class="filtros-search">
-                <i class="fa-solid fa-calendar"></i>
-                <input type="date" name="data_de" value="{{ data_de }}" title="Data inicial">
-            </div>
-            <div class="filtros-search">
-                <i class="fa-solid fa-calendar"></i>
-                <input type="date" name="data_ate" value="{{ data_ate }}" title="Data final">
-            </div>
             <button type="submit" class="btn btn-primary">
                 <i class="fa-solid fa-magnifying-glass"></i> Localizar
             </button>
@@ -73,6 +54,7 @@
             <h5 class="list-card-title">
                 <i class="fas fa-industry me-2 text-primary"></i> OPs Cadastradas
                 <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total }}</span>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold ms-2">Peso total: {{ total_peso|casas:3 }} kg</span>
             </h5>
 
             <div class="dropdown">
@@ -98,8 +80,7 @@
         <div class="card-body list-card-body">
             <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
                 
-{% include 'core/partials/tabela_largura.html' %}
-<table data-tabela-auto class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaOP">
+<table data-tabela-auto class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaOP" style="table-layout:fixed; width:max-content;">
                     <colgroup>
                         <col style="width: 90px;">
                         <col style="width: 150px;">
@@ -113,37 +94,49 @@
                     </colgroup>
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th class="ps-3 text-nowrap">OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">Cód. Esquadria<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">Descrição<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">Obra<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">Cliente<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap text-end">Qtd<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap text-end">Dimensões<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">Tratamento<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="ps-3 text-nowrap">ITENS <a href="?ordenar=itens_asc" title="Crescente" class="sort-btn">▲</a><a href="?ordenar=itens_desc" title="Decrescente" class="sort-btn">▼</a><span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="ps-3 text-nowrap">CODIGO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">CLIENTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">PERSON/AUTOVOLUME<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">OBRA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap text-end">QTD<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap text-end">L<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap text-end">H<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">PESO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">AREA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">LOCALIZAÇÃO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">TIPOLOGIA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">SISTEMA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">LINHA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">FABRICANTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                            <th class="text-nowrap">DATA OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th class="text-end pe-3 text-nowrap">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for op in ordens %}
-                        <tr {% if op.obra_op_id %}ondblclick="window.location.href='{% url 'detalhe_obra_op' op.obra_op_id %}'" style="cursor: pointer;" title="Clique duas vezes para abrir os detalhes"{% endif %}>
-                            <td class="ps-3">
-                                <span class="badge bg-primary" style="font-size: 0.78rem; letter-spacing: 0.5px;">{{ op.Documento }}</span>
-                            </td>
-                            <td class="fw-semibold text-truncate" title="{{ op.CodEsquadria }}">{{ op.CodEsquadria|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Descricao }}">{{ op.Descricao|default:"—" }}</td>
-                            <td>
-                                <span class="fw-semibold">{{ op.ObraCodigo|default:"—" }}</span>
-                                {% if op.ObraNome %}<br><small class="text-muted text-truncate d-inline-block" style="max-width: 180px;" title="{{ op.ObraNome }}">{{ op.ObraNome }}</small>{% endif %}
-                            </td>
-                            <td class="text-truncate" title="{{ op.Cliente }}">{{ op.Cliente|default:"—" }}</td>
+                        <tr {% if op.Pausada %}class="pausada-row"{% endif %} {% if op.obra_op_id %}ondblclick="window.location.href='{% url 'detalhe_obra_op' op.obra_op_id %}'" style="cursor: pointer;" title="Clique duas vezes para abrir os detalhes"{% endif %}>
+                            <td class="ps-3">{{ op.Itens|default:"—" }}</td>
+                            <td class="fw-semibold">{{ op.CodEsquadria|default:"—" }}</td>
+                            <td>{{ op.Cliente|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.PersonAutovolume }}">{{ op.PersonAutovolume|default:"—" }}</td>
+                            <td>{{ op.ObraCodigo|default:"—" }}</td>
                             <td class="text-end fw-bold">{{ op.Quantidade }}</td>
-                            <td class="text-end font-monospace small">{{ op.Largura }} x {{ op.Altura }}</td>
-                            <td class="text-truncate" title="{{ op.Tratamento }}">{{ op.Tratamento|default:"—" }}</td>
+                            <td class="text-end font-monospace small">{{ op.Largura }}</td>
+                            <td class="text-end font-monospace small">{{ op.Altura }}</td>
+                            <td class="text-end">{{ op.Peso|default:"—" }}</td>
+                            <td class="text-end">{{ op.Area|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Localizacao }}">{{ op.Localizacao|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Tipologia }}">{{ op.Tipologia|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Sistema }}">{{ op.Sistema|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Linha }}">{{ op.Linha|default:"—" }}</td>
+                            <td class="text-truncate" title="{{ op.Fabricante }}">{{ op.Fabricante|default:"—" }}</td>
+                            <td class="text-truncate">{{ op.DataOP|default:"—" }}</td>
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
                                     {% if op.obra_op_id %}
                                         <a href="{% url 'detalhe_obra_op' op.obra_op_id %}" class="btn-row btn-row-view" title="Visualizar" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></a>
+                                        <a href="{% url 'editar_op_manual' op.obra_op_id %}" class="btn-row btn-row-edit" title="Editar" onclick="event.stopPropagation();"><i class="fa-solid fa-pen"></i></a>
                                         <a href="{% url 'imprimir_barcode_ordem_producao' op.obra_op_id %}" target="_blank" class="btn-row btn-row-extra" title="Imprimir QR Code" onclick="event.stopPropagation();"><i class="fa-solid fa-qrcode"></i></a>
                                         <button type="button" class="btn-row btn-row-delete" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ op.obra_op_id }}" onclick="event.stopPropagation();"><i class="fas fa-trash-can"></i></button>
                                     {% else %}
@@ -170,7 +163,28 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-                </table>
+                                        <tfoot>
+                                            <tr class="table-light fw-bold">
+                                                <td class="ps-3"></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td class="text-end">TOTAL</td>
+                                                <td class="text-end"></td>
+                                                <td class="text-end"></td>
+                                                <td class="text-end">{{ total_peso|casas:3 }} kg</td>
+                                                <td class="text-end"></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td class="text-end pe-3"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
             </div>
             {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
         </div>

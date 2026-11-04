@@ -686,6 +686,8 @@ def rastreio_op(request, op_id):
 
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
 
+    obra_op = _buscar_obra_op_por_id(op_id)
+
     dados = None
     erro_conexao = None
     try:
@@ -713,12 +715,33 @@ def rastreio_op(request, op_id):
         'produto': (rastreio.produto if rastreio else '') or dados.get('Produto') or '—',
         'variante': (rastreio.variante if rastreio else '') or dados.get('Variante') or '—',
     }
+    obra_op_info = None
+    if obra_op:
+        obra_op_info = {
+            'item': obra_op.itens_texto,
+            'codigo': obra_op.codigo or obra_op.codigo_esquadria,
+            'cliente': obra_op.cliente,
+            'person_autovolume': obra_op.person_autovolume,
+            'obra': obra_op.obra_nome or obra_op.obra.codigo,
+            'qtd': obra_op.quantidade,
+            'largura': obra_op.largura,
+            'altura': obra_op.altura,
+            'peso': obra_op.peso,
+            'area': obra_op.area,
+            'localizacao': obra_op.localizacao or obra_op.vidro_localizacao,
+            'tipologia': obra_op.tipologia or obra_op.descricao,
+            'sistema': obra_op.sistema,
+            'linha': obra_op.linha,
+            'fabricante': obra_op.fabricante,
+            'data_op': obra_op.data_op,
+        }
 
     context = {
         'op_id': op_id,
         'rastreio': rastreio,
         'dados': dados,
         'info': info,
+        'obra_op': obra_op_info,
         'erro_conexao': erro_conexao,
         'setores': _setores_ativos(),
         'fluxo': _montar_fluxo(rastreio),
@@ -1319,6 +1342,7 @@ def escanear(request):
     vidro = request.GET.get('vidro', '').strip()
     setor_param = request.GET.get('setor', '').strip()
     quantidade_produzida = request.GET.get('quantidade_produzida', '').strip()
+    observacao = request.GET.get('observacao', '').strip()
     erro = None
     resultado = None
     precisa_vidro = False
@@ -1358,7 +1382,9 @@ def escanear(request):
                             erro = 'Quantidade produzida inválida.'
                     if not erro:
                         erro, resultado, precisa_vidro = _registrar_por_setor(
-                            request, op_id, setor_usuario, vidro, quantidade_produzida=qtd
+                            request, op_id, setor_usuario, vidro,
+                            observacao_saida=observacao,
+                            quantidade_produzida=qtd,
                         )
                     if precisa_vidro:
                         op_id_pendente = op_id
