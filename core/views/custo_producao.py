@@ -243,9 +243,9 @@ def lista_custos(request):
 
     if query:
         qs = qs.filter(
-            Q(obra_op__codigo_documento__icontains=query)
+            Q(obra_op__codigo_esquadria__icontains=query)
             | Q(obra_op__codigo_esquadria__icontains=query)
-            | Q(obra_op__descricao__icontains=query)
+            | Q(obra_op__tipologia__icontains=query)
             | Q(obra_op__obra__nome__icontains=query))
     if filtro == 'prejuizo':
         qs = [c for c in qs if c.prejuizo]

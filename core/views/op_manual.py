@@ -37,20 +37,15 @@ def _validar_campos_obrigatorios(post):
     if not obra_texto:
         erros.append('OBRA é obrigatória (selecione ou digite).')
 
-    # codigo_documento (identificador único da OP dentro da obra)
-    codigo_documento = post.get('codigo_documento', '').strip() or post.get('codigo', '').strip()
-    if not codigo_documento:
-        erros.append('CÓDIGO DOCUMENTO (ex: J01) é obrigatório.')
-
     # codigo_esquadria (obrigatório no model)
     codigo_esquadria = post.get('codigo_esquadria', '').strip()
     if not codigo_esquadria:
         erros.append('CÓDIGO ESQUADRIA/TIPOLOGIA é obrigatório.')
 
-    # descricao (obrigatório no model)
-    descricao = post.get('descricao', '').strip()
-    if not descricao:
-        erros.append('DESCRIÇÃO é obrigatória.')
+    # tipologia (obrigatório no model)
+    tipologia = post.get('tipologia', '').strip()
+    if not tipologia:
+        erros.append('TIPOLOGIA é obrigatória.')
 
     # largura e altura (obrigatórios no model)
     largura = _to_int(post.get('largura'))
@@ -67,31 +62,29 @@ def _validar_campos_obrigatorios(post):
         erros.append('QUANTIDADE deve ser maior que zero.')
 
     return erros, {
-        'obra_texto': obra_texto,
-        'codigo_documento': codigo_documento[:20],
-        'codigo_esquadria': codigo_esquadria[:50],
-        'descricao': descricao,
-        'quantidade': quantidade,
-        'largura': largura,
-        'altura': altura,
-        'tratamento': post.get('tratamento', '').strip()[:100],
-        'vidro_descricao': post.get('vidro_descricao', '').strip()[:255],
-        'vidro_localizacao': post.get('vidro_localizacao', '').strip()[:255],
-        'itens_texto': post.get('itens', '').strip()[:255],
-                'cliente': post.get('cliente', '').strip()[:255],
-                'person_autovolume': post.get('person_autovolume', '').strip()[:255],
-                'obra_nome': post.get('obra_nome', '').strip()[:255],
-                'peso': _to_decimal(post.get('peso')),
-        'area': _to_decimal(post.get('area')),
-        'localizacao': post.get('localizacao', '').strip()[:255],
-        'tipologia': post.get('tipologia', '').strip()[:255],
-        'sistema': post.get('sistema', '').strip()[:100],
-        'linha': post.get('linha', '').strip()[:100],
-        'fabricante': post.get('fabricante', '').strip()[:100],
-        'data_op': post.get('data_op') or None,
-        'pausada_material': 'pausada_material' in post,
+        "obra_texto": obra_texto,
+        "codigo_esquadria": codigo_esquadria[:50],
+        "tipologia": tipologia,
+        "quantidade": quantidade,
+        "largura": largura,
+        "altura": altura,
+        "tratamento": post.get('tratamento', "").strip()[:100],
+        "vidro_descricao": post.get("vidro_descricao", "").strip()[:255],
+        "vidro_localizacao": post.get("vidro_localizacao", "").strip()[:255],
+        "itens_texto": post.get("itens", "").strip()[:255],
+        "cliente": post.get("cliente", "").strip()[:255],
+        "person_autovolume": post.get("person_autovolume", "").strip()[:255],
+        "obra_nome": post.get("obra_nome", "").strip()[:255],
+        "peso": _to_decimal(post.get("peso")),
+        "area": _to_decimal(post.get("area")),
+        "localizacao": post.get("localizacao", "").strip()[:255],
+        "tipologia": post.get("tipologia", "").strip()[:255],
+        "sistema": post.get("sistema", "").strip()[:100],
+        "linha": post.get("linha", "").strip()[:100],
+        "fabricante": post.get("fabricante", "").strip()[:100],
+        "data_op": post.get("data_op") or None,
+        "pausada_material": "pausada_material" in post,
     }
-
 
 def _obter_ou_criar_obra(obra_texto):
     """Busca obra por código ou cria nova."""
@@ -206,9 +199,9 @@ def nova_op_manual(request):
             context = {'obras': obras, 'tipos_perfil': ObraOPItem.TIPO_PERFIL_CHOICES, 'form_data': request.POST}
             return render(request, 'core/industria/nova_op_manual.html', context)
 
-        # 3. Verifica duplicidade (unique_together = obra + codigo_documento)
-        if ObraOP.objects.filter(obra=obra, codigo_documento=dados['codigo_documento']).exists():
-            messages.error(request, f'Já existe uma OP com o documento "{dados["codigo_documento"]}" para esta obra.')
+        # 3. Verifica duplicidade (unique_together = obra + codigo_esquadria)
+        if ObraOP.objects.filter(obra=obra, codigo_esquadria=dados['codigo_esquadria']).exists():
+            messages.error(request, f"Já existe uma OP com a esquadria {dados["codigo_esquadria"]} para esta obra.")
             context = {'obras': obras, 'tipos_perfil': ObraOPItem.TIPO_PERFIL_CHOICES, 'form_data': request.POST}
             return render(request, 'core/industria/nova_op_manual.html', context)
 
@@ -255,7 +248,7 @@ def editar_op_manual(request, obra_op_id):
 
         try:
             for campo, valor in dados.items():
-                if campo != 'codigo_documento':  # Não altera PK
+                if campo != 'codigo_esquadria':  # Não altera PK
                     setattr(op, campo, valor)
             op.save()
             messages.success(request, 'OP atualizada.')

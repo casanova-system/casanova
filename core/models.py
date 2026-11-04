@@ -562,19 +562,16 @@ class ObraOP(models.Model):
         ordering = ['-id']
         verbose_name = 'OP/Tipologia da Obra'
         verbose_name_plural = 'OPs/Tipologias da Obra'
-        # A identidade da OP é o documento (ex.: J01) dentro da obra.
-        # O código da esquadria NÃO é único: a mesma esquadria (ex.: GOLS-JCR200)
-        # pode aparecer em documentos diferentes (J04, J05).
-        unique_together = ['obra', 'codigo_documento']
+        # A identidade da OP é o código da esquadria dentro da obra.
+        unique_together = ['obra', 'codigo_esquadria']
 
     def __str__(self):
-        return f'{self.obra.codigo} - {self.codigo_formatado} ({self.descricao[:50]})'
+        return f'{self.obra.codigo} - {self.codigo_formatado} ({self.tipologia[:50]})'
 
     @property
     def codigo_formatado(self):
-        """Código da OP no formato '1-J01' (ID sequencial + documento)."""
-        documento = self.codigo_documento or self.codigo_esquadria
-        return f'{self.pk}-{documento}'
+        """Código da OP no formato '1-GOLS-JCR200' (ID sequencial + esquadria)."""
+        return f'{self.pk}-{self.codigo_esquadria}'
 
     @property
     def peso_total(self):
@@ -593,8 +590,8 @@ class ObraOP(models.Model):
 
     @property
     def identificacao(self):
-        """Rótulo curto da OP (documento quando houver, senão a esquadria)."""
-        return self.codigo_documento or self.codigo_esquadria
+        """Rótulo curto da OP (esquadria quando houver)."""
+        return self.codigo_esquadria
 
 
 class ObraOPItem(models.Model):

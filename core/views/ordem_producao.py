@@ -312,7 +312,7 @@ def _converter_op_local(obra_op):
         'Peso': obra_op.peso,
         'Area': obra_op.area,
         'Localizacao': obra_op.localizacao or obra_op.vidro_localizacao,
-        'Tipologia': obra_op.tipologia or obra_op.descricao,
+        'Tipologia': obra_op.tipologia,
         'Sistema': obra_op.sistema,
         'Linha': obra_op.linha,
         'Fabricante': obra_op.fabricante,

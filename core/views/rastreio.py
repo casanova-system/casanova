@@ -296,9 +296,9 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
         obra_op = _buscar_obra_op_por_id(op_id)
         if obra_op:
             dados = {
-                'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                'NumeroDocumento': obra_op.codigo_esquadria,
                 'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '',
-                'Produto': obra_op.descricao or '',
+                'Produto': obra_op.tipologia or '',
                 'Variante': obra_op.codigo_esquadria or '',
             }
         else:
@@ -729,7 +729,7 @@ def rastreio_op(request, op_id):
             'peso': obra_op.peso,
             'area': obra_op.area,
             'localizacao': obra_op.localizacao or obra_op.vidro_localizacao,
-            'tipologia': obra_op.tipologia or obra_op.descricao,
+            'tipologia': obra_op.tipologia,
             'sistema': obra_op.sistema,
             'linha': obra_op.linha,
             'fabricante': obra_op.fabricante,
@@ -800,9 +800,9 @@ def registrar_movimentacao(request, op_id):
         obra_op = _buscar_obra_op_por_id(op_id)
         if obra_op:
             dados = {
-                'NumeroDocumento': obra_op.codigo_documento or obra_op.codigo_esquadria,
+                'NumeroDocumento': obra_op.codigo_esquadria,
                 'ProjetoObra': obra_op.obra.codigo if obra_op.obra else '',
-                'Produto': obra_op.descricao or '',
+                'Produto': obra_op.tipologia or '',
                 'Variante': obra_op.codigo_esquadria or '',
             }
         else:

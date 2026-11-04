@@ -60,7 +60,7 @@ def _ops_disponiveis(romaneio=None):
         .filter(pk__in=ids_na_expedicao)
         .exclude(pk__in=ja_em_romaneio)
         .select_related('obra')
-        .order_by('obra__codigo', 'codigo_documento')
+        .order_by('obra__codigo', 'codigo_esquadria')
     )
     return qs
 
