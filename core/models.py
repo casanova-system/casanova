@@ -545,7 +545,6 @@ class ObraOP(models.Model):
     vidro_localizacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Localização do Vidro')
     # Novos campos da planilha de lançamento manual
     itens_texto = models.CharField(max_length=255, blank=True, default='', verbose_name='ITENS')
-    codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='CODIGO')
     cliente = models.CharField(max_length=255, blank=True, default='', verbose_name='CLIENTE')
     person_autovolume = models.CharField(max_length=255, blank=True, default='', verbose_name='PERSON/AUTOVOLUME')
     obra_nome = models.CharField(max_length=255, blank=True, default='', verbose_name='OBRA')

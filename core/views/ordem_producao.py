@@ -301,7 +301,7 @@ def _converter_op_local(obra_op):
         'obra_op_id': obra_op.pk,
         'Documento': obra_op.codigo_formatado,
         'CodigoFormatado': obra_op.codigo_formatado,
-        'CodEsquadria': obra_op.codigo,
+        'CodEsquadria': obra_op.codigo_esquadria,
         'Descricao': obra_op.itens_texto,
         'Itens': obra_op.itens_texto,
         'ObraCodigo': obra_op.obra_nome or obra_op.obra.codigo,
