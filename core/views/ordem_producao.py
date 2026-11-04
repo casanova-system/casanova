@@ -279,21 +279,8 @@ def _filtrar_ops_locais(request):
     if participante:
         consulta = consulta.filter(obra__cliente__icontains=participante)
 
-    data_de = request.GET.get('data_de', '').strip()
-    if data_de:
-        try:
-            from datetime import datetime
-            consulta = consulta.filter(data_importacao__date__gte=datetime.strptime(data_de, '%Y-%m-%d').date())
-        except ValueError:
-            pass
-
-    data_ate = request.GET.get('data_ate', '').strip()
-    if data_ate:
-        try:
-            from datetime import datetime
-            consulta = consulta.filter(data_importacao__date__lte=datetime.strptime(data_ate, '%Y-%m-%d').date())
-        except ValueError:
-            pass
+    # Filtros de data removidos (campo data_importacao não existe mais)
+    # Use data_op para filtrar por data da OP
 
     ordenar = request.GET.get('ordenar', '')
     ordenacoes = {
@@ -304,7 +291,7 @@ def _filtrar_ops_locais(request):
         'obra_asc': ('obra__codigo', 'codigo_documento'),
         'obra_desc': ('-obra__codigo', '-codigo_documento'),
     }
-    return consulta.order_by(*ordenacoes.get(ordenar, ('-data_importacao', '-id')))
+    return consulta.order_by(*ordenacoes.get(ordenar, ('-id',)))
 
 
 def _converter_op_local(obra_op):
@@ -335,12 +322,8 @@ def _converter_op_local(obra_op):
         'Largura': obra_op.largura,
         'Altura': obra_op.altura,
         'Tratamento': obra_op.tratamento or '—',
-        'DataImportacao': (
-            obra_op.data_importacao.strftime('%d/%m/%Y')
-            if obra_op.data_importacao else '—'
-        ),
-        'fonte': 'importado',
-    }
+                'fonte': 'importado',
+            }
 
 
 def _ordenar_combinado(registros, ordenar):

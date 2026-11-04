@@ -527,7 +527,7 @@ class SetorProducao(models.Model):
 
 
 class ObraOP(models.Model):
-    """OP/Tipologia importada do Excel - vinculada a uma Obra."""
+    """OP/Tipologia lançada manualmente - vinculada a uma Obra."""
     obra = models.ForeignKey(
         'Obra',
         on_delete=models.CASCADE,
@@ -543,7 +543,6 @@ class ObraOP(models.Model):
     tratamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Tratamento/Cor')
     vidro_descricao = models.CharField(max_length=255, blank=True, default='', verbose_name='Descrição do Vidro')
     vidro_localizacao = models.CharField(max_length=255, blank=True, default='', verbose_name='Localização do Vidro')
-    data_importacao = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name='Importado em')
     # Novos campos da planilha de lançamento manual
     itens_texto = models.CharField(max_length=255, blank=True, default='', verbose_name='ITENS')
     codigo = models.CharField(max_length=50, blank=True, default='', verbose_name='CODIGO')
@@ -559,9 +558,9 @@ class ObraOP(models.Model):
     fabricante = models.CharField(max_length=100, blank=True, default='', verbose_name='FABRICANTE')
     data_op = models.DateField(null=True, blank=True, verbose_name='DATA OP')
     pausada_material = models.BooleanField(default=False, verbose_name='Pausada por falta de material')
-    
+
     class Meta:
-        ordering = ['-data_importacao']
+        ordering = ['-id']
         verbose_name = 'OP/Tipologia da Obra'
         verbose_name_plural = 'OPs/Tipologias da Obra'
         # A identidade da OP é o documento (ex.: J01) dentro da obra.
