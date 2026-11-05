@@ -636,6 +636,7 @@ def rastreio_producao(request):
     # ------------------------------------------------------------------
     # Calcula peso somando apenas o peso das OPs que ESTÃO ATUALMENTE em cada setor.
     # Não multiplica o peso por cada setor que a OP já passou (mesmo físico, não multiplica).
+    # Mostra TODOS os setores ativos, mesmo com peso 0.
     from core.models import ObraOP
     op_ids = list(rastreios.values_list('op_id', flat=True))
     ops_peso = dict(
@@ -643,38 +644,30 @@ def rastreio_producao(request):
         .values_list('pk', 'peso')
     )
 
+    # Inicializa TODOS os setores ativos com peso 0
+    peso_setor = {s.nome: 0.0 for s in setores}
+    peso_por_setor_detalhado = {s.codigo: {'nome': s.nome, 'valor': 0.0} for s in setores}
+
     # Soma o peso das OPs pelo setor ATUAL (rastreio.setor_atual)
-    peso_setor = {}
     for r in rastreios:
         peso = ops_peso.get(r.op_id) or 0
         if peso:
             setor_nome = r.setor_atual_nome
+            setor_codigo = r.setor_atual
             peso_setor[setor_nome] = peso_setor.get(setor_nome, 0) + float(peso)
+            if setor_codigo in peso_por_setor_detalhado:
+                peso_por_setor_detalhado[setor_codigo]['valor'] += float(peso)
 
     peso_por_setor = [
         {'nome': k, 'valor': round(v, 1), 'texto': f'{v:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
         for k, v in sorted(peso_setor.items(), key=lambda x: -x[1])
     ]
 
-    # Também prepara dados por setor individual para o seletor (setor atual)
-    peso_por_setor_detalhado = {}
-    for r in rastreios:
-        peso = ops_peso.get(r.op_id) or 0
-        if peso:
-            setor_codigo = r.setor_atual
-            setor_nome = r.setor_atual_nome
-            if setor_codigo not in peso_por_setor_detalhado:
-                peso_por_setor_detalhado[setor_codigo] = {
-                    'nome': setor_nome,
-                    'valor': 0.0,
-                }
-            peso_por_setor_detalhado[setor_codigo]['valor'] += float(peso)
-
     # Converte para lista ordenada
-    peso_por_setor_detalhado = [
-    {'codigo': k, 'nome': v['nome'], 'valor': round(v['valor'], 1),
-    'texto': f'{v["valor"]:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
-    for k, v in sorted(peso_por_setor_detalhado.items(), key=lambda x: -x[1]['valor'])
+    peso_por_setor_detalhado_lista = [
+        {'codigo': k, 'nome': v['nome'], 'valor': round(v['valor'], 1),
+         'texto': f'{v["valor"]:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
+        for k, v in sorted(peso_por_setor_detalhado.items(), key=lambda x: -x[1]['valor'])
     ]
 
     context = {
@@ -698,7 +691,7 @@ def rastreio_producao(request):
         'dist_status': dist_status,
         'dist_vidro': dist_vidro,
         'peso_por_setor': peso_por_setor,
-                'peso_por_setor_detalhado': peso_por_setor_detalhado,
+                'peso_por_setor_detalhado': peso_por_setor_detalhado_lista,
                 'concluidas_7': _concluidas_por_dia(7),
         'concluidas_30': _concluidas_por_dia(30),
         'concluidas_90': _concluidas_por_dia(90),
