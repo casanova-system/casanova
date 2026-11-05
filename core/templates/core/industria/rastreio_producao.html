@@ -454,62 +454,72 @@
 
             // ================= Gráfico 4: Peso por Setor =================
             const graficoPeso = new Chart(
-                document.getElementById('graficoPesoSetor').getContext('2d'),
-                {
-                    type: 'bar',
-                    data: { labels: [], datasets: [] },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        indexAxis: 'y',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: (ctx) => ' ' + (ctx.dataset.textos[ctx.dataIndex] || '—'),
+                    document.getElementById('graficoPesoSetor').getContext('2d'),
+                    {
+                        type: 'bar',
+                        data: { labels: [], datasets: [] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            layout: {
+                                padding: {
+                                    left: 10,
+                                    right: 10,
+                                    top: 10,
+                                    bottom: 10
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => ' ' + (ctx.dataset.textos[ctx.dataIndex] || '—'),
+                                    },
                                 },
                             },
+                            scales: {
+                                x: { ...eixoX, beginAtZero: true, max: Math.max(...(DADOS.pesoSetor?.map(s => s.valor) || [0])) * 1.15 },
+                                y: { ...eixoY, ticks: { font: { size: 10 }, maxRotation: 0, minRotation: 0 } },
+                            },
                         },
-                        scales: {
-                            x: { ...eixoX, beginAtZero: true },
-                            y: { ...eixoY, ticks: { font: { size: 10 } } },
-                        },
-                    },
-                }
-            );
+                    }
+                );
 
             function renderPeso(setor) {
-                            let serie;
-                            if (setor && setor !== 'todos') {
-                                // Filtra pelo setor específico usando os dados detalhados
-                                const detalhado = DADOS.pesoSetorDetalhado || [];
-                                const item = detalhado.find(d => d.codigo === setor);
-                                serie = item ? [item] : [];
-                            } else {
-                                // Mostra todos os setores
-                                serie = DADOS.pesoSetor || [];
-                            }
-                            graficoPeso.data.labels = serie.map((s) => s.nome);
-                            graficoPeso.data.datasets = [{
-                                label: 'Peso (kg)',
-                                data: serie.map((s) => s.valor),
-                                textos: serie.map((s) => s.texto),
-                                backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
-                                borderRadius: 6,
-                                borderSkipped: false,
-                                maxBarThickness: 46,
-                            }];
-                            graficoPeso.update();
+                                        let serie;
+                                        if (setor && setor !== 'todos') {
+                                            // Filtra pelo setor específico usando os dados detalhados
+                                            const detalhado = DADOS.pesoSetorDetalhado || [];
+                                            const item = detalhado.find(d => d.codigo === setor);
+                                            serie = item ? [item] : [];
+                                        } else {
+                                            // Mostra todos os setores
+                                            serie = DADOS.pesoSetor || [];
+                                        }
+                                        graficoPeso.data.labels = serie.map((s) => s.nome);
+                                        graficoPeso.data.datasets = [{
+                                            label: 'Peso (kg)',
+                                            data: serie.map((s) => s.valor),
+                                            textos: serie.map((s) => s.texto),
+                                            backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
+                                            borderRadius: 6,
+                                            borderSkipped: false,
+                                            maxBarThickness: 32,
+                                            barPercentage: 0.7,
+                                            categoryPercentage: 0.8,
+                                        }];
+                                        graficoPeso.update();
 
-                            const totalKg = serie.reduce((s, d) => s + (d.valor || 0), 0);
-                            const totalFmt = totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-                            const label = setor && setor !== 'todos' 
-                                ? (DADOS.pesoSetorDetalhado?.find(d => d.codigo === setor)?.nome || setor)
-                                : 'total';
-                            document.getElementById('pesoResumo').innerHTML = totalKg
-                                ? `<i class="fa-solid fa-weight-hanging"></i> ${totalFmt} kg (${label})`
-                                : '<i class="fa-solid fa-circle-info"></i> Sem dados de peso para os filtros aplicados.';
-                        }
+                                        const totalKg = serie.reduce((s, d) => s + (d.valor || 0), 0);
+                                        const totalFmt = totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+                                        const label = setor && setor !== 'todos' 
+                                            ? (DADOS.pesoSetorDetalhado?.find(d => d.codigo === setor)?.nome || setor)
+                                            : 'total';
+                                        document.getElementById('pesoResumo').innerHTML = totalKg
+                                            ? `<i class="fa-solid fa-weight-hanging"></i> ${totalFmt} kg (${label})`
+                                            : '<i class="fa-solid fa-circle-info"></i> Sem dados de peso para os filtros aplicados.';
+                                    }
 
             // ================= Liga os botões de cada gráfico =================
                 // Um listener por grupo: troca a opção sem recarregar a página.
