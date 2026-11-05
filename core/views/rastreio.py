@@ -632,14 +632,10 @@ def rastreio_producao(request):
     )
 
     # ------------------------------------------------------------------
-    # Gráfico 4 — Peso por Setor (distribuição do peso total das OPs)
+    # Gráfico 4 — Peso por Setor (distribuição histórica do peso das OPs)
     # ------------------------------------------------------------------
-    peso_por_setor = {}
-    for r in rastreios:
-        if r.quantidade_total and r.quantidade_total > 0:
-            # Peso da OP (usa o peso da ObraOP se disponível)
-            pass
-    # Busca peso das OPs via ObraOP
+    # Calcula peso por setor baseado no histórico de movimentações
+    # Cada vez que a OP passa por um setor, o peso total dela conta para aquele setor
     from core.models import ObraOP
     op_ids = list(rastreios.values_list('op_id', flat=True))
     ops_peso = dict(
@@ -647,16 +643,45 @@ def rastreio_producao(request):
         .values_list('pk', 'peso')
     )
 
+    # Busca todas as movimentações das OPs filtradas
+    movimentacoes_peso = MovimentacaoOP.objects.filter(
+        rastreio__in=rastreios,
+        data_entrada__isnull=False,
+    ).select_related("rastreio").only("setor", "setor_nome", "rastreio__op_id")
+
     peso_setor = {}
-    for r in rastreios:
-        peso = ops_peso.get(r.op_id) or 0
+    for mov in movimentacoes_peso:
+        # mov.rastreio_id é o PK do RastreioOP, mas ops_peso usa ObraOP.pk (mov.rastreio.op_id)
+        peso = ops_peso.get(mov.rastreio.op_id) or 0
         if peso:
-            setor_nome = r.setor_atual_nome
+            setor_nome = mov.setor_nome or mov.setor
             peso_setor[setor_nome] = peso_setor.get(setor_nome, 0) + float(peso)
 
     peso_por_setor = [
         {'nome': k, 'valor': round(v, 1), 'texto': f'{v:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
         for k, v in sorted(peso_setor.items(), key=lambda x: -x[1])
+    ]
+
+    # Também prepara dados por setor individual para o seletor
+    peso_por_setor_detalhado = {}
+    for mov in movimentacoes_peso:
+        # mov.rastreio_id é o PK do RastreioOP, mas ops_peso usa ObraOP.pk (mov.rastreio.op_id)
+        peso = ops_peso.get(mov.rastreio.op_id) or 0
+        if peso:
+            setor_codigo = mov.setor
+            setor_nome = mov.setor_nome or mov.setor
+            if setor_codigo not in peso_por_setor_detalhado:
+                peso_por_setor_detalhado[setor_codigo] = {
+                'nome': setor_nome,
+                'valor': 0.0,
+                }
+            peso_por_setor_detalhado[setor_codigo]['valor'] += float(peso)
+
+    # Converte para lista ordenada
+    peso_por_setor_detalhado = [
+        {'codigo': k, 'nome': v['nome'], 'valor': round(v['valor'], 1),
+        'texto': f'{v["valor"]:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
+        for k, v in sorted(peso_por_setor_detalhado.items(), key=lambda x: -x[1]['valor'])
     ]
 
     context = {
@@ -680,7 +705,8 @@ def rastreio_producao(request):
         'dist_status': dist_status,
         'dist_vidro': dist_vidro,
         'peso_por_setor': peso_por_setor,
-        'concluidas_7': _concluidas_por_dia(7),
+                'peso_por_setor_detalhado': peso_por_setor_detalhado,
+                'concluidas_7': _concluidas_por_dia(7),
         'concluidas_30': _concluidas_por_dia(30),
         'concluidas_90': _concluidas_por_dia(90),
     }

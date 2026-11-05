@@ -113,17 +113,25 @@
             </div>
 
             <!-- Peso por Setor -->
-            <div class="col-xl-3 col-lg-6">
-                <div class="chart-panel">
-                    <div class="chart-head">
-                        <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="graficoPesoSetor" height="140"></canvas>
-                    </div>
-                    <div class="chart-foot" id="pesoResumo"></div>
-                </div>
-            </div>
+                        <div class="col-xl-3 col-lg-6">
+                            <div class="chart-panel">
+                                <div class="chart-head">
+                                    <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
+                                    <div class="chart-ctrl">
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Setor">
+                                            <button type="button" class="chart-toggle active" data-grupo="peso" data-valor="todos">Todos</button>
+                                            {% for s in peso_por_setor_detalhado %}
+                                            <button type="button" class="chart-toggle" data-grupo="peso" data-valor="{{ s.codigo }}">{{ s.nome }}</button>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="graficoPesoSetor" height="140"></canvas>
+                                </div>
+                                <div class="chart-foot" id="pesoResumo"></div>
+                            </div>
+                        </div>
         </div>
 
     <!-- Filtros (alimentam KPIs, grÃ¡ficos e tabela) -->
@@ -292,12 +300,13 @@
                 vidro:  {{ dist_vidro|safe }},
             },
             concluidas: {
-                7:  {{ concluidas_7|safe }},
-                30: {{ concluidas_30|safe }},
-                90: {{ concluidas_90|safe }},
-            },
-            pesoSetor: {{ peso_por_setor|safe }},
-        };
+                        7:  {{ concluidas_7|safe }},
+                        30: {{ concluidas_30|safe }},
+                        90: {{ concluidas_90|safe }},
+                    },
+                    pesoSetor: {{ peso_por_setor|safe }},
+                    pesoSetorDetalhado: {{ peso_por_setor_detalhado|safe }},
+                };
 
     const CORES = ['#0b3882', '#4da6ff', '#16a34a', '#d97706', '#dc2626',
                    '#3b82f6', '#7c3aed', '#ec4899', '#06b6d4', '#94a3b8'];
@@ -469,34 +478,47 @@
                 }
             );
 
-            function renderPeso() {
-                const serie = DADOS.pesoSetor || [];
-                graficoPeso.data.labels = serie.map((s) => s.nome);
-                graficoPeso.data.datasets = [{
-                    label: 'Peso (kg)',
-                    data: serie.map((s) => s.valor),
-                    textos: serie.map((s) => s.texto),
-                    backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    maxBarThickness: 46,
-                }];
-                graficoPeso.update();
+            function renderPeso(setor) {
+                            let serie;
+                            if (setor && setor !== 'todos') {
+                                // Filtra pelo setor específico usando os dados detalhados
+                                const detalhado = DADOS.pesoSetorDetalhado || [];
+                                const item = detalhado.find(d => d.codigo === setor);
+                                serie = item ? [item] : [];
+                            } else {
+                                // Mostra todos os setores
+                                serie = DADOS.pesoSetor || [];
+                            }
+                            graficoPeso.data.labels = serie.map((s) => s.nome);
+                            graficoPeso.data.datasets = [{
+                                label: 'Peso (kg)',
+                                data: serie.map((s) => s.valor),
+                                textos: serie.map((s) => s.texto),
+                                backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
+                                borderRadius: 6,
+                                borderSkipped: false,
+                                maxBarThickness: 46,
+                            }];
+                            graficoPeso.update();
 
-                const totalKg = serie.reduce((s, d) => s + (d.valor || 0), 0);
-                const totalFmt = totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-                document.getElementById('pesoResumo').innerHTML = totalKg
-                    ? `<i class="fa-solid fa-weight-hanging"></i> ${totalFmt} kg no total`
-                    : '<i class="fa-solid fa-circle-info"></i> Sem dados de peso para os filtros aplicados.';
-            }
+                            const totalKg = serie.reduce((s, d) => s + (d.valor || 0), 0);
+                            const totalFmt = totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+                            const label = setor && setor !== 'todos' 
+                                ? (DADOS.pesoSetorDetalhado?.find(d => d.codigo === setor)?.nome || setor)
+                                : 'total';
+                            document.getElementById('pesoResumo').innerHTML = totalKg
+                                ? `<i class="fa-solid fa-weight-hanging"></i> ${totalFmt} kg (${label})`
+                                : '<i class="fa-solid fa-circle-info"></i> Sem dados de peso para os filtros aplicados.';
+                        }
 
             // ================= Liga os botões de cada gráfico =================
-    // Um listener por grupo: troca a opção sem recarregar a página.
-    const renderizadores = {
-        tempo: renderTempo,
-        dist: renderDist,
-        dias: renderConc,
-    };
+                // Um listener por grupo: troca a opção sem recarregar a página.
+                const renderizadores = {
+                    tempo: renderTempo,
+                    dist: renderDist,
+                    dias: renderConc,
+                    peso: renderPeso,
+                };
 
     document.querySelectorAll('.chart-toggle').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -521,9 +543,9 @@
     }
 
     renderTempo(valorAtivo('tempo', 'medio'));
-        renderDist(valorAtivo('dist', 'setor'));
-        renderConc(valorAtivo('dias', '7'));
-        renderPeso();
+            renderDist(valorAtivo('dist', 'setor'));
+            renderConc(valorAtivo('dias', '7'));
+            renderPeso(valorAtivo('peso', 'todos'));
     })();
 </script>
 
