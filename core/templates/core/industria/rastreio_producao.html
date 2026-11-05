@@ -107,29 +107,29 @@
                 </div>
                 <div class="chart-body">
                     <canvas id="graficoConcluidas" height="200"></canvas>
-                </div>
+                            </div>
                 <div class="chart-foot" id="concResumo"></div>
             </div>
-                    </div>
-                </div>
+        </div>
+    </div>
 
-                <!-- Peso por Setor -->
-                <div class="row g-3 mb-3" style="flex-shrink: 0;">
-                    <div class="col-xl-4 col-lg-6">
-                        <div class="chart-panel">
-                            <div class="chart-head">
-                                <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
-                            </div>
-                            <div class="chart-body">
-                                <canvas id="graficoPesoSetor" height="200"></canvas>
-                            </div>
-                            <div class="chart-foot" id="pesoResumo"></div>
-                        </div>
-                    </div>
+    <!-- Peso por Setor -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-xl-4 col-lg-6">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
                 </div>
+                <div class="chart-body">
+                    <canvas id="graficoPesoSetor" height="200"></canvas>
+                </div>
+                <div class="chart-foot" id="pesoResumo"></div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Filtros (alimentam KPIs, gráficos e tabela) -->
-    <div class="filtros-bar{% if tem_filtro_ativo %} filtros-ativos{% endif %}">
+    <!-- Filtros (alimentam KPIs, grÃ¡ficos e tabela) -->
+    <div class="filtros-bar{% if tem_filtro_ativo %} filtros-ativos{% endif %}">>
         <form method="GET" action="" class="filtros-bar-form">
             <div class="filtros-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
