@@ -632,10 +632,10 @@ def rastreio_producao(request):
     )
 
     # ------------------------------------------------------------------
-    # Gráfico 4 — Peso por Setor (distribuição histórica do peso das OPs)
+    # Gráfico 4 — Peso por Setor (peso atual por setor)
     # ------------------------------------------------------------------
-    # Calcula peso por setor baseado no histórico de movimentações
-    # Cada vez que a OP passa por um setor, o peso total dela conta para aquele setor
+    # Calcula peso somando apenas o peso das OPs que ESTÃO ATUALMENTE em cada setor.
+    # Não multiplica o peso por cada setor que a OP já passou (mesmo físico, não multiplica).
     from core.models import ObraOP
     op_ids = list(rastreios.values_list('op_id', flat=True))
     ops_peso = dict(
@@ -643,18 +643,12 @@ def rastreio_producao(request):
         .values_list('pk', 'peso')
     )
 
-    # Busca todas as movimentações das OPs filtradas
-    movimentacoes_peso = MovimentacaoOP.objects.filter(
-        rastreio__in=rastreios,
-        data_entrada__isnull=False,
-    ).select_related("rastreio").only("setor", "setor_nome", "rastreio__op_id")
-
+    # Soma o peso das OPs pelo setor ATUAL (rastreio.setor_atual)
     peso_setor = {}
-    for mov in movimentacoes_peso:
-        # mov.rastreio_id é o PK do RastreioOP, mas ops_peso usa ObraOP.pk (mov.rastreio.op_id)
-        peso = ops_peso.get(mov.rastreio.op_id) or 0
+    for r in rastreios:
+        peso = ops_peso.get(r.op_id) or 0
         if peso:
-            setor_nome = mov.setor_nome or mov.setor
+            setor_nome = r.setor_atual_nome
             peso_setor[setor_nome] = peso_setor.get(setor_nome, 0) + float(peso)
 
     peso_por_setor = [
@@ -662,34 +656,33 @@ def rastreio_producao(request):
         for k, v in sorted(peso_setor.items(), key=lambda x: -x[1])
     ]
 
-    # Também prepara dados por setor individual para o seletor
+    # Também prepara dados por setor individual para o seletor (setor atual)
     peso_por_setor_detalhado = {}
-    for mov in movimentacoes_peso:
-        # mov.rastreio_id é o PK do RastreioOP, mas ops_peso usa ObraOP.pk (mov.rastreio.op_id)
-        peso = ops_peso.get(mov.rastreio.op_id) or 0
+    for r in rastreios:
+        peso = ops_peso.get(r.op_id) or 0
         if peso:
-            setor_codigo = mov.setor
-            setor_nome = mov.setor_nome or mov.setor
+            setor_codigo = r.setor_atual
+            setor_nome = r.setor_atual_nome
             if setor_codigo not in peso_por_setor_detalhado:
                 peso_por_setor_detalhado[setor_codigo] = {
-                'nome': setor_nome,
-                'valor': 0.0,
+                    'nome': setor_nome,
+                    'valor': 0.0,
                 }
             peso_por_setor_detalhado[setor_codigo]['valor'] += float(peso)
 
     # Converte para lista ordenada
     peso_por_setor_detalhado = [
-        {'codigo': k, 'nome': v['nome'], 'valor': round(v['valor'], 1),
-        'texto': f'{v["valor"]:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
-        for k, v in sorted(peso_por_setor_detalhado.items(), key=lambda x: -x[1]['valor'])
+    {'codigo': k, 'nome': v['nome'], 'valor': round(v['valor'], 1),
+    'texto': f'{v["valor"]:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
+    for k, v in sorted(peso_por_setor_detalhado.items(), key=lambda x: -x[1]['valor'])
     ]
 
     context = {
-        'page_obj': page_obj,
-        'rastreios': page_obj.object_list,
-        'setores': setores,
-        'obras': obras,
-        'filtros': request.GET,
+    'page_obj': page_obj,
+    'rastreios': page_obj.object_list,
+    'setores': setores,
+    'obras': obras,
+    'filtros': request.GET,
         'querystring': params.urlencode(),
         'tem_filtro_ativo': _tem_filtro_ativo(request.GET),
         'kpis': {
