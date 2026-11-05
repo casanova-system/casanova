@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
+
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'detalhe_obra_op' item.op.pk as url_voltar %}
+    {% include 'core/partials/page_header.html' with titulo="QR Code do Item" subtitulo=item.op.identificacao acao_icone="fa-qrcode" voltar_url=url_voltar %}
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card shadow-lg mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fa-solid fa-qrcode me-2"></i> QR Code do Item</h5>
+                </div>
+                <div class="card-body text-center p-4">
+                    {{ barcode_svg|safe }}
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="row g-2 small">
+                        <div class="col-6"><strong>OP:</strong> {{ op.codigo_formatado }}</div>
+                        <div class="col-6"><strong>Item:</strong> {{ item.codigo|default:"—" }}</div>
+                        <div class="col-6"><strong>Perfil:</strong> {{ item.get_tipo_perfil_display }}</div>
+                        <div class="col-6"><strong>Tamanho:</strong> {{ item.tamanho }} mm</div>
+                        <div class="col-6"><strong>Qtd:</strong> {{ item.quantidade }}</div>
+                        <div class="col-6"><strong>Peso:</strong> {{ item.peso|peso }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if codigo %}
+            <div class="card shadow-lg mb-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fa-solid fa-barcode me-2"></i> Código de Barras (Code 128) — OP</h5>
+                </div>
+                <div class="card-body text-center p-4">
+                    <img src="/industria/ordem-producao/{{ item.op.pk }}/barcode/" alt="Código de Barras" style="max-width: 100%; height: auto;">
+                    <p class="mt-2 mb-0 font-monospace small">{{ codigo }}</p>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted">Código de barras da OP — para leitura com leitor laser</small>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{% url 'detalhe_obra_op' item.op.pk %}" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Voltar à OP
+                </a>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fa-solid fa-print me-1"></i> Imprimir / Salvar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -554,6 +554,39 @@ def _conteudo_barcode(obra_op_id):
     return json.dumps({'id': obra_op_id, 'op': str(obra_op_id)}, ensure_ascii=False)
 
 
+def _conteudo_barcode_item(item_id):
+    """Conteúdo do QR Code: JSON com as informações do item (ObraOPItem).
+
+    O QR Code contém todos os dados do item para rastreio e identificação individual.
+    """
+    import json
+
+    from core.models import ObraOPItem
+
+    item = ObraOPItem.objects.select_related('op', 'op__obra').filter(pk=item_id).first()
+    if item:
+        dados = {
+            'id': item.pk,
+            'tipo': 'item',
+            'op_id': item.op.pk,
+            'op': item.op.codigo_formatado,
+            'esquadria': item.op.codigo_esquadria,
+            'obra': item.op.obra.codigo if item.op.obra else '',
+            'item_codigo': item.codigo,
+            'tipo_perfil': item.get_tipo_perfil_display(),
+            'orientacao': item.orientacao,
+            'corte': item.corte,
+            'tamanho': item.tamanho,
+            'quantidade': item.quantidade,
+            'peso': str(item.peso),
+            'peso_unitario': str(item.peso_unitario),
+        }
+        return json.dumps(dados, ensure_ascii=False)
+
+    # Fallback: apenas o ID
+    return json.dumps({'id': item_id, 'tipo': 'item', 'op': str(item_id)}, ensure_ascii=False)
+
+
 def _gerar_barcode_svg(conteudo):
     """Gera um QR Code como SVG usando a biblioteca qrcode.
 
@@ -775,3 +808,41 @@ def imprimir_barcode_ordem_producao(request, op_id):
         'codigo': _conteudo_codigo_barras(op_id),
     }
     return render(request, 'core/industria/imprimir_barcode_op.html', context)
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def barcode_item(request, item_id):
+    """Gera o QR Code de um item (ObraOPItem) em SVG."""
+    svg = _gerar_barcode_svg(_conteudo_barcode_item(item_id))
+    return HttpResponse(svg, content_type='image/svg+xml')
+
+
+@login_required(login_url='login')
+@requer_rotina('lista_ordem_producao')
+def imprimir_barcode_item(request, item_id):
+    """Página de impressão do QR Code de um item em folha A4."""
+    from core.models import ObraOPItem
+
+    item = ObraOPItem.objects.select_related('op', 'op__obra').filter(pk=item_id).first()
+    if not item:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, 'Item não encontrado.')
+        return redirect('lista_ordem_producao')
+
+    if item.op.pausada_material:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, 'OP pausada por falta de material. Não é possível gerar QR Code.')
+        return redirect('detalhe_obra_op', obra_op_id=item.op.pk)
+
+    conteudo = _conteudo_barcode_item(item_id)
+
+    context = {
+        'item': item,
+        'op': item.op,
+        'barcode_svg': _gerar_barcode_svg(conteudo),
+        'codigo': _conteudo_codigo_barras(item.op.pk),  # Código de barras da OP
+    }
+    return render(request, 'core/industria/imprimir_barcode_item.html', context)

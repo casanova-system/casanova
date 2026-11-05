@@ -37,13 +37,16 @@ from core.views.frete import (
 from core.views.grafico_frete import grafico_custo_frete
 from core.views.op_manual import nova_op_manual, editar_op_manual
 from core.views.ordem_producao import (
+    barcode_item,
     barcode_ordem_producao,
     detalhe_obra_op,
     excluir_op,
     importar_op_excel,
+    imprimir_barcode_item,
     imprimir_barcode_ordem_producao,
     lista_ordem_producao,
 )
+from core.views.op_manual import nova_op_manual, editar_op_manual
 from core.views.custo_producao import (
     calcular_op,
     custos_setores,
@@ -183,7 +186,9 @@ urlpatterns = [
     path('industria/ordem-producao/obra-op/<int:obra_op_id>/', detalhe_obra_op, name='detalhe_obra_op'),
     path('industria/ordem-producao/<int:obra_op_id>/excluir/', excluir_op, name='excluir_op'),
     path('industria/ordem-producao/<int:op_id>/barcode/', barcode_ordem_producao, name='barcode_ordem_producao'),
-    path('industria/ordem-producao/<int:op_id>/barcode/imprimir/', imprimir_barcode_ordem_producao, name='imprimir_barcode_ordem_producao'),
+        path('industria/ordem-producao/<int:op_id>/barcode/imprimir/', imprimir_barcode_ordem_producao, name='imprimir_barcode_ordem_producao'),
+        path('industria/ordem-producao/item/<int:item_id>/barcode/', barcode_item, name='barcode_item'),
+        path('industria/ordem-producao/item/<int:item_id>/barcode/imprimir/', imprimir_barcode_item, name='imprimir_barcode_item'),
     # RASTREIO DE PRODUÇÃO (código de barras)
     path('industria/rastreio/', rastreio_producao, name='rastreio_producao'),
     path('industria/rastreio/escanear/', escanear, name='escanear'),
