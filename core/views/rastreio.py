@@ -631,6 +631,34 @@ def rastreio_producao(request):
         .order_by('obra')
     )
 
+    # ------------------------------------------------------------------
+    # Gráfico 4 — Peso por Setor (distribuição do peso total das OPs)
+    # ------------------------------------------------------------------
+    peso_por_setor = {}
+    for r in rastreios:
+        if r.quantidade_total and r.quantidade_total > 0:
+            # Peso da OP (usa o peso da ObraOP se disponível)
+            pass
+    # Busca peso das OPs via ObraOP
+    from core.models import ObraOP
+    op_ids = list(rastreios.values_list('op_id', flat=True))
+    ops_peso = dict(
+        ObraOP.objects.filter(pk__in=op_ids)
+        .values_list('pk', 'peso')
+    )
+
+    peso_setor = {}
+    for r in rastreios:
+        peso = ops_peso.get(r.op_id) or 0
+        if peso:
+            setor_nome = r.setor_atual_nome
+            peso_setor[setor_nome] = peso_setor.get(setor_nome, 0) + float(peso)
+
+    peso_por_setor = [
+        {'nome': k, 'valor': round(v, 1), 'texto': f'{v:,.1f} kg'.replace(',', 'X').replace('.', ',').replace('X', '.')}
+        for k, v in sorted(peso_setor.items(), key=lambda x: -x[1])
+    ]
+
     context = {
         'page_obj': page_obj,
         'rastreios': page_obj.object_list,
@@ -651,6 +679,7 @@ def rastreio_producao(request):
         'dist_setor': dist_setor,
         'dist_status': dist_status,
         'dist_vidro': dist_vidro,
+        'peso_por_setor': peso_por_setor,
         'concluidas_7': _concluidas_por_dia(7),
         'concluidas_30': _concluidas_por_dia(30),
         'concluidas_90': _concluidas_por_dia(90),

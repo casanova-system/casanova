@@ -110,10 +110,25 @@
                 </div>
                 <div class="chart-foot" id="concResumo"></div>
             </div>
-        </div>
-    </div>
+                    </div>
+                </div>
 
-    <!-- Filtros (alimentam KPIs, gráficos e tabela) -->
+                <!-- Peso por Setor -->
+                <div class="row g-3 mb-3" style="flex-shrink: 0;">
+                    <div class="col-xl-4 col-lg-6">
+                        <div class="chart-panel">
+                            <div class="chart-head">
+                                <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="graficoPesoSetor" height="200"></canvas>
+                            </div>
+                            <div class="chart-foot" id="pesoResumo"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros (alimentam KPIs, gráficos e tabela) -->
     <div class="filtros-bar{% if tem_filtro_ativo %} filtros-ativos{% endif %}">
         <form method="GET" action="" class="filtros-bar-form">
             <div class="filtros-search">
@@ -188,10 +203,11 @@
                             <th>Produto<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th>Vidro<span class="col-resizer" title="Arraste para redimensionar"></span></th>
                             <th>Setor Atual<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Última Atualização<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Status<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th>Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-end pe-3">Ações</th>
+                                                        <th>Última Atualização<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                        <th>Status<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                        <th>Peso (kg)<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                        <th>Qtd. Produzida<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                        <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -216,16 +232,23 @@
                             </td>
                             <td class="text-nowrap text-muted">{{ r.atualizado_em|date:"d/m/Y H:i" }}</td>
                             <td>
-                                {% if r.concluida %}
-                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
-                                {% elif r.aguardando_saida %}
-                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada</span>
-                                {% else %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if r.quantidade_produzida_total is not None %}
+                                                            {% if r.concluida %}
+                                                                <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Concluída</span>
+                                                            {% elif r.aguardando_saida %}
+                                                                <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Liberada</span>
+                                                            {% else %}
+                                                                <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2 py-1"><i class="fa-solid fa-gears me-1"></i> Em Produção</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-end font-monospace small">
+                                                            {% if r.peso %}
+                                                                {{ r.peso|quantidade }}
+                                                            {% else %}
+                                                                <span class="text-muted">—</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if r.quantidade_produzida_total is not None %}
                                     <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
                                         <i class="fa-solid fa-boxes-stacked me-1"></i> {{ r.quantidade_produzida_total }}
                                     </span>
@@ -262,20 +285,21 @@
     'use strict';
 
     // ---- Dados vindos da view (já filtrados pela barra de filtros) ----
-    const DADOS = {
-        tempoMedio: {{ tempo_setores_medio|safe }},
-        tempoTotal: {{ tempo_setores_total|safe }},
-        dist: {
-            setor:  {{ dist_setor|safe }},
-            status: {{ dist_status|safe }},
-            vidro:  {{ dist_vidro|safe }},
-        },
-        concluidas: {
-            7:  {{ concluidas_7|safe }},
-            30: {{ concluidas_30|safe }},
-            90: {{ concluidas_90|safe }},
-        },
-    };
+        const DADOS = {
+            tempoMedio: {{ tempo_setores_medio|safe }},
+            tempoTotal: {{ tempo_setores_total|safe }},
+            dist: {
+                setor:  {{ dist_setor|safe }},
+                status: {{ dist_status|safe }},
+                vidro:  {{ dist_vidro|safe }},
+            },
+            concluidas: {
+                7:  {{ concluidas_7|safe }},
+                30: {{ concluidas_30|safe }},
+                90: {{ concluidas_90|safe }},
+            },
+            pesoSetor: {{ peso_por_setor|safe }},
+        };
 
     const CORES = ['#0b3882', '#4da6ff', '#16a34a', '#d97706', '#dc2626',
                    '#3b82f6', '#7c3aed', '#ec4899', '#06b6d4', '#94a3b8'];
@@ -416,12 +440,59 @@
         graficoConc.update();
 
         const total = totalDe(serie);
-        document.getElementById('concResumo').innerHTML = total
-            ? `<i class="fa-solid fa-flag-checkered"></i> ${total} concluída${total === 1 ? '' : 's'} nos últimos ${dias} dias`
-            : `<i class="fa-solid fa-circle-info"></i> Nenhuma conclusão nos últimos ${dias} dias.`;
-    }
+                document.getElementById('concResumo').innerHTML = total
+                    ? `<i class="fa-solid fa-flag-checkered"></i> ${total} concluída${total === 1 ? '' : 's'} nos últimos ${dias} dias`
+                    : `<i class="fa-solid fa-circle-info"></i> Nenhuma conclusão nos últimos ${dias} dias.`;
+            }
 
-    // ================= Liga os botões de cada gráfico =================
+            // ================= Gráfico 4: Peso por Setor =================
+            const graficoPeso = new Chart(
+                document.getElementById('graficoPesoSetor').getContext('2d'),
+                {
+                    type: 'bar',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ' ' + (ctx.dataset.textos[ctx.dataIndex] || '—'),
+                                },
+                            },
+                        },
+                        scales: {
+                            x: { ...eixoX, beginAtZero: true },
+                            y: { ...eixoY, ticks: { font: { size: 10 } } },
+                        },
+                    },
+                }
+            );
+
+            function renderPeso() {
+                const serie = DADOS.pesoSetor || [];
+                graficoPeso.data.labels = serie.map((s) => s.nome);
+                graficoPeso.data.datasets = [{
+                    label: 'Peso (kg)',
+                    data: serie.map((s) => s.valor),
+                    textos: serie.map((s) => s.texto),
+                    backgroundColor: serie.map((_, i) => CORES[i % CORES.length]),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    maxBarThickness: 46,
+                }];
+                graficoPeso.update();
+
+                const totalKg = serie.reduce((s, d) => s + (d.valor || 0), 0);
+                const totalFmt = totalKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+                document.getElementById('pesoResumo').innerHTML = totalKg
+                    ? `<i class="fa-solid fa-weight-hanging"></i> ${totalFmt} kg no total`
+                    : '<i class="fa-solid fa-circle-info"></i> Sem dados de peso para os filtros aplicados.';
+            }
+
+            // ================= Liga os botões de cada gráfico =================
     // Um listener por grupo: troca a opção sem recarregar a página.
     const renderizadores = {
         tempo: renderTempo,
@@ -452,9 +523,10 @@
     }
 
     renderTempo(valorAtivo('tempo', 'medio'));
-    renderDist(valorAtivo('dist', 'setor'));
-    renderConc(valorAtivo('dias', '7'));
-})();
+        renderDist(valorAtivo('dist', 'setor'));
+        renderConc(valorAtivo('dias', '7'));
+        renderPeso();
+    })();
 </script>
 
 {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaRastreio" storage_key="casanova_rastreio_larguras" %}
