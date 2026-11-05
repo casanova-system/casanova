@@ -1042,10 +1042,10 @@ def _achar_por_obra_e_doc(obra_cod, doc):
         return None
     return (
         ObraOP.objects.filter(
-            obra__codigo=obra_cod, codigo_documento__iexact=doc
+            obra__codigo=obra_cod, codigo_esquadria__iexact=doc
         ).first()
         or ObraOP.objects.filter(
-            obra__codigo__iexact=obra_cod, codigo_documento__iexact=doc
+            obra__codigo__iexact=obra_cod, codigo_esquadria__iexact=doc
         ).first()
     )
 
@@ -1060,10 +1060,7 @@ def _achar_por_documento(doc):
     doc = (doc or '').strip()
     if not doc:
         return None
-    return (
-        ObraOP.objects.filter(codigo_documento__iexact=doc).first()
-        or ObraOP.objects.filter(codigo_esquadria__iexact=doc).first()
-    )
+    return ObraOP.objects.filter(codigo_esquadria__iexact=doc).first()
 
 
 def _extrair_op_id_do_qr(codigo):
@@ -1120,8 +1117,9 @@ def _extrair_op_id_do_qr(codigo):
         if obra_op:
             return obra_op.pk
 
-    # 2b. o documento começa com hífen: '25-3673-03_PROD-VF4 BD'
-    m = re.match(r'^(\d{2}-\d{4}-\d{2}[A-Za-z_]*)[-](.+)$', codigo)
+    # 2b. o documento começa com hífen: '25-3673-03_PROD-VF4 BD' ou '25-2816-05 PROD-VE1'
+    # Obra code: NN-NNNN-NN[ _]XXX (ex: 25-2816-05 PROD, 25-3673-03_PROD)
+    m = re.match(r'^(\d{2}-\d{4}-\d{2}[ _][A-Za-z0-9_]+)[-](.+)$', codigo)
     if m:
         obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
         if obra_op:
@@ -1130,7 +1128,10 @@ def _extrair_op_id_do_qr(codigo):
     # 2c. sem separador: tenta cada ponto de corte do fim para o começo.
     for i in range(len(codigo) - 2, 0, -1):
         prefixo, sufixo = codigo[:i], codigo[i:]
-        obra_op = _achar_por_obra_e_doc(prefixo.strip(), sufixo.strip())
+        # Remove hífens nas bordas (comum em códigos Obra-DOC)
+        prefixo = prefixo.strip().rstrip('-')
+        sufixo = sufixo.strip().lstrip('-')
+        obra_op = _achar_por_obra_e_doc(prefixo, sufixo)
         if obra_op:
             return obra_op.pk
 
