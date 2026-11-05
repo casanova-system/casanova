@@ -54,7 +54,7 @@
             <h5 class="list-card-title">
                 <i class="fas fa-industry me-2 text-primary"></i> OPs Cadastradas
                 <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">{{ total }}</span>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold ms-2">Peso total: {{ total_peso|casas:3 }} kg</span>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold ms-2">Peso total: {{ total_peso|peso }}</span>
             </h5>
 
             <div class="dropdown">
@@ -123,9 +123,9 @@
                             <td>{{ op.ObraCodigo|default:"—" }}</td>
                             <td class="text-end fw-bold">{{ op.Quantidade }}</td>
                             <td class="text-end font-monospace small">{{ op.Largura }}</td>
-                            <td class="text-end font-monospace small">{{ op.Altura }}</td>
-                            <td class="text-end">{{ op.Peso|default:"—" }}</td>
-                            <td class="text-end">{{ op.Area|default:"—" }}</td>
+                                                        <td class="text-end font-monospace small">{{ op.Altura }}</td>
+                                                        <td class="text-end">{{ op.Peso|peso }}</td>
+                                                        <td class="text-end">{{ op.Area|default:"—" }}</td>
                             <td class="text-truncate" title="{{ op.Localizacao }}">{{ op.Localizacao|default:"—" }}</td>
                             <td class="text-truncate" title="{{ op.Tipologia }}">{{ op.Tipologia|default:"—" }}</td>
                             <td class="text-truncate" title="{{ op.Sistema }}">{{ op.Sistema|default:"—" }}</td>
@@ -173,7 +173,7 @@
                                                 <td class="text-end">TOTAL</td>
                                                 <td class="text-end"></td>
                                                 <td class="text-end"></td>
-                                                <td class="text-end">{{ total_peso|casas:3 }} kg</td>
+                                                <td class="text-end">{{ total_peso|peso }}</td>
                                                 <td class="text-end"></td>
                                                 <td></td>
                                                 <td></td>

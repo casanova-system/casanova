@@ -150,6 +150,26 @@ def casas(valor, n):
 
 
 @register.filter
+def peso(valor):
+    """Peso inteligente: kg abaixo de 1000, toneladas acima.
+    
+    Exemplos:
+        500    -> 500,000 kg
+        1500   -> 1,500 t
+        25500  -> 25,500 t
+        40000  -> 40,000 t
+    """
+    d = _dec(valor)
+    if d is None:
+        return ''
+    kg = float(d)
+    if kg < 1000:
+        return _formata(kg, 3) + ' kg'
+    t = kg / 1000
+    return _formata(t, 3) + ' t'
+
+
+@register.filter
 def dictkey(dicionario, chave):
     """Acessa dicionario[chave] no template.
 

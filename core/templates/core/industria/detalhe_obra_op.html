@@ -50,9 +50,9 @@
                     <span class="detail-value">{{ obra_op.altura }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">PESO</span>
-                    <span class="detail-value">{{ obra_op.peso }}</span>
-                </div>
+                                    <span class="detail-label">PESO</span>
+                                    <span class="detail-value">{{ obra_op.peso|peso }}</span>
+                                </div>
                 <div class="detail-item">
                     <span class="detail-label">AREA</span>
                     <span class="detail-value">{{ obra_op.area }}</span>
@@ -102,11 +102,11 @@
                     <span class="detail-value">{{ obra_op.obra_nome|default:"—" }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">PESO</span>
-                    <span class="detail-value">{{ obra_op.peso|default:"—" }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">AREA</span>
+                                    <span class="detail-label">PESO</span>
+                                    <span class="detail-value">{{ obra_op.peso|peso }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">AREA</span>
                     <span class="detail-value">{{ obra_op.area|default:"—" }}</span>
                 </div>
                 <div class="detail-item">
