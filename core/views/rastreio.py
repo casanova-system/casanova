@@ -719,7 +719,7 @@ def rastreio_op(request, op_id):
     if obra_op:
         obra_op_info = {
             'item': obra_op.itens_texto,
-            'codigo': obra_op.codigo or obra_op.codigo_esquadria,
+            'codigo': obra_op.codigo_esquadria,
             'cliente': obra_op.cliente,
             'person_autovolume': obra_op.person_autovolume,
             'obra': obra_op.obra_nome or obra_op.obra.codigo,
