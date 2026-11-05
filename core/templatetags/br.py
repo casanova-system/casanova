@@ -170,6 +170,15 @@ def peso(valor):
 
 
 @register.filter
+def peso_kg(valor):
+    """Peso sempre em kg com 3 casas: 25500 -> 25.500,000 kg"""
+    d = _dec(valor)
+    if d is None:
+        return ''
+    return _formata(float(d), 3) + ' kg'
+
+
+@register.filter
 def dictkey(dicionario, chave):
     """Acessa dicionario[chave] no template.
 
