@@ -48,85 +48,83 @@
     </div>
 
     <!-- Gráficos -->
-    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="row g-2 mb-2" style="flex-shrink: 0;">
 
-        <!-- Tempo por Setor -->
-        <div class="col-xl-4 col-lg-6">
-            <div class="chart-panel">
-                <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Tempo por Setor</h6>
-                    <div class="chart-ctrl">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Métrica">
-                            <button type="button" class="chart-toggle active" data-grupo="tempo" data-valor="medio">Média</button>
-                            <button type="button" class="chart-toggle" data-grupo="tempo" data-valor="total">Total</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-body">
-                    <canvas id="graficoTempoSetor" height="200"></canvas>
-                </div>
-                <div class="chart-foot">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Tempo em horário de fábrica (7h–11h · 12h12–17h), sem noites nem fins de semana.
-                </div>
-            </div>
-        </div>
-
-        <!-- Distribuição -->
-        <div class="col-xl-4 col-lg-6">
-            <div class="chart-panel">
-                <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-chart-pie me-1 text-primary"></i> Distribuição</h6>
-                    <div class="chart-ctrl">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Agrupar por">
-                            <button type="button" class="chart-toggle active" data-grupo="dist" data-valor="setor">Setor</button>
-                            <button type="button" class="chart-toggle" data-grupo="dist" data-valor="status">Status</button>
-                            <button type="button" class="chart-toggle" data-grupo="dist" data-valor="vidro">Vidro</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-body">
-                    <canvas id="graficoDistribuicao" height="200"></canvas>
-                </div>
-                <div class="chart-foot" id="distResumo"></div>
-            </div>
-        </div>
-
-        <!-- Concluídas por Dia -->
-        <div class="col-xl-4">
-            <div class="chart-panel">
-                <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Concluídas por Dia</h6>
-                    <div class="chart-ctrl">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Período">
-                            <button type="button" class="chart-toggle active" data-grupo="dias" data-valor="7">7d</button>
-                            <button type="button" class="chart-toggle" data-grupo="dias" data-valor="30">30d</button>
-                            <button type="button" class="chart-toggle" data-grupo="dias" data-valor="90">90d</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-body">
-                    <canvas id="graficoConcluidas" height="200"></canvas>
+            <!-- Tempo por Setor -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="chart-panel">
+                    <div class="chart-head">
+                        <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Tempo por Setor</h6>
+                        <div class="chart-ctrl">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Métrica">
+                                <button type="button" class="chart-toggle active" data-grupo="tempo" data-valor="medio">Média</button>
+                                <button type="button" class="chart-toggle" data-grupo="tempo" data-valor="total">Total</button>
                             </div>
-                <div class="chart-foot" id="concResumo"></div>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="graficoTempoSetor" height="140"></canvas>
+                    </div>
+                    <div class="chart-foot">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Tempo em horário de fábrica (7h–11h · 12h12–17h), sem noites nem fins de semana.
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Peso por Setor -->
-    <div class="row g-3 mb-3" style="flex-shrink: 0;">
-        <div class="col-xl-4 col-lg-6">
-            <div class="chart-panel">
-                <div class="chart-head">
-                    <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
+            <!-- Distribuição -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="chart-panel">
+                    <div class="chart-head">
+                        <h6 class="chart-title"><i class="fa-solid fa-chart-pie me-1 text-primary"></i> Distribuição</h6>
+                        <div class="chart-ctrl">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Agrupar por">
+                                <button type="button" class="chart-toggle active" data-grupo="dist" data-valor="setor">Setor</button>
+                                <button type="button" class="chart-toggle" data-grupo="dist" data-valor="status">Status</button>
+                                <button type="button" class="chart-toggle" data-grupo="dist" data-valor="vidro">Vidro</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="graficoDistribuicao" height="140"></canvas>
+                    </div>
+                    <div class="chart-foot" id="distResumo"></div>
                 </div>
-                <div class="chart-body">
-                    <canvas id="graficoPesoSetor" height="200"></canvas>
+            </div>
+
+            <!-- Concluídas por Dia -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="chart-panel">
+                    <div class="chart-head">
+                        <h6 class="chart-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Concluídas por Dia</h6>
+                        <div class="chart-ctrl">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Período">
+                                <button type="button" class="chart-toggle active" data-grupo="dias" data-valor="7">7d</button>
+                                <button type="button" class="chart-toggle" data-grupo="dias" data-valor="30">30d</button>
+                                <button type="button" class="chart-toggle" data-grupo="dias" data-valor="90">90d</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="graficoConcluidas" height="140"></canvas>
+                    </div>
+                    <div class="chart-foot" id="concResumo"></div>
                 </div>
-                <div class="chart-foot" id="pesoResumo"></div>
+            </div>
+
+            <!-- Peso por Setor -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="chart-panel">
+                    <div class="chart-head">
+                        <h6 class="chart-title"><i class="fa-solid fa-weight-hanging me-1 text-primary"></i> Peso por Setor</h6>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="graficoPesoSetor" height="140"></canvas>
+                    </div>
+                    <div class="chart-foot" id="pesoResumo"></div>
+                </div>
             </div>
         </div>
-    </div>
 
     <!-- Filtros (alimentam KPIs, grÃ¡ficos e tabela) -->
     <div class="filtros-bar{% if tem_filtro_ativo %} filtros-ativos{% endif %}">>
