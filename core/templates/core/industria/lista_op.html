@@ -163,28 +163,29 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-                                        <tfoot>
-                                            <tr class="table-light fw-bold">
-                                                <td class="ps-3"></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td class="text-end">TOTAL</td>
-                                                <td class="text-end"></td>
-                                                <td class="text-end"></td>
-                                                <td class="text-end">{{ total_peso|peso }}</td>
-                                                <td class="text-end"></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td class="text-end pe-3"></td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
+                                        {% if page_obj.number == page_obj.paginator.num_pages %}
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td class="ps-3"></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-end">TOTAL</td>
+                            <td class="text-end"></td>
+                            <td class="text-end"></td>
+                            <td class="text-end">{{ total_peso|peso }}</td>
+                            <td class="text-end"></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-end pe-3"></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
             </div>
             {% include 'core/partials/paginacao.html' with page_obj=page_obj querystring=querystring %}
         </div>
