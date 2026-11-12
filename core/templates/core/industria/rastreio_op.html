@@ -196,9 +196,9 @@
                                                 {% endif %}
                                             </div>
                                             <div class="fluxo-nome">{{ f.nome }}
-                                                {% if f.codigo == 'mesa' and rastreio.movimentacoes|get_mesa_mesa %}
+                                                                                            {% if f.codigo == 'mesa' and movimentacoes|get_mesa_mesa %}
                                                     <span class="badge bg-info bg-opacity-10 text-info fw-semibold ms-2">
-                                                        <i class="fa-solid fa-table-cells me-1"></i> Mesa {{ rastreio.movimentacoes|get_mesa_mesa }}
+                                                                                                            <i class="fa-solid fa-table-cells me-1"></i> Mesa {{ movimentacoes|get_mesa_mesa }}
                                                     </span>
                                                 {% endif %}
                                             </div>
