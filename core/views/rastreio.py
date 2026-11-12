@@ -1031,6 +1031,15 @@ def registrar_movimentacao(request, op_id):
             messages.warning(request, 'Não há setor anterior no fluxo.')
             return redirect('rastreio_op', op_id=op_id)
 
+        # Se volta para Mesa, preserva a mesa da passagem anterior
+        mesa_anterior = None
+        if anterior.codigo == 'mesa':
+            mov_mesa = MovimentacaoOP.objects.filter(
+                rastreio=rastreio, setor='mesa', mesa__isnull=False
+            ).order_by('-data_entrada').first()
+            if mov_mesa:
+                mesa_anterior = mov_mesa.mesa
+
         with transaction.atomic():
             rastreio.setor_atual = anterior.codigo
             rastreio.status = 'EM_PRODUCAO'
@@ -1043,6 +1052,7 @@ def registrar_movimentacao(request, op_id):
                 usuario_entrada=request.user,
                 observacao_entrada='Retorno (correção)',
                 data_entrada=timezone.now(),
+                mesa=mesa_anterior,
             )
 
         logger.info(
@@ -1086,6 +1096,16 @@ def registrar_movimentacao(request, op_id):
         rastreio.status = 'EM_PRODUCAO'
         rastreio.aguardando_saida = False
         rastreio.save(update_fields=['setor_atual', 'status', 'aguardando_saida'])
+
+        # Se avança para Mesa, preserva a mesa da passagem anterior
+        mesa_anterior = None
+        if proximo.codigo == 'mesa':
+            mov_mesa = MovimentacaoOP.objects.filter(
+                rastreio=rastreio, setor='mesa', mesa__isnull=False
+            ).order_by('-data_entrada').first()
+            if mov_mesa:
+                mesa_anterior = mov_mesa.mesa
+
         MovimentacaoOP.objects.create(
             rastreio=rastreio,
             setor=proximo.codigo,
@@ -1093,6 +1113,7 @@ def registrar_movimentacao(request, op_id):
             usuario_entrada=request.user,
             observacao_entrada='Recebimento no setor',
             data_entrada=timezone.now(),
+            mesa=mesa_anterior,
         )
 
     logger.info(
