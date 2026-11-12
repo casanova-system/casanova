@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 from core.views.permissao import requer_rotina
-from core.models import Obra, ObraOP, ObraOPItem, ObraOPComponente, ObraOPVidro
+from core.models import Obra, ObraOP, ObraOPItem, ObraOPComponente, ObraOPVidro, RastreioOP
 
 
 def _to_int(valor, padrao=0):
@@ -238,17 +238,40 @@ def editar_op_manual(request, obra_op_id):
         messages.error(request, 'OP não encontrada.')
         return redirect('lista_ordem_producao')
 
+    # Verifica se a OP já entrou no rastreio
+    rastreio = RastreioOP.objects.filter(op_id=op.pk).first()
+    if rastreio:
+        messages.error(request, f'Não é possível editar: a OP já está no rastreio de produção (setor atual: {rastreio.setor_atual_nome}).')
+        return redirect('lista_ordem_producao')
+
+    obras = Obra.objects.all().order_by('codigo')
+
     if request.method == 'POST':
         # Validação básica (sem codigo_documento que é PK)
         erros, dados = _validar_campos_obrigatorios(request.POST)
         if erros:
             for e in erros:
                 messages.error(request, e)
-            return render(request, 'core/industria/editar_op_manual.html', {'op': op, 'form_data': request.POST})
+            return render(request, 'core/industria/editar_op_manual.html', {'op': op, 'obras': obras, 'form_data': request.POST})
+
+        # Busca/cria obra a partir do texto (pode ter mudado)
+        obra = _obter_ou_criar_obra(dados.get('obra_texto', ''))
+        if not obra:
+            messages.error(request, 'Não foi possível identificar/criar a obra.')
+            return render(request, 'core/industria/editar_op_manual.html', {'op': op, 'obras': obras, 'form_data': request.POST})
+
+        # Verifica duplicidade se mudou obra ou codigo_esquadria
+        if op.obra != obra or op.codigo_esquadria != dados['codigo_esquadria']:
+            if ObraOP.objects.filter(obra=obra, codigo_esquadria=dados['codigo_esquadria']).exclude(pk=op.pk).exists():
+                messages.error(request, f'Já existe uma OP com a esquadria {dados["codigo_esquadria"]} para esta obra.')
+                return render(request, 'core/industria/editar_op_manual.html', {'op': op, 'obras': obras, 'form_data': request.POST})
 
         try:
+            # Atualiza obra
+            op.obra = obra
+            # Atualiza demais campos (remove obra_texto que não é campo do model)
             for campo, valor in dados.items():
-                if campo != 'codigo_esquadria':  # Não altera PK
+                if campo not in ('obra_texto', 'codigo_esquadria'):  # Não altera PK
                     setattr(op, campo, valor)
             op.save()
             messages.success(request, 'OP atualizada.')
@@ -256,4 +279,4 @@ def editar_op_manual(request, obra_op_id):
             messages.error(request, f'Erro ao atualizar: {e}')
         return redirect('lista_ordem_producao')
 
-    return render(request, 'core/industria/editar_op_manual.html', {'op': op})
+    return render(request, 'core/industria/editar_op_manual.html', {'op': op, 'obras': obras})
