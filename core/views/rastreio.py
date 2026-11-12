@@ -1204,12 +1204,19 @@ def _extrair_op_id_do_qr(codigo):
     # 'P32_PROD', 'VF4 BD', 'BD P32'. Por isso a divisória é definida por um
     # padrão de OBRA (NN-NNNN-NN...) e o resto vira o documento.
     #
+    # Normalização de layout de teclado do leitor: alguns leitores enviam
+    # caracteres diferentes do que está no banco (ex.: ';' em vez de '/').
+    def _normalizar_doc(doc: str) -> str:
+        """Normaliza diferenças comuns de layout de teclado no documento."""
+        # Ponto e vírgula -> barra (comum em leitores US/BR)
+        return doc.replace(';', '/')
+
     # 2a. Padrão explícito de obra (NN-NNNN-NN[ _]XXX) seguido de separador
     #       Aceita QUALQUER separador não-alfanumérico (|, }, /, -, etc.)
     #       Ex.: '25-2816-05 PROD|VF5', '25-2816-05_PROD-VF5', '25-3663-011_PROD}J01'
     m = re.match(r'^(\d{2}-\d{4}-\d{2}[ _][A-Za-z0-9_]+)[^A-Za-z0-9_]+(.+)$', codigo)
     if m:
-        obra_op = _achar_por_obra_e_doc(m.group(1).strip(), m.group(2).strip())
+        obra_op = _achar_por_obra_e_doc(m.group(1).strip(), _normalizar_doc(m.group(2).strip()))
         if obra_op:
             return obra_op.pk
 
@@ -1225,7 +1232,7 @@ def _extrair_op_id_do_qr(codigo):
             ultima_pos = match.start()
             if ultima_pos > 0:
                 obra_tentativa = codigo[:ultima_pos].strip()
-                doc_tentativa = codigo[ultima_pos + len(match.group(0)):].strip()
+                doc_tentativa = _normalizar_doc(codigo[ultima_pos + len(match.group(0)):].strip())
                 obra_op = _achar_por_obra_e_doc(obra_tentativa, doc_tentativa)
                 if obra_op:
                     return obra_op.pk
@@ -1236,12 +1243,12 @@ def _extrair_op_id_do_qr(codigo):
         # Remove separadores não-alfanuméricos nas bordas (hífens, pipes, etc.)
         prefixo = prefixo.strip().rstrip('-|/} ')
         sufixo = sufixo.strip().lstrip('-|/} ')
-        obra_op = _achar_por_obra_e_doc(prefixo, sufixo)
+        obra_op = _achar_por_obra_e_doc(prefixo, _normalizar_doc(sufixo))
         if obra_op:
             return obra_op.pk
 
     # --- 3. Só o documento (ex.: J01, P32_PROD, VF4 BD) ---
-    obra_op = _achar_por_documento(codigo)
+    obra_op = _achar_por_documento(_normalizar_doc(codigo))
     if obra_op:
         return obra_op.pk
 
