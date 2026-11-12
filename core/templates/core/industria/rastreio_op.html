@@ -186,18 +186,24 @@
             <div class="fluxo-producao">
                 {% for f in fluxo %}
                     <div class="fluxo-setor {{ f.estado }}{% if f.estado == 'atual' %} pulso{% endif %}">
-                        <div class="fluxo-icone">
-                            {% if f.estado == 'concluido' %}
-                                <i class="fa-solid fa-check"></i>
-                            {% elif f.estado == 'atual' %}
-                                <i class="fa-solid {{ f.icone }}"></i>
-                            {% else %}
-                                <i class="fa-solid {{ f.icone }}"></i>
-                            {% endif %}
-                        </div>
-                        <div class="fluxo-nome">{{ f.nome }}</div>
-                        {% if f.tempo %}<div class="fluxo-tempo">{{ f.tempo }}</div>{% endif %}
-                    </div>
+                                            <div class="fluxo-icone">
+                                                {% if f.estado == 'concluido' %}
+                                                    <i class="fa-solid fa-check"></i>
+                                                {% elif f.estado == 'atual' %}
+                                                    <i class="fa-solid {{ f.icone }}"></i>
+                                                {% else %}
+                                                    <i class="fa-solid {{ f.icone }}"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="fluxo-nome">{{ f.nome }}
+                                                {% if f.codigo == 'mesa' and rastreio.movimentacoes|get_mesa_mesa %}
+                                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold ms-2">
+                                                        <i class="fa-solid fa-table-cells me-1"></i> Mesa {{ rastreio.movimentacoes|get_mesa_mesa }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            {% if f.tempo %}<div class="fluxo-tempo">{{ f.tempo }}</div>{% endif %}
+                                        </div>
                 {% endfor %}
             </div>
         </div>
@@ -398,18 +404,23 @@
                         <tr>
                             <td class="ps-3 text-muted fw-semibold">{{ forloop.counter }}</td>
                             <td>
-                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
-                                    {% if m.setor == 'estoque' %}<i class="fa-solid fa-warehouse me-1"></i>
-                                    {% elif m.setor == 'separacao' %}<i class="fa-solid fa-boxes-stacked me-1"></i>
-                                    {% elif m.setor == 'corte' %}<i class="fa-solid fa-scissors me-1"></i>
-                                    {% elif m.setor == 'usinagem' %}<i class="fa-solid fa-gears me-1"></i>
-                                    {% elif m.setor == 'mesa' %}<i class="fa-solid fa-table-cells me-1"></i>
-                                    {% elif m.setor == 'encaixilhamento' %}<i class="fa-solid fa-border-all me-1"></i>
-                                    {% elif m.setor == 'expedicao' %}<i class="fa-solid fa-truck me-1"></i>
-                                    {% else %}<i class="fa-solid fa-industry me-1"></i>{% endif %}
-                                    {{ m.setor_nome }}
-                                </span>
-                            </td>
+                                                            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1">
+                                                                {% if m.setor == 'estoque' %}<i class="fa-solid fa-warehouse me-1"></i>
+                                                                {% elif m.setor == 'separacao' %}<i class="fa-solid fa-boxes-stacked me-1"></i>
+                                                                {% elif m.setor == 'corte' %}<i class="fa-solid fa-scissors me-1"></i>
+                                                                {% elif m.setor == 'usinagem' %}<i class="fa-solid fa-gears me-1"></i>
+                                                                {% elif m.setor == 'mesa' %}<i class="fa-solid fa-table-cells me-1"></i>
+                                                                {% elif m.setor == 'encaixilhamento' %}<i class="fa-solid fa-border-all me-1"></i>
+                                                                {% elif m.setor == 'expedicao' %}<i class="fa-solid fa-truck me-1"></i>
+                                                                {% else %}<i class="fa-solid fa-industry me-1"></i>{% endif %}
+                                                                {{ m.setor_nome }}
+                                                                {% if m.setor == 'mesa' and m.mesa %}
+                                                                    <span class="ms-2 badge bg-info bg-opacity-10 text-info fw-semibold px-2 py-1">
+                                                                        <i class="fa-solid fa-table-cells me-1"></i> Mesa {{ m.mesa }}
+                                                                    </span>
+                                                                {% endif %}
+                                                            </span>
+                                                        </td>
                             <td>
                                 {% if m.usuario_entrada %}
                                     <span class="text-primary fw-semibold" style="font-size: 0.8rem;">
