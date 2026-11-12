@@ -350,23 +350,32 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
         return ('Esta OP já foi concluída e não pode receber novas leituras.', None, False, False)
 
     # --- Decisão de vidro pendente (OP parada na Mesa) ---
+    # Só pergunta vidro se a mesa já foi definida
     if rastreio.setor_atual == 'mesa' and rastreio.tem_vidro is None:
-        if vidro in ('sim', 'nao'):
-            rastreio.tem_vidro = (vidro == 'sim')
-            rastreio.save(update_fields=['tem_vidro'])
-            logger.info(
-                'Decisão de vidro — OP %s: %s (usuário %s)',
-                op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
-            )
-            return (
-                None,
-                {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
-                 'decisao_vidro': rastreio.tem_vidro},
-                False,
-                False,
-            )
-        # Ainda não decidiu: pergunta antes de qualquer avanço
-        return (None, None, True, False)
+        mov = MovimentacaoOP.objects.filter(
+            rastreio=rastreio, setor='mesa', data_saida__isnull=True
+        ).first()
+        # Se mesa não definida, não pergunta vidro ainda (fluxo: mesa primeiro)
+        if mov and not mov.mesa:
+            # Não faz nada aqui - a lógica de perguntar mesa está no bloco do 2º bip
+            pass
+        else:
+            if vidro in ('sim', 'nao'):
+                rastreio.tem_vidro = (vidro == 'sim')
+                rastreio.save(update_fields=['tem_vidro'])
+                logger.info(
+                    'Decisão de vidro — OP %s: %s (usuário %s)',
+                    op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
+                )
+                return (
+                    None,
+                    {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
+                     'decisao_vidro': rastreio.tem_vidro},
+                    False,
+                    False,
+                )
+            # Ainda não decidiu: pergunta antes de qualquer avanço
+            return (None, None, True, False)
 
     # --- OP está no MESMO setor do usuário: verificar se é 1º ou 2º bip ---
     if rastreio.setor_atual == codigo_setor:
@@ -496,9 +505,18 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
             op_id, setor_usuario.nome, request.user.username,
         )
 
-    # Se acabou de chegar na Mesa, pergunta sobre o vidro imediatamente
-    if codigo_setor == 'mesa' and rastreio.tem_vidro is None:
-            return (None, None, True, False)
+    # Se acabou de chegar na Mesa, pergunta primeiro qual a mesa (1-7)
+    # Só depois de definir a mesa é que pergunta se tem vidro
+    if codigo_setor == 'mesa':
+        mov = MovimentacaoOP.objects.filter(
+            rastreio=rastreio, setor='mesa', data_saida__isnull=True
+        ).first()
+        if mov and not mov.mesa:
+            return (None, None, False, True)  # precisa_mesa=True
+
+        # Mesa já definida, agora pergunta se tem vidro (se ainda não decidiu)
+        if rastreio.tem_vidro is None:
+            return (None, None, True, False)  # precisa_vidro=True
 
     return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'entrada'}, False, False)
 
@@ -1214,7 +1232,8 @@ def _extrair_op_id_do_qr(codigo):
     # 2a. Padrão explícito de obra (NN-NNNN-NN[ _]XXX) seguido de separador
     #       Aceita QUALQUER separador não-alfanumérico (|, }, /, -, etc.)
     #       Ex.: '25-2816-05 PROD|VF5', '25-2816-05_PROD-VF5', '25-3663-011_PROD}J01'
-    m = re.match(r'^(\d{2}-\d{4}-\d{2}[ _][A-Za-z0-9_]+)[^A-Za-z0-9_]+(.+)$', codigo)
+    #       O sufixo da obra pode ter espaços (ex.: 'FACHADA DE CANTO')
+    m = re.match(r'^(\d{2}-\d{4}-\d{2}[ _][A-Za-z0-9_ ]+)[^A-Za-z0-9_]+(.+)$', codigo)
     if m:
         obra_op = _achar_por_obra_e_doc(m.group(1).strip(), _normalizar_doc(m.group(2).strip()))
         if obra_op:
