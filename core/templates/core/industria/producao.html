@@ -55,12 +55,35 @@
                 </div>
             </div>
         </div>
+    {% elif precisa_mesa %}
+        <div class="prod-msg prod-msg-mesa">
+            <i class="fa-solid fa-table-cells"></i>
+            <div>
+                <strong>Qual mesa?</strong>
+                <span>Selecione a mesa onde a OP será produzida.</span>
+                <div class="prod-mesa-btns">
+                    {% for m in "1234567" %}
+                    <a href="?codigo={{ op_id_pendente }}&mesa={{ m }}{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-mesa">
+                        <i class="fa-solid fa-table-cells"></i> Mesa {{ m }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     {% elif not pode_registrar %}
         <div class="prod-msg prod-msg-erro">
             <i class="fa-solid fa-user-lock"></i>
             <div>
                 <strong>Sem setor vinculado</strong>
                 <span>Peça ao administrador para vincular um setor de produção ao seu perfil.</span>
+            </div>
+        </div>
+    {% elif resultado and resultado.mesa_definida %}
+        <div class="prod-msg prod-msg-mesa">
+            <i class="fa-solid fa-table-cells"></i>
+            <div>
+                <strong>Mesa definida: Mesa {{ resultado.rastreio.movimentacoes|get_mesa_mesa }}</strong>
+                <span>Bipe novamente para liberar a OP.</span>
             </div>
         </div>
     {% elif not resultado %}
@@ -434,6 +457,32 @@
 .prod-msg-idle i  { color: var(--cv-text-faint); }
 
 .prod-vidro-btns { display: flex; gap: 10px; margin-top: 12px; }
+.prod-mesa-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.prod-msg-mesa { border-left: 5px solid #2563eb; }
+.prod-msg-mesa i { color: #2563eb; }
+
+.prod-btn-mesa {
+    flex: 1;
+    min-width: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 50px;
+    padding: 0 12px;
+    border-radius: var(--cv-radius);
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: filter var(--cv-dur) var(--cv-ease);
+}
+.prod-btn-mesa:hover { filter: brightness(1.1); }
+.prod-btn-mesa:active { transform: translateY(1px); }
 
 /* ---- Passos numerados ---- */
 .prod-step,

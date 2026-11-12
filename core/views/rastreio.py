@@ -399,6 +399,14 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                         # Salva a mesa na movimentação
                         mov.mesa = mesa
                         mov.save(update_fields=['mesa'])
+                        # Após definir a mesa, NÃO finaliza direto - aguarda o 2º bip (saída)
+                        return (
+                            None,
+                            {'rastreio': rastreio, 'setor': setor_usuario,
+                             'iniciou': False, 'bip': 'entrada', 'mesa_definida': True},
+                            False,
+                            False,
+                        )
 
             # Sem a quantidade informada: na tela de Produção a saída é
             # registrada direto (a quantidade não é coletada lá). Na tela

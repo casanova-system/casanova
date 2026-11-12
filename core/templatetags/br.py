@@ -195,3 +195,48 @@ def dictkey(dicionario, chave):
             return dicionario[chave]
         except (KeyError, IndexError, TypeError):
             return ''
+
+
+@register.filter
+def get_item(dicionario, chave):
+    """Permite acessar dicionario[chave] no template."""
+    if not dicionario:
+        return ''
+    try:
+        return dicionario.get(chave, '')
+    except AttributeError:
+        try:
+            return dicionario[chave]
+        except (KeyError, IndexError, TypeError):
+            return ''
+
+
+@register.filter
+def total(values):
+    """Soma os valores de um iterável (dict.values(), list, etc)."""
+    try:
+        if hasattr(values, 'values'):
+            return sum(values.values())
+        return sum(values)
+    except (TypeError, AttributeError):
+        return 0
+
+
+@register.filter
+def get_mesa_mesa(movimentacoes):
+    """Retorna o número da mesa da movimentação da mesa."""
+    if not movimentacoes:
+        return ''
+    try:
+        mov = movimentacoes.filter(setor='mesa', mesa__isnull=False).first()
+        return mov.mesa if mov else ''
+    except Exception:
+        return ''
+
+@register.filter
+def div(value, divisor):
+    """Divide um valor por outro (divisão)."""
+    try:
+        return float(value) / float(divisor)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0

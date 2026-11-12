@@ -80,9 +80,12 @@
         <div class="card-body">
             <div class="d-flex align-items-center gap-2 mb-2">
                 {% if resultado.precisa_quantidade %}
-                    <i class="fa-solid fa-clipboard-list text-warning fs-4"></i>
-                    <h5 class="fw-bold mb-0">Informe a quantidade produzida</h5>
-                {% elif resultado.bip == 'saida' %}
+                                    <i class="fa-solid fa-clipboard-list text-warning fs-4"></i>
+                                    <h5 class="fw-bold mb-0">Informe a quantidade produzida</h5>
+                                {% elif resultado.mesa_definida %}
+                                    <i class="fa-solid fa-table-cells text-primary fs-4"></i>
+                                    <h5 class="fw-bold mb-0">Mesa definida — aguardando 2º bip</h5>
+                                {% elif resultado.bip == 'saida' %}
                     <i class="fa-solid fa-arrow-right-from-bracket text-info fs-4"></i>
                     <h5 class="fw-bold mb-0">OP Liberada (2º bip)</h5>
                 {% elif resultado.iniciou %}
@@ -121,11 +124,15 @@
                 </button>
             </form>
             {% else %}
-            {% if resultado.bip == 'saida' %}
-            <div class="alert alert-info py-2 mb-2">
-                <small><i class="fa-solid fa-circle-info me-1"></i> A OP foi liberada. O próximo setor pode agora receber a OP.</small>
-            </div>
-            {% elif resultado.bip == 'entrada' %}
+                        {% if resultado.bip == 'saida' %}
+                        <div class="alert alert-info py-2 mb-2">
+                            <small><i class="fa-solid fa-circle-info me-1"></i> A OP foi liberada. O próximo setor pode agora receber a OP.</small>
+                        </div>
+                        {% elif resultado.mesa_definida %}
+                        <div class="alert alert-primary py-2 mb-2">
+                            <small><i class="fa-solid fa-table-cells me-1"></i> Mesa definida: <strong>Mesa {{ resultado.rastreio.movimentacoes|get_mesa_mesa }}</strong>. Bipe novamente para liberar a OP.</small>
+                        </div>
+                        {% elif resultado.bip == 'entrada' %}
             <div class="alert alert-warning py-2 mb-2">
                 <small><i class="fa-solid fa-circle-info me-1"></i> Bipe novamente quando finalizar o trabalho para liberar a OP.</small>
             </div>
