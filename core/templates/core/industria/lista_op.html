@@ -82,69 +82,96 @@
                 
 <table data-tabela-auto class="table table-hover align-middle mb-0 tabela-redimensionavel" id="tabelaOP" style="table-layout:fixed; width:max-content;">
                     <colgroup>
-                        <col style="width: 90px;">
-                        <col style="width: 150px;">
-                        <col style="width: 260px;">
-                        <col style="width: 190px;">
-                        <col style="width: 170px;">
-                        <col style="width: 70px;">
-                        <col style="width: 130px;">
-                        <col style="width: 170px;">
-                        <col style="width: 110px;">
-                    </colgroup>
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th class="ps-3 text-nowrap">ITENS <a href="?ordenar=itens_asc" title="Crescente" class="sort-btn">▲</a><a href="?ordenar=itens_desc" title="Decrescente" class="sort-btn">▼</a><span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="ps-3 text-nowrap">CODIGO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">CLIENTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">PERSON/AUTOVOLUME<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">OBRA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap text-end">QTD<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap text-end">L<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap text-end">H<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">PESO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">AREA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">LOCALIZAÇÃO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">TIPOLOGIA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">SISTEMA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">LINHA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">FABRICANTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-nowrap">DATA OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
-                            <th class="text-end pe-3 text-nowrap">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for op in ordens %}
-                        <tr {% if op.Pausada %}class="pausada-row"{% endif %} {% if op.obra_op_id %}ondblclick="window.location.href='{% url 'detalhe_obra_op' op.obra_op_id %}'" style="cursor: pointer;" title="Clique duas vezes para abrir os detalhes"{% endif %}>
-                            <td class="ps-3">{{ op.Itens|default:"—" }}</td>
-                            <td class="fw-semibold">{{ op.CodEsquadria|default:"—" }}</td>
-                            <td>{{ op.Cliente|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.PersonAutovolume }}">{{ op.PersonAutovolume|default:"—" }}</td>
-                            <td>{{ op.ObraCodigo|default:"—" }}</td>
-                            <td class="text-end fw-bold">{{ op.Quantidade }}</td>
-                            <td class="text-end font-monospace small">{{ op.Largura }}</td>
-                                                        <td class="text-end font-monospace small">{{ op.Altura }}</td>
-                                                        <td class="text-end">{{ op.Peso|peso }}</td>
-                                                        <td class="text-end">{{ op.Area|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Localizacao }}">{{ op.Localizacao|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Tipologia }}">{{ op.Tipologia|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Sistema }}">{{ op.Sistema|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Linha }}">{{ op.Linha|default:"—" }}</td>
-                            <td class="text-truncate" title="{{ op.Fabricante }}">{{ op.Fabricante|default:"—" }}</td>
-                            <td class="text-truncate">{{ op.DataOP|default:"—" }}</td>
-                            <td class="text-end pe-3">
-                                <div class="d-flex justify-content-end gap-1">
-                                    {% if op.obra_op_id %}
-                                        <a href="{% url 'detalhe_obra_op' op.obra_op_id %}" class="btn-row btn-row-view" title="Visualizar" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></a>
-                                        <a href="{% url 'editar_op_manual' op.obra_op_id %}" class="btn-row btn-row-edit" title="Editar" onclick="event.stopPropagation();"><i class="fa-solid fa-pen"></i></a>
-                                        <a href="{% url 'imprimir_barcode_ordem_producao' op.obra_op_id %}" target="_blank" class="btn-row btn-row-extra" title="Imprimir QR Code" onclick="event.stopPropagation();"><i class="fa-solid fa-qrcode"></i></a>
-                                        <button type="button" class="btn-row btn-row-delete" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ op.obra_op_id }}" onclick="event.stopPropagation();"><i class="fas fa-trash-can"></i></button>
-                                    {% else %}
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" title="OP do ERP Faktory">ERP</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
+                                            <col style="width: 90px;">
+                                                                                        <col style="width: 150px;">
+                                                                                        <col style="width: 260px;">
+                                                                                        <col style="width: 190px;">
+                                                                                        <col style="width: 170px;">
+                                                                                        <col style="width: 70px;">
+                                                                                        <col style="width: 130px;">
+                                                                                        <col style="width: 170px;">
+                                                                                        <col style="width: 110px;">
+                                                                                        <col style="width: 150px;">
+                                                                                        <col style="width: 130px;">
+                                                                                    </colgroup>
+                                        <thead class="table-light sticky-top">
+                                                                <tr>
+                                                                    <th class="ps-3 text-nowrap">ITENS <a href="?ordenar=itens_asc" title="Crescente" class="sort-btn">▲</a><a href="?ordenar=itens_desc" title="Decrescente" class="sort-btn">▼</a><span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="ps-3 text-nowrap">CODIGO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">CLIENTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">PERSON/AUTOVOLUME<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">OBRA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap text-end">QTD<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap text-end">L<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap text-end">H<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">PESO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">AREA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">LOCALIZAÇÃO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">TIPOLOGIA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">SISTEMA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">LINHA<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">FABRICANTE<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-nowrap">DATA OP<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                                                                                        <th class="text-nowrap">DATA LANÇ.<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                                                                                        <th class="text-nowrap">RASTREIO<span class="col-resizer" title="Arraste para redimensionar"></span></th>
+                                                                    <th class="text-end pe-3 text-nowrap">Ações</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for op in ordens %}
+                                                                <tr {% if op.Pausada %}class="pausada-row"{% endif %} {% if op.obra_op_id %}ondblclick="window.location.href='{% url 'detalhe_obra_op' op.obra_op_id %}'" style="cursor: pointer;" title="Clique duas vezes para abrir os detalhes"{% endif %}>
+                                                                    <td class="ps-3">{{ op.Itens|default:"—" }}</td>
+                                                                    <td class="fw-semibold">{{ op.CodEsquadria|default:"—" }}</td>
+                                                                    <td>{{ op.Cliente|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.PersonAutovolume }}">{{ op.PersonAutovolume|default:"—" }}</td>
+                                                                    <td>{{ op.ObraCodigo|default:"—" }}</td>
+                                                                    <td class="text-end fw-bold">{{ op.Quantidade }}</td>
+                                                                    <td class="text-end font-monospace small">{{ op.Largura }}</td>
+                                                                                                <td class="text-end font-monospace small">{{ op.Altura }}</td>
+                                                                                                <td class="text-end">{{ op.Peso|peso }}</td>
+                                                                                                <td class="text-end">{{ op.Area|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.Localizacao }}">{{ op.Localizacao|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.Tipologia }}">{{ op.Tipologia|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.Sistema }}">{{ op.Sistema|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.Linha }}">{{ op.Linha|default:"—" }}</td>
+                                                                    <td class="text-truncate" title="{{ op.Fabricante }}">{{ op.Fabricante|default:"—" }}</td>
+                                                                    <td class="text-truncate">{{ op.DataOP|default:"—" }}</td>
+                                                                                                                                        <td class="text-truncate">{{ op.DataLancamento|date:"d/m/Y H:i"|default:"—" }}</td>
+                                                                                                                                        <td>
+                                                                                                                        {% if op.rastreio_setor %}
+                                                                                                                        <span class="badge {{ op.rastreio_color }} text-white d-flex flex-column align-items-start gap-1 px-3 py-2" style="min-width: 150px; font-size: 0.78rem;" title="Status: {{ op.rastreio_status }}">
+                                                                                                                            <div class="d-flex align-items-center gap-1">
+                                                                                                                                <span class="badge-status-dot"></span>
+                                                                                                                                <strong>{{ op.rastreio_setor_nome }}</strong>
+                                                                                                                            </div>
+                                                                                                                            <small class="opacity-75">{{ op.rastreio_status }}</small>
+                                                                                                                        </span>
+                                                                                                                        {% else %}
+                                                                                                                        <span class="badge bg-light text-muted border rounded-pill px-3 py-2" style="font-size: 0.78rem;">— Aguardando</span>
+                                                                                                                        {% endif %}
+                                                                                                                    </td>
+                                                                    <td class="text-end pe-3">
+                                                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                                        {% if op.rastreio_setor %}
+                                                        <span class="badge bg-warning text-dark d-flex align-items-center gap-1 me-2" title="OP em rastreio: {{ op.rastreio_setor_nome }} ({{ op.rastreio_status }})">
+                                                            <i class="fa-solid fa-barcode"></i> Rastreio
+                                                        </span>
+                                                        {% endif %}
+                                                        {% if op.obra_op_id %}
+                                                            <a href="{% url 'detalhe_obra_op' op.obra_op_id %}" class="btn-row btn-row-view" title="Visualizar" onclick="event.stopPropagation();"><i class="fa-solid fa-eye"></i></a>
+                                                            {% if not op.rastreio_setor %}
+                                                            <a href="{% url 'editar_op_manual' op.obra_op_id %}" class="btn-row btn-row-edit" title="Editar" onclick="event.stopPropagation();"><i class="fa-solid fa-pen"></i></a>
+                                                            {% else %}
+                                                            <a href="{% url 'editar_op_manual' op.obra_op_id %}" class="btn-row btn-row-edit disabled" title="Não é possível editar: OP em rastreio ({{ op.rastreio_setor_nome }})" onclick="event.stopPropagation();" style="opacity: 0.5; pointer-events: none;"><i class="fa-solid fa-pen"></i></a>
+                                                            {% endif %}
+                                                            <a href="{% url 'imprimir_barcode_ordem_producao' op.obra_op_id %}" target="_blank" class="btn-row btn-row-extra" title="Imprimir QR Code" onclick="event.stopPropagation();"><i class="fa-solid fa-qrcode"></i></a>
+                                                            <button type="button" class="btn-row btn-row-delete" title="Excluir" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ op.obra_op_id }}" onclick="event.stopPropagation();"><i class="fas fa-trash-can"></i></button>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" title="OP do ERP Faktory">ERP</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
 
                         {% if op.obra_op_id %}
                         {% url 'excluir_op' op.obra_op_id as url_excluir %}
@@ -155,7 +182,7 @@
 
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="p-0">
+                                                    <td colspan="12" class="p-0">
                                 {% url 'importar_op_excel' as url_novo %}
                                 {% url 'lista_ordem_producao' as url_lista %}
                                 {% include 'core/partials/empty_state.html' with icone="fa-industry" busca=query titulo_vazio="Nenhuma OP cadastrada" texto_vazio="Importe um arquivo Excel do Alumisoft para cadastrar as Ordens de Produção." acao_url=url_novo acao_texto="Importar Excel" acao_icone="fa-file-excel" limpar_url=url_lista %}
@@ -193,4 +220,44 @@
 </div>
 
 {% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaOP" storage_key="casanova_op_larguras" %}
+
+<style>
+/* Badge de status do rastreio - moderno */
+.badge-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.9;
+    animation: pulse-dot 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Cores específicas por setor para o dot */
+.badge.bg-secondary .badge-status-dot { background: #fff; }
+.badge.bg-info .badge-status-dot { background: #fff; }
+.badge.bg-warning .badge-status-dot { background: #212529; }
+.badge.bg-primary .badge-status-dot { background: #fff; }
+.badge.bg-success .badge-status-dot { background: #fff; }
+.badge.bg-danger .badge-status-dot { background: #fff; }
+.badge.bg-dark .badge-status-dot { background: #fff; }
+
+/* Hover effect nas badges */
+.badge[style*="min-width"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+/* Badge "Aguardando" */
+.badge.bg-light.border:hover {
+    background-color: #e9ecef !important;
+    transition: all 0.2s ease;
+}
+</style>
 {% endblock %}

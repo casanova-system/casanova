@@ -296,6 +296,21 @@ def _filtrar_ops_locais(request):
 
 def _converter_op_local(obra_op):
     """Converte uma ObraOP no mesmo dicionário usado pela grid do ERP."""
+    # Verifica se a OP está no rastreio
+    rastreio = RastreioOP.objects.filter(op_id=obra_op.pk).first()
+    
+    # Cores por setor do rastreio
+    STATUS_COLORS = {
+        'estoque': 'bg-secondary',
+        'separacao': 'bg-info',
+        'corte': 'bg-warning text-dark',
+        'usinagem': 'bg-primary',
+        'mesa': 'bg-success',
+        'encaixilhamento': 'bg-danger',
+        'expedicao': 'bg-dark',
+    }
+    rastreio_color = STATUS_COLORS.get(rastreio.setor_atual, 'bg-info') if rastreio else None
+    
     return {
         'IdOrdemProducao': obra_op.pk,
         'obra_op_id': obra_op.pk,
@@ -317,13 +332,19 @@ def _converter_op_local(obra_op):
         'Linha': obra_op.linha,
         'Fabricante': obra_op.fabricante,
         'DataOP': obra_op.data_op,
-        'Quantidade': obra_op.quantidade,
+                'DataLancamento': obra_op.data_lancamento,
+                'Quantidade': obra_op.quantidade,
         'Pausada': obra_op.pausada_material,
         'Largura': obra_op.largura,
         'Altura': obra_op.altura,
         'Tratamento': obra_op.tratamento or '—',
-                'fonte': 'importado',
-            }
+        'fonte': 'importado',
+        # Rastreio info
+        'rastreio_setor': rastreio.setor_atual if rastreio else None,
+        'rastreio_setor_nome': rastreio.setor_atual_nome if rastreio else None,
+        'rastreio_status': rastreio.status if rastreio else None,
+        'rastreio_color': rastreio_color,
+    }
 
 
 def _ordenar_combinado(registros, ordenar):
@@ -535,15 +556,29 @@ def _conteudo_barcode(obra_op_id):
 
     from core.models import ObraOP
 
+    def _sanitize(text):
+        """Remove caracteres que dão problema em leitores industriais."""
+        if not text:
+            return ''
+        # Substitui ° por 'graus' e remove outros chars problemáticos
+        return (str(text)
+                .replace('°', 'graus')
+                .replace('º', 'graus')
+                .replace('ª', 'a')
+                .replace('§', '')
+                .replace('±', '+/-')
+                .replace('²', '2')
+                .replace('³', '3'))
+
     # Busca dados da OP na rotina de ordem de produção
     obra_op = ObraOP.objects.filter(pk=obra_op_id).first()
     if obra_op:
         dados = {
             'id': obra_op.pk,
-            'op': obra_op.codigo_formatado,
-            'esquadria': obra_op.codigo_esquadria,
-            'obra': obra_op.obra.codigo if obra_op.obra else '',
-            'descricao': obra_op.descricao or '',
+            'op': _sanitize(obra_op.codigo_formatado),
+            'esquadria': _sanitize(obra_op.codigo_esquadria),
+            'obra': _sanitize(obra_op.obra.codigo if obra_op.obra else ''),
+            'descricao': _sanitize(obra_op.descricao or ''),
             'quantidade': obra_op.quantidade,
             'largura': obra_op.largura,
             'altura': obra_op.altura,
@@ -563,19 +598,32 @@ def _conteudo_barcode_item(item_id):
 
     from core.models import ObraOPItem
 
+    def _sanitize(text):
+        """Remove caracteres que dão problema em leitores industriais."""
+        if not text:
+            return ''
+        return (str(text)
+                .replace('°', 'graus')
+                .replace('º', 'graus')
+                .replace('ª', 'a')
+                .replace('§', '')
+                .replace('±', '+/-')
+                .replace('²', '2')
+                .replace('³', '3'))
+
     item = ObraOPItem.objects.select_related('op', 'op__obra').filter(pk=item_id).first()
     if item:
         dados = {
             'id': item.pk,
             'tipo': 'item',
             'op_id': item.op.pk,
-            'op': item.op.codigo_formatado,
-            'esquadria': item.op.codigo_esquadria,
-            'obra': item.op.obra.codigo if item.op.obra else '',
-            'item_codigo': item.codigo,
-            'tipo_perfil': item.get_tipo_perfil_display(),
-            'orientacao': item.orientacao,
-            'corte': item.corte,
+            'op': _sanitize(item.op.codigo_formatado),
+            'esquadria': _sanitize(item.op.codigo_esquadria),
+            'obra': _sanitize(item.op.obra.codigo if item.op.obra else ''),
+            'item_codigo': _sanitize(item.codigo),
+            'tipo_perfil': _sanitize(item.get_tipo_perfil_display()),
+            'orientacao': _sanitize(item.orientacao),
+            'corte': _sanitize(item.corte),
             'tamanho': item.tamanho,
             'quantidade': item.quantidade,
             'peso': str(item.peso),
@@ -626,7 +674,7 @@ def _gerar_barcode_svg(conteudo):
 
 
 def _conteudo_codigo_barras(obra_op_id):
-    """Conteúdo do código de barras (Code 128): 'OBRA|DOCUMENTO'.
+    """Conteúdo do código de barras (Code 128): 'OBRA-DOCUMENTO'.
 
     Ex.: '26-0053-02_PROD-J01'
 
@@ -643,12 +691,36 @@ def _conteudo_codigo_barras(obra_op_id):
     """
     from core.models import ObraOP
 
+    def _sanitize(text):
+        """Remove caracteres que dão problema em leitores industriais (Code 128).
+        Code 128 só aceita ASCII 32-126. Substitui tudo fora disso.
+        """
+        if not text:
+            return ''
+        # 1. Substituições conhecidas
+        text = (str(text)
+                .replace('°', 'graus')
+                .replace('º', 'graus')
+                .replace('ª', 'a')
+                .replace('§', '')
+                .replace('±', '+/-')
+                .replace('²', '2')
+                .replace('³', '3')
+                .replace('|', '-')
+                .replace('}', '-')
+                .replace('{', '-'))
+        # 2. Remove QUALQUER char fora do ASCII 32-126 (Code 128 válido)
+        # Mantém: letras, números, espaço, pontuação básica
+        import re
+        text = re.sub(r'[^\x20-\x7E]', '', text)
+        return text
+
     obra_op = ObraOP.objects.filter(pk=obra_op_id).first()
     if not obra_op:
         return str(obra_op_id)
 
-    obra = (obra_op.obra.codigo if obra_op.obra else '') or ''
-    doc = obra_op.codigo_documento or obra_op.codigo_esquadria or ''
+    obra = _sanitize((obra_op.obra.codigo if obra_op.obra else '') or '')
+    doc = _sanitize(obra_op.codigo_documento or obra_op.codigo_esquadria or '')
 
     if obra and doc:
         # Separador '-' e NAO '|': o leitor laser emula teclado, e o pipe

@@ -87,32 +87,33 @@ ROTINAS_PADRAO = [
     ('008', 'Ordem de Produção (OP)', 'lista_ordem_producao', 'ROTINA', 'INDUSTRIA'),
     ('009', 'Rastreio de Produção', 'rastreio_producao', 'ROTINA', 'INDUSTRIA'),
     ('010', 'Produção', 'producao', 'ROTINA', 'INDUSTRIA'),
-    ('011', 'Romaneio de Carga', 'lista_romaneios', 'ROTINA', 'INDUSTRIA'),
-    ('012', 'Estoque', 'lista_estoque', 'ROTINA', 'INDUSTRIA'),
-    ('013', 'Compras', 'lista_compras', 'ROTINA', 'INDUSTRIA'),
-    ('014', 'Custo de Produção', 'lista_custos', 'ROTINA', 'INDUSTRIA'),
-    # Administração: usuários e permissões de acesso.
-    # Estas rotinas NÃO podem ficar em ROTINAS_REMOVIDAS: aquela lista é
-    # apagada do banco a cada garantir_rotinas_padrao(), o que removia a
-    # própria tela de gerenciar permissões e travava o administrador fora.
-    ('001', 'Usuários do Sistema', 'lista_usuarios', 'ROTINA', 'ADMINISTRADOR'),
-    ('002', 'Permissões de Acesso', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
-    ('021', 'Funcionários', 'lista_funcionarios', 'ROTINA', 'ADMINISTRADOR'),
-    # Telas que o menu lateral ja mostrava mas NAO existiam na tabela Rotina.
-    # Sem cadastro aqui, elas apareciam no menu para todos e nao podiam ser
-    # liberadas nem bloqueadas por permissao — o oposto do controle pedido.
-    ('015', 'Pedidos de Venda', 'lista_vendas', 'ROTINA', 'COMERCIAL'),
-    ('016', 'Propostas', 'lista_propostas', 'ROTINA', 'COMERCIAL'),
-    ('017', 'Contas a Pagar', 'lista_contas_pagar', 'ROTINA', 'FINANCEIRO'),
-    ('018', 'Contas a Receber', 'lista_contas_receber', 'ROTINA', 'FINANCEIRO'),
-    ('019', 'Notas Fiscais', 'lista_notas', 'ROTINA', 'FINANCEIRO'),
-    ('020', 'Estrutura de Produtos', 'lista_estruturas', 'ROTINA', 'INDUSTRIA'),
-    ('022', 'Movimentos de Estoque', 'lista_movimentos_hist', 'ROTINA', 'INDUSTRIA'),
-    ('023', 'Pedidos ao Fornecedor', 'lista_pedidos', 'ROTINA', 'INDUSTRIA'),
-    ('024', 'Fornecedores', 'lista_fornecedores', 'ROTINA', 'INDUSTRIA'),
-    ('025', 'Custo por Setor', 'custos_setores', 'ROTINA', 'INDUSTRIA'),
-    ('026', 'Painel Financeiro', 'painel_financeiro', 'ROTINA', 'FINANCEIRO'),
-    ('027', 'Funcionários por Setor', 'funcionarios_por_setor', 'ROTINA', 'ADMINISTRADOR'),
+    ('011', 'Acompanhamento de Mesa', 'acompanhamento_mesa', 'ROTINA', 'INDUSTRIA'),
+    ('012', 'Romaneio de Carga', 'lista_romaneios', 'ROTINA', 'INDUSTRIA'),
+        ('013', 'Estoque', 'lista_estoque', 'ROTINA', 'INDUSTRIA'),
+        ('014', 'Compras', 'lista_compras', 'ROTINA', 'INDUSTRIA'),
+        ('015', 'Custo de Produção', 'lista_custos', 'ROTINA', 'INDUSTRIA'),
+        # Administração: usuários e permissões de acesso.
+        # Estas rotinas NÃO podem ficar em ROTINAS_REMOVIDAS: aquela lista é
+        # apagada do banco a cada garantir_rotinas_padrao(), o que removia a
+        # própria tela de gerenciar permissões e travava o administrador fora.
+        ('001', 'Usuários do Sistema', 'lista_usuarios', 'ROTINA', 'ADMINISTRADOR'),
+        ('002', 'Permissões de Acesso', 'lista_permissao', 'ROTINA', 'ADMINISTRADOR'),
+        ('021', 'Funcionários', 'lista_funcionarios', 'ROTINA', 'ADMINISTRADOR'),
+        # Telas que o menu lateral ja mostrava mas NAO existiam na tabela Rotina.
+        # Sem cadastro aqui, elas apareciam no menu para todos e nao podiam ser
+        # liberadas nem bloqueadas por permissao — o oposto do controle pedido.
+        ('016', 'Pedidos de Venda', 'lista_vendas', 'ROTINA', 'COMERCIAL'),
+        ('017', 'Propostas', 'lista_propostas', 'ROTINA', 'COMERCIAL'),
+        ('018', 'Contas a Pagar', 'lista_contas_pagar', 'ROTINA', 'FINANCEIRO'),
+            ('019', 'Contas a Receber', 'lista_contas_receber', 'ROTINA', 'FINANCEIRO'),
+            ('020', 'Notas Fiscais', 'lista_notas', 'ROTINA', 'FINANCEIRO'),
+            ('021', 'Estrutura de Produtos', 'lista_estruturas', 'ROTINA', 'INDUSTRIA'),
+        ('022', 'Movimentos de Estoque', 'lista_movimentos_hist', 'ROTINA', 'INDUSTRIA'),
+        ('023', 'Pedidos ao Fornecedor', 'lista_pedidos', 'ROTINA', 'INDUSTRIA'),
+        ('024', 'Fornecedores', 'lista_fornecedores', 'ROTINA', 'INDUSTRIA'),
+        ('025', 'Custo por Setor', 'custos_setores', 'ROTINA', 'INDUSTRIA'),
+        ('026', 'Painel Financeiro', 'painel_financeiro', 'ROTINA', 'FINANCEIRO'),
+        ('027', 'Funcionários por Setor', 'funcionarios_por_setor', 'ROTINA', 'ADMINISTRADOR'),
 ]
 
 # Rotinas descontinuadas — removidas do menu e da tela de permissões.
@@ -556,6 +557,7 @@ class ObraOP(models.Model):
     linha = models.CharField(max_length=100, blank=True, default='', verbose_name='LINHA')
     fabricante = models.CharField(max_length=100, blank=True, default='', verbose_name='FABRICANTE')
     data_op = models.DateField(null=True, blank=True, verbose_name='DATA OP')
+    data_lancamento = models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Lançamento')
     pausada_material = models.BooleanField(default=False, verbose_name='Pausada por falta de material')
 
     class Meta:
@@ -898,6 +900,12 @@ class MovimentacaoOP(models.Model):
         verbose_name='Qtd. Produzida',
         help_text='Quantidade de peças produzidas neste setor (informada no 2º bip).',
     )
+    # Mesa (1-7) — preenchido quando o setor é "mesa"
+    mesa = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        verbose_name='Mesa',
+        help_text='Número da mesa (1 a 7) — apenas para o setor Mesa.',
+    )
     data_hora = models.DateTimeField(auto_now_add=True, verbose_name='Data/Hora')
     data_entrada = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Entrada')
     data_saida = models.DateTimeField(null=True, blank=True, verbose_name='Data/Hora de Saída')
@@ -908,7 +916,8 @@ class MovimentacaoOP(models.Model):
         verbose_name_plural = 'Movimentações de OP'
 
     def __str__(self):
-        return f'{self.setor_nome} — {self.data_hora:%d/%m/%Y %H:%M}'
+        mesa_str = f' (Mesa {self.mesa})' if self.mesa else ''
+        return f'{self.setor_nome}{mesa_str} — {self.data_hora:%d/%m/%Y %H:%M}'
 
     @property
     def tempo_no_setor(self):
