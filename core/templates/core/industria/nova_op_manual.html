@@ -15,12 +15,12 @@
                         <div class="col-md-2"><label class="form-label">CLIENTE</label><input name="cliente" class="form-control"></div>
                         <div class="col-md-2"><label class="form-label">PERSON/AUTOVOLUME</label><input name="person_autovolume" class="form-control"></div>
                         <div class="col-md-4">
-                            <label class="form-label">OBRA (selecionar ou digitar) <span class="text-danger">*</span></label>
-                            <input list="obrasList" name="obra_texto" class="form-control" placeholder="Selecione ou digite">
-                            <datalist id="obrasList">
-                                {% for o in obras %}<option value="{{ o.codigo }} - {{ o.nome }}">{% endfor %}
-                            </datalist>
-                        </div>
+                                                    <label class="form-label">OBRA (selecionar ou digitar) <span class="text-danger">*</span></label>
+                                                    <input list="obrasList" name="obra_texto" class="form-control" placeholder="Selecione ou digite o código da obra">
+                                                    <datalist id="obrasList">
+                                                        {% for o in obras %}<option value="{{ o.codigo }}">{{ o.codigo }} - {{ o.nome }}</option>{% endfor %}
+                                                    </datalist>
+                                                </div>
 
                         <div class="col-md-2"><label class="form-label">QTD <span class="text-danger">*</span></label><input name="quantidade" type="number" class="form-control" value="1" min="1"></div>
                         <div class="col-md-2"><label class="form-label">L <span class="text-danger">*</span></label><input name="largura" type="number" class="form-control" value="0" min="1"></div>
