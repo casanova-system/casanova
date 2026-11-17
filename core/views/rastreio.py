@@ -260,7 +260,7 @@ def _validar_quantidade(rastreio, qtd):
 
 
 def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_saida='',
-                         quantidade_produzida=None, pedir_quantidade=True, mesa=None):
+                         quantidade_produzida=None, pedir_quantidade=True):
     """Registra automaticamente a passagem da OP pelo setor do usuário.
 
     Lógica de DUPLO BIP:
@@ -268,19 +268,16 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
     - 2º bip (saída): operador do setor bipa novamente para finalizar e liberar
     - O próximo setor só pode receber após o setor anterior ter bipado a saída
 
-    Retorna (erro, resultado, precisa_vidro, precisa_mesa):
+    Retorna (erro, resultado, precisa_vidro):
       - erro: mensagem de erro (ou None)
       - resultado: dict com dados do registro (ou None)
       - precisa_vidro: True se o setor Mesa precisa decidir sobre vidro
-      - precisa_mesa: True se o setor Mesa precisa escolher a mesa (1-7)
 
     `pedir_quantidade`:
       - True (padrão)  — no 2º bip sem quantidade, devolve o formulário para o
         operador informar quantas peças produziu (tela "Escanear OP").
       - False          — no 2º bip libera o setor direto, sem perguntar nada
         (tela "Produção", onde a quantidade não é coletada).
-
-    `mesa`: número da mesa (1-7) — usado quando setor é "mesa".
     """
     rastreio = RastreioOP.objects.filter(op_id=op_id).first()
     codigo_setor = setor_usuario.codigo
@@ -293,7 +290,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                 f'A OP ainda não foi iniciada. Ela precisa ser lida primeiro '
                 f'pelo setor de {primeiro.nome if primeiro else "Estoque"}.',
                 None,
-                False,
                 False,
             )
         # Busca dados da ObraOP
@@ -343,71 +339,34 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
             'Rastreio iniciado — OP %s pelo usuário %s no setor %s (1º bip)',
             op_id, request.user.username, setor_usuario.nome,
         )
-        return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True, 'bip': 'entrada'}, False, False)
+        return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': True, 'bip': 'entrada'}, False)
 
     # --- OP já concluída ---
     if rastreio.concluida:
-        return ('Esta OP já foi concluída e não pode receber novas leituras.', None, False, False)
+        return ('Esta OP já foi concluída e não pode receber novas leituras.', None, False)
 
     # --- Decisão de vidro pendente (OP parada na Mesa) ---
-    # Só pergunta vidro se a mesa já foi definida
     if rastreio.setor_atual == 'mesa' and rastreio.tem_vidro is None:
-        mov = MovimentacaoOP.objects.filter(
-            rastreio=rastreio, setor='mesa', data_saida__isnull=True
-        ).first()
-        # Se mesa não definida, não pergunta vidro ainda (fluxo: mesa primeiro)
-        if mov and not mov.mesa:
-            # Não faz nada aqui - a lógica de perguntar mesa está no bloco do 2º bip
-            pass
-        else:
-            if vidro in ('sim', 'nao'):
-                rastreio.tem_vidro = (vidro == 'sim')
-                rastreio.save(update_fields=['tem_vidro'])
-                logger.info(
-                    'Decisão de vidro — OP %s: %s (usuário %s)',
-                    op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
-                )
-                return (
-                    None,
-                    {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
-                     'decisao_vidro': rastreio.tem_vidro},
-                    False,
-                    False,
-                )
-            # Ainda não decidiu: pergunta antes de qualquer avanço
-            return (None, None, True, False)
+        if vidro in ('sim', 'nao'):
+            rastreio.tem_vidro = (vidro == 'sim')
+            rastreio.save(update_fields=['tem_vidro'])
+            logger.info(
+                'Decisão de vidro — OP %s: %s (usuário %s)',
+                op_id, 'SIM' if rastreio.tem_vidro else 'NÃO', request.user.username,
+            )
+            return (
+                None,
+                {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False,
+                 'decisao_vidro': rastreio.tem_vidro, 'vidro_definido': True},
+                False,
+            )
+        # Ainda não decidiu: pergunta antes de qualquer avanço
+        return (None, None, True)
 
     # --- OP está no MESMO setor do usuário: verificar se é 1º ou 2º bip ---
     if rastreio.setor_atual == codigo_setor:
         # Se já bipou a entrada e NÃO bipou a saída → este é o 2º bip (saída)
         if not rastreio.aguardando_saida:
-            # Se é mesa e não tem mesa definida, pergunta qual mesa
-            if codigo_setor == 'mesa':
-                mov = MovimentacaoOP.objects.filter(
-                    rastreio=rastreio, setor='mesa', data_saida__isnull=True
-                ).first()
-                if mov and not mov.mesa:
-                    if mesa is None and pedir_quantidade:
-                        return (
-                            None,
-                            {'rastreio': rastreio, 'setor': setor_usuario,
-                             'iniciou': False, 'bip': 'entrada', 'precisa_mesa': True},
-                            False,
-                            True,
-                        )
-                    if mesa is not None:
-                        # Salva a mesa na movimentação
-                        mov.mesa = mesa
-                        mov.save(update_fields=['mesa'])
-                        # Após definir a mesa, NÃO finaliza direto - aguarda o 2º bip (saída)
-                        return (
-                            None,
-                            {'rastreio': rastreio, 'setor': setor_usuario,
-                             'iniciou': False, 'bip': 'entrada', 'mesa_definida': True},
-                            False,
-                            False,
-                        )
-
             # Sem a quantidade informada: na tela de Produção a saída é
             # registrada direto (a quantidade não é coletada lá). Na tela
             # "Escanear OP" devolve o formulário, como antes.
@@ -416,7 +375,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                     None,
                     {'rastreio': rastreio, 'setor': setor_usuario,
                      'iniciou': False, 'bip': 'entrada', 'precisa_quantidade': True},
-                    False,
                     False,
                 )
 
@@ -451,7 +409,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                 None,
                 {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'saida'},
                 False,
-                False,
             )
         else:
             # Já bipou a saída, está aguardando o próximo setor receber
@@ -459,7 +416,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
                 f'A OP já foi liberada do setor de {setor_usuario.nome}. '
                 f'Aguardando o próximo setor receber.',
                 None,
-                False,
                 False,
             )
 
@@ -471,13 +427,12 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
             f'O operador precisa bipar a saída antes de liberar para o próximo setor.',
             None,
             False,
-            False,
         )
 
     # --- Valida se é o próximo setor esperado ---
     proximo = _proximo_setor(rastreio.setor_atual, rastreio.tem_vidro)
     if not proximo:
-        return ('Não há próximo setor no fluxo.', None, False, False)
+        return ('Não há próximo setor no fluxo.', None, False)
 
     if proximo.codigo != codigo_setor:
         return (
@@ -485,7 +440,6 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
             f'setor é {proximo.nome}. O setor de {setor_usuario.nome} só pode ler '
             f'após essa etapa.',
             None,
-            False,
             False,
         )
 
@@ -513,20 +467,12 @@ def _registrar_por_setor(request, op_id, setor_usuario, vidro='', observacao_sai
             op_id, setor_usuario.nome, request.user.username,
         )
 
-    # Se acabou de chegar na Mesa, pergunta primeiro qual a mesa (1-7)
-    # Só depois de definir a mesa é que pergunta se tem vidro
+    # Se acabou de chegar na Mesa, pergunta se tem vidro (se ainda não decidiu)
     if codigo_setor == 'mesa':
-        mov = MovimentacaoOP.objects.filter(
-            rastreio=rastreio, setor='mesa', data_saida__isnull=True
-        ).first()
-        if mov and not mov.mesa:
-            return (None, None, False, True)  # precisa_mesa=True
-
-        # Mesa já definida, agora pergunta se tem vidro (se ainda não decidiu)
         if rastreio.tem_vidro is None:
-            return (None, None, True, False)  # precisa_vidro=True
+            return (None, None, True)  # precisa_vidro=True
 
-    return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'entrada'}, False, False)
+    return (None, {'rastreio': rastreio, 'setor': setor_usuario, 'iniciou': False, 'bip': 'entrada'}, False)
 
 @login_required(login_url='login')
 @requer_rotina('rastreio_producao')
@@ -1332,7 +1278,6 @@ def producao(request):
     erro = None
     resultado = None
     precisa_vidro = False
-    precisa_mesa = False
     op_id_pendente = None
 
     if not _garantir_setores():
@@ -1369,13 +1314,11 @@ def producao(request):
                 if not obra_op:
                     erro = 'OP não encontrada.'
                 else:
-                    erro, resultado, precisa_vidro, precisa_mesa = _registrar_por_setor(
+                    erro, resultado, precisa_vidro = _registrar_por_setor(
                         request, op_id, setor_usuario, vidro,
                         pedir_quantidade=False,
                     )
                     if precisa_vidro:
-                        op_id_pendente = op_id
-                    if precisa_mesa:
                         op_id_pendente = op_id
 
     context = {
@@ -1383,7 +1326,6 @@ def producao(request):
         'erro': erro,
         'resultado': resultado,
         'precisa_vidro': precisa_vidro,
-        'precisa_mesa': precisa_mesa,
         'op_id_pendente': op_id_pendente,
         'setor_param': setor_param,
         'setor_usuario': _setor_do_usuario(request.user, setor_param),
@@ -1556,16 +1498,16 @@ def escanear(request):
                         op_id_pendente = op_id
 
     context = {
-        'codigo': codigo,
-        'erro': erro,
-    'resultado': resultado,
-    'precisa_vidro': precisa_vidro,
-    'op_id_pendente': op_id_pendente,
-    'setor_usuario': _setor_do_usuario(request.user, setor_param),
-    'pode_gerenciar': _pode_gerenciar(request.user),
-    'setores': _setores_ativos(),
-    'setor_param': setor_param,
-    }
+            'codigo': codigo,
+            'erro': erro,
+            'resultado': resultado,
+            'precisa_vidro': precisa_vidro,
+            'op_id_pendente': op_id_pendente,
+            'setor_usuario': _setor_do_usuario(request.user, setor_param),
+            'pode_gerenciar': _pode_gerenciar(request.user),
+            'setores': _setores_ativos(),
+            'setor_param': setor_param,
+        }
     return render(request, 'core/industria/escanear.html', context)
 
 

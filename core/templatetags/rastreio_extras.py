@@ -30,3 +30,15 @@ def status_tempo_setor_texto(rastreio, codigo_setor):
     if status == 'ATENCAO':
         return 'Atenção'
     return 'OK'
+
+
+@register.filter
+def get_mesa_mesa(movimentacoes):
+    """Retorna o número da mesa da movimentação da mesa."""
+    if not movimentacoes:
+        return ''
+    try:
+        mov = movimentacoes.filter(setor='mesa', mesa__isnull=False).first()
+        return mov.mesa if mov else ''
+    except Exception:
+        return ''

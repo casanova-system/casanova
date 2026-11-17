@@ -87,6 +87,7 @@ from core.views.romaneio import (
     lista_romaneios,
     novo_romaneio,
 )
+from core.views.acompanhamento_mesa import acompanhamento_mesa
 from core.views.rastreio import (
     escanear,
     producao,
@@ -195,7 +196,8 @@ urlpatterns = [
     path('industria/rastreio/<int:op_id>/', rastreio_op, name='rastreio_op'),
     path('industria/rastreio/<int:op_id>/registrar/', registrar_movimentacao, name='registrar_movimentacao'),
     # PRODUÇÃO (consulta rápida da OP na indústria)
-    path('industria/producao/', producao, name='producao'),
+        path('industria/producao/', producao, name='producao'),
+        path('industria/acompanhamento-mesa/', acompanhamento_mesa, name='acompanhamento_mesa'),
 
     # VENDA
     path('vendas/', lista_vendas, name='lista_vendas'),

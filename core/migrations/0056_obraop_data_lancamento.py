@@ -6,8 +6,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0055_add_mesa_to_movimentacao'),
-    ]
+            ('core', '0054_remove_codigo_documento_descricao_final'),
+        ]
 
     operations = [
         migrations.AddField(

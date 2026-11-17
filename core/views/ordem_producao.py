@@ -537,13 +537,22 @@ def _buscar_op_por_id(op_id):
         LEFT JOIN dbo.DOCUMENTO DOCP ON PRJ.ID_DOCUMENTO = DOCP.ID_DOCUMENTO
         WHERE OP.ID_ORDEMPRODUCAO = %s
     """
-    with connections['faktory'].cursor() as cur:
-        cur.execute(sql, [op_id])
-        colunas = [descricao[0] for descricao in cur.description]
-        linha = cur.fetchone()
-        if not linha:
-            return None
-        return _normalizar_registro_erp(dict(zip(colunas, linha)))
+    try:
+        with connections['faktory'].cursor() as cur:
+            cur.execute(sql, [op_id])
+            colunas = [descricao[0] for descricao in cur.description]
+            linha = cur.fetchone()
+            if not linha:
+                return None
+            return _normalizar_registro_erp(dict(zip(colunas, linha)))
+    except Exception as exc:  # noqa: BLE001 — ERP é opcional
+        erro = str(exc)
+        if 'available database backend' in erro or 'mssql' in erro.lower():
+            erro = MSG_DRIVER_FAKTORY
+        # Loga o erro mas não quebra a tela — o rastreio continua funcionando
+        import logging
+        logging.getLogger(__name__).warning('Erro ao buscar OP %s no ERP: %s', op_id, erro)
+        return None
 
 
 def _conteudo_barcode(obra_op_id):

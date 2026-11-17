@@ -24,12 +24,15 @@ USO NOS TEMPLATES
         {{ pct|percentual }}         ->  59,4%
         {{ valor|moeda_curta }}      ->  R$ 46,97 mi
 """
+import sys
+print(f"[DEBUG] Loading core.templatetags.br module", file=sys.stderr)
 from decimal import Decimal, InvalidOperation
 
 from django import template
 from django.template.defaultfilters import floatformat
 
 register = template.Library()
+print(f"[DEBUG] core.templatetags.br register created: {register}", file=sys.stderr)
 
 
 def _dec(valor):
@@ -232,6 +235,8 @@ def get_mesa_mesa(movimentacoes):
         return mov.mesa if mov else ''
     except Exception:
         return ''
+
+print(f"[DEBUG] get_mesa_mesa filter DEFINED and registered", file=sys.stderr)
 
 @register.filter
 def div(value, divisor):

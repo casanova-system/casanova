@@ -1,0 +1,373 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3 d-flex flex-column" style="height: calc(100vh - 56px); overflow: hidden;">
+
+    {% include 'core/partials/messages.html' %}
+
+    {% url 'menu_principal' as url_inicio %}
+    {% include 'core/partials/page_header.html' with titulo="Acompanhamento de Mesa" subtitulo="Produção por mesa (1 a 7) — filtros por período." acao_icone="fa-table-cells" voltar_url=url_inicio %}
+
+    {% if migration_pendente %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+        <div>
+            <strong>Rotina não instalada neste servidor.</strong>
+            Execute <code>python manage.py migrate</code> no servidor para criar as tabelas do rastreio.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #0b3882;">
+                <div class="kpi-label"><i class="fa-solid fa-table-cells me-1"></i> Total Produzido</div>
+                <div class="kpi-value">{{ kpis.total_geral|quantidade }}</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #16a34a;">
+                <div class="kpi-label"><i class="fa-solid fa-trophy me-1"></i> Melhor Mesa</div>
+                <div class="kpi-value">{% if kpis.melhor_mesa %}Mesa {{ kpis.melhor_mesa }} ({{ kpis.melhor_qtd|quantidade }}){% else %}—{% endif %}</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #d97706;">
+                <div class="kpi-label"><i class="fa-solid fa-calendar-week me-1"></i> Esta Semana</div>
+                <div class="kpi-value">
+                    {% if semanal.values %}
+                        {{ semanal.values|total|quantidade }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card" style="--kpi-color: #7c3aed;">
+                <div class="kpi-label"><i class="fa-solid fa-calendar-days me-1"></i> Este Mês</div>
+                <div class="kpi-value">
+                    {% if mensal.values %}
+                        {{ mensal.values|total|quantidade }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-bar">
+        <form method="GET" action="" class="filtros-bar-form">
+            <select name="dias" class="form-select form-select-sm" style="max-width: 160px;">
+                <option value="7" {% if dias == 7 %}selected{% endif %}>Últimos 7 dias</option>
+                <option value="14" {% if dias == 14 %}selected{% endif %}>Últimos 14 dias</option>
+                <option value="30" {% if dias == 30 %}selected{% endif %}>Últimos 30 dias</option>
+                <option value="60" {% if dias == 60 %}selected{% endif %}>Últimos 60 dias</option>
+                <option value="90" {% if dias == 90 %}selected{% endif %}>Últimos 90 dias</option>
+            </select>
+            <select name="mesa" class="form-select form-select-sm" style="max-width: 160px;">
+                <option value="">Todas as mesas</option>
+                {% for m in mesas %}
+                <option value="{{ m }}" {% if mesa_filtro == m|stringformat:"s" %}selected{% endif %}>Mesa {{ m }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+            </button>
+            <a href="{% url 'acompanhamento_mesa' %}" class="btn btn-limpar">
+                <i class="fa-solid fa-rotate-left"></i> Limpar
+            </a>
+        </form>
+    </div>
+
+    <!-- Gráfico de Linhas: Produção por dia -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-12">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-line me-1 text-primary"></i> Produção por Dia (últimos {{ dias }} dias)</h6>
+                    <div class="chart-ctrl">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Mesa">
+                            {% for m in mesas %}
+                            <button type="button" class="chart-toggle {% if mesa_filtro == m|stringformat:'s' %}active{% endif %}" data-mesa="{{ m }}">Mesa {{ m }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoMesaDia" height="180"></canvas>
+                </div>
+                <div class="chart-foot">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Produção por mesa por dia (quantidade de peças finalizadas na mesa).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barras: Semana e Mês -->
+    <div class="row g-3 mb-3" style="flex-shrink: 0;">
+        <div class="col-xl-6 col-lg-12">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Produção Esta Semana</h6>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoMesaSemana" height="160"></canvas>
+                </div>
+                <div class="chart-foot" id="semanaResumo"></div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-12">
+            <div class="chart-panel">
+                <div class="chart-head">
+                    <h6 class="chart-title"><i class="fa-solid fa-chart-column me-1 text-primary"></i> Produção Este Mês</h6>
+                </div>
+                <div class="chart-body">
+                    <canvas id="graficoMesaMes" height="160"></canvas>
+                </div>
+                <div class="chart-foot" id="mesResumo"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Resumo -->
+    <div class="card shadow-lg list-card">
+        <div class="card-header list-card-header">
+            <h5 class="list-card-title"><i class="fa-solid fa-table me-2 text-primary"></i> Resumo por Mesa</h5>
+        </div>
+        <div class="card-body list-card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 tabela-redimensionavel">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Mesa</th>
+                            <th class="text-end">Total (Peças)</th>
+                            <th class="text-end">Esta Semana</th>
+                            <th class="text-end">Este Mês</th>
+                            <th class="text-end">Média/Dia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in mesas %}
+                        <tr>
+                            <td class="fw-bold text-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">Mesa {{ m }}</span>
+                            </td>
+                            <td class="text-end fw-bold">{{ totais|get_item:m|default:"—"|quantidade }}</td>
+                            <td class="text-end">{{ semanal|get_item:m|default:"—"|quantidade }}</td>
+                            <td class="text-end">{{ mensal|get_item:m|default:"—"|quantidade }}</td>
+                            <td class="text-end">
+                                {% if totais|get_item:m %}
+                                    {{ totais|get_item:m|div:dias|floatformat:1|quantidade }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Nenhuma produção no período.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td>TOTAL</td>
+                            <td class="text-end">{{ kpis.total_geral|quantidade }}</td>
+                            <td class="text-end">{{ semanal.values|total|quantidade }}</td>
+                            <td class="text-end">{{ mensal.values|total|quantidade }}</td>
+                            <td class="text-end">{{ kpis.total_geral|div:dias|floatformat:1|quantidade }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js (local) -->
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+    'use strict';
+
+    const DADOS = {
+        series: {{ series|safe }},
+        totais: {{ totais|safe }},
+        semanal: {{ semanal|safe }},
+        mensal: {{ mensal|safe }},
+        dias: {{ dias }},
+    };
+
+    const CORES = ['#0b3882', '#16a34a', '#d97706', '#7c3aed', '#ec4899', '#06b6d4', '#ea580c'];
+
+    const eixoY = {
+        beginAtZero: true,
+        grid: { color: 'rgba(128,140,160,0.12)' },
+        ticks: { font: { size: 11 }, precision: 0 },
+    };
+    const eixoX = {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, autoSkip: true, maxRotation: 0 },
+    };
+
+    // --- Gráfico 1: Linhas por dia ---
+    const graficoDia = new Chart(
+        document.getElementById('graficoMesaDia').getContext('2d'),
+        {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y} peças`,
+                        },
+                    },
+                },
+                interaction: { mode: 'index', intersect: false },
+                scales: { y: eixoY, x: eixoX },
+            },
+        }
+    );
+
+    function renderDia(mesaFiltro) {
+        const labels = DADOS.series[1].map(d => d.dia);
+        let datasets = [];
+        if (mesaFiltro && mesaFiltro !== 'todas') {
+            const m = parseInt(mesaFiltro);
+            const serie = DADOS.series[m] || [];
+            datasets = [{
+                label: `Mesa ${m}`,
+                data: serie.map(d => d.qtd),
+                borderColor: CORES[(m - 1) % CORES.length],
+                backgroundColor: CORES[(m - 1) % CORES.length] + '20',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: CORES[(m - 1) % CORES.length],
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+            }];
+        } else {
+            for (let m = 1; m <= 7; m++) {
+                const serie = DADOS.series[m] || [];
+                datasets.push({
+                    label: `Mesa ${m}`,
+                    data: serie.map(d => d.qtd),
+                    borderColor: CORES[(m - 1) % CORES.length],
+                    backgroundColor: CORES[(m - 1) % CORES.length] + '10',
+                    fill: false,
+                    tension: 0.25,
+                    pointBackgroundColor: CORES[(m - 1) % CORES.length],
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 2,
+                    pointHoverRadius: 4,
+                });
+            }
+        }
+        graficoDia.data.labels = labels;
+        graficoDia.data.datasets = datasets;
+        graficoDia.update();
+    }
+
+    // --- Gráfico 2: Barras Semana ---
+    const graficoSemana = new Chart(
+        document.getElementById('graficoMesaSemana').getContext('2d'),
+        {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.y} peças` } },
+                },
+                scales: { y: { ...eixoY, ticks: { ...eixoY.ticks, stepSize: 1 } }, x: eixoX },
+            },
+        }
+    );
+
+    function renderSemana() {
+        const mesas = [1,2,3,4,5,6,7];
+        graficoSemana.data.labels = mesas.map(m => `Mesa ${m}`);
+        graficoSemana.data.datasets = [{
+            label: 'Peças',
+            data: mesas.map(m => DADOS.semanal[m] || 0),
+            backgroundColor: mesas.map((_, i) => CORES[i % CORES.length]),
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 40,
+        }];
+        graficoSemana.update();
+        const total = Object.values(DADOS.semanal).reduce((a,b)=>a+b,0);
+        document.getElementById('semanaResumo').innerHTML = total
+            ? `<i class="fa-solid fa-flag-checkered"></i> ${total} peças esta semana`
+            : '<i class="fa-solid fa-circle-info"></i> Sem dados para o período.';
+    }
+
+    // --- Gráfico 3: Barras Mês ---
+    const graficoMes = new Chart(
+        document.getElementById('graficoMesaMes').getContext('2d'),
+        {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.y} peças` } },
+                },
+                scales: { y: { ...eixoY, ticks: { ...eixoY.ticks, stepSize: 1 } }, x: eixoX },
+            },
+        }
+    );
+
+    function renderMes() {
+        const mesas = [1,2,3,4,5,6,7];
+        graficoMes.data.labels = mesas.map(m => `Mesa ${m}`);
+        graficoMes.data.datasets = [{
+            label: 'Peças',
+            data: mesas.map(m => DADOS.mensal[m] || 0),
+            backgroundColor: mesas.map((_, i) => CORES[i % CORES.length]),
+            borderRadius: 6,
+            borderSkipped: false,
+            maxBarThickness: 40,
+        }];
+        graficoMes.update();
+        const total = Object.values(DADOS.mensal).reduce((a,b)=>a+b,0);
+        document.getElementById('mesResumo').innerHTML = total
+            ? `<i class="fa-solid fa-calendar-check"></i> ${total} peças este mês`
+            : '<i class="fa-solid fa-circle-info"></i> Sem dados para o período.';
+    }
+
+    // Botões de filtro de mesa nos gráficos
+    document.querySelectorAll('.chart-toggle[data-mesa]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.chart-toggle[data-mesa]').forEach(b => b.classList.toggle('active', b === this));
+            renderDia(this.dataset.mesa);
+        });
+    });
+
+    // Inicialização
+    renderDia({{ mesa_filtro|default:'todas' }});
+    renderSemana();
+    renderMes();
+
+})();
+</script>
+
+{% include 'core/partials/tabela_redimensionavel.html' with tabela_id="tabelaMesa" storage_key="casanova_mesa_larguras" %}
+{% endblock %}

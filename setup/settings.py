@@ -48,7 +48,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
+        'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -62,6 +62,10 @@ TEMPLATES = [
             # esquecer o load em um template novo mostraria 46965576.42 em vez
             # de 46.965.576,42 — exatamente o erro que queremos evitar.
             'builtins': ['core.templatetags.br'],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
         },
     },
 ]
