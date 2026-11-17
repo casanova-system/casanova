@@ -40,19 +40,41 @@
                 <span>{{ erro }}</span>
             </div>
         </div>
+    {% elif precisa_mesa %}
+        <div class="prod-msg prod-msg-vidro">
+            <i class="fa-solid fa-table-cells"></i>
+            <div>
+                <strong>Informe a mesa (1 a 7):</strong>
+                <div class="prod-vidro-btns">
+                    {% for m in "1234567" %}
+                    <a href="?codigo={{ op_id_pendente }}&mesa={{ m }}{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-sim" style="min-width: 80px;">
+                        Mesa {{ m }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     {% elif precisa_vidro %}
         <div class="prod-msg prod-msg-vidro">
             <i class="fa-solid fa-circle-question"></i>
             <div>
-                <strong>Esta OP tem vidro?</strong>
+                <strong>Mesa {{ resultado.mesa_definida }} — Esta OP tem vidro?</strong>
                 <div class="prod-vidro-btns">
-                    <a href="?codigo={{ op_id_pendente }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-sim">
+                    <a href="?codigo={{ op_id_pendente }}&mesa={{ resultado.mesa_definida }}&vidro=sim{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-sim">
                         <i class="fa-solid fa-check"></i> Sim
                     </a>
-                    <a href="?codigo={{ op_id_pendente }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-nao">
+                    <a href="?codigo={{ op_id_pendente }}&mesa={{ resultado.mesa_definida }}&vidro=nao{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-nao">
                         <i class="fa-solid fa-xmark"></i> Não
                     </a>
                 </div>
+            </div>
+        </div>
+    {% elif resultado and resultado.liberada_com_sucesso %}
+        <div class="prod-msg prod-msg-ok">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+                <strong>OP liberada com sucesso!</strong>
+                <span>Mesa {{ resultado.mesa }} • Vidro: {{ resultado.tem_vidro|yesno:"Sim,Não" }} → Próximo: {{ resultado.proximo_setor }}</span>
             </div>
         </div>
     {% elif resultado and resultado.vidro_definido %}

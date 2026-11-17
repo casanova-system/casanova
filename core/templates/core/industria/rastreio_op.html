@@ -305,27 +305,96 @@
                 </div>
 
                 {% if not rastreio.concluida %}
-                    {% if not rastreio.aguardando_saida %}
-                        <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="acao" value="saida">
-                            <div class="rastreio-acao-campo">
-                                <label class="rastreio-acao-label">Quantidade produzida neste setor</label>
-                                <div class="rastreio-acao-linha">
-                                    <input type="number" name="quantidade_produzida"
-                                           class="rastreio-acao-input" placeholder="0"
-                                           inputmode="numeric" min="0" max="99999">
-                                    <input type="text" name="observacao"
-                                           class="rastreio-acao-input rastreio-acao-input-obs"
-                                           placeholder="Observação / B.O. (opcional)">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-acao btn-acao-primario btn-acao-largo">
-                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                                Finalizar e liberar do setor
-                            </button>
-                        </form>
-                    {% else %}
+                                    {% if not rastreio.aguardando_saida %}
+                                        {% if rastreio.setor_atual == 'mesa' %}
+                                            <!-- Fluxo Mesa: passo 1 - escolher mesa -->
+                                            {% if not mesa_selecionada %}
+                                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="acao" value="saida">
+                                                <div class="rastreio-acao-campo">
+                                                    <label class="rastreio-acao-label">Selecione a mesa (1 a 7)</label>
+                                                    <div class="rastreio-acao-linha rastreio-mesa-btns">
+                                                        {% for m in "1234567" %}
+                                                        <button type="submit" name="mesa" value="{{ m }}" class="btn-acao btn-acao-primario" style="min-width: 80px;">
+                                                            Mesa {{ m }}
+                                                        </button>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            <!-- Fluxo Mesa: passo 2 - escolher vidro -->
+                                            {% elif mesa_selecionada and not vidro_selecionado %}
+                                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="acao" value="saida">
+                                                <input type="hidden" name="mesa" value="{{ mesa_selecionada }}">
+                                                <div class="rastreio-acao-campo">
+                                                    <label class="rastreio-acao-label">Mesa {{ mesa_selecionada }} — Esta OP tem vidro?</label>
+                                                    <div class="rastreio-acao-linha rastreio-vidro-btns">
+                                                        <button type="submit" name="vidro" value="sim" class="btn-acao btn-acao-ok">
+                                                            <i class="fa-solid fa-check"></i> Sim
+                                                        </button>
+                                                        <button type="submit" name="vidro" value="nao" class="btn-acao btn-acao-neutro">
+                                                            <i class="fa-solid fa-xmark"></i> Não
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            <!-- Fluxo Mesa: ambos selecionados - mostrar resumo e confirmar -->
+                                            {% else %}
+                                            <div class="rastreio-aviso rastreio-aviso-ok">
+                                                <i class="fa-solid fa-circle-check"></i>
+                                                <div>
+                                                    <strong>Mesa {{ mesa_selecionada }} selecionada</strong>
+                                                    <span>Vidro: {% if vidro_selecionado == 'sim' %}Sim{% else %}Não{% endif %}</span>
+                                                </div>
+                                            </div>
+                                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="acao" value="saida">
+                                                <input type="hidden" name="mesa" value="{{ mesa_selecionada }}">
+                                                <input type="hidden" name="vidro" value="{{ vidro_selecionado }}">
+                                                <div class="rastreio-acao-campo">
+                                                    <label class="rastreio-acao-label">Quantidade produzida (opcional)</label>
+                                                    <div class="rastreio-acao-linha">
+                                                        <input type="number" name="quantidade_produzida"
+                                                               class="rastreio-acao-input" placeholder="0"
+                                                               inputmode="numeric" min="0" max="99999">
+                                                        <input type="text" name="observacao"
+                                                               class="rastreio-acao-input rastreio-acao-input-obs"
+                                                               placeholder="Observação / B.O. (opcional)">
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn-acao btn-acao-primario btn-acao-largo">
+                                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                                    Confirmar e liberar
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        {% else %}
+                                            <!-- Outros setores: formulário padrão -->
+                                            <form method="POST" action="{% url 'registrar_movimentacao' op_id %}" class="rastreio-acao-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="acao" value="saida">
+                                                <div class="rastreio-acao-campo">
+                                                    <label class="rastreio-acao-label">Quantidade produzida neste setor</label>
+                                                    <div class="rastreio-acao-linha">
+                                                        <input type="number" name="quantidade_produzida"
+                                                               class="rastreio-acao-input" placeholder="0"
+                                                               inputmode="numeric" min="0" max="99999">
+                                                        <input type="text" name="observacao"
+                                                               class="rastreio-acao-input rastreio-acao-input-obs"
+                                                               placeholder="Observação / B.O. (opcional)">
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn-acao btn-acao-primario btn-acao-largo">
+                                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                                    Finalizar e liberar do setor
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    {% else %}
                         <div class="rastreio-aviso rastreio-aviso-info">
                             <i class="fa-solid fa-circle-info"></i>
                             <div>

@@ -211,6 +211,7 @@ def api_escanear(request):
 
     codigo = str(request.data.get('codigo', '')).strip()
     vidro = str(request.data.get('vidro', '')).strip()
+    mesa = str(request.data.get('mesa', '')).strip()
 
     op_id = _extrair_op_id_do_qr(codigo)
     if not op_id:
@@ -231,24 +232,33 @@ def api_escanear(request):
             {'erro': 'Seu usuário não está vinculado a um setor de produção.'},
             status=status.HTTP_403_FORBIDDEN,
         )
-    erro, resultado, precisa_vidro = _registrar_por_setor(
-        request, op_id, setor_usuario, vidro
-    )
+    erro, resultado, precisa_mesa, precisa_vidro = _registrar_por_setor(
+        request, op_id, setor_usuario, vidro, mesa=mesa if mesa else None
+        )
 
     if erro:
         return Response({'erro': erro}, status=status.HTTP_409_CONFLICT)
 
+    if precisa_mesa:
+        return Response({
+            'precisa_mesa': True,
+            'op_id': op_id,
+            'mensagem': 'Informe o número da mesa (1 a 7):',
+        })
+
     if precisa_vidro:
         return Response({
             'precisa_vidro': True,
+            'precisa_mesa': True,
+            'mesa': resultado.get('mesa_definida'),
             'op_id': op_id,
-            'mensagem': 'Esta OP tem vidro?',
-        })
+                'mensagem': 'Esta OP tem vidro?',
+            })
 
-    rastreio = resultado['rastreio']
-    return Response({
-        'ok': True,
-        'iniciou': resultado.get('iniciou', False),
-        'setor': _serializar_setor(resultado['setor']),
-        'rastreio': _serializar_rastreio(rastreio),
-    })
+        rastreio = resultado['rastreio']
+        return Response({
+            'ok': True,
+            'iniciou': resultado.get('iniciou', False),
+            'setor': _serializar_setor(resultado['setor']),
+            'rastreio': _serializar_rastreio(rastreio),
+        })
