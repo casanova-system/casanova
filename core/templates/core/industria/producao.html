@@ -45,9 +45,9 @@
             <i class="fa-solid fa-table-cells"></i>
             <div>
                 <strong>Informe a mesa (1 a 7):</strong>
-                <div class="prod-vidro-btns">
+                <div class="prod-mesa-btns">
                     {% for m in "1234567" %}
-                    <a href="?codigo={{ op_id_pendente }}&mesa={{ m }}{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-sim" style="min-width: 80px;">
+                    <a href="?codigo={{ op_id_pendente }}&mesa={{ m }}{% if setor_param %}&setor={{ setor_param }}{% endif %}" class="prod-btn prod-btn-mesa">
                         Mesa {{ m }}
                     </a>
                     {% endfor %}
@@ -464,6 +464,42 @@
 .prod-msg-idle i  { color: var(--cv-text-faint); }
 
 .prod-vidro-btns { display: flex; gap: 10px; margin-top: 12px; }
+
+/* ---- Botões de mesa (grid responsivo) ---- */
+.prod-mesa-btns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.prod-btn-mesa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 50px;
+    padding: 0 16px;
+    border-radius: var(--cv-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: 2px solid var(--cv-line);
+    background: var(--cv-surface);
+    color: var(--cv-text);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--cv-dur) var(--cv-ease);
+}
+.prod-btn-mesa:hover {
+    border-color: var(--cv-blue);
+    background: var(--cv-blue-soft);
+    color: var(--cv-blue);
+    transform: translateY(-1px);
+    box-shadow: var(--cv-shadow-sm);
+}
+.prod-btn-mesa:active {
+    transform: translateY(0);
+}
 
 /* ---- Passos numerados ---- */
 .prod-step,
